@@ -63,6 +63,13 @@
     <div class="stat"><div class="label">Last Update</div><div class="value" id="stat-time" style="font-size:14px;">—</div></div>
   </div>
 
+  <section id="pricing">
+    <h2 style="color:var(--gold);font-size:16px;letter-spacing:1px;margin-bottom:12px;">💳 PRICING</h2>
+    <div id="pricing-cards" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
+      <div style="color:var(--muted);padding:12px;">Loading pricing…</div>
+    </div>
+  </section>
+
   <table>
     <thead>
       <tr>
@@ -92,6 +99,27 @@
     if (/in_progress|dry_run/i.test(s)) return 'status-in_progress';
     if (/success|sent|won/i.test(s)) return 'status-success';
     return '';
+  }
+
+  async function loadPricing() {
+    try {
+      const pricing = await fetch('/api/pricing').then(r => r.json());
+      const cards = document.getElementById('pricing-cards');
+      cards.innerHTML = pricing.map(t => `
+        <div class="stat" style="min-width:240px;">
+          <div class="label">${esc(t.tier)}</div>
+          <div style="margin-top:8px;">
+            <div>Monthly <b>${esc(t.monthly.price)}</b></div>
+            <a href="${esc(t.monthly.url)}" style="color:var(--blue);font-size:12px;">${esc(t.monthly.url)}</a>
+            <div style="margin-top:6px;">Annual <b>${esc(t.annual.price)}</b></div>
+            <a href="${esc(t.annual.url)}" style="color:var(--blue);font-size:12px;">${esc(t.annual.url)}</a>
+          </div>
+        </div>
+      `).join('');
+    } catch (_) {
+      document.getElementById('pricing-cards').innerHTML =
+        '<div style="color:var(--muted);padding:12px;">Pricing unavailable.</div>';
+    }
   }
 
   async function refresh() {
@@ -132,6 +160,7 @@
   }
 
   refresh();
+  loadPricing();
   setInterval(refresh, 5000);
 </script>
 </body>

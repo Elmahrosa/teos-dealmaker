@@ -2,9 +2,14 @@ const path = require('path');
 const express = require('express');
 const audit = require('../utils/auditLogger');
 const { getMode } = require('../config/mode');
+const PRICING = require('../config/pricing.config');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+app.get('/api/pricing', (req, res) => {
+  res.json(PRICING);
+});
 
 app.get('/api/health', (req, res) => {
   const entries = audit.readVault();

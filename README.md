@@ -20,15 +20,16 @@
 - [Implemented] Telegram bot (@TeosEgypt_bot commands incl. `/sales <prompt>`; inline welcome menu with Features/Pricing/Demo/Affiliate/Contact/Docs panels)
 - [Implemented] Postgres schema (db/schema.sql: deals + audit_trail with updated_at trigger; db/index.js pg pool, `npm run db:migrate`, needs `DATABASE_URL`)
 - [Implemented] Dual-write audit mirror (flat file always; mirrors to audit_trail + syncVaultToDb() when `DATABASE_URL` is set)
-- [Implemented] Sentinel dashboard (`npm run server` → dark-theme BVAP audit console at http://localhost:3000, reads the local vault; `/api/health`, `/api/audit`)
+- [Implemented] Sentinel dashboard (`npm run server` → dark-theme BVAP audit console at http://localhost:3000, reads the local vault; `/api/health`, `/api/audit`, `/api/pricing`)
 - [Implemented] Dodo Payments stub (utils/dodoPayments.js, mocks payload when `DODO_API_KEY` missing)
+- [Implemented] Shared pricing config (config/pricing.config.js — 6-tier source of truth: Solo Operator/Growth Team/Corporate × Monthly/Annual with Dodo checkout URLs + product IDs; served to web via `/api/pricing` and to the bot via `/pricing` and the Pricing menu panel)
 - [Implemented] Master pipeline test (tests/final_pipeline.test.js: Strategist → Marketer → Negotiator → Treasurer → Closing)
 
 **❌ PENDING:**
 - [Pending] Multi-tenancy on the DB schema
 - [Pending] User account system
 - [Pending] Real Dodo Payments integration (LIVE key)
-- [Pending] Pricing tiers activation (Solo Operator waitlist, Professional $199/mo, Enterprise $999/mo — DRY-only until payments go LIVE)
+- [Pending] Live checkout verification of the published pricing links (Solo $99/$950, Growth $249/$2,390, Corporate $799/$7,600 — links served from config/pricing.config.js, Dodo downstream unverified)
 - [Pending] Marketing landing page
 - [Pending] Automated test runner (npm test)
 

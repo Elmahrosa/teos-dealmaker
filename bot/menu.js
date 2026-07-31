@@ -1,4 +1,5 @@
 const audit = require('../utils/auditLogger');
+const { formatPricingText, pricingButtons } = require('../config/pricing.config');
 
 const WELCOME_TEXT = [
   '🏛️ <b>ELMAHROSA SOVEREIGN ECOSYSTEM</b>',
@@ -43,17 +44,13 @@ const PANELS = {
     ].join('\n')
   },
   btn_pricing: {
-    text: [
-      '💳 <b>TEOS DealMaker - Sovereign Tiers</b>',
-      '',
-      'Deploy the full 12-agent court to automate your negotiation, closing, and contract generation.',
-      '',
-      '1. <b>Solo Operator</b> — Waitlist / Early Builders',
-      '2. <b>Professional</b> — Full Suite ($199/mo, waitlist)',
-      '3. <b>Enterprise</b> — White-glove setup ($999/mo, waitlist)',
-      '',
-      'Checkout is not enabled yet — payments are DRY-only.'
-    ].join('\n')
+    text: formatPricingText(),
+    keyboard: () => ({
+      inline_keyboard: [
+        ...pricingButtons().inline_keyboard,
+        [{ text: '⬅️ Back to Menu', callback_data: 'btn_back' }]
+      ]
+    })
   },
   btn_demo: {
     text: [
@@ -76,12 +73,12 @@ const PANELS = {
   }
 };
 
-function editPanel(bot, query, text) {
+function editPanel(bot, query, text, keyboard) {
   return bot.editMessageText(text, {
     chat_id: query.message.chat.id,
     message_id: query.message.message_id,
     parse_mode: 'HTML',
-    reply_markup: backKeyboard()
+    reply_markup: keyboard || backKeyboard()
   });
 }
 
@@ -104,7 +101,7 @@ function handleCallback(query, bot) {
       bot.answerCallbackQuery(query.id, { text: 'Unknown action' }).catch(() => {});
       return;
     }
-    editPanel(bot, query, panel.text).catch(() => {});
+    editPanel(bot, query, panel.text, panel.keyboard ? panel.keyboard() : null).catch(() => {});
   }
 
   bot.answerCallbackQuery(query.id, { text: 'OK' }).catch(() => {});

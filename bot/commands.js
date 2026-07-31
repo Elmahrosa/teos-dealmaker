@@ -2,6 +2,7 @@ const { getMode, setMode } = require('../config/mode');
 const audit = require('../utils/auditLogger');
 const { BOT_CONFIG } = require('./config');
 const { WELCOME_TEXT, welcomeKeyboard } = require('./menu');
+const { formatPricingText, pricingButtons } = require('../config/pricing.config');
 
 function isFounder(userId) {
   return BOT_CONFIG.founderId !== null && userId === BOT_CONFIG.founderId;
@@ -145,6 +146,14 @@ function cmdSales(chatId, userId, prompt) {
   }
 }
 
+function cmdPricing(chatId) {
+  return {
+    chatId,
+    text: formatPricingText(),
+    replyMarkup: pricingButtons()
+  };
+}
+
 const COMMANDS = {
   '/start': cmdStart,
   '/help': cmdStart,
@@ -156,7 +165,8 @@ const COMMANDS = {
   '/audit': cmdAudit,
   '/outreach': cmdOutreach,
   '/qualify': cmdQualify,
-  '/sales': cmdSales
+  '/sales': cmdSales,
+  '/pricing': cmdPricing
 };
 
 module.exports = { COMMANDS, isFounder, isAdmin };
