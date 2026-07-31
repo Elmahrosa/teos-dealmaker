@@ -116,7 +116,7 @@ async function runAgent(adapter, workspaceId, agentType, fn, opts) {
     agent_name: agentType,
     action_type: 'AGENT_RUN_' + (status === 'completed' ? 'SUCCESS' : 'ERROR'),
     details: { agent: meta.label, duration_ms: durationMs, cost_cents: costCents, input: o.input },
-    version: 'v0.3.0'
+    version: 'v0.3.1'
   });
 
   if (error) throw error;
@@ -125,46 +125,72 @@ async function runAgent(adapter, workspaceId, agentType, fn, opts) {
 
 async function runPipelineDemo(adapter, workspaceId) {
   const repos = createRepos(adapter);
+  const memorySvc = require('./memory');
   const { buildPlaybook } = require('../agents/strategist');
   const { craftPositioning } = require('../agents/marketer');
   const { buildTerms } = require('../agents/negotiator');
   const { draftContract, createCheckout, closeDeal } = require('../agents/treasurer');
   const { closeDeal: closingAgent } = require('../agents/closing');
 
+  const mem = await memorySvc.getMemory(adapter, workspaceId);
+
   const lead = {
     id: 'deal_ws_' + Date.now(),
-    company: 'Control Center Demo',
+    company: mem.company_name || 'Control Center Demo',
     contactName: 'Enterprise Operator',
-    product: 'TEOS DealMaker Sovereign License',
+    product: mem.products && mem.products.length ? mem.products[0] : 'TEOS DealMaker Sovereign License',
     classification: 'Hot',
     fitScore: 92,
     budget: 15000,
     competitivePressure: 'low',
-    industry: 'Technology',
+    industry: mem.industry || 'Technology',
     currency: 'USD',
     termMonths: 12,
     paymentMethod: 'invoice'
   };
   const targetPrice = 12500;
 
+  const d = await repos.deals.create({
+    workspace_id: workspaceId,
+    company_name: lead.company,
+    stage: 'lead',
+    status: 'open',
+    deal_value: null,
+    currency: 'USD',
+    current_agent: 'strategist'
+  });
+
+  const collaborate = (agentType, note) =>
+    repos.dealNotes.add({ workspace_id: workspaceId, deal_id: d.id, agent_name: agentType, note });
+
   const strategy = await runAgent(adapter, workspaceId, 'strategist', async () => {
+    const ctx = await memorySvc.getContextFor(adapter, workspaceId, 'strategist');
     const r = buildPlaybook(lead);
-    return { output: `Playbook: ${r.style}`, cost_cents: 1, data: r };
+    const note = `Playbook: ${r.style}${ctx.competitors && ctx.competitors.length ? ' · beat ' + ctx.competitors.slice(0, 2).join(', ') : ''}`;
+    await collaborate('strategist', note);
+    return { output: note, cost_cents: 1, data: r };
   });
   const marketing = await runAgent(adapter, workspaceId, 'marketer', async () => {
     const r = craftPositioning(lead, strategy.result.data);
-    return { output: `Positioning: ${r.headline}`, cost_cents: 1, data: r };
+    const note = `Positioning: ${r.headline}`;
+    await collaborate('marketer', note);
+    return { output: note, cost_cents: 1, data: r };
   });
   const negotiation = await runAgent(adapter, workspaceId, 'negotiator', async () => {
     const r = buildTerms(lead, targetPrice, lead.budget);
-    return { output: `Landing: $${r.landingPrice}`, cost_cents: 1, data: r };
+    const note = `Landing $${r.landingPrice} (max discount ${r.maxDiscount}%)`;
+    await collaborate('negotiator', note);
+    return { output: note, cost_cents: 1, data: r };
   });
   const deal = { ...lead, amount: negotiation.result.data.landingPrice };
+  await repos.deals.update(workspaceId, d.id, { deal_value: deal.amount, current_agent: 'treasurer' });
   const treasurer = await runAgent(adapter, workspaceId, 'treasurer', async () => {
     const contract = draftContract(deal);
     const checkout = await createCheckout(deal, contract);
     closeDeal(deal, contract, checkout);
-    return { output: `Contract ${contract.contractId}${checkout ? ' · ' + checkout.url : ''}`, cost_cents: 2, data: { contract, checkout } };
+    const note = `Contract ${contract.contractId}${checkout ? ' · ' + checkout.url : ''}`;
+    await collaborate('treasurer', note);
+    return { output: note, cost_cents: 2, data: { contract, checkout } };
   });
   const closing = await runAgent(adapter, workspaceId, 'closing', async () => {
     const r = closingAgent({
@@ -176,19 +202,14 @@ async function runPipelineDemo(adapter, workspaceId) {
       approved: true,
       paymentMethod: 'invoice'
     });
-    return { output: `Outcome: ${r.status}`, cost_cents: 0, data: r };
+    const note = `Outcome: ${r.status}`;
+    await collaborate('closing', note);
+    return { output: note, cost_cents: 0, data: r };
   });
 
-  const d = await repos.deals.create({
-    workspace_id: workspaceId,
-    company_name: lead.company,
-    stage: 'lead',
-    status: 'open',
-    deal_value: deal.amount,
-    currency: 'USD',
-    current_agent: 'closing'
-  });
   await repos.deals.advanceStage(workspaceId, d.id, 'closing', 'lead');
+
+  const notes = await repos.dealNotes.list(workspaceId, d.id);
 
   return {
     strategy: strategy.result.data,
@@ -197,6 +218,7 @@ async function runPipelineDemo(adapter, workspaceId) {
     treasurer: treasurer.result.data,
     closing: closing.result.data,
     deal: d,
+    notes,
     runs: [strategy, marketing, negotiation, treasurer, closing]
   };
 }

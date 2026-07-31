@@ -202,6 +202,34 @@ function createRepos(adapter) {
       update(workspace_id, changes) {
         return adapter.update('workspace_settings', { workspace_id }, changes);
       }
+    },
+
+    memory: {
+      async upsert(workspace_id, key, value, source = 'manual') {
+        const existing = await adapter.findOne('workspace_memory', { workspace_id, key });
+        if (existing) {
+          return adapter.update('workspace_memory', { workspace_id, key }, { value, source });
+        }
+        return adapter.insert('workspace_memory', { workspace_id, key, value, source });
+      },
+      get(workspace_id, key) {
+        return adapter.findOne('workspace_memory', { workspace_id, key });
+      },
+      list(workspace_id) {
+        return adapter.find('workspace_memory', { workspace_id });
+      },
+      remove(workspace_id, key) {
+        return adapter.delete('workspace_memory', { workspace_id, key });
+      }
+    },
+
+    dealNotes: {
+      add({ workspace_id, deal_id, agent_name, note }) {
+        return adapter.insert('deal_notes', { workspace_id, deal_id, agent_name, note });
+      },
+      list(workspace_id, deal_id) {
+        return adapter.find('deal_notes', { workspace_id, deal_id }, { orderBy: 'id', order: 'asc' });
+      }
     }
   };
 }
@@ -272,6 +300,16 @@ function forWorkspace(adapter, workspaceId) {
       create: data => repos.settings.create({ ...data, workspace_id: workspaceId }),
       get: () => repos.settings.getByWorkspace(workspaceId),
       update: changes => repos.settings.update(workspaceId, changes)
+    },
+    memory: {
+      set: (key, value, source) => repos.memory.upsert(workspaceId, key, value, source),
+      get: key => repos.memory.get(workspaceId, key),
+      list: () => repos.memory.list(workspaceId),
+      remove: key => repos.memory.remove(workspaceId, key)
+    },
+    dealNotes: {
+      add: (deal_id, agent_name, note) => repos.dealNotes.add({ workspace_id: workspaceId, deal_id, agent_name, note }),
+      list: deal_id => repos.dealNotes.list(workspaceId, deal_id)
     }
   };
 }

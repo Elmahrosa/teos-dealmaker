@@ -181,6 +181,29 @@ CREATE TABLE IF NOT EXISTS workspace_settings (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS workspace_memory (
+    id SERIAL PRIMARY KEY,
+    workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    key VARCHAR(80) NOT NULL,
+    value JSONB NOT NULL,
+    source VARCHAR(30) NOT NULL DEFAULT 'manual',
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (workspace_id, key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_memory_workspace_key ON workspace_memory(workspace_id, key);
+
+CREATE TABLE IF NOT EXISTS deal_notes (
+    id SERIAL PRIMARY KEY,
+    workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    deal_id INTEGER NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+    agent_name VARCHAR(80) NOT NULL,
+    note TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_deal_notes_workspace_deal ON deal_notes(workspace_id, deal_id);
+
 CREATE OR REPLACE FUNCTION update_modified_column()
 RETURNS TRIGGER AS $$
 BEGIN

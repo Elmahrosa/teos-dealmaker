@@ -82,6 +82,14 @@ const workforce = require('../services/workforce');
   assert.ok(pipeline.closing.status === 'won' || pipeline.closing.status === 'blocked', 'closing outcome');
   const dealStages = await repos.pipeline.list(ws.id, pipeline.deal.id);
   assert.ok(dealStages.length >= 1, 'pipeline events recorded');
+  const notes = await repos.dealNotes.list(ws.id, pipeline.deal.id);
+  assert.strictEqual(notes.length, 5, 'five collaboration notes');
+  assert.deepStrictEqual(
+    notes.map(n => n.agent_name),
+    ['strategist', 'marketer', 'negotiator', 'treasurer', 'closing'],
+    'collaboration chain in order'
+  );
+  assert.ok(notes.every(n => typeof n.note === 'string' && n.note.length > 0), 'notes have content');
   const updatedCtx = await identity.getWorkspaceForUser(adapter, (await identity.getUserByTelegram(adapter, tg)).id);
   assert.strictEqual(updatedCtx.id, ws.id, 'workspace intact after pipeline');
 
@@ -103,7 +111,7 @@ const workforce = require('../services/workforce');
   assert.ok(dealCountA >= 1, 'workspace A has the pipeline deal');
   assert.strictEqual(dealCountB, 0, 'workspace B deals isolated');
 
-  console.log(`\n✓ ai workforce (${35} assertions passed)`);
+  console.log(`\n✓ ai workforce (${38} assertions passed)`);
   console.log(`  ${view.agents.length} agents · prospector runs ${actProspector.runs} · cost $${(agentAgain.total_cost_cents / 100).toFixed(2)} · pipeline deal #${pipeline.deal.id}`);
   process.exit(0);
 })().catch(err => {

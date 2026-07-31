@@ -1,8 +1,10 @@
 const { COMMANDS } = require('./commands');
 const onboarding = require('./onboarding');
 const identity = require('../services/identity');
+const memory = require('../services/memory');
+const memoryEdit = require('./memoryEdit');
 const { getStoreAdapter } = require('./store');
-const { buildHome } = require('./menu');
+const { buildHome, buildMemory } = require('./menu');
 const audit = require('../utils/auditLogger');
 const { getMode } = require('../config/mode');
 
@@ -10,7 +12,7 @@ function screenResult(chatId, screen) {
   return { chatId, text: screen.text, replyMarkup: screen.keyboard };
 }
 
-async function handleStart(chatId, userId) {
+async function handleStart(chatId, userId, displayName) {
   if (onboarding.isActive(userId)) {
     const sc = onboarding.prompt(userId);
     return { chatId, text: sc.text, replyMarkup: sc.keyboard };
@@ -19,7 +21,7 @@ async function handleStart(chatId, userId) {
   const adapter = getStoreAdapter();
   try {
     const user = await identity.ensureUser(adapter, userId, {
-      display_name: msg.from ? msg.from.first_name : null
+      display_name: displayName || null
     });
     const workspace = user ? await identity.getWorkspaceForUser(adapter, user.id) : null;
     if (workspace) {
@@ -37,6 +39,24 @@ async function handleStart(chatId, userId) {
   return { chatId, text: sc.text, replyMarkup: sc.keyboard };
 }
 
+function parseMemoryValue(key, text) {
+  const listKeys = ['products', 'services', 'competitors', 'languages', 'documents', 'preferred_providers'];
+  if (listKeys.includes(key)) {
+    return text.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  if (key === 'icp') {
+    const icp = {};
+    for (const part of text.split(';')) {
+      const [k, v] = part.split(':').map(s => s.trim());
+      if (!k || !v) continue;
+      if (k === 'industries' || k === 'geos') icp[k] = v.split(',').map(s => s.trim()).filter(Boolean);
+      else icp[k] = v;
+    }
+    return icp;
+  }
+  return text;
+}
+
 async function handleMessage(msg) {
   const chatId = msg.chat.id;
   const userId = msg.from ? msg.from.id : null;
@@ -48,12 +68,32 @@ async function handleMessage(msg) {
     return onboarding.handleText(chatId, userId, text);
   }
 
+  const pendingKey = memoryEdit.pending(userId);
+  if (pendingKey && !text.startsWith('/')) {
+    memoryEdit.clear(userId);
+    const adapter = getStoreAdapter();
+    try {
+      const user = await identity.getUserByTelegram(adapter, userId);
+      const workspace = user ? await identity.getWorkspaceForUser(adapter, user.id) : null;
+      if (!workspace) {
+        return { chatId, text: 'No workspace found. Run /start to provision one.' };
+      }
+      const value = parseMemoryValue(pendingKey, text);
+      await memory.setMemory(adapter, workspace.id, pendingKey, value);
+      audit.writeEntry('BOT_MEMORY_UPDATE', String(userId), 'success', { key: pendingKey, mode: getMode() });
+      return screenResult(chatId, await buildMemory(userId));
+    } catch (err) {
+      audit.writeEntry('BOT_MEMORY_UPDATE', String(userId), 'error', { key: pendingKey, error: err.message });
+      return { chatId, text: `Memory update failed: ${err.message}` };
+    }
+  }
+
   if (text.startsWith('/')) {
     const parts = text.split(/\s+/);
     const command = parts[0];
 
     if (command === '/start' || command === '/setup') {
-      return handleStart(chatId, userId);
+      return handleStart(chatId, userId, msg.from ? msg.from.first_name : null);
     }
 
     const handler = COMMANDS[command];

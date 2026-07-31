@@ -2,7 +2,7 @@ const { getMode, setMode } = require('../config/mode');
 const audit = require('../utils/auditLogger');
 const { BOT_CONFIG } = require('./config');
 const { isFounder, isAdmin } = require('./access');
-const { buildHome, buildWorkforce, buildPipeline, buildDeals, buildAudit, buildAdmin, buildPricing } = require('./menu');
+const { buildHome, buildWorkforce, buildPipeline, buildDeals, buildAudit, buildAdmin, buildPricing, buildMemory } = require('./menu');
 const { formatPricingText, pricingButtons } = require('../config/pricing.config');
 const design = require('./design');
 
@@ -172,6 +172,10 @@ async function cmdDeals(chatId, userId) {
   return screenResult(chatId, await buildDeals(userId));
 }
 
+async function cmdMemory(chatId, userId) {
+  return screenResult(chatId, await buildMemory(userId));
+}
+
 function cmdAdmin(chatId, userId) {
   return screenResult(chatId, buildAdmin(userId));
 }
@@ -193,6 +197,7 @@ const COMMANDS = {
   '/workforce': cmdWorkforce,
   '/pipeline': cmdPipeline,
   '/deals': cmdDeals,
+  '/memory': cmdMemory,
   '/admin': cmdAdmin
 };
 

@@ -8,6 +8,8 @@ const { formatPricingText, pricingButtons } = require('../config/pricing.config'
 const { getWorkspaceContext, setWorkspaceLang } = require('../services/workspace');
 const { getStoreAdapter } = require('./store');
 const workforce = require('../services/workforce');
+const memory = require('../services/memory');
+const memoryEdit = require('./memoryEdit');
 
 const PIPELINE_STAGES = ['Strategist', 'Marketer', 'Negotiator', 'Treasurer', 'Closing'];
 
@@ -339,6 +341,10 @@ function buildAiGuide() {
     design.it('12 specialized agents run your revenue motion: Prospecting → Qualification → Outreach → Sales → Negotiation → Treasurer → Closing.'),
     design.section('FLOW'),
     design.it('A deal moves Lead → Qualified → Meeting → Proposal → Negotiation → Won → Customer. Agents advance it automatically.'),
+    design.section('TEAM'),
+    design.it('Agents hand off work — each leaves notes for the next, like a real team. Run the pipeline demo to watch the chain.'),
+    design.section('MEMORY'),
+    design.it('Open Settings → Workspace Memory so every agent knows your company, products, ICP and competitors before acting.'),
     design.section('CONTROL'),
     design.it('Run /sales <objection> to test the orchestrator. Open Workforce for per-agent activity.'),
     design.divider()
@@ -362,13 +368,71 @@ async function buildSettings(userId) {
     design.row('Timezone', s.timezone),
     design.row('Notifications', s.notifications),
     design.row('Theme', s.theme),
+    design.section('KNOWLEDGE'),
+    design.it('Store what your company knows so every agent works from the same truth.'),
     design.divider()
   ]);
   return {
     text,
     keyboard: design.keyboard([
       [design.textButton('English', 'cc_set_lang:en'), design.textButton('العربية', 'cc_set_lang:ar')],
+      [design.textButton('Workspace Memory', 'cc_memory')],
       [design.textButton('Back to Home', 'cc_home')]
+    ])
+  };
+}
+
+async function buildMemory(userId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  const mem = await memory.getMemory(getStoreAdapter(), ctx.workspace.id);
+  const rows = memory.describe(mem);
+  const lines = [
+    `${design.EMOJI.ai} ${design.b('Workspace Memory')}`,
+    design.it('Every agent reads the context it needs before working.'),
+    design.divider(),
+    ...(rows.length ? rows.map(r => design.row(r.split(':')[0], r.split(':').slice(1).join(':'))) : [design.it('Nothing saved yet — add your company details below.')]),
+    design.section('HOW AGENTS USE IT'),
+    design.it('Prospector: industry · ICP · competitors'),
+    design.it('Outreach: brand voice · playbook · languages'),
+    design.it('Negotiator: products · preferred providers'),
+    design.divider()
+  ];
+  return {
+    text: design.compose(lines),
+    keyboard: design.keyboard([
+      [design.textButton('Edit Company', 'cc_mem_edit:company_name'), design.textButton('Edit Industry', 'cc_mem_edit:industry')],
+      [design.textButton('Edit Products', 'cc_mem_edit:products'), design.textButton('Edit Services', 'cc_mem_edit:services')],
+      [design.textButton('Edit ICP', 'cc_mem_edit:icp'), design.textButton('Edit Competitors', 'cc_mem_edit:competitors')],
+      [design.textButton('Edit Brand Voice', 'cc_mem_edit:brand_voice'), design.textButton('Edit Playbook', 'cc_mem_edit:sales_playbook')],
+      [design.textButton('Back to Settings', 'cc_settings')]
+    ])
+  };
+}
+
+function buildMemoryEdit(userId, key) {
+  const hints = {
+    company_name: 'Company name',
+    industry: 'Industry (e.g. SaaS, Fintech, Logistics)',
+    products: 'Products (comma-separated)',
+    services: 'Services (comma-separated)',
+    icp: 'Ideal Customer Profile, e.g. industries: SaaS; size: 50-500; geos: US, EU',
+    competitors: 'Competitors (comma-separated)',
+    brand_voice: 'Brand voice (e.g. direct, consultative, friendly)',
+    sales_playbook: 'Sales playbook (e.g. value-led, MEDDIC, consultative)'
+  };
+  const label = hints[key] || key;
+  return {
+    text: design.compose([
+      `${design.EMOJI.ai} ${design.b('Edit ' + titleCase(key))}`,
+      design.it(label),
+      design.divider(),
+      design.it('Type the new value below.'),
+      design.it('For lists, separate items with commas.'),
+      design.divider()
+    ]),
+    keyboard: design.keyboard([
+      [design.textButton('Cancel', 'cc_mem_cancel')]
     ])
   };
 }
@@ -452,6 +516,9 @@ function buildSalesDemo() {
 }
 
 function buildPipelineResult(userId, result) {
+  const notes = (result.notes || []).map(n =>
+    `${design.code(n.agent_name)} ${n.note}`
+  );
   const lines = [
     `${design.EMOJI.ai} ${design.b('Pipeline Demo')}`,
     design.it('Strategist → Marketer → Negotiator → Treasurer → Closing'),
@@ -465,6 +532,8 @@ function buildPipelineResult(userId, result) {
     design.row('Outcome', design.badge(result.closing.status === 'won' ? 'success' : 'critical')),
     design.row('Deal saved', design.badge('success')),
     design.row('Cost', `$${(result.runs.reduce((acc, r) => acc + r.cost_cents, 0) / 100).toFixed(2)}`),
+    design.section('TEAM NOTES'),
+    ...notes,
     design.divider()
   ];
   return {
@@ -536,6 +605,15 @@ async function handleCallback(query, bot) {
       return send(buildAiGuide());
     case 'cc_settings':
       return send(await buildSettings(userId));
+    case 'cc_memory':
+      return send(await buildMemory(userId));
+    case 'cc_mem_cancel':
+      memoryEdit.clear(userId);
+      return send(await buildMemory(userId));
+    case 'cc_mem_edit:': {
+      memoryEdit.clear(userId);
+      return send(await buildMemory(userId));
+    }
     case 'cc_activity':
       return send(await buildActivity(userId));
     case 'cc_audit': {
@@ -567,6 +645,11 @@ async function handleCallback(query, bot) {
       if (action.startsWith('cc_agent:')) {
         const agentType = action.split(':')[1];
         return send(await buildAgentDetail(userId, agentType));
+      }
+      if (action.startsWith('cc_mem_edit:')) {
+        const key = action.split(':')[1];
+        memoryEdit.begin(userId, key);
+        return send(buildMemoryEdit(userId, key));
       }
       if (action === 'cc_live') {
         if (!isFounder(userId)) return send(denied('founder actions'));
@@ -637,6 +720,7 @@ module.exports = {
   buildAdmin,
   buildAiGuide,
   buildSettings,
+  buildMemory,
   buildActivity,
   buildAgentDetail,
   handleCallback

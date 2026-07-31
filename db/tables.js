@@ -46,6 +46,13 @@ const TABLES = {
   workspace_settings: {
     columns: ['workspace_id', 'lang', 'timezone', 'notifications', 'theme'],
     timestamps: true
+  },
+  workspace_memory: {
+    columns: ['workspace_id', 'key', 'value', 'source'],
+    timestamps: true
+  },
+  deal_notes: {
+    columns: ['workspace_id', 'deal_id', 'agent_name', 'note']
   }
 };
 
