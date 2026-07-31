@@ -14,15 +14,23 @@ function timestamp() {
 
 function mirrorToDb(entry) {
   if (!process.env.DATABASE_URL) return;
-  const { getPool } = require('../db');
-  const agentName = (entry.action.split('_')[0] || 'system').toLowerCase();
-  getPool()
-    .query(
-      `INSERT INTO audit_trail (deal_id, timestamp, agent_name, action_type, details, version)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [null, entry.timestamp, agentName, entry.action, entry.details, 'v0.1.0']
-    )
-    .catch(err => console.error('[auditLogger] Postgres mirror failed:', err.message));
+  try {
+    const { getAdapter } = require('../db');
+    const agentName = (entry.action.split('_')[0] || 'system').toLowerCase();
+    getAdapter()
+      .insert('audit_trail', {
+        workspace_id: null,
+        deal_id: null,
+        timestamp: entry.timestamp,
+        agent_name: agentName,
+        action_type: entry.action,
+        details: entry.details,
+        version: 'v0.1.0'
+      })
+      .catch(err => console.error('[auditLogger] Postgres mirror failed:', err.message));
+  } catch (err) {
+    console.error('[auditLogger] Postgres mirror init failed:', err.message);
+  }
 }
 
 function writeEntry(action, target, status, details) {
@@ -44,7 +52,8 @@ async function syncVaultToDb() {
   if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is not set. Cannot sync to PostgreSQL.');
   }
-  const { getPool } = require('../db');
+  const { getAdapter } = require('../db');
+  const adapter = getAdapter();
   const entries = readVault();
   let inserted = 0;
   let failed = 0;
@@ -52,11 +61,15 @@ async function syncVaultToDb() {
   for (const entry of entries) {
     const agentName = (entry.action.split('_')[0] || 'system').toLowerCase();
     try {
-      await getPool().query(
-        `INSERT INTO audit_trail (deal_id, timestamp, agent_name, action_type, details, version)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [null, entry.timestamp, agentName, entry.action, entry.details, 'v0.1.0']
-      );
+      await adapter.insert('audit_trail', {
+        workspace_id: null,
+        deal_id: null,
+        timestamp: entry.timestamp,
+        agent_name: agentName,
+        action_type: entry.action,
+        details: entry.details,
+        version: 'v0.1.0'
+      });
       inserted++;
     } catch (err) {
       failed++;

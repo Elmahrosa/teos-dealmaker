@@ -15,6 +15,7 @@
     "test:marketer": "node tests/test-marketer.js",
     "test:negotiator": "node tests/test-negotiator.js",
     "test:closing": "node tests/test-closing.js",
+    "test:multitenancy": "node tests/test-multitenancy.js",
     "test:pipeline": "node tests/final_pipeline.test.js",
     "db:migrate": "node -e \"require('./db').createTables().then(()=>console.log('[db] schema applied')).catch(e=>{console.error('[db] '+e.message);process.exit(1)})\""
   },
