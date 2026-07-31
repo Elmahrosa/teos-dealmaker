@@ -10,8 +10,8 @@ function screenResult(chatId, screen) {
   return { chatId, text: screen.text, replyMarkup: screen.keyboard };
 }
 
-function cmdStart(chatId) {
-  return screenResult(chatId, buildHome());
+async function cmdStart(chatId, userId) {
+  return screenResult(chatId, await buildHome(userId));
 }
 
 function cmdHealth(chatId) {
@@ -160,16 +160,16 @@ function cmdPricing(chatId) {
   return { chatId, text: formatPricingText(), replyMarkup: pricingButtons() };
 }
 
-function cmdWorkforce(chatId) {
-  return screenResult(chatId, buildWorkforce());
+async function cmdWorkforce(chatId, userId) {
+  return screenResult(chatId, await buildWorkforce(userId));
 }
 
-function cmdPipeline(chatId) {
+async function cmdPipeline(chatId) {
   return screenResult(chatId, buildPipeline());
 }
 
-function cmdDeals(chatId) {
-  return screenResult(chatId, buildDeals());
+async function cmdDeals(chatId, userId) {
+  return screenResult(chatId, await buildDeals(userId));
 }
 
 function cmdAdmin(chatId, userId) {

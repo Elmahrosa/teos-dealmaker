@@ -25,7 +25,7 @@ async function handleStart(chatId, userId) {
         workspaceId: workspace.id,
         mode: getMode()
       });
-      return screenResult(chatId, buildHome());
+      return screenResult(chatId, await buildHome(userId));
     }
   } catch (err) {
     console.error('[handlers] identity lookup failed:', err.message);
@@ -65,7 +65,7 @@ async function handleMessage(msg) {
     const remainder = parts.slice(1).join(' ').trim();
 
     try {
-      const result = handler(chatId, userId, remainder);
+      const result = await handler(chatId, userId, remainder);
       audit.writeEntry(actionType, command, 'success', { userId, mode: getMode() });
       return result;
     } catch (err) {

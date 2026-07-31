@@ -151,7 +151,7 @@ async function handleCallback(query, bot) {
 
   if (action === 'cc_onb_cancel') {
     reset(userId);
-    const sc = buildHome();
+    const sc = await buildHome(userId);
     await bot.answerCallbackQuery(query.id, { text: 'Setup cancelled' }).catch(() => {});
     await bot.editMessageText(sc.text, {
       chat_id: query.message.chat.id,

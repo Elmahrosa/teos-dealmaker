@@ -3,7 +3,10 @@ const audit = require('../utils/auditLogger');
 const { getMode, setMode } = require('../config/mode');
 const { BOT_CONFIG } = require('./config');
 const { isFounder, isAdmin } = require('./access');
+const i18n = require('./i18n');
 const { formatPricingText, pricingButtons } = require('../config/pricing.config');
+const { getWorkspaceContext, setWorkspaceLang } = require('../services/workspace');
+const { getStoreAdapter } = require('./store');
 
 const AGENTS = [
   { name: 'Orchestrator', prefix: 'ORCHESTRATOR', role: 'Routing and control' },
@@ -37,7 +40,45 @@ function lastEntry() {
   return entries[entries.length - 1];
 }
 
-function buildHome() {
+async function getCtx(userId) {
+  try {
+    return await getWorkspaceContext(getStoreAdapter(), userId);
+  } catch (err) {
+    console.error('[menu] context failed:', err.message);
+    return null;
+  }
+}
+
+function titleCase(str) {
+  return String(str || '').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+async function buildHome(userId) {
+  const ctx = await getCtx(userId);
+  if (ctx) {
+    const text = design.compose([
+      `🏢 ${design.b(`Welcome to ${ctx.workspace.name}`)}`,
+      design.it('Workspace Ready'),
+      design.divider(),
+      design.row('Plan', titleCase(ctx.workspace.plan)),
+      design.row('Members', String(ctx.membersCount)),
+      design.row('Agents', `${ctx.agents.active} Active`),
+      design.row('Revenue Pipeline', ctx.deals.total === 0 ? 'Empty' : `${ctx.deals.open} open · ${ctx.deals.closed} closed`),
+      design.row('Subscription', ctx.subscriptionLabel),
+      design.divider(),
+      design.it('What would you like to do?')
+    ]);
+    return {
+      text,
+      keyboard: design.keyboard([
+        [design.textButton('Find Leads', 'cc_workforce'), design.textButton('AI Guide', 'cc_ai_guide')],
+        [design.textButton('Deals', 'cc_deals'), design.textButton('Settings', 'cc_settings')],
+        [design.textButton('Dashboard', 'cc_dashboard'), design.textButton('Pipeline', 'cc_pipeline')],
+        [design.textButton('Audit Log', 'cc_audit'), design.textButton('Pricing', 'cc_pricing')],
+        [design.textButton('Admin', 'cc_admin')]
+      ])
+    };
+  }
   const entries = audit.readVault();
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b('TEOS DEALMAKER')}`,
@@ -59,10 +100,13 @@ function buildHome() {
   };
 }
 
-function buildDashboard() {
+async function buildDashboard(userId) {
+  const ctx = await getCtx(userId);
   const entries = audit.readVault();
   const last = lastEntry();
-  const closed = entries.filter(e => e.action === 'CLOSING_AGENT_DEAL_CLOSED').length;
+  const closed = ctx
+    ? ctx.deals.closed
+    : entries.filter(e => e.action === 'CLOSING_AGENT_DEAL_CLOSED').length;
   const recent = entries.slice(-3).reverse().map(e =>
     `${design.code((e.timestamp || '').slice(11, 19))} ${e.action} → ${e.target}`
   );
@@ -70,8 +114,13 @@ function buildDashboard() {
     `${design.EMOJI.ai} ${design.b('Dashboard')}`,
     design.it('Operational overview'),
     design.divider(),
+    ctx ? design.row('Workspace', ctx.workspace.name) : null,
     design.row('Mode', design.modeBadge(getMode())),
     design.row('Bot', `@${BOT_CONFIG.botName}`),
+    ctx ? design.row('Plan', titleCase(ctx.workspace.plan)) : null,
+    ctx ? design.row('Members', String(ctx.membersCount)) : null,
+    ctx ? design.row('Agents', `${ctx.agents.active} active`) : null,
+    ctx ? design.row('Subscription', ctx.subscriptionLabel) : null,
     design.row('Audit', `${entries.length} entries`),
     design.row('Closed deals', `${closed}`),
     design.row('Last activity', last ? `${last.action} · ${(last.timestamp || '').slice(11, 19)}` : '—'),
@@ -88,10 +137,11 @@ function buildDashboard() {
   };
 }
 
-function buildWorkforce() {
+async function buildWorkforce(userId) {
+  const ctx = await getCtx(userId);
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b('Workforce')}`,
-    design.it('12 agents — activity per agent'),
+    design.it(ctx ? `${ctx.agents.active} agents active` : '12 agents — activity per agent'),
     design.divider(),
     ...AGENTS.map(a =>
       `${design.row(a.name, statusOf(a.prefix))}\n${design.it(a.role)}`
@@ -124,17 +174,19 @@ function buildPipeline() {
   };
 }
 
-function buildDeals() {
+async function buildDeals(userId) {
+  const ctx = await getCtx(userId);
   const entries = audit.readVault();
-  const closed = entries.filter(e => e.action === 'CLOSING_AGENT_DEAL_CLOSED').length;
-  const blocked = entries.filter(e => e.action === 'CLOSING_AGENT_DEAL_BLOCKED').length;
+  const closed = ctx
+    ? ctx.deals.closed
+    : entries.filter(e => e.action === 'CLOSING_AGENT_DEAL_CLOSED').length;
   const dbConfigured = Boolean(process.env.DATABASE_URL);
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b('Deals')}`,
     design.it('Deal ledger'),
     design.divider(),
+    design.row('Open', ctx ? String(ctx.deals.open) : '—'),
     design.row('Closed', `${closed}`),
-    design.row('Blocked', `${blocked}`),
     design.row('Persistence', dbConfigured ? design.badge('success') : design.badge('warning') + ' ' + design.it('Postgres not configured')),
     design.section('NOTES'),
     design.it('Run the pipeline demo to record a deal through Strategist → Closing.'),
@@ -146,6 +198,49 @@ function buildDeals() {
     text,
     keyboard: design.keyboard([
       [design.textButton('Run Pipeline Demo', 'cc_pipeline_run')],
+      [design.textButton('Back to Home', 'cc_home')]
+    ])
+  };
+}
+
+function buildAiGuide() {
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('AI Guide')}`,
+    design.it('How your AI workforce works'),
+    design.divider(),
+    design.section('WORKFORCE'),
+    design.it('12 specialized agents run your revenue motion: Prospecting → Qualification → Outreach → Sales → Negotiation → Treasurer → Closing.'),
+    design.section('FLOW'),
+    design.it('A deal moves Lead → Qualified → Meeting → Proposal → Negotiation → Won → Customer. Agents advance it automatically.'),
+    design.section('CONTROL'),
+    design.it('Run /sales <objection> to test the orchestrator. Open Workforce for per-agent activity.'),
+    design.divider()
+  ]);
+  return {
+    text,
+    keyboard: design.keyboard([
+      [design.textButton('Back to Home', 'cc_home')]
+    ])
+  };
+}
+
+async function buildSettings(userId) {
+  const ctx = await getCtx(userId);
+  const s = (ctx && ctx.settings) || { lang: 'en', timezone: 'UTC', notifications: 'on', theme: 'system' };
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('Settings')}`,
+    design.it('Workspace configuration'),
+    design.divider(),
+    design.row('Language', s.lang),
+    design.row('Timezone', s.timezone),
+    design.row('Notifications', s.notifications),
+    design.row('Theme', s.theme),
+    design.divider()
+  ]);
+  return {
+    text,
+    keyboard: design.keyboard([
+      [design.textButton('English', 'cc_set_lang:en'), design.textButton('العربية', 'cc_set_lang:ar')],
       [design.textButton('Back to Home', 'cc_home')]
     ])
   };
@@ -335,17 +430,21 @@ async function handleCallback(query, bot) {
   switch (action) {
     case 'cc_home':
     case 'btn_back':
-      return send(buildHome());
+      return send(await buildHome(userId));
     case 'cc_dashboard':
-      return send(buildDashboard());
+      return send(await buildDashboard(userId));
     case 'cc_workforce':
-      return send(buildWorkforce());
+      return send(await buildWorkforce(userId));
     case 'cc_pipeline':
       return send(buildPipeline());
     case 'cc_deals':
-      return send(buildDeals());
+      return send(await buildDeals(userId));
     case 'cc_pricing':
       return send(buildPricing());
+    case 'cc_ai_guide':
+      return send(buildAiGuide());
+    case 'cc_settings':
+      return send(await buildSettings(userId));
     case 'cc_audit': {
       if (!isAdmin(userId)) return send(denied('audit feed'));
       return send(buildAudit(0));
@@ -382,6 +481,19 @@ async function handleCallback(query, bot) {
         return applyMode(query, bot, 'DRY');
       }
       if (action === 'cc_dry_cancel') return send(buildAdmin(userId));
+      if (action.startsWith('cc_set_lang:')) {
+        const lang = action.split(':')[1];
+        if (lang !== 'en' && lang !== 'ar') {
+          return bot.answerCallbackQuery(query.id, { text: 'Unknown language' }).catch(() => {});
+        }
+        i18n.setLang(userId, lang);
+        const ctx = await getCtx(userId);
+        if (ctx) {
+          await setWorkspaceLang(getStoreAdapter(), ctx.workspace.id, lang).catch(err =>
+            console.error('[menu] setWorkspaceLang failed:', err.message));
+        }
+        return send(await buildSettings(userId));
+      }
       return bot.answerCallbackQuery(query.id, { text: 'Unknown action' }).catch(() => {});
     }
   }
@@ -409,5 +521,7 @@ module.exports = {
   buildAudit,
   buildPricing,
   buildAdmin,
+  buildAiGuide,
+  buildSettings,
   handleCallback
 };
