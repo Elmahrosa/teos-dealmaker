@@ -8,15 +8,17 @@ CREATE TABLE IF NOT EXISTS workspaces (
     slug VARCHAR(80) NOT NULL UNIQUE,
     plan VARCHAR(50) NOT NULL DEFAULT 'free',
     status VARCHAR(50) NOT NULL DEFAULT 'active',
+    owner_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    subscription_id INTEGER,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    email VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) UNIQUE,
     display_name VARCHAR(255),
-    telegram_id BIGINT,
+    telegram_id BIGINT UNIQUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -72,6 +74,7 @@ CREATE TABLE IF NOT EXISTS audit_trail (
     id SERIAL PRIMARY KEY,
     workspace_id INTEGER REFERENCES workspaces(id) ON DELETE SET NULL,
     deal_id INTEGER REFERENCES deals(id) ON DELETE SET NULL,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     agent_name VARCHAR(50) NOT NULL,
     action_type VARCHAR(100) NOT NULL,
@@ -143,6 +146,29 @@ CREATE TABLE IF NOT EXISTS pipeline_events (
 
 CREATE INDEX IF NOT EXISTS idx_pipeline_events_workspace_deal ON pipeline_events(workspace_id, deal_id);
 
+CREATE TABLE IF NOT EXISTS agents (
+    id SERIAL PRIMARY KEY,
+    workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    agent_type VARCHAR(80) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'active',
+    provider VARCHAR(50),
+    model VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_agents_workspace_type ON agents(workspace_id, agent_type);
+
+CREATE TABLE IF NOT EXISTS workspace_settings (
+    id SERIAL PRIMARY KEY,
+    workspace_id INTEGER NOT NULL UNIQUE REFERENCES workspaces(id) ON DELETE CASCADE,
+    lang VARCHAR(8) NOT NULL DEFAULT 'en',
+    timezone VARCHAR(40) NOT NULL DEFAULT 'UTC',
+    notifications VARCHAR(10) NOT NULL DEFAULT 'on',
+    theme VARCHAR(10) NOT NULL DEFAULT 'system',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE OR REPLACE FUNCTION update_modified_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -169,4 +195,9 @@ FOR EACH ROW EXECUTE FUNCTION update_modified_column();
 DROP TRIGGER IF EXISTS update_users_modtime ON users;
 CREATE TRIGGER update_users_modtime
 BEFORE UPDATE ON users
+FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+
+DROP TRIGGER IF EXISTS update_workspace_settings_modtime ON workspace_settings;
+CREATE TRIGGER update_workspace_settings_modtime
+BEFORE UPDATE ON workspace_settings
 FOR EACH ROW EXECUTE FUNCTION update_modified_column();

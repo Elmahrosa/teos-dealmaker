@@ -178,6 +178,7 @@ function cmdAdmin(chatId, userId) {
 
 const COMMANDS = {
   '/start': cmdStart,
+  '/setup': cmdStart,
   '/help': cmdStart,
   '/status': cmdHealth,
   '/health': cmdHealth,

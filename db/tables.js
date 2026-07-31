@@ -1,6 +1,6 @@
 const TABLES = {
   workspaces: {
-    columns: ['name', 'slug', 'plan', 'status'],
+    columns: ['name', 'slug', 'plan', 'status', 'owner_user_id', 'subscription_id'],
     timestamps: true
   },
   users: {
@@ -22,7 +22,7 @@ const TABLES = {
     timestamps: true
   },
   audit_trail: {
-    columns: ['workspace_id', 'deal_id', 'timestamp', 'agent_name', 'action_type', 'details', 'version']
+    columns: ['workspace_id', 'deal_id', 'user_id', 'timestamp', 'agent_name', 'action_type', 'details', 'version']
   },
   conversations: {
     columns: ['workspace_id', 'user_id', 'channel', 'title']
@@ -38,6 +38,13 @@ const TABLES = {
   },
   pipeline_events: {
     columns: ['workspace_id', 'deal_id', 'from_stage', 'to_stage']
+  },
+  agents: {
+    columns: ['workspace_id', 'agent_type', 'status', 'provider', 'model']
+  },
+  workspace_settings: {
+    columns: ['workspace_id', 'lang', 'timezone', 'notifications', 'theme'],
+    timestamps: true
   }
 };
 

@@ -2,6 +2,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const { BOT_CONFIG } = require('./config');
 const { handleMessage } = require('./handlers');
 const { handleCallback } = require('./menu');
+const onboarding = require('./onboarding');
 const audit = require('../utils/auditLogger');
 const { getMode } = require('../config/mode');
 
@@ -14,7 +15,7 @@ const bot = new TelegramBot(BOT_CONFIG.token, { polling: true });
 bot.on('message', async (msg) => {
   const start = Date.now();
   try {
-    const result = handleMessage(msg);
+    const result = await handleMessage(msg);
     if (result && result.chatId && result.text) {
       await bot.sendChatAction(result.chatId, 'typing').catch(() => {});
       const sendOpts = { parse_mode: 'HTML' };
@@ -35,6 +36,11 @@ bot.on('message', async (msg) => {
 
 bot.on('callback_query', async (query) => {
   try {
+    const userId = query.from ? query.from.id : null;
+    if (userId && onboarding.isActive(userId)) {
+      const handled = await onboarding.handleCallback(query, bot);
+      if (handled) return;
+    }
     await handleCallback(query, bot);
   } catch (err) {
     console.error('[bot] callback error:', err.message);

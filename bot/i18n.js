@@ -194,7 +194,23 @@ const EN = {
 
   help_unknown: 'I can help you with:',
   help_items: 'Pricing · Plans · Features · AI Workforce · Getting Started · Billing · Revenue Automation',
-  help_free_text: 'You can also pick an option below.'
+  help_free_text: 'You can also pick an option below.',
+
+  plan_solo: '🚀 Solo Operator — $99/mo',
+  plan_growth: '⚡ Growth Team — $249/mo',
+  plan_corporate: '👑 Corporate — $799/mo',
+  onb_welcome: '🚀 Set up your workspace',
+  onb_welcome_sub: 'Provision your AI workforce in a few steps.',
+  onb_name: 'Enter your company name.',
+  onb_lang: 'Choose your interface language.',
+  onb_plan: 'Choose a plan.',
+  onb_plan_note: 'Payments run in DRY mode until a LIVE Dodo key is configured.',
+  onb_done: 'Workspace provisioned',
+  onb_done_sub: 'Your AI workforce is ready.',
+  onb_existing: 'This workspace is already provisioned.',
+  onb_open_cc: 'Open Control Center',
+  onb_ephemeral: 'DATABASE_URL is not set — workspace data is ephemeral and resets on restart. Configure DATABASE_URL for production persistence.',
+  onb_cancel: 'Cancel setup'
 };
 
 const AR = {
@@ -350,7 +366,23 @@ const AR = {
 
   help_unknown: 'يمكنني مساعدتك في:',
   help_items: 'الأسعار · الخطط · الميزات · القوى العاملة · البدء · الفوترة · أتمتة الإيرادات',
-  help_free_text: 'يمكنك أيضاً اختيار خيار أدناه.'
+  help_free_text: 'يمكنك أيضاً اختيار خيار أدناه.',
+
+  plan_solo: '🚀 خطة سولو — 99$ شهرياً',
+  plan_growth: '⚡ خطة النمو — 249$ شهرياً',
+  plan_corporate: '👑 خطة الشركات — 799$ شهرياً',
+  onb_welcome: '🚀 إعداد مساحة العمل',
+  onb_welcome_sub: 'جهّز قوتك العاملة من الذكاء الاصطناعي في خطوات قليلة.',
+  onb_name: 'أدخل اسم شركتك.',
+  onb_lang: 'اختر لغة الواجهة.',
+  onb_plan: 'اختر خطة.',
+  onb_plan_note: 'تعمل المدفوعات في الوضع التجريبي حتى ضبط مفتاح دودو المباشر.',
+  onb_done: 'تم إعداد مساحة العمل',
+  onb_done_sub: 'قوتك العاملة من الذكاء الاصطناعي جاهزة.',
+  onb_existing: 'تم إعداد مساحة العمل هذه بالفعل.',
+  onb_open_cc: 'افتح مركز التحكم',
+  onb_ephemeral: 'DATABASE_URL غير مضبوط — بيانات مساحة العمل مؤقتة وستُعاد بعد إعادة التشغيل. اضبط DATABASE_URL للاستمرار في الإنتاج.',
+  onb_cancel: 'إلغاء الإعداد'
 };
 
 const LANGS = { en: EN, ar: AR };
