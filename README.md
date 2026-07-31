@@ -1,6 +1,6 @@
 # TEOS DealMaker
 
-**Status: FOUNDATION + 12 AGENTS (v0.1.0) — ~85% of roadmap**
+**Status: FOUNDATION + 13 AGENTS (v0.1.0) — ~90% of roadmap**
 
 **✅ IMPLEMENTED:**
 - [Implemented v0.1.0] Outreach agent (draft → gatekeeper → vault)
@@ -14,15 +14,15 @@
 - [Implemented v0.1.0] Marketer agent (value positioning from playbook, `MARKETER_AGENT_*` audit)
 - [Implemented v0.1.0] Negotiator agent (discount thresholds + payment terms, `NEGOTIATOR_AGENT_*` audit)
 - [Implemented v0.1.0] Treasurer agent (contract drafting + DRY-only Dodo checkout via utils/dodoPayments.js, `TREASURER_AGENT_*` audit)
+- [Implemented v0.1.0] Closing agent (readiness check → won/blocked, `CLOSING_AGENT_*` audit)
 - [Implemented] BVAP audit logging (JSON to data/vault/audit.log)
 - [Implemented] DRY/LIVE mode toggle (default DRY, founder-controlled; `agents/router.js` vaults in DRY, sends in LIVE)
 - [Implemented] Telegram bot (@TeosEgypt_bot commands, incl. `/sales <prompt>`)
 - [Implemented] Postgres schema (db/schema.sql: deals + audit_logs; db/index.js pg pool, needs `npm i pg` + `DATABASE_URL`)
 - [Implemented] Dodo Payments stub (utils/dodoPayments.js, mocks payload when `DODO_API_KEY` missing)
-- [Implemented] Master pipeline test (tests/final_pipeline.test.js: Strategist → Marketer → Negotiator → Treasurer)
+- [Implemented] Master pipeline test (tests/final_pipeline.test.js: Strategist → Marketer → Negotiator → Treasurer → Closing)
 
 **❌ PENDING:**
-- [Pending] Closing agent
 - [Pending] Multi-tenancy on the DB schema
 - [Pending] User account system
 - [Pending] Real Dodo Payments integration (LIVE key)

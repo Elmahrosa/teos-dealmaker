@@ -2,6 +2,7 @@ const { buildPlaybook } = require('../agents/strategist');
 const { craftPositioning } = require('../agents/marketer');
 const { buildTerms } = require('../agents/negotiator');
 const { draftContract, createCheckout, closeDeal } = require('../agents/treasurer');
+const { closeDeal: closeDealAgent } = require('../agents/closing');
 const audit = require('../utils/auditLogger');
 
 async function main() {
@@ -39,8 +40,19 @@ async function main() {
   const summary = closeDeal(deal, contract, checkout);
   console.log(`4) Treasurer   -> ${contract.contractId} | ${checkout.url} | closed=${summary.status}`);
 
+  const closed = closeDealAgent({
+    id: lead.id,
+    company: lead.company,
+    amount: terms.landingPrice,
+    currency: 'USD',
+    contractId: contract.contractId,
+    approved: true,
+    paymentMethod: 'invoice'
+  });
+  console.log(`5) Closing     -> ${closed.status} (${closed.dealId})`);
+
   const entries = audit.readVault().filter(e =>
-    /^(STRATEGIST_AGENT|MARKETER_AGENT|NEGOTIATOR_AGENT|TREASURER_AGENT)/.test(e.action)
+    /^(STRATEGIST_AGENT|MARKETER_AGENT|NEGOTIATOR_AGENT|TREASURER_AGENT|CLOSING_AGENT)/.test(e.action)
   );
   console.log(`\nPipeline audit entries: ${entries.length}`);
   console.log("Verify 'data/vault/audit.log' for the agent entries above.");
