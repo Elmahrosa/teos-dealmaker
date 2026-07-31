@@ -1,6 +1,6 @@
 # TEOS DealMaker
 
-**Status: FOUNDATION + 13 AGENTS (v0.1.0) — ~90% of roadmap**
+**Status: FOUNDATION + 12 AGENTS (v0.1.0) — ~90% of roadmap**
 
 **✅ IMPLEMENTED:**
 - [Implemented v0.1.0] Outreach agent (draft → gatekeeper → vault)
