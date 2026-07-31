@@ -30,7 +30,7 @@ async function getWorkspaceContext(adapter, userId) {
     membersCount: members.length,
     agents: {
       total: agents.length,
-      active: agents.filter(a => a.status === 'active').length
+      active: agents.filter(a => a.status === 'active' || a.status === 'ready').length
     },
     deals: {
       total: deals.length,

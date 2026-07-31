@@ -75,7 +75,7 @@ async function uniqueSlug(adapter, name) {
 async function provisionWorkspace(adapter, workspaceId, lang) {
   const repos = createRepos(adapter);
   for (const agentType of AGENT_TYPES) {
-    await repos.agents.create({ workspace_id: workspaceId, agent_type: agentType, status: 'active', provider: null, model: null });
+    await repos.agents.create({ workspace_id: workspaceId, agent_type: agentType, status: 'ready', provider: null, model: null });
   }
   await repos.settings.create({ workspace_id: workspaceId, lang: lang || 'en', timezone: 'UTC', notifications: 'on', theme: 'system' });
   await repos.audit.add({

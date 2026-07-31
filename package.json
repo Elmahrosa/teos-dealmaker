@@ -18,6 +18,7 @@
     "test:multitenancy": "node tests/test-multitenancy.js",
     "test:identity": "node tests/test-identity.js",
     "test:workspace": "node tests/test-workspace.js",
+    "test:workforce": "node tests/test-workforce.js",
     "test:pipeline": "node tests/final_pipeline.test.js",
     "db:migrate": "node -e \"require('./db').createTables().then(()=>console.log('[db] schema applied')).catch(e=>{console.error('[db] '+e.message);process.exit(1)})\""
   },

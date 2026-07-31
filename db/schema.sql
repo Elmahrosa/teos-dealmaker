@@ -153,10 +153,22 @@ CREATE TABLE IF NOT EXISTS agents (
     status VARCHAR(20) NOT NULL DEFAULT 'active',
     provider VARCHAR(50),
     model VARCHAR(100),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    owner_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    total_runs INTEGER NOT NULL DEFAULT 0,
+    total_cost_cents INTEGER NOT NULL DEFAULT 0,
+    last_run_at TIMESTAMP WITH TIME ZONE,
+    next_run_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_agents_workspace_type ON agents(workspace_id, agent_type);
+
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS owner_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS total_runs INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS total_cost_cents INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS last_run_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS next_run_at TIMESTAMP WITH TIME ZONE;
 
 CREATE TABLE IF NOT EXISTS workspace_settings (
     id SERIAL PRIMARY KEY,
@@ -200,4 +212,9 @@ FOR EACH ROW EXECUTE FUNCTION update_modified_column();
 DROP TRIGGER IF EXISTS update_workspace_settings_modtime ON workspace_settings;
 CREATE TRIGGER update_workspace_settings_modtime
 BEFORE UPDATE ON workspace_settings
+FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+
+DROP TRIGGER IF EXISTS update_agents_modtime ON agents;
+CREATE TRIGGER update_agents_modtime
+BEFORE UPDATE ON agents
 FOR EACH ROW EXECUTE FUNCTION update_modified_column();

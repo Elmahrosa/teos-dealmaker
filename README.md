@@ -1,6 +1,6 @@
 # TEOS DealMaker
 
-**Status: FOUNDATION + 12 AGENTS + MULTI-TENANT PERSISTENCE + WORKSPACE IDENTITY + DASHBOARD (v0.2.2)**
+**Status: FOUNDATION + 12 AGENTS + MULTI-TENANT PERSISTENCE + WORKSPACE IDENTITY + PROACTIVE DASHBOARD + AI WORKFORCE RUNTIME (v0.3.0)**
 
 **✅ IMPLEMENTED:**
 - [Implemented v0.1.0] Outreach agent (draft → gatekeeper → vault)
@@ -30,6 +30,8 @@
 - [Implemented] Real workspace identity + onboarding (Phase 2: services/identity.js — Telegram User → Authenticated User → Workspace Member → Workspace → Subscription → AI Workforce; bot/onboarding.js self-service wizard `/start`/`/setup`: company name → language → plan → auto-provisioned 12 agents + workspace settings + audit stream + pending subscription; bot/store.js adapter selection; extended schema with `users.telegram_id UNIQUE`, `workspaces.owner_user_id`/`subscription_id`, `audit_trail.user_id`, `agents` + `workspace_settings` tables; verified by tests/test-identity.js)
 - [Implemented] Bot free-text routing into onboarding (active wizard consumes typed company name; `/setup` re-enters onboarding or opens Control Center for provisioned workspaces)
 - [Implemented] Workspace dashboard (Phase 3: after onboarding, Control Center home renders the live workspace — Welcome <company>, plan, members, agents active, revenue pipeline (open/closed), subscription status (Trialing/Active); new AI Guide + Settings panels; Settings shows workspace config and persists EN/AR language choice to both prefs and `workspace_settings`; aggregated via services/workspace.js `getWorkspaceContext`, verified by tests/test-workspace.js)
+- [Implemented] Proactive dashboard (greeting by name + time-of-day, Today's AI Activity — agents ready/active deals/outreach dispatches/health, Next Recommendation, Today You Can checklist with setup ETA; coming-soon handlers for CRM/catalog/campaigns)
+- [Implemented] AI Workforce runtime (Phase 4: services/workforce.js — agent registry with friendly labels + roles + cadence, `runAgent` wraps any agent execution: records agent_runs (status/duration/cost/output), updates agent runtime state (total_runs/total_cost_cents/last_run_at/next_run_at/provider/model/status), surfaces errors and recovers to ready; `runPipelineDemo` executes the 5-stage pipeline through the runtime and persists a deal + pipeline events; workforce screens — AI Workforce (per-agent Ready/Working/Waiting status), Today's Activity feed (per-agent runs today + latest outcome), per-agent detail panel (status/runs/last/next/provider/cost); schema extended (agents runtime columns + forward-only ALTERs); verified by tests/test-workforce.js)
 
 **❌ PENDING:**
 - [Pending] Live Postgres verification (schema never migrated — no `DATABASE_URL` provided)
@@ -53,7 +55,7 @@
 - Tables: workspaces (owner_user_id, subscription_id), users (telegram_id UNIQUE), workspace_members (role RBAC), subscriptions, dodo_customers, deals, audit_trail (user_id), conversations, messages, agent_runs, provider_usage, pipeline_events, agents (provisioned workforce), workspace_settings (lang/timezone/notifications/theme).
 - Isolation rule: every tenant-owned table carries `workspace_id`; all repository reads/writes filter by it, enforced by `forWorkspace()`.
 - Identity flow: `services/identity.js` — `ensureUser` (telegram_id → user), `getWorkspaceForUser` (user → member → workspace), `onboardWorkspace` (transactional: workspace + owner membership + pending subscription + provision), `uniqueSlug` (collision-safe slug).
-- Verify locally: `node tests/test-multitenancy.js` and `node tests/test-identity.js` and `node tests/test-workspace.js` (in-memory adapter, no DB required).
+- Verify locally: `node tests/test-multitenancy.js` and `node tests/test-identity.js` and `node tests/test-workspace.js` and `node tests/test-workforce.js` (in-memory adapter, no DB required).
 - Live: set `DATABASE_URL` then `npm run db:migrate`; adapter + repos then target Postgres.
 
 ## Known Issues

@@ -7,32 +7,9 @@ const i18n = require('./i18n');
 const { formatPricingText, pricingButtons } = require('../config/pricing.config');
 const { getWorkspaceContext, setWorkspaceLang } = require('../services/workspace');
 const { getStoreAdapter } = require('./store');
-
-const AGENTS = [
-  { name: 'Orchestrator', prefix: 'ORCHESTRATOR', role: 'Routing and control' },
-  { name: 'Prospecting', prefix: 'PROSPECTING_AGENT', role: 'Lead scoring and routing' },
-  { name: 'Market Intelligence', prefix: 'MARKET_INTELLIGENCE', role: 'Prospect fit scoring' },
-  { name: 'Qualification', prefix: 'QUALIFICATION_AGENT', role: 'BANT classification' },
-  { name: 'Outreach', prefix: 'OUTREACH', role: 'Draft review and dispatch' },
-  { name: 'Strategist', prefix: 'STRATEGIST_AGENT', role: 'Tactical playbooks' },
-  { name: 'Marketer', prefix: 'MARKETER_AGENT', role: 'Value positioning' },
-  { name: 'Sales', prefix: 'SALES', role: 'Objection handling' },
-  { name: 'Negotiator', prefix: 'NEGOTIATOR_AGENT', role: 'Thresholds and terms' },
-  { name: 'Treasurer', prefix: 'TREASURER_AGENT', role: 'Contracts and checkout' },
-  { name: 'Gatekeeper', prefix: 'GATEKEEPER', role: 'Safety review' },
-  { name: 'Closing', prefix: 'CLOSING_AGENT', role: 'Readiness to won/blocked' }
-];
+const workforce = require('../services/workforce');
 
 const PIPELINE_STAGES = ['Strategist', 'Marketer', 'Negotiator', 'Treasurer', 'Closing'];
-
-function activityCount(prefix) {
-  return audit.readVault().filter(e => e.action.startsWith(prefix)).length;
-}
-
-function statusOf(prefix) {
-  const count = activityCount(prefix);
-  return count > 0 ? design.badge('success') : design.badge('info');
-}
 
 function lastEntry() {
   const entries = audit.readVault();
@@ -128,9 +105,9 @@ async function buildHome(userId) {
       keyboard: design.keyboard([
         [design.textButton('Import Leads', 'cc_deals'), design.textButton('Connect CRM', 'cc_connect_crm')],
         [design.textButton('Upload Catalog', 'cc_upload_catalog'), design.textButton('Launch Campaign', 'cc_launch_campaign')],
-        [design.textButton('AI Guide', 'cc_ai_guide'), design.textButton('Settings', 'cc_settings')],
+        [design.textButton('Today\'s Activity', 'cc_activity'), design.textButton('AI Guide', 'cc_ai_guide')],
         [design.textButton('Dashboard', 'cc_dashboard'), design.textButton('Pipeline', 'cc_pipeline')],
-        [design.textButton('Audit Log', 'cc_audit'), design.textButton('Pricing', 'cc_pricing')],
+        [design.textButton('Settings', 'cc_settings'), design.textButton('Audit Log', 'cc_audit'), design.textButton('Pricing', 'cc_pricing')],
         [design.textButton('Admin', 'cc_admin')]
       ])
     };
@@ -193,20 +170,114 @@ async function buildDashboard(userId) {
   };
 }
 
+function workforceStatus(agent) {
+  const status = agent.status;
+  if (status === 'running') return `${design.EMOJI.warning} Working`;
+  if (status === 'waiting') return `${design.EMOJI.warning} Waiting`;
+  if (status === 'paused') return `${design.EMOJI.critical} Paused`;
+  return `${design.EMOJI.success} Ready`;
+}
+
 async function buildWorkforce(userId) {
   const ctx = await getCtx(userId);
+  if (!ctx) {
+    return {
+      text: design.compose([
+        `${design.EMOJI.ai} ${design.b('AI Workforce')}`,
+        design.it('Set up a workspace to see your workforce.'),
+        design.divider()
+      ]),
+      keyboard: design.keyboard([
+        [design.textButton('Back to Home', 'cc_home')]
+      ])
+    };
+  }
+  const view = await workforce.getWorkforceView(getStoreAdapter(), ctx.workspace.id);
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Workforce')}`,
-    design.it(ctx ? `${ctx.agents.active} agents active` : '12 agents — activity per agent'),
+    `${design.EMOJI.ai} ${design.b('AI Workforce')}`,
+    design.it(`${view.agents.length} agents · ${view.today_runs_total} runs today`),
     design.divider(),
-    ...AGENTS.map(a =>
-      `${design.row(a.name, statusOf(a.prefix))}\n${design.it(a.role)}`
+    ...view.agents.map(a =>
+      `${design.row(a.label, workforceStatus(a))}\n${design.it(a.role)}`
     ),
     design.divider()
   ]);
   return {
     text,
     keyboard: design.keyboard([
+      [design.textButton('Today\'s Activity', 'cc_activity')],
+      [design.textButton('Back to Home', 'cc_home')]
+    ])
+  };
+}
+
+async function buildActivity(userId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) {
+    return {
+      text: design.compose([
+        `${design.EMOJI.ai} ${design.b('Today\'s Activity')}`,
+        design.it('Set up a workspace to see activity.'),
+        design.divider()
+      ]),
+      keyboard: design.keyboard([
+        [design.textButton('Back to Home', 'cc_home')]
+      ])
+    };
+  }
+  const today = await workforce.todayActivity(getStoreAdapter(), ctx.workspace.id);
+  const lines = today.flatMap(a => {
+    const line = a.runs > 0
+      ? `${design.EMOJI.success} ${a.label} · ${a.runs} run${a.runs === 1 ? '' : 's'}`
+      : `${design.EMOJI.info} ${a.label} · waiting`;
+    const detail = a.last_output ? `\n${design.it(String(a.last_output))}` : '';
+    return [`${line}${detail}`];
+  });
+  const total = today.reduce((acc, a) => acc + a.runs, 0);
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('Today\'s Activity')}`,
+    design.it(`${total} agent run${total === 1 ? '' : 's'} so far`),
+    design.divider(),
+    ...lines,
+    design.divider()
+  ]);
+  return {
+    text,
+    keyboard: design.keyboard([
+      [design.textButton('AI Workforce', 'cc_workforce')],
+      [design.textButton('Back to Home', 'cc_home')]
+    ])
+  };
+}
+
+async function buildAgentDetail(userId, agentType) {
+  const ctx = await getCtx(userId);
+  if (!ctx) {
+    return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  }
+  const view = await workforce.getWorkforceView(getStoreAdapter(), ctx.workspace.id);
+  const agent = view.agents.find(a => a.agent_type === agentType);
+  if (!agent) {
+    return { text: design.errorPanel('Agent not found', agentType).text, keyboard: null };
+  }
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b(agent.label)}`,
+    design.it(agent.role),
+    design.divider(),
+    design.row('Status', workforceStatus(agent)),
+    design.row('Runs today', String(agent.today_runs)),
+    design.row('Total runs', String(agent.total_runs)),
+    design.row('Last run', workforce.shortTime(agent.last_run_at)),
+    design.row('Next run', workforce.shortTime(agent.next_run_at)),
+    design.row('Provider', agent.provider || 'not configured'),
+    design.row('Model', agent.model || '—'),
+    design.row('Cost', `$${(agent.total_cost_cents / 100).toFixed(2)}`),
+    design.divider()
+  ]);
+  return {
+    text,
+    keyboard: design.keyboard([
+      [design.textButton('Back to Workforce', 'cc_workforce')],
       [design.textButton('Back to Home', 'cc_home')]
     ])
   };
@@ -380,63 +451,27 @@ function buildSalesDemo() {
   };
 }
 
-async function buildPipelineDemo() {
-  const { buildPlaybook } = require('../agents/strategist');
-  const { craftPositioning } = require('../agents/marketer');
-  const { buildTerms } = require('../agents/negotiator');
-  const { draftContract, createCheckout, closeDeal } = require('../agents/treasurer');
-  const { closeDeal: closingAgent } = require('../agents/closing');
-
-  const lead = {
-    id: 'deal_bot_' + Date.now(),
-    company: 'Control Center Demo',
-    contactName: 'Enterprise Operator',
-    product: 'TEOS DealMaker Sovereign License',
-    classification: 'Hot',
-    fitScore: 92,
-    budget: 15000,
-    competitivePressure: 'low',
-    industry: 'Technology',
-    currency: 'USD',
-    termMonths: 12,
-    paymentMethod: 'invoice'
-  };
-  const targetPrice = 12500;
-
-  const playbook = buildPlaybook(lead);
-  const positioning = craftPositioning(lead, playbook);
-  const terms = buildTerms(lead, targetPrice, lead.budget);
-  const deal = { ...lead, amount: terms.landingPrice };
-  const contract = draftContract(deal);
-  const checkout = await createCheckout(deal, contract);
-  closeDeal(deal, contract, checkout);
-  const closed = closingAgent({
-    id: lead.id,
-    company: lead.company,
-    amount: terms.landingPrice,
-    currency: 'USD',
-    contractId: contract.contractId,
-    approved: true,
-    paymentMethod: 'invoice'
-  });
-
+function buildPipelineResult(userId, result) {
   const lines = [
     `${design.EMOJI.ai} ${design.b('Pipeline Demo')}`,
     design.it('Strategist → Marketer → Negotiator → Treasurer → Closing'),
     design.divider(),
-    design.row('Strategy', playbook.style),
-    design.row('Positioning', positioning.headline),
-    design.row('Landing price', `$${terms.landingPrice}`),
-    design.row('Terms', terms.suggestedTerms),
-    design.row('Contract', contract.contractId),
-    design.row('Checkout', checkout ? checkout.url : 'blocked'),
-    design.row('Outcome', design.badge(closed.status === 'won' ? 'success' : 'critical')),
+    design.row('Strategy', result.strategy.style),
+    design.row('Positioning', result.marketing.headline),
+    design.row('Landing price', `$${result.negotiation.landingPrice}`),
+    design.row('Terms', result.negotiation.suggestedTerms),
+    design.row('Contract', result.treasurer.contract.contractId),
+    design.row('Checkout', result.treasurer.checkout ? result.treasurer.checkout.url : 'blocked'),
+    design.row('Outcome', design.badge(result.closing.status === 'won' ? 'success' : 'critical')),
+    design.row('Deal saved', design.badge('success')),
+    design.row('Cost', `$${(result.runs.reduce((acc, r) => acc + r.cost_cents, 0) / 100).toFixed(2)}`),
     design.divider()
   ];
   return {
     text: design.compose(lines),
     keyboard: design.keyboard([
       [design.textButton('Run Again', 'cc_pipeline_run')],
+      [design.textButton('Today\'s Activity', 'cc_activity')],
       [design.textButton('Back to Home', 'cc_home')]
     ])
   };
@@ -501,6 +536,8 @@ async function handleCallback(query, bot) {
       return send(buildAiGuide());
     case 'cc_settings':
       return send(await buildSettings(userId));
+    case 'cc_activity':
+      return send(await buildActivity(userId));
     case 'cc_audit': {
       if (!isAdmin(userId)) return send(denied('audit feed'));
       return send(buildAudit(0));
@@ -517,7 +554,19 @@ async function handleCallback(query, bot) {
       }
       if (action === 'cc_pipeline_run') {
         try { await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
-        return send(await buildPipelineDemo());
+        const ctx = await getCtx(userId);
+        if (!ctx) return send({ text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null });
+        try {
+          const result = await workforce.runPipelineDemo(getStoreAdapter(), ctx.workspace.id);
+          return send(buildPipelineResult(userId, result));
+        } catch (err) {
+          audit.writeEntry('BOT_PIPELINE_ERROR', String(userId), 'error', { error: err.message });
+          return send({ text: design.errorPanel('Pipeline failed', String(err.message)).text, keyboard: null });
+        }
+      }
+      if (action.startsWith('cc_agent:')) {
+        const agentType = action.split(':')[1];
+        return send(await buildAgentDetail(userId, agentType));
       }
       if (action === 'cc_live') {
         if (!isFounder(userId)) return send(denied('founder actions'));
@@ -588,5 +637,7 @@ module.exports = {
   buildAdmin,
   buildAiGuide,
   buildSettings,
+  buildActivity,
+  buildAgentDetail,
   handleCallback
 };

@@ -147,7 +147,7 @@ function createRepos(adapter) {
 
     agentRuns: {
       start({ workspace_id, agent_name, provider = null, model = null, input = null }) {
-        return adapter.insert('agent_runs', { workspace_id, agent_name, status: 'running', provider, model, input });
+        return adapter.insert('agent_runs', { workspace_id, agent_name, status: 'running', provider, model, input, started_at: new Date().toISOString() });
       },
       complete(workspace_id, id, { status = 'completed', output = null, duration_ms = null, cost_cents = 0 }) {
         return adapter.update('agent_runs', { workspace_id, id }, { status, output, duration_ms, cost_cents, completed_at: new Date().toISOString() });
@@ -183,6 +183,9 @@ function createRepos(adapter) {
       },
       list(workspace_id) {
         return adapter.find('agents', { workspace_id }, { orderBy: 'id', order: 'asc' });
+      },
+      update(workspace_id, agent_type, changes) {
+        return adapter.update('agents', { workspace_id, agent_type }, changes);
       },
       updateStatus(workspace_id, agent_type, status) {
         return adapter.update('agents', { workspace_id, agent_type }, { status });
@@ -262,6 +265,7 @@ function forWorkspace(adapter, workspaceId) {
       create: data => repos.agents.create({ ...data, workspace_id: workspaceId }),
       get: agent_type => repos.agents.getByWorkspace(workspaceId, agent_type),
       list: () => repos.agents.list(workspaceId),
+      update: (agent_type, changes) => repos.agents.update(workspaceId, agent_type, changes),
       updateStatus: (agent_type, status) => repos.agents.updateStatus(workspaceId, agent_type, status)
     },
     settings: {
