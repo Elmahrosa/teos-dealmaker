@@ -1,15 +1,16 @@
 # TEOS DealMaker
 
-**Status: FOUNDATION + 5 AGENTS (v0.1.0)**
+**Status: FOUNDATION + 6 AGENTS (v0.1.0)**
 
 **✅ IMPLEMENTED:**
 - [Implemented v0.1.0] Outreach agent (draft → gatekeeper → vault)
 - [Implemented v0.1.0] Qualification agent (classify/route)
 - [Implemented v0.1.0] Sales agent (objection → response)
-- [Implemented v0.1.0] Orchestrator agent (qualify → route: sales/follow-up/archive, `ORCHESTRATOR_*` audit)
+- [Implemented v0.1.0] Gatekeeper agent (spam/unsafe draft review, `GATEKEEPER_*` audit)
+- [Implemented v0.1.0] Orchestrator agent (qualify → route: sales/follow-up/archive, `ORCHESTRATOR_*` audit; `/sales <prompt>` → draft → gatekeeper → route flow)
 - [Implemented] BVAP audit logging (JSON to data/vault/audit.log)
 - [Implemented] DRY/LIVE mode toggle (default DRY, founder-controlled)
-- [Implemented] Telegram bot (@TeosEgypt_bot commands)
+- [Implemented] Telegram bot (@TeosEgypt_bot commands, incl. `/sales <prompt>`)
 
 **❌ PENDING:**
 - [Pending] Negotiation agent
