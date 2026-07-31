@@ -7,11 +7,11 @@ function processResponse(response) {
 
   const classification = classify(response);
   console.log(`[Qualification] Sentiment: ${classification.sentiment}, Fit: ${classification.fit.label} (${classification.fit.score})`);
-  audit.writeEntry('QUALIFY_CLASSIFY', response.from, classification.sentiment, classification);
+  audit.writeEntry('QUALIFICATION_CLASSIFY', response.from, classification.sentiment, classification);
 
   const routing = route(classification);
   console.log(`[Qualification] Action: ${routing.action} -> ${routing.target_agent || 'archive'}`);
-  audit.writeEntry('QUALIFY_ROUTE', response.from, routing.action, routing);
+  audit.writeEntry('QUALIFICATION_ROUTE', response.from, routing.action, routing);
 
   return { classification, routing };
 }

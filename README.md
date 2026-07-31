@@ -1,25 +1,29 @@
-# TEOS DealMaker - Foundation + Outreach Agent (v0.1.0)
+# TEOS DealMaker — Multi-agent sales orchestration
 
-## Status: FOUNDATION + OUTREACH AGENT (v0.1.0)
+## What's Implemented ✅
 
-### ✅ IMPLEMENTED:
-- [Implemented v0.1.0] Outreach agent (draft → gatekeeper → vault)
-- [Implemented] BVAP audit logging (JSON entries to data/vault/audit.log)
+- [x] Bot infrastructure (node-telegram-bot-api, polling)
+- [x] `/start`, `/status`, `/mode`, `/live`, `/dry`, `/audit`, `/outreach`, `/qualify`, `/sales` commands
+- [x] BVAP Audit Logger with specific action types (`BOT_COMMAND_START`, `BOT_COMMAND_STATUS`, `QUALIFICATION_CLASSIFY`, `OUTREACH_DRAFT`, `SALES_CLASSIFY`, ...)
+- [x] DRY/LIVE mode toggle (default DRY; LIVE is founder-only)
+- [x] Router — messages vault in DRY, send in LIVE
+- [x] Outreach agent (draft → gatekeeper → vault)
+- [x] Qualification agent (response → classify → route)
+- [x] Sales agent (objection classification → response → route)
 
-### ❌ PENDING:
-- [Pending] Qualification agent
-- [Pending] Sales agent
-- [Pending] Database schema with multi-tenancy
-- [Pending] Authentication/authorization system
-- [Pending] Payment integration (Dodo)
-- [Pending] Telegram bot integration
-- [Pending] Web application
-- [Pending] Tests
+## Not Yet Implemented ❌
 
-## How It Works (Implemented)
+- [ ] Database schema with multi-tenancy
+- [ ] Authentication/authorization system
+- [ ] Payment integration (Dodo)
+- [ ] Web application
+- [ ] Automated test suite
+- [ ] Mode persistence across bot restarts (resets to DRY)
 
-1. **Outreach Agent** — Draft message → Gatekeeper review → Audit to vault
-2. **BVAP Audit** — Every action logged with timestamp, action, status, details
+## Known Limitations
+
+- `node-telegram-bot-api` carries transitive npm audit vulnerabilities (deprecated `request`); swap to `grammy` before production.
+- Bot mode resets to DRY on every restart.
 
 ## License
 
