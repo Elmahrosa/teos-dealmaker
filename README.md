@@ -1,6 +1,6 @@
 # TEOS DealMaker
 
-**Status: FOUNDATION + 9 AGENTS (v0.1.0) — ~62% of roadmap**
+**Status: FOUNDATION + 12 AGENTS (v0.1.0) — ~85% of roadmap**
 
 **✅ IMPLEMENTED:**
 - [Implemented v0.1.0] Outreach agent (draft → gatekeeper → vault)
@@ -10,19 +10,24 @@
 - [Implemented v0.1.0] Orchestrator agent (qualify → route: sales/follow-up/archive, `ORCHESTRATOR_*` audit; `/sales <prompt>` → draft → gatekeeper → route flow)
 - [Implemented v0.1.0] Market Intelligence agent (prospect fit scoring + priority, `MARKET_INTELLIGENCE_*` audit)
 - [Implemented v0.1.0] Prospecting agent (lead scoring/classification → next agent, `PROSPECTING_AGENT_*` audit)
-- [Implemented v0.1.0] Treasurer agent (contract drafting + DRY-only Dodo checkout stub, `TREASURER_AGENT_*` audit)
+- [Implemented v0.1.0] Strategist agent (tactical Deal Playbook from lead data, `STRATEGIST_AGENT_*` audit)
+- [Implemented v0.1.0] Marketer agent (value positioning from playbook, `MARKETER_AGENT_*` audit)
+- [Implemented v0.1.0] Negotiator agent (discount thresholds + payment terms, `NEGOTIATOR_AGENT_*` audit)
+- [Implemented v0.1.0] Treasurer agent (contract drafting + DRY-only Dodo checkout via utils/dodoPayments.js, `TREASURER_AGENT_*` audit)
 - [Implemented] BVAP audit logging (JSON to data/vault/audit.log)
-- [Implemented] DRY/LIVE mode toggle (default DRY, founder-controlled)
+- [Implemented] DRY/LIVE mode toggle (default DRY, founder-controlled; `agents/router.js` vaults in DRY, sends in LIVE)
 - [Implemented] Telegram bot (@TeosEgypt_bot commands, incl. `/sales <prompt>`)
+- [Implemented] Postgres schema (db/schema.sql: deals + audit_logs; db/index.js pg pool, needs `npm i pg` + `DATABASE_URL`)
+- [Implemented] Dodo Payments stub (utils/dodoPayments.js, mocks payload when `DODO_API_KEY` missing)
+- [Implemented] Master pipeline test (tests/final_pipeline.test.js: Strategist → Marketer → Negotiator → Treasurer)
 
 **❌ PENDING:**
-- [Pending] Negotiation agent
 - [Pending] Closing agent
-- [Pending] Database schema with multi-tenancy
+- [Pending] Multi-tenancy on the DB schema
 - [Pending] User account system
-- [Pending] Payment integration (Dodo)
+- [Pending] Real Dodo Payments integration (LIVE key)
 - [Pending] Landing page dashboard
-- [Pending] Tests
+- [Pending] Automated test runner (npm test)
 
 ## Known Issues
 

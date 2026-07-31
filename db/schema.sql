@@ -1,0 +1,17 @@
+-- TEOS DealMaker - Postgres schema
+
+CREATE TABLE IF NOT EXISTS deals (
+  id SERIAL PRIMARY KEY,
+  company VARCHAR(255) NOT NULL,
+  amount NUMERIC(12, 2) NOT NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'open',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id SERIAL PRIMARY KEY,
+  timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  agent VARCHAR(100),
+  action VARCHAR(100) NOT NULL,
+  data JSONB
+);

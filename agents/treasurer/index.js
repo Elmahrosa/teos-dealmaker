@@ -1,5 +1,6 @@
 const audit = require('../../utils/auditLogger');
 const mode = require('../../config/mode');
+const dodoPayments = require('../../utils/dodoPayments');
 
 function draftContract(deal) {
   audit.writeEntry('TREASURER_AGENT_CONTRACT_DRAFT_STARTED', deal.id, 'in_progress', {
@@ -42,7 +43,7 @@ function draftContract(deal) {
   return contract;
 }
 
-function createCheckout(deal, contract) {
+async function createCheckout(deal, contract) {
   if (!mode.isDRY()) {
     audit.writeEntry('TREASURER_AGENT_CHECKOUT_BLOCKED', contract.contractId, 'blocked', {
       reason: 'Dodo Payments is DRY-only until LIVE payments are enabled',
@@ -51,13 +52,18 @@ function createCheckout(deal, contract) {
     return null;
   }
 
-  const checkout = {
-    checkoutId: `CHK-${contract.contractId}`,
-    amount: contract.amount,
+  const link = await dodoPayments.createCheckoutLink(contract.contractId, contract.amount, {
     currency: contract.currency,
+    paymentMethod: contract.paymentMethod
+  });
+
+  const checkout = {
+    checkoutId: link.checkoutId,
+    amount: link.amount,
+    currency: link.currency,
     paymentMethod: contract.paymentMethod,
-    url: `https://dodo.example/checkout/${contract.contractId}`,
-    dryRun: true
+    url: link.url,
+    dryRun: link.dryRun
   };
 
   audit.writeEntry('TREASURER_AGENT_CHECKOUT_CREATED', checkout.checkoutId, 'dry_run', checkout);
@@ -79,9 +85,9 @@ function closeDeal(deal, contract, checkout) {
   return summary;
 }
 
-function runTreasuryFlow(deal) {
+async function runTreasuryFlow(deal) {
   const contract = draftContract(deal);
-  const checkout = createCheckout(deal, contract);
+  const checkout = await createCheckout(deal, contract);
   return closeDeal(deal, contract, checkout);
 }
 

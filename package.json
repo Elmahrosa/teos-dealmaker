@@ -8,7 +8,12 @@
     "start": "node bot/index.js",
     "test:outreach": "node agents/outreach/test.js",
     "test:qualify": "node agents/qualification/test.js",
-    "test:sales": "node agents/sales/test.js"
+    "test:sales": "node agents/sales/test.js",
+    "test:treasurer": "node tests/test-treasurer.js",
+    "test:strategist": "node tests/test-strategist.js",
+    "test:marketer": "node tests/test-marketer.js",
+    "test:negotiator": "node tests/test-negotiator.js",
+    "test:pipeline": "node tests/final_pipeline.test.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
