@@ -1,6 +1,6 @@
 # TEOS DealMaker
 
-**Status: FOUNDATION + 12 AGENTS + MULTI-TENANT PERSISTENCE + WORKSPACE IDENTITY + PROACTIVE DASHBOARD + AI WORKFORCE RUNTIME + WORKSPACE MEMORY + AGENT COLLABORATION + WORKFORCE CONSOLE (v0.4.0)**
+**Status: FOUNDATION + 12 AGENTS + MULTI-TENANT PERSISTENCE + WORKSPACE IDENTITY + PROACTIVE DASHBOARD + AI WORKFORCE RUNTIME + WORKSPACE MEMORY + AGENT COLLABORATION + WORKFORCE CONSOLE + MULTI-PROVIDER AI LAYER + COST INTELLIGENCE + AGENT HEALTH + QUEUE MANAGER + EXECUTIVE BRIEFING (v0.5.0)**
 
 **✅ IMPLEMENTED:**
 - [Implemented v0.1.0] Outreach agent (draft → gatekeeper → vault)
@@ -35,12 +35,18 @@
 - [Implemented] Workspace Memory (Phase 5: services/memory.js — shared memory every agent reads before working: company, industry, products, services, ICP, competitors, brand voice, sales playbook, languages, documents, preferred providers, plus a `past_deals` aggregate from the deals repo; per-agent context slices via CONTEXT_MAP so each agent only receives the keys it needs; `ensureDefaults` seeds the 11 memory keys on workspace provision; memory editor in Settings (view/edit via `cc_memory`/`cc_mem_edit:<key>` callbacks and `/memory`); schema `workspace_memory` table (UNIQUE workspace_id+key, JSONB values); verified by tests/test-memory.js)
 - [Implemented] Agent Collaboration (Phase 5.5: agents hand off work by writing notes to the deal — `deal_notes` table (workspace_id, deal_id, agent_name, note); `runPipelineDemo` produces a visible team chain Strategist → Marketer → Negotiator → Treasurer → Closing with each agent's note surfaced in the pipeline result TEAM NOTES panel; verified in tests/test-workforce.js)
 - [Implemented] Workforce Console + visibility layer (services/workforce.js aggregates — `workforceConsole` (workers busy/ready, today's cost, completed tasks, estimated pipeline from open deals, per-agent live status Running/Completed/Waiting/Ready), `dealTimeline` (per-deal collaboration chain with timestamps + stage transitions), `costSummary` (today's cost by provider + total + avg per task), `healthCheck` (AI Providers/Database/Payments/Audit/Memory/Workers 12/12); Control Center screens — AI Workforce console header + live roster, Deal Timeline (all deals + per-deal deep view), AI Cost Dashboard, Platform Health; latest-run resolution tie-broken by run id (same-millisecond safety); verified by tests/test-console.js)
+- [Implemented] Multi-provider AI layer (v0.5.0: services/providers.js — 8-provider catalog (OpenAI/Anthropic/Gemini/Groq/OpenRouter/NVIDIA NIM/Ollama/LM Studio) with per-model pricing, DEFAULT_POLICY routing for all 12 agents (e.g. prospector → Gemini Flash, researcher → Claude Sonnet, negotiator → GPT-5, gatekeeper → Groq Llama-3.1), FALLBACK_CHAIN across providers, `resolveRoute` policy → configured → fallback → simulated, seeded deterministic `simulate` + real HTTP `realCall` (OpenAI/Anthropic/Gemini payload shapes + usage token extraction), `costFromTokens` from per-model pricing, usage recorded to `provider_usage`; no keys → simulated runs at $0.00; verified by tests/test-providers.js)
+- [Implemented] Provider policies (db `provider_policies` table — workspace-scoped agent → provider/model overrides with `UNIQUE(workspace_id, agent_type)`; seeded via `providers.ensurePolicies` on workspace provision; editable from the Providers screen (`/providers`, `cc_pol:<agent>` → `cc_pol_set:<agent>:<provider>`))
+- [Implemented] Cost intelligence (services/cost.js `costIntelligence` — today's cost/tokens/tasks, avg cost per task, avg runtime, spend by provider/agent/deal (agent labels from REGISTRY, deal company names joined), estimated monthly spend from average daily cost; Cost Intelligence screen at `/costs`)
+- [Implemented] Agent health (services/workforce.js `agentHealth` — per-agent Ready/Busy/Failed/Disabled from runtime status + latest run, avg runtime, success %, last success/error timestamps; Platform Health screen now includes the full 12-agent health roster)
+- [Implemented] Queue manager (services/queue.js — 7-stage deal queue incoming → research → qualification → proposal → negotiation → closing → won; `enqueueDeal`/`advanceQueue` (closes deal on `won`)/`queueSnapshot`/`queueMovements`; `runPipelineDemo` now walks the queue and closes won deals; Deal Queue screen at `/queue` with stage counts + live movement feed)
+- [Implemented] Executive briefing (services/briefing.js `executiveBriefing` — yesterday prospects/qualified/emails/proposals, today's opportunities, open pipeline value, meetings needed, 20% revenue forecast, high-risk deals stalled >14 days, recommended action; Executive Briefing screen at `/briefing`)
+- [Implemented] LLM-driven agent runs (`runAgent` now accepts a `prompt` — executed through the provider layer via `providers.generate` — alongside the deterministic `fn` path; runs carry `deal_id` and record provider/model into `agent_runs`; audited as `AGENT_RUN_*` with provider/model/cost/deal_id)
 
 **❌ PENDING:**
-- [Pending] Live Postgres verification (schema never migrated — no `DATABASE_URL` provided)
+- [Pending] Live Postgres verification (schema never migrated — no `DATABASE_URL` provided; pending: `agent_runs.deal_id` ALTER + `provider_policies` table on real PG/Supabase)
 - [Pending] Subscription activation wiring (onboarding creates pending subscription; checkout/payment activation is next)
-- [Pending] Real AI workforce orchestration on top of the persistence layer
-- [Pending] Multi-provider LLM layer (Anthropic/OpenAI/Gemini/Groq/OpenRouter/NVIDIA NIM/Ollama/LM Studio)
+- [Pending] Real multi-provider live calls (provider layer ships with seeded simulation; set any provider API key to go live)
 - [Pending] Real Dodo Payments integration (LIVE key)
 - [Pending] Live checkout verification of the published pricing links (Solo $99/$950, Growth $249/$2,390, Corporate $799/$7,600 — links served from config/pricing.config.js, Dodo downstream unverified)
 - [Pending] Automated test runner (npm test)
@@ -55,10 +61,10 @@
 ## Database (Phase 1 + Phase 2)
 
 - Schema: `db/schema.sql` (multi-tenant, forward-only, `CREATE TABLE IF NOT EXISTS`, updated_at triggers).
-- Tables: workspaces (owner_user_id, subscription_id), users (telegram_id UNIQUE), workspace_members (role RBAC), subscriptions, dodo_customers, deals, audit_trail (user_id), conversations, messages, agent_runs, provider_usage, pipeline_events, agents (provisioned workforce), workspace_settings (lang/timezone/notifications/theme), workspace_memory (key/value JSONB), deal_notes (agent collaboration hand-offs).
+- Tables: workspaces (owner_user_id, subscription_id), users (telegram_id UNIQUE), workspace_members (role RBAC), subscriptions, dodo_customers, deals, audit_trail (user_id), conversations, messages, agent_runs (incl. deal_id), provider_usage, pipeline_events, provider_policies (workspace agent routing), agents (provisioned workforce), workspace_settings (lang/timezone/notifications/theme), workspace_memory (key/value JSONB), deal_notes (agent collaboration hand-offs).
 - Isolation rule: every tenant-owned table carries `workspace_id`; all repository reads/writes filter by it, enforced by `forWorkspace()`.
 - Identity flow: `services/identity.js` — `ensureUser` (telegram_id → user), `getWorkspaceForUser` (user → member → workspace), `onboardWorkspace` (transactional: workspace + owner membership + pending subscription + provision), `uniqueSlug` (collision-safe slug).
-- Verify locally: `node tests/test-multitenancy.js` and `node tests/test-identity.js` and `node tests/test-workspace.js` and `node tests/test-workforce.js` and `node tests/test-memory.js` and `node tests/test-console.js` (in-memory adapter, no DB required).
+- Verify locally: `node tests/test-multitenancy.js` and `node tests/test-identity.js` and `node tests/test-workspace.js` and `node tests/test-workforce.js` and `node tests/test-memory.js` and `node tests/test-console.js` and `node tests/test-providers.js` and `node tests/test-operations.js` (in-memory adapter, no DB required).
 - Live: set `DATABASE_URL` then `npm run db:migrate`; adapter + repos then target Postgres.
 
 ## Known Issues

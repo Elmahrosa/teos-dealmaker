@@ -2,7 +2,7 @@ const { getMode, setMode } = require('../config/mode');
 const audit = require('../utils/auditLogger');
 const { BOT_CONFIG } = require('./config');
 const { isFounder, isAdmin } = require('./access');
-const { buildHome, buildWorkforce, buildPipeline, buildDeals, buildAudit, buildAdmin, buildPricing, buildMemory } = require('./menu');
+const { buildHome, buildWorkforce, buildPipeline, buildDeals, buildAudit, buildAdmin, buildPricing, buildMemory, buildCosts, buildHealth, buildProviders, buildQueue, buildBriefing } = require('./menu');
 const { formatPricingText, pricingButtons } = require('../config/pricing.config');
 const design = require('./design');
 
@@ -176,6 +176,26 @@ async function cmdMemory(chatId, userId) {
   return screenResult(chatId, await buildMemory(userId));
 }
 
+async function cmdCosts(chatId, userId) {
+  return screenResult(chatId, await buildCosts(userId));
+}
+
+async function cmdHealth(chatId, userId) {
+  return screenResult(chatId, await buildHealth(userId));
+}
+
+async function cmdProviders(chatId, userId) {
+  return screenResult(chatId, await buildProviders(userId));
+}
+
+async function cmdQueue(chatId, userId) {
+  return screenResult(chatId, await buildQueue(userId));
+}
+
+async function cmdBriefing(chatId, userId) {
+  return screenResult(chatId, await buildBriefing(userId));
+}
+
 function cmdAdmin(chatId, userId) {
   return screenResult(chatId, buildAdmin(userId));
 }
@@ -198,6 +218,10 @@ const COMMANDS = {
   '/pipeline': cmdPipeline,
   '/deals': cmdDeals,
   '/memory': cmdMemory,
+  '/costs': cmdCosts,
+  '/providers': cmdProviders,
+  '/queue': cmdQueue,
+  '/briefing': cmdBriefing,
   '/admin': cmdAdmin
 };
 

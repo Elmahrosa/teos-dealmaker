@@ -3,6 +3,7 @@ const { createMemoryAdapter } = require('../db/adapter');
 const { createRepos } = require('../db/repos');
 const identity = require('../services/identity');
 const workforce = require('../services/workforce');
+const queue = require('../services/queue');
 
 (async () => {
   const adapter = createMemoryAdapter();
@@ -40,19 +41,30 @@ const workforce = require('../services/workforce');
 
   const pipeline = await workforce.runPipelineDemo(adapter, ws.id);
   const consoleAfter = await workforce.workforceConsole(adapter, ws.id);
-  assert.strictEqual(consoleAfter.open_deals, 1, 'pipeline deal open');
-  assert.strictEqual(consoleAfter.estimated_pipeline_cents, pipeline.negotiation.landingPrice, 'estimated pipeline = deal value');
+  assert.strictEqual(pipeline.won, true, 'pipeline demo closes a win');
+  assert.strictEqual(consoleAfter.open_deals, 0, 'won deal no longer open');
+  assert.strictEqual(consoleAfter.estimated_pipeline_cents, 0, 'no open pipeline after win');
   assert.ok(consoleAfter.today_cost_cents > 18, 'pipeline adds cost');
   assert.strictEqual(consoleAfter.completed_tasks, 7, 'five more runs → 7 total tasks');
 
   const tl = await workforce.dealTimeline(adapter, ws.id, pipeline.deal.id);
   assert.ok(tl, 'timeline found');
   assert.strictEqual(tl.notes.length, 5, 'five collaboration notes');
-  assert.strictEqual(tl.events.length, 1, 'one pipeline event');
-  assert.strictEqual(tl.events[0].text, 'lead → closing', 'stage transition explained');
+  assert.strictEqual(tl.events.length, 6, 'six queue transitions');
+  assert.strictEqual(tl.events[0].text, 'incoming → research', 'queue starts at research');
+  assert.strictEqual(tl.events[5].text, 'closing → won', 'queue ends at won');
   assert.strictEqual(tl.notes[0].agent_name, 'strategist', 'chain starts with strategist');
   assert.ok(tl.notes.every(n => n.time), 'notes carry timestamps');
   assert.strictEqual(await workforce.dealTimeline(adapter, ws.id, 999999), null, 'missing deal returns null');
+
+  const snapshot = await queue.queueSnapshot(adapter, ws.id);
+  assert.strictEqual(snapshot.stages.length, 7, 'seven queue stages');
+  const wonStage = snapshot.stages.find(s => s.stage === 'won');
+  assert.strictEqual(wonStage.count, 1, 'one deal in won queue');
+  const movements = await queue.queueMovements(adapter, ws.id, 10);
+  assert.ok(movements.length >= 6, 'movements recorded');
+  assert.strictEqual(movements[0].to_stage, 'won', 'most recent movement is the win');
+  assert.ok(movements.every(m => m.company), 'movements carry deal names');
 
   const costs = await workforce.costSummary(adapter, ws.id);
   assert.strictEqual(costs.tasks, 7, 'seven tasks today');
@@ -94,7 +106,7 @@ const workforce = require('../services/workforce');
   const costsB = await workforce.costSummary(adapter, wsB.id);
   assert.strictEqual(costsB.tasks, 0, 'workspace B cost summary isolated');
 
-  console.log(`\n✓ workforce console + timeline + costs + health (${40} assertions passed)`);
+  console.log(`\n✓ workforce console + timeline + costs + health (${44} assertions passed)`);
   console.log(`  ${consoleAfter.workers_total} workers · today $${(consoleAfter.today_cost_cents / 100).toFixed(2)} · pipeline $${(consoleAfter.estimated_pipeline_cents / 100).toFixed(2)} · ${costs.by_provider.length} providers`);
   process.exit(0);
 })().catch(err => {

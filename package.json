@@ -1,6 +1,6 @@
 {
   "name": "teos-dealmaker",
-  "version": "0.0.1",
+  "version": "0.5.0",
   "main": "index.js",
   "author": "Ayman Seif",
   "license": "MIT",
@@ -21,6 +21,8 @@
     "test:workforce": "node tests/test-workforce.js",
     "test:memory": "node tests/test-memory.js",
     "test:console": "node tests/test-console.js",
+    "test:providers": "node tests/test-providers.js",
+    "test:operations": "node tests/test-operations.js",
     "test:pipeline": "node tests/final_pipeline.test.js",
     "db:migrate": "node -e \"require('./db').createTables().then(()=>console.log('[db] schema applied')).catch(e=>{console.error('[db] '+e.message);process.exit(1)})\""
   },

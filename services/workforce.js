@@ -1,18 +1,20 @@
 const { createRepos } = require('../db/repos');
+const providers = require('./providers');
+const queue = require('./queue');
 
 const REGISTRY = {
-  orchestrator: { label: 'Orchestrator', role: 'Routes every request through the right agent', cadence: 5 },
-  prospecting: { label: 'Prospector', role: 'Finds and scores new companies', cadence: 60 },
-  market_intelligence: { label: 'Researcher', role: 'Analyzes companies and prospect fit', cadence: 60 },
-  qualification: { label: 'Qualifier', role: 'Classifies leads by BANT', cadence: 10 },
-  outreach: { label: 'Outreach', role: 'Drafts and dispatches emails', cadence: 30 },
-  strategist: { label: 'Strategist', role: 'Builds tactical deal playbooks', cadence: 15 },
-  marketer: { label: 'Marketer', role: 'Positions value for every deal', cadence: 15 },
-  sales: { label: 'Sales', role: 'Handles objections', cadence: 5 },
-  negotiator: { label: 'Negotiator', role: 'Sets thresholds and terms', cadence: 15 },
-  treasurer: { label: 'Treasurer', role: 'Drafts contracts and checkout', cadence: 15 },
-  gatekeeper: { label: 'Gatekeeper', role: 'Reviews drafts for safety', cadence: 5 },
-  closing: { label: 'Closer', role: 'Closes or blocks deals', cadence: 15 }
+  orchestrator: { label: 'Orchestrator', role: 'Routes every request through the right agent', cadence: 5, queue: 'incoming' },
+  prospecting: { label: 'Prospector', role: 'Finds and scores new companies', cadence: 60, queue: 'research' },
+  market_intelligence: { label: 'Researcher', role: 'Analyzes companies and prospect fit', cadence: 60, queue: 'research' },
+  qualification: { label: 'Qualifier', role: 'Classifies leads by BANT', cadence: 10, queue: 'qualification' },
+  outreach: { label: 'Outreach', role: 'Drafts and dispatches emails', cadence: 30, queue: 'proposal' },
+  strategist: { label: 'Strategist', role: 'Builds tactical deal playbooks', cadence: 15, queue: 'proposal' },
+  marketer: { label: 'Marketer', role: 'Positions value for every deal', cadence: 15, queue: 'proposal' },
+  sales: { label: 'Sales', role: 'Handles objections', cadence: 5, queue: 'negotiation' },
+  negotiator: { label: 'Negotiator', role: 'Sets thresholds and terms', cadence: 15, queue: 'negotiation' },
+  treasurer: { label: 'Treasurer', role: 'Drafts contracts and checkout', cadence: 15, queue: 'closing' },
+  gatekeeper: { label: 'Gatekeeper', role: 'Reviews drafts for safety', cadence: 5, queue: 'qualification' },
+  closing: { label: 'Closer', role: 'Closes or blocks deals', cadence: 15, queue: 'closing' }
 };
 
 function minutesFromNow(minutes) {
@@ -80,18 +82,29 @@ async function runAgent(adapter, workspaceId, agentType, fn, opts) {
   await repos.agents.update(workspaceId, agentType, { status: 'running' });
   const run = await repos.agentRuns.start({
     workspace_id: workspaceId,
+    deal_id: o.deal_id || null,
     agent_name: agentType,
     provider: o.provider || agent.provider || null,
     model: o.model || agent.model || null,
-    input: o.input !== undefined ? o.input : null
+    input: o.input !== undefined ? o.input : (o.prompt !== undefined ? o.prompt : null)
   });
 
   const started = Date.now();
   let result;
   let status = 'completed';
   let error = null;
+  let llm = null;
   try {
-    result = await fn();
+    if (o.prompt !== undefined && o.prompt !== null) {
+      llm = await providers.generate(adapter, workspaceId, agentType, o.prompt, {
+        provider: o.provider,
+        model: o.model,
+        temperature: o.temperature
+      });
+      result = { output: llm.text, cost_cents: llm.cost_cents, provider: llm.provider, model: llm.model };
+    } else {
+      result = await fn();
+    }
   } catch (err) {
     status = 'error';
     error = err;
@@ -99,19 +112,23 @@ async function runAgent(adapter, workspaceId, agentType, fn, opts) {
   }
   const durationMs = Date.now() - started;
   const costCents = result && result.cost_cents ? result.cost_cents : 0;
+  const runProvider = result && result.provider ? result.provider : (o.provider || agent.provider || null);
+  const runModel = result && result.model ? result.model : (o.model || agent.model || null);
 
   await repos.agentRuns.complete(workspaceId, run.id, {
     status,
     output: result ? result.output : null,
     duration_ms: durationMs,
-    cost_cents: costCents
+    cost_cents: costCents,
+    provider: runProvider,
+    model: runModel
   });
 
   const next = minutesFromNow(meta.cadence);
   await repos.agents.update(workspaceId, agentType, {
     status: 'ready',
-    provider: o.provider || agent.provider || null,
-    model: o.model || agent.model || null,
+    provider: o.provider || runProvider || agent.provider || null,
+    model: o.model || runModel || agent.model || null,
     last_run_at: new Date().toISOString(),
     next_run_at: next,
     total_runs: (agent.total_runs || 0) + 1,
@@ -122,8 +139,8 @@ async function runAgent(adapter, workspaceId, agentType, fn, opts) {
     workspace_id: workspaceId,
     agent_name: agentType,
     action_type: 'AGENT_RUN_' + (status === 'completed' ? 'SUCCESS' : 'ERROR'),
-    details: { agent: meta.label, duration_ms: durationMs, cost_cents: costCents, input: o.input },
-    version: 'v0.4.0'
+    details: { agent: meta.label, duration_ms: durationMs, cost_cents: costCents, provider: runProvider, model: runModel, deal_id: o.deal_id || null },
+    version: 'v0.5.0'
   });
 
   if (error) throw error;
@@ -157,15 +174,9 @@ async function runPipelineDemo(adapter, workspaceId) {
   };
   const targetPrice = 12500;
 
-  const d = await repos.deals.create({
-    workspace_id: workspaceId,
-    company_name: lead.company,
-    stage: 'lead',
-    status: 'open',
-    deal_value: null,
-    currency: 'USD',
-    current_agent: 'strategist'
-  });
+  const d = await queue.enqueueDeal(adapter, workspaceId, lead.company);
+  await queue.advanceQueue(adapter, workspaceId, d.id, 'research');
+  await queue.advanceQueue(adapter, workspaceId, d.id, 'qualification');
 
   const collaborate = (agentType, note) =>
     repos.dealNotes.add({ workspace_id: workspaceId, deal_id: d.id, agent_name: agentType, note });
@@ -176,19 +187,21 @@ async function runPipelineDemo(adapter, workspaceId) {
     const note = `Playbook: ${r.style}${ctx.competitors && ctx.competitors.length ? ' · beat ' + ctx.competitors.slice(0, 2).join(', ') : ''}`;
     await collaborate('strategist', note);
     return { output: note, cost_cents: 1, data: r };
-  });
+  }, { deal_id: d.id });
   const marketing = await runAgent(adapter, workspaceId, 'marketer', async () => {
     const r = craftPositioning(lead, strategy.result.data);
     const note = `Positioning: ${r.headline}`;
     await collaborate('marketer', note);
     return { output: note, cost_cents: 1, data: r };
-  });
+  }, { deal_id: d.id });
+  await queue.advanceQueue(adapter, workspaceId, d.id, 'proposal');
   const negotiation = await runAgent(adapter, workspaceId, 'negotiator', async () => {
     const r = buildTerms(lead, targetPrice, lead.budget);
     const note = `Landing $${r.landingPrice} (max discount ${r.maxDiscount}%)`;
     await collaborate('negotiator', note);
     return { output: note, cost_cents: 1, data: r };
-  });
+  }, { deal_id: d.id });
+  await queue.advanceQueue(adapter, workspaceId, d.id, 'negotiation');
   const deal = { ...lead, amount: negotiation.result.data.landingPrice };
   await repos.deals.update(workspaceId, d.id, { deal_value: deal.amount, current_agent: 'treasurer' });
   const treasurer = await runAgent(adapter, workspaceId, 'treasurer', async () => {
@@ -198,7 +211,8 @@ async function runPipelineDemo(adapter, workspaceId) {
     const note = `Contract ${contract.contractId}${checkout ? ' · ' + checkout.url : ''}`;
     await collaborate('treasurer', note);
     return { output: note, cost_cents: 2, data: { contract, checkout } };
-  });
+  }, { deal_id: d.id });
+  await queue.advanceQueue(adapter, workspaceId, d.id, 'closing');
   const closing = await runAgent(adapter, workspaceId, 'closing', async () => {
     const r = closingAgent({
       id: lead.id,
@@ -212,11 +226,12 @@ async function runPipelineDemo(adapter, workspaceId) {
     const note = `Outcome: ${r.status}`;
     await collaborate('closing', note);
     return { output: note, cost_cents: 0, data: r };
-  });
-
-  await repos.deals.advanceStage(workspaceId, d.id, 'closing', 'lead');
+  }, { deal_id: d.id });
+  const won = closing.result.data.status === 'won';
+  if (won) await queue.advanceQueue(adapter, workspaceId, d.id, 'won');
 
   const notes = await repos.dealNotes.list(workspaceId, d.id);
+  const finalDeal = await repos.deals.get(workspaceId, d.id);
 
   return {
     strategy: strategy.result.data,
@@ -224,8 +239,9 @@ async function runPipelineDemo(adapter, workspaceId) {
     negotiation: negotiation.result.data,
     treasurer: treasurer.result.data,
     closing: closing.result.data,
-    deal: d,
+    deal: finalDeal || d,
     notes,
+    won,
     runs: [strategy, marketing, negotiation, treasurer, closing]
   };
 }
@@ -246,6 +262,45 @@ async function todayActivity(adapter, workspaceId) {
       runs: own.length,
       status: latest ? latest.status : 'idle',
       last_output: latest ? latest.output : null
+    };
+  });
+}
+
+async function agentHealth(adapter, workspaceId) {
+  const repos = createRepos(adapter);
+  const [agents, runs] = await Promise.all([
+    repos.agents.list(workspaceId),
+    repos.agentRuns.list(workspaceId)
+  ]);
+  return agents.map(a => {
+    const meta = REGISTRY[a.agent_type] || { label: a.agent_type, role: '', cadence: 15, queue: 'incoming' };
+    const own = runs.filter(r => r.agent_name === a.agent_type);
+    const completed = own.filter(r => r.status === 'completed');
+    const failed = own.filter(r => r.status === 'error');
+    const last = latestOf(own);
+    const lastSuccess = latestOf(completed);
+    const lastError = latestOf(failed);
+    const avgRuntimeMs = own.length ? own.reduce((acc, r) => acc + (r.duration_ms || 0), 0) / own.length : 0;
+    const successPct = own.length ? Math.round((completed.length / own.length) * 100) : null;
+    let display;
+    let tone;
+    if (a.status === 'paused') { display = 'Disabled'; tone = 'critical'; }
+    else if (last && last.status === 'error') { display = 'Failed'; tone = 'critical'; }
+    else if (a.status === 'running' || a.status === 'waiting') { display = 'Busy'; tone = 'warning'; }
+    else { display = 'Ready'; tone = 'success'; }
+    return {
+      agent_type: a.agent_type,
+      label: meta.label,
+      queue: meta.queue,
+      display,
+      tone,
+      last_run_at: last ? last.started_at : null,
+      last_success_at: lastSuccess ? lastSuccess.started_at : null,
+      last_error: lastError ? (lastError.output || lastError.status) : null,
+      last_error_at: lastError ? lastError.started_at : null,
+      avg_runtime_ms: avgRuntimeMs,
+      success_pct: successPct,
+      total_runs: own.length
     };
   });
 }
@@ -361,4 +416,4 @@ async function healthCheck(adapter, workspaceId, vaultEntries) {
   ];
 }
 
-module.exports = { REGISTRY, getWorkforceView, runAgent, runPipelineDemo, todayActivity, shortTime, workforceConsole, dealTimeline, costSummary, healthCheck };
+module.exports = { REGISTRY, getWorkforceView, runAgent, runPipelineDemo, todayActivity, shortTime, workforceConsole, dealTimeline, costSummary, healthCheck, agentHealth };

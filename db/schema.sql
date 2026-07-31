@@ -122,6 +122,8 @@ CREATE TABLE IF NOT EXISTS agent_runs (
 
 CREATE INDEX IF NOT EXISTS idx_agent_runs_workspace_time ON agent_runs(workspace_id, started_at);
 
+ALTER TABLE agent_runs ADD COLUMN IF NOT EXISTS deal_id INTEGER REFERENCES deals(id) ON DELETE SET NULL;
+
 CREATE TABLE IF NOT EXISTS provider_usage (
     id SERIAL PRIMARY KEY,
     workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -134,6 +136,19 @@ CREATE TABLE IF NOT EXISTS provider_usage (
 );
 
 CREATE INDEX IF NOT EXISTS idx_provider_usage_workspace_time ON provider_usage(workspace_id, created_at);
+
+CREATE TABLE IF NOT EXISTS provider_policies (
+    id SERIAL PRIMARY KEY,
+    workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    agent_type VARCHAR(80) NOT NULL,
+    provider VARCHAR(50) NOT NULL,
+    model VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (workspace_id, agent_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_provider_policies_workspace ON provider_policies(workspace_id);
 
 CREATE TABLE IF NOT EXISTS pipeline_events (
     id SERIAL PRIMARY KEY,

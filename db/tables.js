@@ -31,13 +31,19 @@ const TABLES = {
     columns: ['workspace_id', 'conversation_id', 'role', 'content', 'tokens']
   },
   agent_runs: {
-    columns: ['workspace_id', 'agent_name', 'status', 'input', 'output', 'duration_ms', 'provider', 'model', 'cost_cents', 'started_at', 'completed_at']
+    columns: ['workspace_id', 'deal_id', 'agent_name', 'status', 'input', 'output', 'duration_ms', 'provider', 'model', 'cost_cents', 'started_at', 'completed_at']
   },
   provider_usage: {
-    columns: ['workspace_id', 'provider', 'model', 'input_tokens', 'output_tokens', 'cost_cents']
+    columns: ['workspace_id', 'provider', 'model', 'input_tokens', 'output_tokens', 'cost_cents'],
+    timestamps: true
   },
   pipeline_events: {
-    columns: ['workspace_id', 'deal_id', 'from_stage', 'to_stage']
+    columns: ['workspace_id', 'deal_id', 'from_stage', 'to_stage'],
+    timestamps: true
+  },
+  provider_policies: {
+    columns: ['workspace_id', 'agent_type', 'provider', 'model'],
+    timestamps: true
   },
   agents: {
     columns: ['workspace_id', 'agent_type', 'status', 'provider', 'model', 'owner_user_id', 'total_runs', 'total_cost_cents', 'last_run_at', 'next_run_at'],

@@ -10,6 +10,10 @@ const { getStoreAdapter } = require('./store');
 const workforce = require('../services/workforce');
 const memory = require('../services/memory');
 const memoryEdit = require('./memoryEdit');
+const providers = require('../services/providers');
+const { costIntelligence } = require('../services/cost');
+const { executiveBriefing } = require('../services/briefing');
+const queue = require('../services/queue');
 
 const PIPELINE_STAGES = ['Strategist', 'Marketer', 'Negotiator', 'Treasurer', 'Closing'];
 
@@ -110,6 +114,7 @@ async function buildHome(userId) {
         [design.textButton('Today\'s Activity', 'cc_activity'), design.textButton('AI Guide', 'cc_ai_guide')],
         [design.textButton('Dashboard', 'cc_dashboard'), design.textButton('Pipeline', 'cc_pipeline')],
         [design.textButton('Timeline', 'cc_timeline'), design.textButton('Costs', 'cc_costs'), design.textButton('Health', 'cc_health')],
+        [design.textButton('Providers', 'cc_providers'), design.textButton('Queue', 'cc_queue'), design.textButton('Briefing', 'cc_briefing')],
         [design.textButton('Settings', 'cc_settings'), design.textButton('Audit Log', 'cc_audit'), design.textButton('Pricing', 'cc_pricing')],
         [design.textButton('Admin', 'cc_admin')]
       ])
@@ -297,7 +302,7 @@ async function buildCosts(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('AI Cost Dashboard')}`,
+        `${design.EMOJI.ai} ${design.b('AI Cost Intelligence')}`,
         design.it('Set up a workspace to see costs.'),
         design.divider()
       ]),
@@ -306,25 +311,37 @@ async function buildCosts(userId) {
       ])
     };
   }
-  const c = await workforce.costSummary(getStoreAdapter(), ctx.workspace.id);
+  const c = await costIntelligence(getStoreAdapter(), ctx.workspace.id);
   const providerRows = c.by_provider.length
-    ? c.by_provider.map(p => design.row(titleCase(p.provider), `$${(p.cost_cents / 100).toFixed(2)} · ${p.tasks} tasks`))
+    ? c.by_provider.map(p => design.row(titleCase(p.provider), `$${(p.cost_cents / 100).toFixed(2)} · ${p.tasks} tasks · ${p.tokens} tokens`))
     : [design.it('No provider usage today yet.')];
+  const agentRows = c.by_agent.filter(a => a.tasks > 0).slice(0, 5)
+    .map(a => design.row(a.label, `$${(a.cost_cents / 100).toFixed(2)} · ${a.tasks} tasks`));
+  const dealRows = c.by_deal.slice(0, 3)
+    .map(d => design.row(d.company, `$${(d.cost_cents / 100).toFixed(2)} · ${d.tasks} runs`));
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('AI Cost Dashboard')}`,
-    design.it('Today'),
+    `${design.EMOJI.ai} ${design.b('AI Cost Intelligence')}`,
+    design.it('Spend, tokens and averages'),
     design.divider(),
+    design.section('TODAY'),
     ...providerRows,
-    design.section('TOTALS'),
     design.row('Total', `$${(c.today_cost_cents / 100).toFixed(2)}`),
-    design.row('Tasks', String(c.tasks)),
-    design.row('Avg per task', `$${(c.avg_per_task_cents / 100).toFixed(4)}`),
+    design.row('Tokens', String(c.today_tokens)),
+    design.row('Tasks', String(c.tasks_today)),
+    design.row('Avg per task', `$${(c.avg_cost_cents / 100).toFixed(4)}`),
+    design.row('Avg runtime', `${c.avg_runtime_ms} ms`),
+    design.section('BY AGENT'),
+    ...(agentRows.length ? agentRows : [design.it('No agent runs today.')]),
+    design.section('BY DEAL'),
+    ...(dealRows.length ? dealRows : [design.it('No deal activity today.')]),
+    design.section('FORECAST'),
+    design.row('Estimated monthly', `$${(c.estimated_monthly_cents / 100).toFixed(2)}`),
     design.divider()
   ]);
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('AI Workforce', 'cc_workforce')],
+      [design.textButton('Providers', 'cc_providers'), design.textButton('AI Workforce', 'cc_workforce')],
       [design.textButton('Back to Home', 'cc_home')]
     ])
   };
@@ -345,17 +362,186 @@ async function buildHealth(userId) {
     };
   }
   const checks = await workforce.healthCheck(getStoreAdapter(), ctx.workspace.id, audit.readVault().length);
+  const health = await workforce.agentHealth(getStoreAdapter(), ctx.workspace.id);
+  const agentLines = health.map(h => {
+    const tone = h.display === 'Ready' ? 'success' : h.display === 'Busy' ? 'warning' : h.display === 'Failed' ? 'critical' : 'info';
+    const detail = h.success_pct !== null ? ` · ${h.success_pct}% ok · ${h.avg_runtime_ms} ms` : '';
+    return `${design.EMOJI[tone]} ${h.label} · ${h.display}${detail}`;
+  });
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b('Platform Health')}`,
     design.it('System status'),
     design.divider(),
     ...checks.map(ch => design.row(ch.label, `${ch.ok ? design.EMOJI.success : design.EMOJI.warning} ${ch.detail}`)),
+    design.section('AGENT HEALTH'),
+    ...agentLines,
     design.divider()
   ]);
   return {
     text,
     keyboard: design.keyboard([
       [design.textButton('AI Workforce', 'cc_workforce')],
+      [design.textButton('Back to Home', 'cc_home')]
+    ])
+  };
+}
+
+async function buildProviders(userId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) {
+    return {
+      text: design.compose([
+        `${design.EMOJI.ai} ${design.b('AI Providers')}`,
+        design.it('Set up a workspace to manage providers.'),
+        design.divider()
+      ]),
+      keyboard: design.keyboard([
+        [design.textButton('Back to Home', 'cc_home')]
+      ])
+    };
+  }
+  const catalogRows = Object.entries(providers.PROVIDERS).map(([key, p]) => {
+    const cfg = providers.isConfigured(key);
+    return design.row(p.label, cfg ? `${design.EMOJI.success} ${p.defaultModel}` : `${design.EMOJI.info} no key`);
+  });
+  const policy = await providers.getPolicy(getStoreAdapter(), ctx.workspace.id);
+  const policyRows = Object.entries(policy).map(([agentType, p]) => {
+    const label = (workforce.REGISTRY[agentType] || {}).label || agentType;
+    return design.row(label, `${titleCase(p.provider)} · ${p.model}`);
+  });
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('AI Providers')}`,
+    design.it('Routing · policies · costs'),
+    design.divider(),
+    design.section('PROVIDER CATALOG'),
+    ...catalogRows,
+    design.section('AGENT POLICIES'),
+    ...policyRows,
+    design.it('Set an API key to go live. Without keys, runs are simulated at no cost.'),
+    design.divider()
+  ]);
+  const policyKeys = Object.keys(policy);
+  const rows = [];
+  for (let i = 0; i < policyKeys.length; i += 2) {
+    const a = policyKeys[i];
+    const b = policyKeys[i + 1];
+    rows.push([
+      design.textButton(workforce.REGISTRY[a].label, `cc_pol:${a}`),
+      b ? design.textButton(workforce.REGISTRY[b].label, `cc_pol:${b}`) : null
+    ].filter(Boolean));
+  }
+  rows.push([design.textButton('Costs', 'cc_costs'), design.textButton('Back to Home', 'cc_home')]);
+  return {
+    text,
+    keyboard: design.keyboard(rows)
+  };
+}
+
+async function buildProviderPicker(userId, agentType) {
+  const ctx = await getCtx(userId);
+  const label = (workforce.REGISTRY[agentType] || {}).label || agentType;
+  const policy = await providers.getPolicy(getStoreAdapter(), ctx.workspace.id);
+  const current = policy[agentType] || { provider: '—', model: '—' };
+  const rows = Object.keys(providers.PROVIDERS).map(key => [
+    design.textButton(providers.PROVIDERS[key].label, `cc_pol_set:${agentType}:${key}`)
+  ]);
+  rows.push([design.textButton('Cancel', 'cc_providers')]);
+  return {
+    text: design.compose([
+      `${design.EMOJI.ai} ${design.b('Provider for ' + label)}`,
+      design.it(`Current: ${titleCase(current.provider)} · ${current.model}`),
+      design.divider(),
+      design.it('Choose a provider to route this agent.'),
+      design.divider()
+    ]),
+    keyboard: design.keyboard(rows)
+  };
+}
+
+async function buildQueue(userId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) {
+    return {
+      text: design.compose([
+        `${design.EMOJI.ai} ${design.b('Deal Queue')}`,
+        design.it('Set up a workspace to see the queue.'),
+        design.divider()
+      ]),
+      keyboard: design.keyboard([
+        [design.textButton('Back to Home', 'cc_home')]
+      ])
+    };
+  }
+  const snap = await queue.queueSnapshot(getStoreAdapter(), ctx.workspace.id);
+  const movements = await queue.queueMovements(getStoreAdapter(), ctx.workspace.id, 6);
+  const stageLines = snap.stages.map(s => {
+    const tone = s.count > 0 ? 'warning' : 'info';
+    return design.row(`${s.label}`, `${design.EMOJI[tone]} ${s.count}`);
+  });
+  const movementLines = movements.map(m =>
+    `${design.code((m.created_at || '').slice(11, 19))} ${m.company}: ${m.from_stage} → ${m.to_stage}`
+  );
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('Deal Queue')}`,
+    design.it(`${snap.total} deal${snap.total === 1 ? '' : 's'} in pipeline`),
+    design.divider(),
+    ...stageLines,
+    design.section('RECENT MOVEMENT'),
+    ...(movementLines.length ? movementLines : [design.it('No movement yet — run the pipeline demo.')]),
+    design.divider()
+  ]);
+  return {
+    text,
+    keyboard: design.keyboard([
+      [design.textButton('Run Pipeline Demo', 'cc_pipeline_run'), design.textButton('Briefing', 'cc_briefing')],
+      [design.textButton('Back to Home', 'cc_home')]
+    ])
+  };
+}
+
+async function buildBriefing(userId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) {
+    return {
+      text: design.compose([
+        `${design.EMOJI.ai} ${design.b('Executive Briefing')}`,
+        design.it('Set up a workspace to see the briefing.'),
+        design.divider()
+      ]),
+      keyboard: design.keyboard([
+        [design.textButton('Back to Home', 'cc_home')]
+      ])
+    };
+  }
+  const b = await executiveBriefing(getStoreAdapter(), ctx.workspace.id);
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('Executive Briefing')}`,
+    design.it(b.date),
+    design.divider(),
+    design.section('YESTERDAY'),
+    design.row('Prospects', String(b.yesterday.prospects)),
+    design.row('Qualified', String(b.yesterday.qualified)),
+    design.row('Emails sent', String(b.yesterday.emails)),
+    design.row('Proposals', String(b.yesterday.proposals)),
+    design.section('TODAY'),
+    design.row('Opportunities', String(b.today_opportunities)),
+    design.row('Open deals', String(b.open_deals)),
+    design.row('Pipeline value', `$${(b.pipeline_value_cents / 100).toFixed(2)}`),
+    design.row('Meetings needed', String(b.meetings_needed)),
+    design.section('FORECAST'),
+    design.row('Revenue forecast', `$${(b.revenue_forecast_cents / 100).toFixed(2)}`),
+    design.section('ATTENTION'),
+    ...(b.high_risk_deals.length
+      ? b.high_risk_deals.map(d => design.it(`⚠ ${d.company} stalled in ${d.stage} (${d.days} days)`))
+      : [design.it('No stalled deals.')]),
+    design.section('RECOMMENDED ACTION'),
+    design.it(b.recommended_action),
+    design.divider()
+  ]);
+  return {
+    text,
+    keyboard: design.keyboard([
+      [design.textButton('Queue', 'cc_queue'), design.textButton('Costs', 'cc_costs')],
       [design.textButton('Back to Home', 'cc_home')]
     ])
   };
@@ -770,6 +956,12 @@ async function handleCallback(query, bot) {
       return send(await buildCosts(userId));
     case 'cc_health':
       return send(await buildHealth(userId));
+    case 'cc_providers':
+      return send(await buildProviders(userId));
+    case 'cc_queue':
+      return send(await buildQueue(userId));
+    case 'cc_briefing':
+      return send(await buildBriefing(userId));
     case 'cc_audit': {
       if (!isAdmin(userId)) return send(denied('audit feed'));
       return send(buildAudit(0));
@@ -808,6 +1000,25 @@ async function handleCallback(query, bot) {
       if (action.startsWith('cc_timeline_deal:')) {
         const dealId = action.split(':')[1];
         return send(await buildTimeline(userId, dealId));
+      }
+      if (action.startsWith('cc_pol:')) {
+        const agentType = action.split(':')[1];
+        return send(await buildProviderPicker(userId, agentType));
+      }
+      if (action.startsWith('cc_pol_set:')) {
+        const parts = action.split(':');
+        const agentType = parts[1];
+        const providerKey = parts[2];
+        const ctx = await getCtx(userId);
+        if (!ctx) return send(denied('provider policy'));
+        const repos = require('../db/repos').createRepos(getStoreAdapter());
+        const target = providers.PROVIDERS[providerKey];
+        const model = providers.resolveModel(providerKey, target ? target.defaultModel : null);
+        await repos.providerPolicies.set(ctx.workspace.id, agentType, providerKey, model);
+        audit.writeEntry('BOT_POLICY_SET', String(userId), 'success', {
+          agent: agentType, provider: providerKey, model
+        });
+        return send(await buildProviders(userId));
       }
       if (action === 'cc_live') {
         if (!isFounder(userId)) return send(denied('founder actions'));
@@ -884,5 +1095,8 @@ module.exports = {
   buildTimeline,
   buildCosts,
   buildHealth,
+  buildProviders,
+  buildQueue,
+  buildBriefing,
   handleCallback
 };

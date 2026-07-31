@@ -106,6 +106,30 @@ function createRepos(adapter) {
       },
       list(workspace_id, deal_id) {
         return adapter.find('pipeline_events', { workspace_id, deal_id }, { orderBy: 'id', order: 'asc' });
+      },
+      listAll(workspace_id, opts) {
+        const o = opts || {};
+        return adapter.find('pipeline_events', { workspace_id }, {
+          orderBy: 'id',
+          order: o.order || 'desc',
+          limit: o.limit
+        });
+      }
+    },
+
+    providerPolicies: {
+      async set(workspace_id, agent_type, provider, model) {
+        const updated = await adapter.update('provider_policies', { workspace_id, agent_type }, { provider, model });
+        return updated || adapter.insert('provider_policies', { workspace_id, agent_type, provider, model });
+      },
+      get(workspace_id, agent_type) {
+        return adapter.findOne('provider_policies', { workspace_id, agent_type });
+      },
+      list(workspace_id) {
+        return adapter.find('provider_policies', { workspace_id });
+      },
+      remove(workspace_id, agent_type) {
+        return adapter.delete('provider_policies', { workspace_id, agent_type });
       }
     },
 
@@ -146,11 +170,11 @@ function createRepos(adapter) {
     },
 
     agentRuns: {
-      start({ workspace_id, agent_name, provider = null, model = null, input = null }) {
-        return adapter.insert('agent_runs', { workspace_id, agent_name, status: 'running', provider, model, input, started_at: new Date().toISOString() });
+      start({ workspace_id, deal_id = null, agent_name, provider = null, model = null, input = null }) {
+        return adapter.insert('agent_runs', { workspace_id, deal_id, agent_name, status: 'running', provider, model, input, started_at: new Date().toISOString() });
       },
-      complete(workspace_id, id, { status = 'completed', output = null, duration_ms = null, cost_cents = 0 }) {
-        return adapter.update('agent_runs', { workspace_id, id }, { status, output, duration_ms, cost_cents, completed_at: new Date().toISOString() });
+      complete(workspace_id, id, { status = 'completed', output = null, duration_ms = null, cost_cents = 0, provider = null, model = null }) {
+        return adapter.update('agent_runs', { workspace_id, id }, { status, output, duration_ms, cost_cents, provider, model, completed_at: new Date().toISOString() });
       },
       list(workspace_id) {
         return adapter.find('agent_runs', { workspace_id }, { orderBy: 'started_at', order: 'desc' });
@@ -310,6 +334,15 @@ function forWorkspace(adapter, workspaceId) {
     dealNotes: {
       add: (deal_id, agent_name, note) => repos.dealNotes.add({ workspace_id: workspaceId, deal_id, agent_name, note }),
       list: deal_id => repos.dealNotes.list(workspaceId, deal_id)
+    },
+    providerPolicies: {
+      set: (agent_type, provider, model) => repos.providerPolicies.set(workspaceId, agent_type, provider, model),
+      get: agent_type => repos.providerPolicies.get(workspaceId, agent_type),
+      list: () => repos.providerPolicies.list(workspaceId),
+      remove: agent_type => repos.providerPolicies.remove(workspaceId, agent_type)
+    },
+    pipeline: {
+      listAll: opts => repos.pipeline.listAll(workspaceId, opts)
     }
   };
 }
