@@ -20,6 +20,7 @@
 - [Implemented] Telegram bot (@TeosEgypt_bot commands incl. `/sales <prompt>`; inline welcome menu with Features/Pricing/Demo/Affiliate/Contact/Docs panels)
 - [Implemented] Postgres schema (db/schema.sql: deals + audit_trail with updated_at trigger; db/index.js pg pool, `npm run db:migrate`, needs `DATABASE_URL`)
 - [Implemented] Dual-write audit mirror (flat file always; mirrors to audit_trail + syncVaultToDb() when `DATABASE_URL` is set)
+- [Implemented] Sentinel dashboard (`npm run server` → dark-theme BVAP audit console at http://localhost:3000, reads the local vault; `/api/health`, `/api/audit`)
 - [Implemented] Dodo Payments stub (utils/dodoPayments.js, mocks payload when `DODO_API_KEY` missing)
 - [Implemented] Master pipeline test (tests/final_pipeline.test.js: Strategist → Marketer → Negotiator → Treasurer → Closing)
 
@@ -27,8 +28,14 @@
 - [Pending] Multi-tenancy on the DB schema
 - [Pending] User account system
 - [Pending] Real Dodo Payments integration (LIVE key)
-- [Pending] Landing page dashboard
+- [Pending] Pricing tiers activation (Solo Operator waitlist, Professional $199/mo, Enterprise $999/mo — DRY-only until payments go LIVE)
+- [Pending] Marketing landing page
 - [Pending] Automated test runner (npm test)
+
+## Fallback structure
+
+- Audit logging is dual-write: the flat file `data/vault/audit.log` is always written; when `DATABASE_URL` is set, entries mirror to the `audit_trail` Postgres table (Postgres failures are logged, never fatal). `syncVaultToDb()` backfills the file into Postgres on demand.
+- Payments are DRY-first: `utils/dodoPayments.js` returns a mocked payload/URL unless a real `DODO_API_KEY` is present.
 
 ## Known Issues
 

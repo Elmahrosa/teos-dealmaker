@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "start": "node bot/index.js",
+    "server": "node server/index.js",
     "test:outreach": "node agents/outreach/test.js",
     "test:qualify": "node agents/qualification/test.js",
     "test:sales": "node agents/sales/test.js",
@@ -19,6 +20,7 @@
   },
   "dependencies": {
     "dotenv": "^16.4.5",
+    "express": "^5.2.1",
     "node-telegram-bot-api": "^0.65.0",
     "pg": "^8.22.0"
   }

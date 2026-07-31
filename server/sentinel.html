@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentinel — TEOS DealMaker</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --panel: #131a23;
+    --border: #1f2a37;
+    --text: #d7e1ea;
+    --muted: #7c8a99;
+    --gold: #d4af37;
+    --green: #3fbf6f;
+    --red: #e05656;
+    --blue: #4aa3df;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    padding: 24px;
+  }
+  header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  h1 { font-size: 22px; letter-spacing: 2px; color: var(--gold); }
+  header .sub { color: var(--muted); font-size: 13px; }
+  #mode { font-weight: 700; padding: 2px 10px; border-radius: 10px; font-size: 12px; }
+  #mode.dry { background: #2a2410; color: var(--gold); }
+  #mode.live { background: #2a1212; color: var(--red); }
+  .stats { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .stat {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 18px;
+    min-width: 140px;
+  }
+  .stat .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+  .stat .value { font-size: 22px; margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  th, td { text-align: left; padding: 8px 12px; font-size: 12px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-size: 11px; }
+  td.mono { font-family: Consolas, monospace; font-size: 11px; color: var(--blue); }
+  .status-success { color: var(--green); }
+  .status-error, .status-blocked, .status-denied { color: var(--red); }
+  .status-in_progress, .status-dry_run { color: var(--gold); }
+  #empty { color: var(--muted); padding: 20px; text-align: center; }
+  footer { margin-top: 20px; color: var(--muted); font-size: 11px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>🏛️ SENTINEL</h1>
+    <span class="sub">TEOS DealMaker · BVAP Audit Console</span>
+    <span id="mode" class="dry">…</span>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="label">Mode</div><div class="value" id="stat-mode">—</div></div>
+    <div class="stat"><div class="label">Audit Entries</div><div class="value" id="stat-total">—</div></div>
+    <div class="stat"><div class="label">Last Update</div><div class="value" id="stat-time" style="font-size:14px;">—</div></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>Action</th>
+        <th>Target</th>
+        <th>Status</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+    <tbody id="rows">
+      <tr><td id="empty" colspan="5">Loading audit trail…</td></tr>
+    </tbody>
+  </table>
+
+  <footer>DRY-first governance · every agent decision is written to the BVAP vault</footer>
+
+<script>
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function statusClass(s) {
+    if (/error|blocked|denied|failed/i.test(s)) return 'status-error';
+    if (/in_progress|dry_run/i.test(s)) return 'status-in_progress';
+    if (/success|sent|won/i.test(s)) return 'status-success';
+    return '';
+  }
+
+  async function refresh() {
+    try {
+      const [health, audit] = await Promise.all([
+        fetch('/api/health').then(r => r.json()),
+        fetch('/api/audit?limit=100').then(r => r.json())
+      ]);
+
+      document.getElementById('stat-mode').textContent = health.mode;
+      document.getElementById('stat-total').textContent = health.totalEntries;
+      document.getElementById('stat-time').textContent = new Date(health.timestamp).toLocaleTimeString();
+
+      const modeEl = document.getElementById('mode');
+      modeEl.textContent = health.mode;
+      modeEl.className = health.mode.toLowerCase();
+
+      const rows = document.getElementById('rows');
+      if (!audit.length) {
+        rows.innerHTML = '<tr><td id="empty" colspan="5">No audit entries yet.</td></tr>';
+        return;
+      }
+      rows.innerHTML = audit.map(e => {
+        const t = (e.timestamp || '').replace('T', ' ').slice(0, 19);
+        const details = e.details ? JSON.stringify(e.details) : '';
+        return `<tr>
+          <td class="mono">${esc(t)}</td>
+          <td>${esc(e.action)}</td>
+          <td>${esc(e.target)}</td>
+          <td class="${statusClass(e.status)}">${esc(e.status)}</td>
+          <td class="mono">${esc(details.length > 120 ? details.slice(0, 120) + '…' : details)}</td>
+        </tr>`;
+      }).join('');
+    } catch (err) {
+      document.getElementById('rows').innerHTML =
+        '<tr><td id="empty" colspan="5">Failed to load audit trail: ' + esc(err.message) + '</td></tr>';
+    }
+  }
+
+  refresh();
+  setInterval(refresh, 5000);
+</script>
+</body>
+</html>
