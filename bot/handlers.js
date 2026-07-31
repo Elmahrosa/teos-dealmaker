@@ -20,9 +20,10 @@ function handleMessage(msg) {
     }
 
     const actionType = 'BOT_COMMAND_' + command.slice(1).toUpperCase();
+    const remainder = parts.slice(1).join(' ').trim();
 
     try {
-      const result = handler(chatId, userId, parts[1] ? Number(parts[1]) : undefined);
+      const result = handler(chatId, userId, remainder);
       audit.writeEntry(actionType, command, 'success', { userId, mode: getMode() });
       return result;
     } catch (err) {

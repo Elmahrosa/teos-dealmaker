@@ -27,7 +27,8 @@ function cmdStart(chatId) {
       `/audit — recent audit log (admin)`,
       `/outreach — run outreach cycle test`,
       `/qualify — run qualification test`,
-      `/sales — run sales test`
+      `/sales — run sales test`,
+      `/sales &lt;prompt&gt; — end-to-end sales flow (draft → gatekeeper → route)`
     ].join('\n')
   };
 }
@@ -73,8 +74,10 @@ function cmdAudit(chatId, userId, limit) {
   if (!isAdmin(userId)) {
     return { chatId, text: `⛔ Admin only.` };
   }
+  const n = Number(limit);
+  const size = isNaN(n) || n <= 0 ? 10 : n;
   const entries = audit.readVault();
-  const recent = entries.slice(-(limit || 10));
+  const recent = entries.slice(-size);
   if (recent.length === 0) {
     return { chatId, text: `No audit entries yet.` };
   }
@@ -106,7 +109,19 @@ function cmdQualify(chatId) {
   return { chatId, text: `<b>Qualify test</b>: ${result.routing.action} → ${result.routing.target_agent || 'archive'}` };
 }
 
-function cmdSales(chatId) {
+function cmdSales(chatId, userId, prompt) {
+  if (prompt) {
+    const { runSalesFlow } = require('../agents/orchestrator');
+    const result = runSalesFlow(prompt, userId);
+    const lines = [
+      `<b>Sales flow</b>: ${result.status}`,
+      `Objection: ${result.draft.objectionType}`,
+      `Gatekeeper: ${result.review.decision}`,
+      `Draft: ${result.draft.draft}`
+    ];
+    if (result.routed) lines.push(`Route: ${result.routed.status}`);
+    return { chatId, text: lines.join('\n') };
+  }
   const { runSalesCycle } = require('../agents/sales');
   const result = runSalesCycle('This is too expensive for us right now.');
   return { chatId, text: `<b>Sales test</b>: ${result.objection_type} → ${result.suggested_action}` };

@@ -1,5 +1,8 @@
 const { processResponse } = require('../qualification');
 const { runSalesCycle } = require('../sales');
+const { draftResponse } = require('../sales/drafter');
+const { reviewDraft } = require('../gatekeeper');
+const { route } = require('../router');
 const audit = require('../../utils/auditLogger');
 
 function runOrchestrator(response) {
@@ -48,4 +51,35 @@ function runOrchestrator(response) {
   return { classification, routing, outcome };
 }
 
-module.exports = { runOrchestrator };
+function runSalesFlow(prompt, userId) {
+  console.log(`[Orchestrator] Sales request from ${userId}: "${(prompt || '').slice(0, 50)}..."`);
+
+  const draft = draftResponse(prompt, userId);
+  console.log(`[Orchestrator] Sales drafted (${draft.objectionType}): ${draft.draft.slice(0, 60)}...`);
+
+  const review = reviewDraft(draft.draft, 'sales-draft');
+  console.log(`[Orchestrator] Gatekeeper decision: ${review.decision}`);
+
+  let routed = null;
+
+  if (review.decision === 'APPROVE') {
+    const message = { id: 'sales_' + Date.now(), body: review.draft };
+    routed = route(message, 'customer');
+    audit.writeEntry('ORCHESTRATOR_REQUEST_COMPLETED', String(userId || 'unknown'), 'success', {
+      specialist: 'SALES',
+      status: 'success',
+      objection_type: draft.objectionType,
+      decision: review.decision
+    });
+  } else {
+    audit.writeEntry('ORCHESTRATOR_REQUEST_COMPLETED', String(userId || 'unknown'), 'blocked', {
+      specialist: 'SALES',
+      status: 'blocked',
+      reasons: review.reasons
+    });
+  }
+
+  return { draft, review, routed, status: review.decision === 'APPROVE' ? 'success' : 'blocked' };
+}
+
+module.exports = { runOrchestrator, runSalesFlow };
