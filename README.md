@@ -17,7 +17,6 @@
 **❌ PENDING:**
 - [Pending] Negotiation agent
 - [Pending] Closing agent
-- [Pending] Prospecting agent
 - [Pending] Database schema with multi-tenancy
 - [Pending] User account system
 - [Pending] Payment integration (Dodo)
