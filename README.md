@@ -1,6 +1,6 @@
 # TEOS DealMaker
 
-**Status: FOUNDATION + 12 AGENTS + MULTI-TENANT PERSISTENCE + WORKSPACE IDENTITY + PROACTIVE DASHBOARD + AI WORKFORCE RUNTIME + WORKSPACE MEMORY + AGENT COLLABORATION (v0.3.0)**
+**Status: FOUNDATION + 12 AGENTS + MULTI-TENANT PERSISTENCE + WORKSPACE IDENTITY + PROACTIVE DASHBOARD + AI WORKFORCE RUNTIME + WORKSPACE MEMORY + AGENT COLLABORATION + WORKFORCE CONSOLE (v0.4.0)**
 
 **✅ IMPLEMENTED:**
 - [Implemented v0.1.0] Outreach agent (draft → gatekeeper → vault)
@@ -34,6 +34,7 @@
 - [Implemented] AI Workforce runtime (Phase 4: services/workforce.js — agent registry with friendly labels + roles + cadence, `runAgent` wraps any agent execution: records agent_runs (status/duration/cost/output), updates agent runtime state (total_runs/total_cost_cents/last_run_at/next_run_at/provider/model/status), surfaces errors and recovers to ready; `runPipelineDemo` executes the 5-stage pipeline through the runtime and persists a deal + pipeline events; workforce screens — AI Workforce (per-agent Ready/Working/Waiting status), Today's Activity feed (per-agent runs today + latest outcome), per-agent detail panel (status/runs/last/next/provider/cost); schema extended (agents runtime columns + forward-only ALTERs); verified by tests/test-workforce.js)
 - [Implemented] Workspace Memory (Phase 5: services/memory.js — shared memory every agent reads before working: company, industry, products, services, ICP, competitors, brand voice, sales playbook, languages, documents, preferred providers, plus a `past_deals` aggregate from the deals repo; per-agent context slices via CONTEXT_MAP so each agent only receives the keys it needs; `ensureDefaults` seeds the 11 memory keys on workspace provision; memory editor in Settings (view/edit via `cc_memory`/`cc_mem_edit:<key>` callbacks and `/memory`); schema `workspace_memory` table (UNIQUE workspace_id+key, JSONB values); verified by tests/test-memory.js)
 - [Implemented] Agent Collaboration (Phase 5.5: agents hand off work by writing notes to the deal — `deal_notes` table (workspace_id, deal_id, agent_name, note); `runPipelineDemo` produces a visible team chain Strategist → Marketer → Negotiator → Treasurer → Closing with each agent's note surfaced in the pipeline result TEAM NOTES panel; verified in tests/test-workforce.js)
+- [Implemented] Workforce Console + visibility layer (services/workforce.js aggregates — `workforceConsole` (workers busy/ready, today's cost, completed tasks, estimated pipeline from open deals, per-agent live status Running/Completed/Waiting/Ready), `dealTimeline` (per-deal collaboration chain with timestamps + stage transitions), `costSummary` (today's cost by provider + total + avg per task), `healthCheck` (AI Providers/Database/Payments/Audit/Memory/Workers 12/12); Control Center screens — AI Workforce console header + live roster, Deal Timeline (all deals + per-deal deep view), AI Cost Dashboard, Platform Health; latest-run resolution tie-broken by run id (same-millisecond safety); verified by tests/test-console.js)
 
 **❌ PENDING:**
 - [Pending] Live Postgres verification (schema never migrated — no `DATABASE_URL` provided)
@@ -57,7 +58,7 @@
 - Tables: workspaces (owner_user_id, subscription_id), users (telegram_id UNIQUE), workspace_members (role RBAC), subscriptions, dodo_customers, deals, audit_trail (user_id), conversations, messages, agent_runs, provider_usage, pipeline_events, agents (provisioned workforce), workspace_settings (lang/timezone/notifications/theme), workspace_memory (key/value JSONB), deal_notes (agent collaboration hand-offs).
 - Isolation rule: every tenant-owned table carries `workspace_id`; all repository reads/writes filter by it, enforced by `forWorkspace()`.
 - Identity flow: `services/identity.js` — `ensureUser` (telegram_id → user), `getWorkspaceForUser` (user → member → workspace), `onboardWorkspace` (transactional: workspace + owner membership + pending subscription + provision), `uniqueSlug` (collision-safe slug).
-- Verify locally: `node tests/test-multitenancy.js` and `node tests/test-identity.js` and `node tests/test-workspace.js` and `node tests/test-workforce.js` and `node tests/test-memory.js` (in-memory adapter, no DB required).
+- Verify locally: `node tests/test-multitenancy.js` and `node tests/test-identity.js` and `node tests/test-workspace.js` and `node tests/test-workforce.js` and `node tests/test-memory.js` and `node tests/test-console.js` (in-memory adapter, no DB required).
 - Live: set `DATABASE_URL` then `npm run db:migrate`; adapter + repos then target Postgres.
 
 ## Known Issues

@@ -109,6 +109,7 @@ async function buildHome(userId) {
         [design.textButton('Upload Catalog', 'cc_upload_catalog'), design.textButton('Launch Campaign', 'cc_launch_campaign')],
         [design.textButton('Today\'s Activity', 'cc_activity'), design.textButton('AI Guide', 'cc_ai_guide')],
         [design.textButton('Dashboard', 'cc_dashboard'), design.textButton('Pipeline', 'cc_pipeline')],
+        [design.textButton('Timeline', 'cc_timeline'), design.textButton('Costs', 'cc_costs'), design.textButton('Health', 'cc_health')],
         [design.textButton('Settings', 'cc_settings'), design.textButton('Audit Log', 'cc_audit'), design.textButton('Pricing', 'cc_pricing')],
         [design.textButton('Admin', 'cc_admin')]
       ])
@@ -129,6 +130,7 @@ async function buildHome(userId) {
     keyboard: design.keyboard([
       [design.textButton('Dashboard', 'cc_dashboard'), design.textButton('Workforce', 'cc_workforce')],
       [design.textButton('Pipeline', 'cc_pipeline'), design.textButton('Deals', 'cc_deals')],
+      [design.textButton('Timeline', 'cc_timeline'), design.textButton('Costs', 'cc_costs'), design.textButton('Health', 'cc_health')],
       [design.textButton('Audit Log', 'cc_audit'), design.textButton('Pricing', 'cc_pricing')],
       [design.textButton('Admin', 'cc_admin')]
     ])
@@ -194,20 +196,166 @@ async function buildWorkforce(userId) {
       ])
     };
   }
-  const view = await workforce.getWorkforceView(getStoreAdapter(), ctx.workspace.id);
+  const view = await workforce.workforceConsole(getStoreAdapter(), ctx.workspace.id);
+  const statusLine = (a) => `${design.EMOJI[a.tone]} ${a.label} · ${a.display}`;
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b('AI Workforce')}`,
-    design.it(`${view.agents.length} agents · ${view.today_runs_total} runs today`),
+    design.it(`${view.workers_total} Workers · ${view.busy} Busy · ${view.ready} Ready`),
     design.divider(),
-    ...view.agents.map(a =>
-      `${design.row(a.label, workforceStatus(a))}\n${design.it(a.role)}`
-    ),
+    design.row('⚡ Today\'s Cost', `$${(view.today_cost_cents / 100).toFixed(2)}`),
+    design.row('✓ Completed Tasks', String(view.completed_tasks)),
+    design.row('💰 Estimated Pipeline', `$${(view.estimated_pipeline_cents / 100).toFixed(2)}`),
+    design.section('WORKFORCE'),
+    ...view.agents.map(a => statusLine(a)),
     design.divider()
   ]);
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('Today\'s Activity', 'cc_activity')],
+      [design.textButton('Today\'s Activity', 'cc_activity'), design.textButton('Timeline', 'cc_timeline')],
+      [design.textButton('Costs', 'cc_costs'), design.textButton('Health', 'cc_health')],
+      [design.textButton('Back to Home', 'cc_home')]
+    ])
+  };
+}
+
+async function buildTimeline(userId, dealId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) {
+    return {
+      text: design.compose([
+        `${design.EMOJI.ai} ${design.b('Deal Timeline')}`,
+        design.it('Set up a workspace to see the timeline.'),
+        design.divider()
+      ]),
+      keyboard: design.keyboard([
+        [design.textButton('Back to Home', 'cc_home')]
+      ])
+    };
+  }
+  const repos = require('../db/repos').createRepos(getStoreAdapter());
+  if (dealId) {
+    const tl = await workforce.dealTimeline(getStoreAdapter(), ctx.workspace.id, Number(dealId));
+    if (!tl) {
+      return {
+        text: design.compose([
+          `${design.EMOJI.ai} ${design.b('Deal Timeline')}`,
+          design.it('Deal not found.'),
+          design.divider()
+        ]),
+        keyboard: design.keyboard([
+          [design.textButton('All Deals', 'cc_timeline')],
+          [design.textButton('Back to Home', 'cc_home')]
+        ])
+      };
+    }
+    const rows = [
+      ...tl.notes.map(n => `${design.code(n.time ? workforce.shortTime(n.time) : '—')} ${design.b(titleCase(n.agent_name))} ${n.text}`),
+      ...tl.events.map(e => `${design.code(e.time ? workforce.shortTime(e.time) : '—')} ${design.it('Stage')} ${e.text}`)
+    ];
+    const text = design.compose([
+      `${design.EMOJI.ai} ${design.b('Deal Timeline')}`,
+      design.it(`#${tl.deal.id} · ${tl.deal.company_name} · ${tl.deal.stage}`),
+      design.divider(),
+      ...rows,
+      design.divider()
+    ]);
+    return {
+      text,
+      keyboard: design.keyboard([
+        [design.textButton('All Deals', 'cc_timeline')],
+        [design.textButton('Back to Home', 'cc_home')]
+      ])
+    };
+  }
+  const deals = await repos.deals.list(ctx.workspace.id, {});
+  const recent = deals.slice(0, 3);
+  const blocks = recent.length ? (await Promise.all(recent.map(async d => {
+    const notes = await repos.dealNotes.list(ctx.workspace.id, d.id);
+    return [
+      `${design.b(`#${d.id} · ${d.company_name} · ${d.stage}`)}`,
+      ...(notes.length ? notes.map(n => `${design.code('  ·')} ${design.b(titleCase(n.agent_name))} ${n.note}`) : [design.it('  no notes yet')])
+    ];
+  }))).flat() : [design.it('No deals yet — run the pipeline demo.')];
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('Deal Timeline')}`,
+    design.it('How the team collaborated on each deal.'),
+    design.divider(),
+    ...blocks,
+    design.divider()
+  ]);
+  const keyboardRows = recent.map(d => [design.textButton(`Deal #${d.id}`, `cc_timeline_deal:${d.id}`)]);
+  keyboardRows.push([design.textButton('AI Workforce', 'cc_workforce'), design.textButton('Back to Home', 'cc_home')]);
+  return {
+    text,
+    keyboard: design.keyboard(keyboardRows)
+  };
+}
+
+async function buildCosts(userId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) {
+    return {
+      text: design.compose([
+        `${design.EMOJI.ai} ${design.b('AI Cost Dashboard')}`,
+        design.it('Set up a workspace to see costs.'),
+        design.divider()
+      ]),
+      keyboard: design.keyboard([
+        [design.textButton('Back to Home', 'cc_home')]
+      ])
+    };
+  }
+  const c = await workforce.costSummary(getStoreAdapter(), ctx.workspace.id);
+  const providerRows = c.by_provider.length
+    ? c.by_provider.map(p => design.row(titleCase(p.provider), `$${(p.cost_cents / 100).toFixed(2)} · ${p.tasks} tasks`))
+    : [design.it('No provider usage today yet.')];
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('AI Cost Dashboard')}`,
+    design.it('Today'),
+    design.divider(),
+    ...providerRows,
+    design.section('TOTALS'),
+    design.row('Total', `$${(c.today_cost_cents / 100).toFixed(2)}`),
+    design.row('Tasks', String(c.tasks)),
+    design.row('Avg per task', `$${(c.avg_per_task_cents / 100).toFixed(4)}`),
+    design.divider()
+  ]);
+  return {
+    text,
+    keyboard: design.keyboard([
+      [design.textButton('AI Workforce', 'cc_workforce')],
+      [design.textButton('Back to Home', 'cc_home')]
+    ])
+  };
+}
+
+async function buildHealth(userId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) {
+    return {
+      text: design.compose([
+        `${design.EMOJI.ai} ${design.b('Platform Health')}`,
+        design.it('Set up a workspace to see health.'),
+        design.divider()
+      ]),
+      keyboard: design.keyboard([
+        [design.textButton('Back to Home', 'cc_home')]
+      ])
+    };
+  }
+  const checks = await workforce.healthCheck(getStoreAdapter(), ctx.workspace.id, audit.readVault().length);
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('Platform Health')}`,
+    design.it('System status'),
+    design.divider(),
+    ...checks.map(ch => design.row(ch.label, `${ch.ok ? design.EMOJI.success : design.EMOJI.warning} ${ch.detail}`)),
+    design.divider()
+  ]);
+  return {
+    text,
+    keyboard: design.keyboard([
+      [design.textButton('AI Workforce', 'cc_workforce')],
       [design.textButton('Back to Home', 'cc_home')]
     ])
   };
@@ -616,6 +764,12 @@ async function handleCallback(query, bot) {
     }
     case 'cc_activity':
       return send(await buildActivity(userId));
+    case 'cc_timeline':
+      return send(await buildTimeline(userId));
+    case 'cc_costs':
+      return send(await buildCosts(userId));
+    case 'cc_health':
+      return send(await buildHealth(userId));
     case 'cc_audit': {
       if (!isAdmin(userId)) return send(denied('audit feed'));
       return send(buildAudit(0));
@@ -650,6 +804,10 @@ async function handleCallback(query, bot) {
         const key = action.split(':')[1];
         memoryEdit.begin(userId, key);
         return send(buildMemoryEdit(userId, key));
+      }
+      if (action.startsWith('cc_timeline_deal:')) {
+        const dealId = action.split(':')[1];
+        return send(await buildTimeline(userId, dealId));
       }
       if (action === 'cc_live') {
         if (!isFounder(userId)) return send(denied('founder actions'));
@@ -723,5 +881,8 @@ module.exports = {
   buildMemory,
   buildActivity,
   buildAgentDetail,
+  buildTimeline,
+  buildCosts,
+  buildHealth,
   handleCallback
 };

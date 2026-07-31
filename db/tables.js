@@ -52,7 +52,8 @@ const TABLES = {
     timestamps: true
   },
   deal_notes: {
-    columns: ['workspace_id', 'deal_id', 'agent_name', 'note']
+    columns: ['workspace_id', 'deal_id', 'agent_name', 'note'],
+    timestamps: true
   }
 };
 

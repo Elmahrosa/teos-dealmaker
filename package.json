@@ -20,6 +20,7 @@
     "test:workspace": "node tests/test-workspace.js",
     "test:workforce": "node tests/test-workforce.js",
     "test:memory": "node tests/test-memory.js",
+    "test:console": "node tests/test-console.js",
     "test:pipeline": "node tests/final_pipeline.test.js",
     "db:migrate": "node -e \"require('./db').createTables().then(()=>console.log('[db] schema applied')).catch(e=>{console.error('[db] '+e.message);process.exit(1)})\""
   },
