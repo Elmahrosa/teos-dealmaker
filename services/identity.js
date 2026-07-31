@@ -43,6 +43,8 @@ async function ensureUser(adapter, telegramId, extra) {
       email: e.email || null,
       display_name: e.display_name || null
     });
+  } else if (e.display_name && user.display_name !== e.display_name) {
+    user = await adapter.update('users', { telegram_id: telegramId }, { display_name: e.display_name });
   }
   return user;
 }

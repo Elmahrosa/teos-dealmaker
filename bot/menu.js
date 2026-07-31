@@ -53,26 +53,82 @@ function titleCase(str) {
   return String(str || '').replace(/\b\w/g, c => c.toUpperCase());
 }
 
+function greetingFor(timezone) {
+  const now = new Date();
+  let hour = now.getHours();
+  try {
+    hour = Number(new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      hour12: false,
+      timeZone: timezone || 'UTC'
+    }).format(now));
+  } catch (_) { /* keep local hour */ }
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function outreachToday() {
+  const today = new Date().toISOString().slice(0, 10);
+  return audit.readVault().filter(e =>
+    e.action.startsWith('OUTREACH') && (e.timestamp || '').startsWith(today)
+  ).length;
+}
+
+function recentErrors() {
+  const entries = audit.readVault();
+  return entries.slice(-50).filter(e => e.status === 'error').length;
+}
+
+function nextRecommendation(ctx) {
+  if (ctx.deals.total === 0) return 'Import your first leads to start the pipeline.';
+  if (ctx.deals.open === 0) return 'Your pipeline is closed — import new leads to keep revenue flowing.';
+  if (outreachToday() === 0) return 'Run an outreach cycle on your active deals.';
+  return 'Follow up on your active deals to move them forward.';
+}
+
 async function buildHome(userId) {
   const ctx = await getCtx(userId);
   if (ctx) {
+    const name = (ctx.user && ctx.user.display_name) || 'there';
+    const timezone = (ctx.settings && ctx.settings.timezone) || 'UTC';
+    const healthy = ctx.agents.active === ctx.agents.total && recentErrors() === 0;
+    const outreach = outreachToday();
+    const activityLines = [
+      `${healthy ? design.EMOJI.success : design.EMOJI.warning} ${ctx.agents.active} Agents Ready`,
+      ctx.deals.open > 0
+        ? `${design.EMOJI.info} ${ctx.deals.open} Active Deal${ctx.deals.open === 1 ? '' : 's'}`
+        : `${design.EMOJI.info} 0 Active Deals`,
+      outreach > 0
+        ? `${design.EMOJI.success} ${outreach} outreach dispatch${outreach === 1 ? '' : 'es'} today`
+        : `${design.EMOJI.info} No scheduled outreach`,
+      `${healthy ? design.EMOJI.success : design.EMOJI.warning} ${healthy ? 'Workspace Healthy' : 'Attention needed'}`
+    ];
+    const checklist = [
+      `✓ Import Leads`,
+      `✓ Connect CRM`,
+      `✓ Upload Product Catalog`,
+      `✓ Launch First Campaign`
+    ];
     const text = design.compose([
-      `🏢 ${design.b(`Welcome to ${ctx.workspace.name}`)}`,
-      design.it('Workspace Ready'),
+      `${design.EMOJI.info} ${design.b(`${greetingFor(timezone)}, ${name}.`)}`,
+      design.it('Your AI workforce is ready.'),
       design.divider(),
-      design.row('Plan', titleCase(ctx.workspace.plan)),
-      design.row('Members', String(ctx.membersCount)),
-      design.row('Agents', `${ctx.agents.active} Active`),
-      design.row('Revenue Pipeline', ctx.deals.total === 0 ? 'Empty' : `${ctx.deals.open} open · ${ctx.deals.closed} closed`),
-      design.row('Subscription', ctx.subscriptionLabel),
-      design.divider(),
-      design.it('What would you like to do?')
+      design.section('TODAY\'S AI ACTIVITY'),
+      ...activityLines,
+      design.section('NEXT RECOMMENDATION'),
+      design.it(nextRecommendation(ctx)),
+      design.section('TODAY YOU CAN'),
+      ...checklist.map(c => design.it(c)),
+      design.it('Estimated setup time: 4 minutes'),
+      design.divider()
     ]);
     return {
       text,
       keyboard: design.keyboard([
-        [design.textButton('Find Leads', 'cc_workforce'), design.textButton('AI Guide', 'cc_ai_guide')],
-        [design.textButton('Deals', 'cc_deals'), design.textButton('Settings', 'cc_settings')],
+        [design.textButton('Import Leads', 'cc_deals'), design.textButton('Connect CRM', 'cc_connect_crm')],
+        [design.textButton('Upload Catalog', 'cc_upload_catalog'), design.textButton('Launch Campaign', 'cc_launch_campaign')],
+        [design.textButton('AI Guide', 'cc_ai_guide'), design.textButton('Settings', 'cc_settings')],
         [design.textButton('Dashboard', 'cc_dashboard'), design.textButton('Pipeline', 'cc_pipeline')],
         [design.textButton('Audit Log', 'cc_audit'), design.textButton('Pricing', 'cc_pricing')],
         [design.textButton('Admin', 'cc_admin')]
@@ -493,6 +549,15 @@ async function handleCallback(query, bot) {
             console.error('[menu] setWorkspaceLang failed:', err.message));
         }
         return send(await buildSettings(userId));
+      }
+      if (action === 'cc_connect_crm') {
+        return bot.answerCallbackQuery(query.id, { text: 'Coming soon — CRM integration is on the roadmap' }).catch(() => {});
+      }
+      if (action === 'cc_upload_catalog') {
+        return bot.answerCallbackQuery(query.id, { text: 'Coming soon — Company Knowledge is on the roadmap' }).catch(() => {});
+      }
+      if (action === 'cc_launch_campaign') {
+        return bot.answerCallbackQuery(query.id, { text: 'Coming soon — Campaigns arrive with the revenue pipeline' }).catch(() => {});
       }
       return bot.answerCallbackQuery(query.id, { text: 'Unknown action' }).catch(() => {});
     }

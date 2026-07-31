@@ -18,7 +18,9 @@ async function handleStart(chatId, userId) {
 
   const adapter = getStoreAdapter();
   try {
-    const user = await identity.getUserByTelegram(adapter, userId);
+    const user = await identity.ensureUser(adapter, userId, {
+      display_name: msg.from ? msg.from.first_name : null
+    });
     const workspace = user ? await identity.getWorkspaceForUser(adapter, user.id) : null;
     if (workspace) {
       audit.writeEntry('BOT_START_EXISTING', String(userId), 'success', {

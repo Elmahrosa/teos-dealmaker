@@ -94,7 +94,9 @@ async function complete(query, bot) {
   const s = state.get(userId);
   const adapter = getStoreAdapter();
   try {
-    const user = await identity.ensureUser(adapter, userId);
+    const user = await identity.ensureUser(adapter, userId, {
+      display_name: query.from ? query.from.first_name : null
+    });
     const workspace = await identity.onboardWorkspace(adapter, {
       ownerUserId: user.id,
       companyName: s.name,
