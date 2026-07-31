@@ -27,7 +27,6 @@ function cmdStart(chatId) {
       `/audit — recent audit log (admin)`,
       `/outreach — run outreach cycle test`,
       `/qualify — run qualification test`,
-      `/sales — run sales test`,
       `/sales &lt;prompt&gt; — end-to-end sales flow (draft → gatekeeper → route)`
     ].join('\n')
   };
@@ -110,9 +109,35 @@ function cmdQualify(chatId) {
 }
 
 function cmdSales(chatId, userId, prompt) {
-  if (prompt) {
+  if (!prompt) {
+    return {
+      chatId,
+      text: [
+        `Please provide the sales objection after the command.`,
+        ``,
+        `<i>Example:</i>`,
+        `<code>/sales The price is too high</code>`
+      ].join('\n')
+    };
+  }
+
+  audit.writeEntry('BOT_COMMAND_SALES_RECEIVED', String(userId), 'in_progress', {
+    command: '/sales',
+    userId,
+    text: prompt
+  });
+
+  try {
     const { runSalesFlow } = require('../agents/orchestrator');
     const result = runSalesFlow(prompt, userId);
+
+    audit.writeEntry('BOT_COMMAND_SALES_RESPONSE', String(userId), 'success', {
+      userId,
+      objection: result.draft.objectionType,
+      decision: result.review.decision,
+      routed: result.routed ? result.routed.status : null
+    });
+
     const lines = [
       `<b>Sales flow</b>: ${result.status}`,
       `Objection: ${result.draft.objectionType}`,
@@ -121,10 +146,16 @@ function cmdSales(chatId, userId, prompt) {
     ];
     if (result.routed) lines.push(`Route: ${result.routed.status}`);
     return { chatId, text: lines.join('\n') };
+  } catch (error) {
+    audit.writeEntry('BOT_COMMAND_SALES_ERROR', String(userId), 'error', {
+      error: error.message,
+      command: '/sales'
+    });
+    return {
+      chatId,
+      text: `An internal error occurred while processing your request. The incident has been logged.`
+    };
   }
-  const { runSalesCycle } = require('../agents/sales');
-  const result = runSalesCycle('This is too expensive for us right now.');
-  return { chatId, text: `<b>Sales test</b>: ${result.objection_type} → ${result.suggested_action}` };
 }
 
 const COMMANDS = {
