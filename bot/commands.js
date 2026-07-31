@@ -1,6 +1,7 @@
 const { getMode, setMode } = require('../config/mode');
 const audit = require('../utils/auditLogger');
 const { BOT_CONFIG } = require('./config');
+const { WELCOME_TEXT, welcomeKeyboard } = require('./menu');
 
 function isFounder(userId) {
   return BOT_CONFIG.founderId !== null && userId === BOT_CONFIG.founderId;
@@ -11,24 +12,10 @@ function isAdmin(userId) {
 }
 
 function cmdStart(chatId) {
-  const mode = getMode();
   return {
     chatId,
-    text: [
-      `<b>TEOS DealMaker Bot</b>`,
-      ``,
-      `Status: ${mode === 'LIVE' ? '🔴 LIVE' : '🟡 DRY RUN'}`,
-      ``,
-      `Commands:`,
-      `/status — system status`,
-      `/mode — show current mode`,
-      `/live — switch to LIVE (founder only)`,
-      `/dry — switch to DRY`,
-      `/audit — recent audit log (admin)`,
-      `/outreach — run outreach cycle test`,
-      `/qualify — run qualification test`,
-      `/sales &lt;prompt&gt; — end-to-end sales flow (draft → gatekeeper → route)`
-    ].join('\n')
+    text: WELCOME_TEXT,
+    replyMarkup: welcomeKeyboard()
   };
 }
 
