@@ -30,4 +30,26 @@ async function createTables() {
   return getPool().query(schema);
 }
 
-module.exports = { query, getPool, createTables };
+async function createDeal({ companyName, status = 'PROSPECTING', currentAgent = null, dealValue = null }) {
+  const res = await query(
+    `INSERT INTO deals (company_name, status, current_agent, deal_value)
+     VALUES ($1, $2, $3, $4) RETURNING *`,
+    [companyName, status, currentAgent, dealValue]
+  );
+  return res.rows[0];
+}
+
+async function updateDealStatus(id, status) {
+  const res = await query(
+    `UPDATE deals SET status = $2 WHERE id = $1 RETURNING *`,
+    [id, status]
+  );
+  return res.rows[0];
+}
+
+async function getDeals() {
+  const res = await query(`SELECT * FROM deals ORDER BY id`);
+  return res.rows;
+}
+
+module.exports = { query, getPool, createTables, createDeal, updateDealStatus, getDeals };

@@ -19,6 +19,7 @@
 - [Implemented] DRY/LIVE mode toggle (default DRY, founder-controlled; `agents/router.js` vaults in DRY, sends in LIVE)
 - [Implemented] Telegram bot (@TeosEgypt_bot commands, incl. `/sales <prompt>`)
 - [Implemented] Postgres schema (db/schema.sql: deals + audit_trail with updated_at trigger; db/index.js pg pool, `npm run db:migrate`, needs `DATABASE_URL`)
+- [Implemented] Dual-write audit mirror (flat file always; mirrors to audit_trail + syncVaultToDb() when `DATABASE_URL` is set)
 - [Implemented] Dodo Payments stub (utils/dodoPayments.js, mocks payload when `DODO_API_KEY` missing)
 - [Implemented] Master pipeline test (tests/final_pipeline.test.js: Strategist → Marketer → Negotiator → Treasurer → Closing)
 
