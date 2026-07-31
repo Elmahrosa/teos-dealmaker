@@ -14,10 +14,12 @@
     "test:marketer": "node tests/test-marketer.js",
     "test:negotiator": "node tests/test-negotiator.js",
     "test:closing": "node tests/test-closing.js",
-    "test:pipeline": "node tests/final_pipeline.test.js"
+    "test:pipeline": "node tests/final_pipeline.test.js",
+    "db:migrate": "node -e \"require('./db').createTables().then(()=>console.log('[db] schema applied')).catch(e=>{console.error('[db] '+e.message);process.exit(1)})\""
   },
   "dependencies": {
     "dotenv": "^16.4.5",
-    "node-telegram-bot-api": "^0.65.0"
+    "node-telegram-bot-api": "^0.65.0",
+    "pg": "^8.22.0"
   }
 }
