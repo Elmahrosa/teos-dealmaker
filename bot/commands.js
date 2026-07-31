@@ -1,78 +1,67 @@
 const { getMode, setMode } = require('../config/mode');
 const audit = require('../utils/auditLogger');
 const { BOT_CONFIG } = require('./config');
-const { WELCOME_TEXT, welcomeKeyboard } = require('./menu');
+const { isFounder, isAdmin } = require('./access');
+const { buildHome, buildWorkforce, buildPipeline, buildDeals, buildAudit, buildAdmin, buildPricing } = require('./menu');
 const { formatPricingText, pricingButtons } = require('../config/pricing.config');
+const design = require('./design');
 
-function isFounder(userId) {
-  return BOT_CONFIG.founderId !== null && userId === BOT_CONFIG.founderId;
-}
-
-function isAdmin(userId) {
-  return BOT_CONFIG.adminIds.includes(userId) || isFounder(userId);
+function screenResult(chatId, screen) {
+  return { chatId, text: screen.text, replyMarkup: screen.keyboard };
 }
 
 function cmdStart(chatId) {
-  return {
-    chatId,
-    text: WELCOME_TEXT,
-    replyMarkup: welcomeKeyboard()
-  };
+  return screenResult(chatId, buildHome());
 }
 
 function cmdHealth(chatId) {
-  const mode = getMode();
-  return {
-    chatId,
-    text: [
-      `🩺 <b>Health Check</b>`,
-      ``,
-      `Mode: ${mode === 'LIVE' ? '🔴 LIVE' : '🟡 DRY'}`,
-      `Bot: @${BOT_CONFIG.botName}`,
-      `Timestamp: ${new Date().toISOString()}`
-    ].join('\n')
-  };
+  const entries = audit.readVault();
+  const last = entries[entries.length - 1];
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('Health Check')}`,
+    design.it('System status'),
+    design.divider(),
+    design.row('Mode', design.modeBadge(getMode())),
+    design.row('Bot', `@${BOT_CONFIG.botName}`),
+    design.row('Audit entries', `${entries.length}`),
+    design.row('Last activity', last ? `${last.action} · ${(last.timestamp || '').slice(11, 19)}` : '—'),
+    design.row('Timestamp', new Date().toISOString()),
+    design.divider()
+  ]);
+  return { chatId, text };
 }
 
 function cmdMode(chatId) {
-  return { chatId, text: `Current mode: <b>${getMode()}</b>` };
+  const text = design.compose([
+    design.row('Current mode', design.modeBadge(getMode()))
+  ]);
+  return { chatId, text };
 }
 
 function cmdLive(chatId, userId) {
   if (!isFounder(userId)) {
     audit.writeEntry('BOT_LIVE_DENIED', String(userId), 'denied', { reason: 'not founder' });
-    return { chatId, text: `⛔ Founder only.` };
+    return { chatId, text: design.errorPanel('Access denied', 'Founder only.').text };
   }
   setMode('LIVE');
   audit.writeEntry('BOT_MODE', 'system', 'success', { mode: 'LIVE', by: userId });
-  return { chatId, text: `🔴 Switched to <b>LIVE</b> mode.` };
+  return { chatId, text: `${design.row('Mode', design.modeBadge('LIVE'))}\n\n${design.it('Live dispatch enabled.')}` };
 }
 
 function cmdDry(chatId, userId) {
   if (!isAdmin(userId)) {
-    return { chatId, text: `⛔ Admin only.` };
+    return { chatId, text: design.errorPanel('Access denied', 'Admin only.').text };
   }
   setMode('DRY');
   audit.writeEntry('BOT_MODE', 'system', 'success', { mode: 'DRY', by: userId });
-  return { chatId, text: `🟡 Switched to <b>DRY</b> mode.` };
+  return { chatId, text: `${design.row('Mode', design.modeBadge('DRY'))}\n\n${design.it('Vault-only protection enabled.')}` };
 }
 
-function cmdAudit(chatId, userId, limit) {
+function cmdAudit(chatId, userId) {
   if (!isAdmin(userId)) {
-    return { chatId, text: `⛔ Admin only.` };
+    return { chatId, text: design.errorPanel('Access denied', 'Admin only.').text };
   }
-  const n = Number(limit);
-  const size = isNaN(n) || n <= 0 ? 10 : n;
-  const entries = audit.readVault();
-  const recent = entries.slice(-size);
-  if (recent.length === 0) {
-    return { chatId, text: `No audit entries yet.` };
-  }
-  const lines = recent.map(e => {
-    const t = (e.timestamp || '').slice(0, 19);
-    return `<code>${t}</code> ${e.action} ${e.status} → ${e.target}`;
-  });
-  return { chatId, text: [`<b>Recent Audit Log</b>`, ...lines].join('\n') };
+  return screenResult(chatId, buildAudit(0));
 }
 
 function cmdOutreach(chatId) {
@@ -82,7 +71,15 @@ function cmdOutreach(chatId) {
     email: 'test@example.com',
     template: 'intro'
   });
-  return { chatId, text: `<b>Outreach test</b>: ${result.status}\nMessage ID: <code>${result.message_id}</code>` };
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('Outreach')}`,
+    design.it('Draft review and dispatch'),
+    design.divider(),
+    design.row('Status', result.status),
+    design.row('Message ID', design.code(result.message_id)),
+    design.divider()
+  ]);
+  return { chatId, text };
 }
 
 function cmdQualify(chatId) {
@@ -93,20 +90,27 @@ function cmdQualify(chatId) {
     body: 'Sounds great! Let us schedule a demo.',
     industry: 'ai'
   });
-  return { chatId, text: `<b>Qualify test</b>: ${result.routing.action} → ${result.routing.target_agent || 'archive'}` };
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('Qualification')}`,
+    design.it('BANT classification'),
+    design.divider(),
+    design.row('Action', result.routing.action),
+    design.row('Route', result.routing.target_agent || 'archive'),
+    design.divider()
+  ]);
+  return { chatId, text };
 }
 
 function cmdSales(chatId, userId, prompt) {
   if (!prompt) {
-    return {
-      chatId,
-      text: [
-        `Please provide the sales objection after the command.`,
-        ``,
-        `<i>Example:</i>`,
-        `<code>/sales The price is too high</code>`
-      ].join('\n')
-    };
+    const text = design.compose([
+      `${design.EMOJI.ai} ${design.b('Sales Flow')}`,
+      design.it('Provide the objection to process.'),
+      design.divider(),
+      `${design.row('Example', design.code('/sales The price is too high'))}`,
+      design.divider()
+    ]);
+    return { chatId, text };
   }
 
   audit.writeEntry('BOT_COMMAND_SALES_RECEIVED', String(userId), 'in_progress', {
@@ -126,32 +130,50 @@ function cmdSales(chatId, userId, prompt) {
       routed: result.routed ? result.routed.status : null
     });
 
-    const lines = [
-      `<b>Sales flow</b>: ${result.status}`,
-      `Objection: ${result.draft.objectionType}`,
-      `Gatekeeper: ${result.review.decision}`,
-      `Draft: ${result.draft.draft}`
-    ];
-    if (result.routed) lines.push(`Route: ${result.routed.status}`);
-    return { chatId, text: lines.join('\n') };
+    const text = design.compose([
+      `${design.EMOJI.ai} ${design.b('Sales Flow')}`,
+      design.it('Orchestrator → Sales → Gatekeeper'),
+      design.divider(),
+      design.row('Status', design.badge(result.status === 'success' ? 'success' : 'warning')),
+      design.row('Objection', result.draft.objectionType),
+      design.row('Gatekeeper', design.badge(result.review.decision === 'APPROVE' ? 'success' : 'warning')),
+      design.row('Draft', design.code(result.draft.draft)),
+      design.row('Route', result.routed ? result.routed.status : 'blocked'),
+      design.divider()
+    ]);
+    return { chatId, text };
   } catch (error) {
     audit.writeEntry('BOT_COMMAND_SALES_ERROR', String(userId), 'error', {
       error: error.message,
       command: '/sales'
     });
-    return {
-      chatId,
-      text: `An internal error occurred while processing your request. The incident has been logged.`
-    };
+    const text = design.compose([
+      design.errorPanel('Request failed', 'The incident has been logged.'),
+      design.row('Reference', String(userId)),
+      design.divider()
+    ]);
+    return { chatId, text };
   }
 }
 
 function cmdPricing(chatId) {
-  return {
-    chatId,
-    text: formatPricingText(),
-    replyMarkup: pricingButtons()
-  };
+  return { chatId, text: formatPricingText(), replyMarkup: pricingButtons() };
+}
+
+function cmdWorkforce(chatId) {
+  return screenResult(chatId, buildWorkforce());
+}
+
+function cmdPipeline(chatId) {
+  return screenResult(chatId, buildPipeline());
+}
+
+function cmdDeals(chatId) {
+  return screenResult(chatId, buildDeals());
+}
+
+function cmdAdmin(chatId, userId) {
+  return screenResult(chatId, buildAdmin(userId));
 }
 
 const COMMANDS = {
@@ -166,7 +188,11 @@ const COMMANDS = {
   '/outreach': cmdOutreach,
   '/qualify': cmdQualify,
   '/sales': cmdSales,
-  '/pricing': cmdPricing
+  '/pricing': cmdPricing,
+  '/workforce': cmdWorkforce,
+  '/pipeline': cmdPipeline,
+  '/deals': cmdDeals,
+  '/admin': cmdAdmin
 };
 
 module.exports = { COMMANDS, isFounder, isAdmin };

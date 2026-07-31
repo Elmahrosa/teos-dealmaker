@@ -5,6 +5,10 @@ const { handleCallback } = require('./menu');
 const audit = require('../utils/auditLogger');
 const { getMode } = require('../config/mode');
 
+function escapeHtml(text) {
+  return String(text).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+}
+
 const bot = new TelegramBot(BOT_CONFIG.token, { polling: true });
 
 bot.on('message', async (msg) => {
@@ -12,6 +16,7 @@ bot.on('message', async (msg) => {
   try {
     const result = handleMessage(msg);
     if (result && result.chatId && result.text) {
+      await bot.sendChatAction(result.chatId, 'typing').catch(() => {});
       const sendOpts = { parse_mode: 'HTML' };
       if (result.replyMarkup) sendOpts.reply_markup = result.replyMarkup;
       await bot.sendMessage(result.chatId, result.text, sendOpts);
@@ -23,11 +28,24 @@ bot.on('message', async (msg) => {
   } catch (err) {
     console.error('[bot] handler error:', err.message);
     try {
-      await bot.sendMessage(msg.chat.id, '⚠️ An error occurred. Check server logs.');
+      await bot.sendMessage(msg.chat.id, '🔴 <b>Request failed</b>\n\nCheck server logs.');
     } catch (_) { /* ignore */ }
   }
 });
 
-bot.on('callback_query', (query) => handleCallback(query, bot));
+bot.on('callback_query', async (query) => {
+  try {
+    await handleCallback(query, bot);
+  } catch (err) {
+    console.error('[bot] callback error:', err.message);
+    try {
+      await bot.editMessageText('🔴 <b>Action failed</b>\n\n' + escapeHtml(err.message), {
+        chat_id: query.message.chat.id,
+        message_id: query.message.message_id,
+        parse_mode: 'HTML'
+      });
+    } catch (_) { /* ignore */ }
+  }
+});
 
 console.log(`[TEOS DealMaker Bot] @${BOT_CONFIG.botName} polling (mode: ${getMode()})`);
