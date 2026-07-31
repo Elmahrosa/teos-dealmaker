@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEOS DealMaker — Sovereign Sales Court</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --panel: #131a23;
+    --border: #1f2a37;
+    --text: #d7e1ea;
+    --muted: #7c8a99;
+    --gold: #d4af37;
+    --green: #3fbf6f;
+    --blue: #4aa3df;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 24px; }
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 32px; }
+  h1 { font-size: 20px; letter-spacing: 2px; color: var(--gold); }
+  header nav a { color: var(--blue); text-decoration: none; margin-left: 16px; font-size: 14px; }
+  header nav a:hover { color: var(--gold); }
+  .hero { text-align: center; padding: 40px 0 48px; }
+  .hero h2 { font-size: 34px; letter-spacing: 1px; color: var(--text); margin-bottom: 12px; }
+  .hero .gold { color: var(--gold); }
+  .hero p { color: var(--muted); font-size: 17px; max-width: 640px; margin: 0 auto 24px; }
+  .cta { display: inline-block; background: var(--gold); color: #0b0f14; font-weight: 700; padding: 12px 28px; border-radius: 6px; text-decoration: none; letter-spacing: 1px; }
+  .cta:hover { filter: brightness(1.1); }
+  section { margin-bottom: 48px; }
+  h2.sect { font-size: 16px; letter-spacing: 2px; color: var(--gold); text-transform: uppercase; margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
+  .card h3 { font-size: 15px; color: var(--gold); margin-bottom: 8px; }
+  .card p, .card li { color: var(--muted); font-size: 14px; }
+  .card ul { list-style: none; margin-top: 8px; }
+  .card ul li::before { content: "◆ "; color: var(--gold); font-size: 10px; }
+  .price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .price-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 22px; display: flex; flex-direction: column; }
+  .price-card h3 { font-size: 17px; color: var(--gold); margin-bottom: 14px; }
+  .price-row { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--border); padding: 10px 0; }
+  .price-row .cycle { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+  .price-row .amount { font-size: 20px; font-weight: 700; color: var(--text); }
+  .buy { display: block; margin-top: 12px; text-align: center; background: var(--blue); color: #0b0f14; font-weight: 700; padding: 10px; border-radius: 6px; text-decoration: none; font-size: 14px; }
+  .buy:hover { filter: brightness(1.15); }
+  .buy.annual { background: var(--green); }
+  .pid { color: var(--muted); font-size: 11px; margin-top: 10px; text-align: center; }
+  footer { border-top: 1px solid var(--border); padding-top: 20px; color: var(--muted); font-size: 13px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>TEOS DEALMAKER</h1>
+    <nav>
+      <a href="#features">Agents</a>
+      <a href="#pricing">Pricing</a>
+      <a href="/dashboard">Sentinel</a>
+      <a href="/api/health">API</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <h2>The <span class="gold">Sovereign Sales Court</span></h2>
+    <p>A 12-agent autonomous court that qualifies, negotiates, drafts contracts, and closes deals — with a tamper-checked audit trail and payments wired to Dodo.</p>
+    <a class="cta" href="#pricing">Choose a Tier</a>
+  </div>
+
+  <section id="features">
+    <h2 class="sect">The Court</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Lead Inflow</h3>
+        <ul>
+          <li>Prospecting — lead scoring and routing</li>
+          <li>Market Intelligence — prospect fit scoring</li>
+          <li>Outreach — draft review and dispatch</li>
+          <li>Qualification — BANT classification</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Deal Execution</h3>
+        <ul>
+          <li>Strategist — tactical playbooks</li>
+          <li>Marketer — value positioning</li>
+          <li>Sales — objection handling</li>
+          <li>Negotiator — thresholds and terms</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Close &amp; Audit</h3>
+        <ul>
+          <li>Treasurer — contracts and checkout</li>
+          <li>Closing — readiness to won/blocked</li>
+          <li>Gatekeeper — safety review</li>
+          <li>Orchestrator — routing and control</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Foundation</h3>
+        <ul>
+          <li>BVAP audit logging with dual-write mirror</li>
+          <li>Postgres persistence (deals + audit_trail)</li>
+          <li>Telegram bot with inline pricing menu</li>
+          <li>DRY/LIVE mode toggle</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <h2 class="sect">Pricing</h2>
+    <div class="price-grid">
+      {{PRICING_CARDS}}
+    </div>
+  </section>
+
+  <footer>MIT — Elmahrosa International 2026</footer>
+</div>
+</body>
+</html>

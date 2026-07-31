@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const audit = require('../utils/auditLogger');
 const { getMode } = require('../config/mode');
@@ -28,10 +29,28 @@ app.get('/api/audit', (req, res) => {
   res.json(entries.slice(-limit).reverse());
 });
 
+function renderPricingCards() {
+  return PRICING.map(t => `
+    <div class="price-card">
+      <h3>${t.tier}</h3>
+      <div class="price-row"><span class="cycle">Monthly</span><span class="amount">${t.monthly.price}</span></div>
+      <a class="buy" href="${t.monthly.url}">Start ${t.tier} Monthly</a>
+      <div class="price-row"><span class="cycle">Annual</span><span class="amount">${t.annual.price}</span></div>
+      <a class="buy annual" href="${t.annual.url}">Start ${t.tier} Annual</a>
+      <div class="pid">${t.productIds.monthly} / ${t.productIds.annual}</div>
+    </div>
+  `).join('\n');
+}
+
 app.get('/', (req, res) => {
+  const template = fs.readFileSync(path.join(__dirname, 'landing.html'), 'utf8');
+  res.type('html').send(template.replace('{{PRICING_CARDS}}', renderPricingCards()));
+});
+
+app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'sentinel.html'));
 });
 
 app.listen(PORT, () => {
-  console.log(`[Sentinel] TEOS DealMaker dashboard on http://localhost:${PORT}`);
+  console.log(`[Sentinel] TEOS DealMaker server on http://localhost:${PORT} (landing) and http://localhost:${PORT}/dashboard`);
 });
