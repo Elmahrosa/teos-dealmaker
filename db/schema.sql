@@ -246,6 +246,65 @@ CREATE TABLE IF NOT EXISTS integration_connections (
 
 CREATE INDEX IF NOT EXISTS idx_integration_workspace_connector ON integration_connections(workspace_id, connector_id);
 
+ALTER TABLE agent_runs ADD COLUMN IF NOT EXISTS plan_id INTEGER REFERENCES plans(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_agent_runs_workspace_plan ON agent_runs(workspace_id, plan_id);
+
+CREATE TABLE IF NOT EXISTS plans (
+    id SERIAL PRIMARY KEY,
+    workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    goal TEXT NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'planned',
+    priority VARCHAR(30) DEFAULT 'normal',
+    metrics JSONB,
+    version VARCHAR(20),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_plans_workspace_time ON plans(workspace_id, created_at);
+
+CREATE TABLE IF NOT EXISTS plan_steps (
+    id SERIAL PRIMARY KEY,
+    workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    plan_id INTEGER NOT NULL REFERENCES plans(id) ON DELETE CASCADE,
+    step_key VARCHAR(30) NOT NULL,
+    agent_type VARCHAR(80) NOT NULL,
+    step_group VARCHAR(60),
+    depends_on JSONB,
+    task TEXT NOT NULL,
+    priority INTEGER NOT NULL DEFAULT 3,
+    provider VARCHAR(50),
+    model VARCHAR(100),
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    output TEXT,
+    error TEXT,
+    review JSONB,
+    approval JSONB,
+    confidence DOUBLE PRECISION,
+    retries INTEGER NOT NULL DEFAULT 0,
+    attempt INTEGER NOT NULL DEFAULT 0,
+    started_at TIMESTAMP WITH TIME ZONE,
+    completed_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX IF NOT EXISTS idx_plan_steps_workspace_plan ON plan_steps(workspace_id, plan_id);
+
+CREATE TABLE IF NOT EXISTS approval_requests (
+    id SERIAL PRIMARY KEY,
+    workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    plan_id INTEGER REFERENCES plans(id) ON DELETE CASCADE,
+    step_id INTEGER REFERENCES plan_steps(id) ON DELETE CASCADE,
+    agent_type VARCHAR(80) NOT NULL,
+    reason TEXT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    requested_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    decided_at TIMESTAMP WITH TIME ZONE,
+    decided_by INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_approvals_workspace_status ON approval_requests(workspace_id, status);
+
 CREATE OR REPLACE FUNCTION update_modified_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -282,4 +341,14 @@ FOR EACH ROW EXECUTE FUNCTION update_modified_column();
 DROP TRIGGER IF EXISTS update_agents_modtime ON agents;
 CREATE TRIGGER update_agents_modtime
 BEFORE UPDATE ON agents
+FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+
+DROP TRIGGER IF EXISTS update_plans_modtime ON plans;
+CREATE TRIGGER update_plans_modtime
+BEFORE UPDATE ON plans
+FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+
+DROP TRIGGER IF EXISTS update_plan_steps_modtime ON plan_steps;
+CREATE TRIGGER update_plan_steps_modtime
+BEFORE UPDATE ON plan_steps
 FOR EACH ROW EXECUTE FUNCTION update_modified_column();

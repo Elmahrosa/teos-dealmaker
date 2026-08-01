@@ -18,7 +18,7 @@ const workforce = require('../services/workforce');
   });
 
   let view = await workforce.getWorkforceView(adapter, ws.id);
-  assert.strictEqual(view.agents.length, 12, '12 agents in view');
+  assert.strictEqual(view.agents.length, 13, '13 agents in view');
   assert.strictEqual(view.today_runs_total, 0, 'no runs yet');
   const prospector = view.agents.find(a => a.agent_type === 'prospecting');
   assert.strictEqual(prospector.label, 'Prospector', 'friendly label');

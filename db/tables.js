@@ -31,7 +31,7 @@ const TABLES = {
     columns: ['workspace_id', 'conversation_id', 'role', 'content', 'tokens']
   },
   agent_runs: {
-    columns: ['workspace_id', 'deal_id', 'agent_name', 'status', 'input', 'output', 'duration_ms', 'provider', 'model', 'cost_cents', 'started_at', 'completed_at']
+    columns: ['workspace_id', 'deal_id', 'plan_id', 'agent_name', 'status', 'input', 'output', 'duration_ms', 'provider', 'model', 'cost_cents', 'started_at', 'completed_at']
   },
   provider_usage: {
     columns: ['workspace_id', 'provider', 'model', 'input_tokens', 'output_tokens', 'cost_cents'],
@@ -68,6 +68,16 @@ const TABLES = {
   integration_connections: {
     columns: ['workspace_id', 'connector_id', 'status', 'config', 'last_synced_at'],
     timestamps: true
+  },
+  plans: {
+    columns: ['workspace_id', 'title', 'goal', 'status', 'priority', 'metrics', 'version'],
+    timestamps: true
+  },
+  plan_steps: {
+    columns: ['workspace_id', 'plan_id', 'step_key', 'agent_type', 'step_group', 'depends_on', 'task', 'priority', 'provider', 'model', 'status', 'output', 'error', 'review', 'approval', 'confidence', 'retries', 'attempt', 'started_at', 'completed_at']
+  },
+  approval_requests: {
+    columns: ['workspace_id', 'plan_id', 'step_id', 'agent_type', 'reason', 'status', 'requested_at', 'decided_at', 'decided_by']
   }
 };
 

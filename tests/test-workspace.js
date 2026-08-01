@@ -26,8 +26,8 @@ const { getWorkspaceContext, setWorkspaceLang, subscriptionLabel } = require('..
   assert.strictEqual(ctx.workspace.name, 'Acme Ltd', 'workspace name');
   assert.strictEqual(ctx.role, 'owner', 'owner role');
   assert.strictEqual(ctx.membersCount, 1, 'one member');
-  assert.strictEqual(ctx.agents.total, 12, '12 agents provisioned');
-  assert.strictEqual(ctx.agents.active, 12, 'all active');
+  assert.strictEqual(ctx.agents.total, 13, '13 agents provisioned');
+  assert.strictEqual(ctx.agents.active, 13, 'all active');
   assert.strictEqual(ctx.deals.total, 0, 'empty revenue pipeline');
   assert.strictEqual(ctx.deals.open, 0, 'zero open');
   assert.strictEqual(ctx.deals.closed, 0, 'zero closed');

@@ -170,8 +170,8 @@ function createRepos(adapter) {
     },
 
     agentRuns: {
-      start({ workspace_id, deal_id = null, agent_name, provider = null, model = null, input = null }) {
-        return adapter.insert('agent_runs', { workspace_id, deal_id, agent_name, status: 'running', provider, model, input, started_at: new Date().toISOString() });
+      start({ workspace_id, deal_id = null, plan_id = null, agent_name, provider = null, model = null, input = null }) {
+        return adapter.insert('agent_runs', { workspace_id, deal_id, plan_id, agent_name, status: 'running', provider, model, input, started_at: new Date().toISOString() });
       },
       complete(workspace_id, id, { status = 'completed', output = null, duration_ms = null, cost_cents = 0, provider = null, model = null }) {
         return adapter.update('agent_runs', { workspace_id, id }, { status, output, duration_ms, cost_cents, provider, model, completed_at: new Date().toISOString() });
@@ -293,6 +293,48 @@ function createRepos(adapter) {
       remove(workspace_id, connector_id) {
         return adapter.delete('integration_connections', { workspace_id, connector_id });
       }
+    },
+    plans: {
+      create({ workspace_id, title, goal, status = 'planned', priority = 'normal', metrics = null, version = null }) {
+        return adapter.insert('plans', { workspace_id, title, goal, status, priority, metrics, version });
+      },
+      get(workspace_id, id) {
+        return adapter.findOne('plans', { workspace_id, id });
+      },
+      list(workspace_id) {
+        return adapter.find('plans', { workspace_id }, { orderBy: 'id', order: 'desc' });
+      },
+      update(workspace_id, id, changes) {
+        return adapter.update('plans', { workspace_id, id }, changes);
+      }
+    },
+    planSteps: {
+      create({ workspace_id, plan_id, step_key, agent_type, step_group = null, depends_on = null, task, priority = 3, provider = null, model = null }) {
+        return adapter.insert('plan_steps', { workspace_id, plan_id, step_key, agent_type, step_group, depends_on, task, priority, provider, model, status: 'pending', retries: 0, attempt: 0 });
+      },
+      get(workspace_id, id) {
+        return adapter.findOne('plan_steps', { workspace_id, id });
+      },
+      list(workspace_id, plan_id) {
+        return adapter.find('plan_steps', { workspace_id, plan_id }, { orderBy: 'id', order: 'asc' });
+      },
+      update(workspace_id, id, changes) {
+        return adapter.update('plan_steps', { workspace_id, id }, changes);
+      }
+    },
+    approvals: {
+      create({ workspace_id, plan_id = null, step_id = null, agent_type, reason }) {
+        return adapter.insert('approval_requests', { workspace_id, plan_id, step_id, agent_type, reason, status: 'pending' });
+      },
+      get(workspace_id, id) {
+        return adapter.findOne('approval_requests', { workspace_id, id });
+      },
+      list(workspace_id, status = null) {
+        return adapter.find('approval_requests', { workspace_id, ...(status ? { status } : {}) }, { orderBy: 'id', order: 'desc' });
+      },
+      update(workspace_id, id, changes) {
+        return adapter.update('approval_requests', { workspace_id, id }, changes);
+      }
     }
   };
 }
@@ -392,6 +434,24 @@ function forWorkspace(adapter, workspaceId) {
       get: connector_id => repos.integrations.get(workspaceId, connector_id),
       list: () => repos.integrations.list(workspaceId),
       remove: connector_id => repos.integrations.remove(workspaceId, connector_id)
+    },
+    plans: {
+      create: data => repos.plans.create({ ...data, workspace_id: workspaceId }),
+      get: id => repos.plans.get(workspaceId, id),
+      list: () => repos.plans.list(workspaceId),
+      update: (id, changes) => repos.plans.update(workspaceId, id, changes)
+    },
+    planSteps: {
+      create: data => repos.planSteps.create({ ...data, workspace_id: workspaceId }),
+      get: id => repos.planSteps.get(workspaceId, id),
+      list: plan_id => repos.planSteps.list(workspaceId, plan_id),
+      update: (id, changes) => repos.planSteps.update(workspaceId, id, changes)
+    },
+    approvals: {
+      create: data => repos.approvals.create({ ...data, workspace_id: workspaceId }),
+      get: id => repos.approvals.get(workspaceId, id),
+      list: status => repos.approvals.list(workspaceId, status),
+      update: (id, changes) => repos.approvals.update(workspaceId, id, changes)
     },
     pipeline: {
       listAll: opts => repos.pipeline.listAll(workspaceId, opts)

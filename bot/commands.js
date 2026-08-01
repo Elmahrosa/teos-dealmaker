@@ -2,11 +2,12 @@ const { getMode, setMode } = require('../config/mode');
 const audit = require('../utils/auditLogger');
 const { BOT_CONFIG } = require('./config');
 const { isFounder, isAdmin } = require('./access');
-const { buildHome, buildWorkforce, buildPipeline, buildDeals, buildAudit, buildAdmin, buildPricing, buildMemory, buildCosts, buildHealth, buildProviders, buildQueue, buildBriefing, buildIntelligence, buildKnowledgeDocs, buildAskResult, buildIntegrations } = require('./menu');
+const { buildHome, buildWorkforce, buildPipeline, buildDeals, buildAudit, buildAdmin, buildPricing, buildMemory, buildCosts, buildHealth, buildProviders, buildQueue, buildBriefing, buildIntelligence, buildKnowledgeDocs, buildAskResult, buildIntegrations, buildLearn, buildMissions, buildApprovals, buildMissionGoalPrompt, launchMission1, launchGoalMission } = require('./menu');
 const { formatPricingText, pricingButtons } = require('../config/pricing.config');
 const design = require('./design');
 const identity = require('../services/identity');
 const intelligence = require('../services/intelligence');
+const learning = require('../services/learning');
 const { getStoreAdapter } = require('./store');
 
 function screenResult(chatId, screen) {
@@ -234,6 +235,30 @@ async function cmdAsk(chatId, userId, remainder) {
   return screenResult(chatId, buildAskResult(userId, remainder, result));
 }
 
+async function cmdLearn(chatId, userId) {
+  const adapter = getStoreAdapter();
+  const user = await identity.getUserByTelegram(adapter, userId);
+  const workspace = user ? await identity.getWorkspaceForUser(adapter, user.id) : null;
+  if (!workspace) return screenResult(chatId, await buildHome(userId));
+  const progress = await learning.progress(adapter, workspace.id);
+  return screenResult(chatId, await buildLearn(userId, progress, null));
+}
+
+async function cmdMissions(chatId, userId) {
+  return screenResult(chatId, await buildMissions(userId));
+}
+
+async function cmdApprovals(chatId, userId) {
+  return screenResult(chatId, await buildApprovals(userId));
+}
+
+async function cmdMission(chatId, userId, remainder) {
+  if (!remainder) {
+    return screenResult(chatId, await buildMissionGoalPrompt(userId));
+  }
+  return screenResult(chatId, await launchGoalMission(userId, remainder));
+}
+
 function cmdAdmin(chatId, userId) {
   return screenResult(chatId, buildAdmin(userId));
 }
@@ -264,6 +289,11 @@ const COMMANDS = {
   '/documents': cmdDocuments,
   '/ask': cmdAsk,
   '/integrations': cmdIntegrations,
+  '/learn': cmdLearn,
+  '/missions': cmdMissions,
+  '/mission': cmdMission,
+  '/workflow': cmdMissions,
+  '/approvals': cmdApprovals,
   '/admin': cmdAdmin
 };
 

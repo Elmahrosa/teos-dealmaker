@@ -3,7 +3,11 @@ const EMOJI = {
   info: '🔵',
   warning: '🟡',
   critical: '🔴',
-  ai: '🤖'
+  ai: '🤖',
+  rocket: '🚀',
+  target: '📈',
+  globe: '🌍',
+  brain: '🧠'
 };
 
 const STATUS_LABEL = {

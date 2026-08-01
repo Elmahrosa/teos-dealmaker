@@ -122,10 +122,12 @@ async function complete(query, bot) {
       design.row('Subscription', design.badge('warning')),
       design.divider(),
       design.it(i18n.t(userId, 'onb_plan_note')),
+      design.it('Next: Mission 0 teaches your revenue team what you sell, to whom, and how — every answer is saved as you type.'),
       !isPersistent() ? design.it(i18n.t(userId, 'onb_ephemeral')) : null,
       design.divider()
     ], design.keyboard([
-      [design.textButton(i18n.t(userId, 'onb_open_cc'), 'cc_home')]
+      [design.textButton('Start Mission 0 — Learn your business', 'cc_learn')],
+      [design.textButton('Skip for now', 'cc_home')]
     ]));
     await bot.answerCallbackQuery(query.id, { text: i18n.t(userId, 'onb_done') }).catch(() => {});
     await bot.editMessageText(sc.text, {

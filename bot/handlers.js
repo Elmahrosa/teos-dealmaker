@@ -5,8 +5,10 @@ const memory = require('../services/memory');
 const intelligence = require('../services/intelligence');
 const memoryEdit = require('./memoryEdit');
 const knowledgeState = require('./knowledgeState');
+const missionState = require('./missionState');
+const botLearning = require('./learning');
 const { getStoreAdapter } = require('./store');
-const { buildHome, buildMemory, buildAskResult } = require('./menu');
+const { buildHome, buildMemory, buildAskResult, buildMissionRunResult } = require('./menu');
 const audit = require('../utils/auditLogger');
 const { getMode } = require('../config/mode');
 
@@ -70,6 +72,26 @@ async function handleMessage(msg) {
     return onboarding.handleText(chatId, userId, text);
   }
 
+  if (botLearning.pending(userId) && !text.startsWith('/')) {
+    const adapter = getStoreAdapter();
+    try {
+      const user = await identity.getUserByTelegram(adapter, userId);
+      const workspace = user ? await identity.getWorkspaceForUser(adapter, user.id) : null;
+      if (!workspace) {
+        return { chatId, text: 'No workspace found. Run /start to provision one.' };
+      }
+      const res = await botLearning.handleAnswer(userId, adapter, workspace.id, text);
+      if (res.type === 'finished') {
+        botLearning.clear(userId);
+        return { chatId, text: res.prompt, replyMarkup: res.keyboard };
+      }
+      return { chatId, text: res.prompt, replyMarkup: res.keyboard };
+    } catch (err) {
+      audit.writeEntry('BOT_LEARNING_ERROR', String(userId), 'error', { error: err.message });
+      return { chatId, text: `Learning update failed: ${err.message}` };
+    }
+  }
+
   const kgFlow = knowledgeState.pending(userId);
   if (kgFlow && !text.startsWith('/')) {
     const adapter = getStoreAdapter();
@@ -123,6 +145,25 @@ async function handleMessage(msg) {
     } catch (err) {
       audit.writeEntry('BOT_MEMORY_UPDATE', String(userId), 'error', { key: pendingKey, error: err.message });
       return { chatId, text: `Memory update failed: ${err.message}` };
+    }
+  }
+
+  if (missionState.pending(userId) && !text.startsWith('/')) {
+    missionState.clear(userId);
+    const adapter = getStoreAdapter();
+    try {
+      const user = await identity.getUserByTelegram(adapter, userId);
+      const workspace = user ? await identity.getWorkspaceForUser(adapter, user.id) : null;
+      if (!workspace) {
+        return { chatId, text: 'No workspace found. Run /start to provision one.' };
+      }
+      const runtime = require('../services/workforce/runtime');
+      const result = await runtime.runGoal(adapter, workspace.id, text, { title: text.slice(0, 120), priority: 'high' });
+      audit.writeEntry('BOT_MISSION_GOAL', String(userId), 'success', { planId: result.plan.id, status: result.status });
+      return screenResult(chatId, await buildMissionRunResult(userId, result.plan.id, result));
+    } catch (err) {
+      audit.writeEntry('BOT_MISSION_GOAL', String(userId), 'error', { error: err.message });
+      return { chatId, text: `Mission failed: ${err.message}` };
     }
   }
 

@@ -56,7 +56,7 @@ const queue = require('../services/queue');
   assert.strictEqual(dealCost.company, pipeline.deal.company_name, 'deal cost carries company');
 
   const health = await workforce.agentHealth(adapter, ws.id);
-  assert.strictEqual(health.length, 12, 'health for 12 agents');
+  assert.strictEqual(health.length, 13, 'health for 13 agents');
   const prospector = health.find(a => a.agent_type === 'prospecting');
   assert.strictEqual(prospector.display, 'Ready', 'healthy agent ready');
   assert.strictEqual(prospector.success_pct, 100, '100% success');

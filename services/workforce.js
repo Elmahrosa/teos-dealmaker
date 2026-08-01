@@ -24,6 +24,7 @@ async function intelligencePrompt(adapter, workspaceId, agentType, prompt) {
 
 const REGISTRY = {
   orchestrator: { label: 'Orchestrator', role: 'Routes every request through the right agent', cadence: 5, queue: 'incoming' },
+  revenue_strategist: { label: 'Revenue Strategist', role: 'Decides if a mission makes sense, picks specialists, sets success criteria and budget, and asks for human approval when needed', cadence: 5, queue: 'incoming' },
   prospecting: { label: 'Prospector', role: 'Finds and scores new companies', cadence: 60, queue: 'research' },
   market_intelligence: { label: 'Researcher', role: 'Analyzes companies and prospect fit', cadence: 60, queue: 'research' },
   qualification: { label: 'Qualifier', role: 'Classifies leads by BANT', cadence: 10, queue: 'qualification' },
@@ -103,6 +104,7 @@ async function runAgent(adapter, workspaceId, agentType, fn, opts) {
   const run = await repos.agentRuns.start({
     workspace_id: workspaceId,
     deal_id: o.deal_id || null,
+    plan_id: o.plan_id || null,
     agent_name: agentType,
     provider: o.provider || agent.provider || null,
     model: o.model || agent.model || null,

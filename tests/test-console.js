@@ -28,7 +28,7 @@ const queue = require('../services/queue');
   }), { provider: 'gemini', model: 'flash' });
 
   const consoleView = await workforce.workforceConsole(adapter, ws.id);
-  assert.strictEqual(consoleView.workers_total, 12, '12 workers');
+  assert.strictEqual(consoleView.workers_total, 13, '13 workers');
   assert.strictEqual(consoleView.busy, 0, 'no busy workers after runs');
   assert.strictEqual(consoleView.today_cost_cents, 18, 'today cost sums both runs');
   assert.strictEqual(consoleView.completed_tasks, 2, 'completed tasks across agents');
@@ -80,7 +80,7 @@ const queue = require('../services/queue');
   const checks = await workforce.healthCheck(adapter, ws.id, 5);
   assert.strictEqual(checks.length, 6, 'six health checks');
   const workers = checks.find(c => c.label === 'Workers');
-  assert.strictEqual(workers.detail, '12/12 online', 'workers healthy');
+  assert.strictEqual(workers.detail, '13/13 online', 'workers healthy');
   assert.strictEqual(workers.ok, true, 'workers ok');
   const memoryCheck = checks.find(c => c.label === 'Memory');
   assert.strictEqual(memoryCheck.ok, true, 'memory seeded → ok');

@@ -17,6 +17,10 @@ const { costIntelligence } = require('../services/cost');
 const { executiveBriefing } = require('../services/briefing');
 const queue = require('../services/queue');
 const knowledgeState = require('./knowledgeState');
+const missionState = require('./missionState');
+const botLearning = require('./learning');
+const learning = require('../services/learning');
+const runtime = require('../services/workforce/runtime');
 
 const PIPELINE_STAGES = ['Strategist', 'Marketer', 'Negotiator', 'Treasurer', 'Closing'];
 
@@ -75,75 +79,383 @@ function nextRecommendation(ctx) {
 
 async function buildHome(userId) {
   const ctx = await getCtx(userId);
-  if (ctx) {
-    const name = (ctx.user && ctx.user.display_name) || 'there';
-    const timezone = (ctx.settings && ctx.settings.timezone) || 'UTC';
-    const healthy = ctx.agents.active === ctx.agents.total && recentErrors() === 0;
-    const outreach = outreachToday();
-    const activityLines = [
-      `${healthy ? design.EMOJI.success : design.EMOJI.warning} ${ctx.agents.active} Agents Ready`,
-      ctx.deals.open > 0
-        ? `${design.EMOJI.info} ${ctx.deals.open} Active Deal${ctx.deals.open === 1 ? '' : 's'}`
-        : `${design.EMOJI.info} 0 Active Deals`,
-      outreach > 0
-        ? `${design.EMOJI.success} ${outreach} outreach dispatch${outreach === 1 ? '' : 'es'} today`
-        : `${design.EMOJI.info} No scheduled outreach`,
-      `${healthy ? design.EMOJI.success : design.EMOJI.warning} ${healthy ? 'Workspace Healthy' : 'Attention needed'}`
-    ];
-    const checklist = [
-      `✓ Import Leads`,
-      `✓ Connect CRM`,
-      `✓ Upload Product Catalog`,
-      `✓ Launch First Campaign`
-    ];
+  const isAdminOrFounder = isAdmin(userId) || isFounder(userId);
+  if (!ctx) {
+    const entries = audit.readVault();
     const text = design.compose([
-      `${design.EMOJI.info} ${design.b(`${greetingFor(timezone)}, ${name}.`)}`,
-      design.it('Your AI workforce is ready.'),
+      \`\${design.EMOJI.ai} \${design.b('TEOS DEALMAKER')}\`,
+      design.it('Mission Control — AI Revenue Workforce'),
       design.divider(),
-      design.section('TODAY\'S AI ACTIVITY'),
-      ...activityLines,
-      design.section('NEXT RECOMMENDATION'),
-      design.it(nextRecommendation(ctx)),
-      design.section('TODAY YOU CAN'),
-      ...checklist.map(c => design.it(c)),
-      design.it('Estimated setup time: 4 minutes'),
-      design.divider()
+      \`\${design.row('Status', design.modeBadge(getMode()))}\`,
+      \`\${design.row('Revenue Team', '13 specialists available')}\`,
+      \`\${design.row('Audit', \`\${entries.length} entries\`)}\n\${design.divider()}\`,
+      \`${design.it('Select a module to manage the workforce.')}\`
     ]);
+    // Build keyboard with conditional infrastructure buttons
+    const row1 = [design.textButton('Dashboard', 'cc_dashboard'), design.textButton('My Revenue Team', 'cc_workforce')];
+    const row2 = [design.textButton('Sales Pipeline', 'cc_pipeline'), design.textButton('Deals', 'cc_deals')];
+    const row3 = [design.textButton('Timeline', 'cc_timeline'), design.textButton('Costs', 'cc_costs'), design.textButton('Health', 'cc_health')];
+    const row4 = [];
+    if (isAdminOrFounder) {
+      row4.push(design.textButton('Audit Log', 'cc_audit'));
+    }
+    row4.push(design.textButton('Pricing', 'cc_pricing'));
+    const row5 = [];
+    if (isAdminOrFounder) {
+      row5.push(design.textButton('Admin', 'cc_admin'));
+    }
+    return {
+      text,
+      keyboard: design.keyboard([row1, row2, row3, row4, row5])
+    };
+  }
+  const adapter = getStoreAdapter();
+  const progress = await learning.progress(adapter, ctx.workspace.id);
+  if (!progress.complete) {
+    return buildLearn(userId, progress, ctx);
+  }
+  const name = (ctx.user && ctx.user.display_name) || 'there';
+  const timezone = (ctx.settings && ctx.settings.timezone) || 'UTC';
+  const healthy = ctx.agents.active === ctx.agents.total && recentErrors() === 0;
+  const missions = await runtime.listMissions(adapter, ctx.workspace.id);
+  const running = missions.filter(m => ['planned', 'running', 'waiting_approval'].includes(m.status)).length;
+  const completed = missions.filter(m => m.status === 'completed').length;
+  const nextMission = missions.find(m => !['completed', 'failed', 'cancelled'].includes(m.status));
+  const recommendation = nextMission
+    ? \`\${nextMission.title} · \${nextMission.progress}% · next: \${nextMission.next_agent || '—'}\`
+    : 'Start Mission 1 to define your sales strategy.';
+  const text = design.compose([
+    \`\${design.EMOJI.ai} \${design.b('MISSION CONTROL')}\`,
+    design.it(\`\${greetingFor(timezone)}, \${name}.\`),
+    design.divider(),
+    design.section('MISSIONS'),
+    design.row('In flight', String(running)),
+    design.row('Completed', String(completed)),
+    design.section('WORKFORCE'),
+    \`\${healthy ? design.EMOJI.success : design.EMOJI.warning} \${ctx.agents.active} agents ready · \${ctx.deals.open} active deals\`,
+    design.section('NEXT ACTION'),
+    design.it(recommendation),
+    design.divider()
+  ]);
+  if (isAdminOrFounder) {
+    // Admin/Founder see the full original layout
     return {
       text,
       keyboard: design.keyboard([
-        [design.textButton('Import Leads', 'cc_deals'), design.textButton('Connect CRM', 'cc_connect_crm')],
-        [design.textButton('Upload Catalog', 'cc_upload_catalog'), design.textButton('Launch Campaign', 'cc_launch_campaign')],
-        [design.textButton('Today\'s Activity', 'cc_activity'), design.textButton('AI Guide', 'cc_ai_guide')],
-        [design.textButton('Dashboard', 'cc_dashboard'), design.textButton('Pipeline', 'cc_pipeline')],
-        [design.textButton('Timeline', 'cc_timeline'), design.textButton('Costs', 'cc_costs'), design.textButton('Health', 'cc_health')],
-        [design.textButton('Providers', 'cc_providers'), design.textButton('Queue', 'cc_queue'), design.textButton('Briefing', 'cc_briefing')],
-        [design.textButton('Intelligence', 'cc_intelligence'), design.textButton('Integrations', 'cc_integrations'), design.textButton('Ask the AI', 'cc_kg_ask')],
-        [design.textButton('Settings', 'cc_settings'), design.textButton('Audit Log', 'cc_audit'), design.textButton('Pricing', 'cc_pricing')],
-        [design.textButton('Admin', 'cc_admin')]
+        [design.textButton('Mission 1 · Sell TEOS Dealmaker', 'cc_mission1'), design.textButton('New Mission', 'cc_mission_goal')],
+        [design.textButton('Mission Center', 'cc_missions'), design.textButton('Approvals', 'cc_approvals')],
+        [design.textButton('Sales Pipeline', 'cc_pipeline'), design.textButton('My Revenue Team', 'cc_workforce')],
+        [design.textButton('Activity', 'cc_activity'), design.textButton('Daily Summary', 'cc_briefing'), design.textButton('Costs', 'cc_costs')],
+        [design.textButton('Health', 'cc_health'), design.textButton('Intelligence', 'cc_intelligence'), design.textButton('Integrations', 'cc_integrations')],
+        [design.textButton('Settings', 'cc_settings'), design.textButton('Audit Log', 'cc_audit'), design.textButton('Admin', 'cc_admin')]
       ])
     };
+  } else {
+    // Regular users see only a restricted set
+    const allowedButtons = [
+      { text: 'Mission 1 · Sell TEOS Dealmaker', callback: 'cc_mission1' },
+      { text: 'New Mission', callback: 'cc_mission_goal' },
+      { text: 'Mission Center', callback: 'cc_missions' },
+      { text: 'Approvals', callback: 'cc_approvals' },
+      { text: 'Company Intelligence', callback: 'cc_intelligence' },
+      { text: 'Pipeline', callback: 'cc_pipeline' },
+      { text: 'Settings', callback: 'cc_settings' }
+    ];
+    const rows = [];
+    for (let i = 0; i < allowedButtons.length; i += 2) {
+      const pair = allowedButtons.slice(i, i + 2);
+      const row = pair.map(b => design.textButton(b.text, b.callback));
+      rows.push(row);
+    }
+    return {
+      text,
+      keyboard: design.keyboard(rows)
+    };
   }
-  const entries = audit.readVault();
+}
+
+async function buildLearn(userId, progress, ctx) {
+  const p = progress || {};
+  const pct = p.pct || 0;
+  const fill = Math.round((pct / 100) * 10);
+  const bar = '█'.repeat(fill) + '░'.repeat(10 - fill);
+  const sectionLines = [
+    `🏢 Company Intelligence    ${p.companyAnswered || 0}/${p.companyTotal || 0}`,
+    `📦 Product Intelligence    ${p.products || 0} product${(p.products || 0) === 1 ? '' : 's'}`,
+    `📖 Sales Playbook          ${p.playbookAnswered || 0}/${p.playbookTotal || 0}`,
+    `👥 Customer Personas       ${p.personas || 0} persona${(p.personas || 0) === 1 ? '' : 's'}`
+  ];
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('TEOS DEALMAKER')}`,
-    design.it('AI Revenue Workforce — Control Center'),
+    `${design.EMOJI.ai} ${design.b('Welcome! Your AI Revenue Team is ready.')}`,
+    design.it('What would you like to accomplish?'),
     design.divider(),
-    `${design.row('Status', design.modeBadge(getMode()))}`,
-    `${design.row('Workforce', '12 agents available')}`,
-    `${design.row('Audit', `${entries.length} entries`)}\n${design.divider()}`,
-    `${design.it('Select a module to manage the workforce.')}`
+    `${design.EMOJI.rocket} ${design.b('Sell TEOS Dealmaker')} — learn your business, then build strategy, prospects and first outreach.`,
+    `${design.EMOJI.target} ${design.b('Find New Customers')} — run a full revenue pipeline for your known products.`,
+    `${design.EMOJI.globe} ${design.b('Analyze a Market')} — research a market and map opportunity.`,
+    `${design.EMOJI.brain} ${design.b('Build Company Intelligence')} — finish the learning interview.`,
+    design.divider(),
+    `${design.code(bar)} ${design.b('Company Knowledge ' + pct + '%')}`,
+    ...sectionLines,
+    design.divider()
   ]);
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('Dashboard', 'cc_dashboard'), design.textButton('Workforce', 'cc_workforce')],
-      [design.textButton('Pipeline', 'cc_pipeline'), design.textButton('Deals', 'cc_deals')],
-      [design.textButton('Timeline', 'cc_timeline'), design.textButton('Costs', 'cc_costs'), design.textButton('Health', 'cc_health')],
-      [design.textButton('Audit Log', 'cc_audit'), design.textButton('Pricing', 'cc_pricing')],
-      [design.textButton('Admin', 'cc_admin')]
+      [design.textButton('🚀 Sell TEOS Dealmaker', 'cc_mission1')],
+      [design.textButton('📈 Find New Customers', 'cc_mission2'), design.textButton('🌍 Analyze a Market', 'cc_mission_market')],
+      [design.textButton('🧠 Build Company Intelligence', 'cc_learn')],
+      [design.textButton('Mission Center', 'cc_missions')]
     ])
   };
+}
+
+async function buildMissions(userId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) {
+    return {
+      text: design.compose([
+      `${design.EMOJI.ai} ${design.b('Mission Center')}`,
+      design.it('Set up a workspace to run missions.'),
+        design.divider()
+      ]),
+      keyboard: design.keyboard([
+        [design.textButton('Back to Home', 'cc_home')]
+      ])
+    };
+  }
+  const adapter = getStoreAdapter();
+  const progress = await learning.progress(adapter, ctx.workspace.id);
+  const missions = await runtime.listMissions(adapter, ctx.workspace.id);
+  const missionLines = missions.length
+    ? missions.slice(0, 8).map(m => {
+      const status = m.status === 'waiting_approval' ? '🟡 awaiting your approval' : m.status === 'completed' ? '🟢 completed' : m.status === 'failed' ? '🔴 failed' : m.status === 'budget_exceeded' ? '🔴 budget exceeded' : '🟡 in flight';
+      return `${design.b(m.title)}\n${design.it(status + ' · ' + m.progress + '% · ' + m.completed_steps + '/' + m.total_steps + ' steps')}`;
+    })
+    : [design.it('No missions yet — start Mission 1 below.')];
+  const rows = [];
+    if (progress.complete) {
+      rows.push([design.textButton('Mission 1 · Sell TEOS Dealmaker', 'cc_mission1'), design.textButton('Mission 2 · Revenue Pipeline', 'cc_mission2')]);
+      rows.push([design.textButton('New Custom Mission', 'cc_mission_goal')]);
+    } else {
+      rows.push([design.textButton('Complete Mission 0 · Learn First', 'cc_learn')]);
+    }
+  if (missions.length) {
+    const missionRows = missions.slice(0, 8).map(m => [design.textButton(`#${m.id} ${m.title.slice(0, 22)}`, `cc_mission:${m.id}`)]);
+    rows.push(...missionRows);
+  }
+  rows.push([design.textButton('Approvals', 'cc_approvals'), design.textButton('Back to Home', 'cc_home')]);
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('Mission Center')}`,
+    design.it('Every mission starts with the Revenue Strategist: it decides if the mission makes sense, picks the specialists, sets success criteria and a budget, and asks for human approval before anything ships.'),
+    design.divider(),
+    design.section('YOUR MISSIONS'),
+    ...missionLines,
+    design.divider()
+  ]);
+  return { text, keyboard: design.keyboard(rows) };
+}
+
+async function buildMissionDetail(userId, planId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  const adapter = getStoreAdapter();
+  const repos = require('../db/repos').createRepos(adapter);
+  const plan = await repos.plans.get(ctx.workspace.id, Number(planId));
+  if (!plan) return { text: design.errorPanel('Mission not found', String(planId)).text, keyboard: null };
+  const steps = await repos.planSteps.list(ctx.workspace.id, Number(planId));
+  const stepLines = steps.map(s => {
+    const tone = s.status === 'completed' ? '🟢' : s.status === 'awaiting_approval' ? '🟡' : s.status === 'failed' ? '🔴' : s.status === 'skipped' ? '⚪' : '◽';
+    const out = s.status === 'completed' && s.output ? `\n${design.it(String(s.output).split('\n')[0].slice(0, 80))}` : '';
+    return `${tone} ${design.b(s.agent_type)} · ${s.step_key}${out}`;
+  });
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('Mission #' + plan.id + ' · ' + plan.title)}`,
+    design.it(plan.goal),
+    design.divider(),
+    design.row('Status', design.badge(plan.status === 'completed' ? 'success' : plan.status === 'waiting_approval' ? 'warning' : 'info')),
+    design.row('Priority', String(plan.priority || 'normal')),
+    design.row('Cost', `$${(((plan.metrics && plan.metrics.total_cost_cents) || 0) / 100).toFixed(2)}`),
+    design.section('STEPS'),
+    ...stepLines,
+    design.divider()
+  ]);
+  const rows = [];
+  if (plan.status === 'waiting_approval') rows.push([design.textButton('Review Approval', 'cc_approvals')]);
+  if (plan.status === 'running' || plan.status === 'planned' || plan.status === 'paused') {
+    rows.push([
+      design.textButton(plan.status === 'paused' ? 'Resume' : 'Pause', `cc_mission_${plan.status === 'paused' ? 'resume' : 'pause'}:${plan.id}`)
+    ]);
+  }
+  rows.push([design.textButton('Missions', 'cc_missions'), design.textButton('Back to Home', 'cc_home')]);
+  return { text, keyboard: design.keyboard(rows) };
+}
+
+async function buildApprovals(userId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) {
+    return {
+      text: design.compose([
+        `${design.EMOJI.ai} ${design.b('Approvals')}`,
+        design.it('Set up a workspace first.'),
+        design.divider()
+      ]),
+      keyboard: design.keyboard([
+        [design.textButton('Back to Home', 'cc_home')]
+      ])
+    };
+  }
+  const adapter = getStoreAdapter();
+  const repos = require('../db/repos').createRepos(adapter);
+  const pending = await repos.approvals.list(ctx.workspace.id, 'pending');
+  const planCache = {};
+  const lines = pending.length
+    ? pending.map(a => {
+      let title = a.agent_type;
+      if (a.plan_id) {
+        if (!planCache[a.plan_id]) planCache[a.plan_id] = repos.plans.get(ctx.workspace.id, a.plan_id);
+        const p = planCache[a.plan_id];
+        if (p) title = p.title;
+      }
+      return `${design.EMOJI.warning} ${design.b(title)}\n${design.it((a.reason || '').slice(0, 120))}`;
+    })
+    : [design.it('No pending approvals.')];
+  const rows = [];
+  if (pending.length) {
+    const apprRows = pending.map(a => [design.textButton(`Approve #${a.id}`, `cc_appr:${a.id}:approve`), design.textButton(`Reject #${a.id}`, `cc_appr:${a.id}:reject`)]);
+    rows.push(...apprRows);
+  }
+  rows.push([design.textButton('Missions', 'cc_missions'), design.textButton('Back to Home', 'cc_home')]);
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('Approvals')}`,
+    design.it('Missions pause here until you decide — nothing is sent, created or issued without your approval.'),
+    design.divider(),
+    ...lines,
+    design.divider()
+  ]);
+  return { text, keyboard: design.keyboard(rows) };
+}
+
+async function buildMissionGoalPrompt(userId) {
+  return {
+    text: design.compose([
+      `${design.EMOJI.ai} ${design.b('New Mission')}`,
+      design.divider(),
+      design.it('Type your mission goal. The Revenue Strategist will decide whether it makes sense and which specialists to deploy.'),
+      design.it('Examples:'),
+      design.code('Research our top competitors and explain how we win.'),
+      design.code('Build an outreach sequence for fintech founders in the US.'),
+      design.code('Prepare a pricing strategy for our Enterprise plan.'),
+      design.divider()
+    ]),
+    keyboard: design.keyboard([
+      [design.textButton('Cancel', 'cc_missions')]
+    ])
+  };
+}
+
+async function buildMissionRunResult(userId, planId, extra) {
+  const ctx = await getCtx(userId);
+  const adapter = getStoreAdapter();
+  const repos = require('../db/repos').createRepos(adapter);
+  const plan = await repos.plans.get(ctx.workspace.id, planId);
+  const steps = await repos.planSteps.list(ctx.workspace.id, planId);
+  const status = plan ? plan.status : 'completed';
+  const stepLines = steps.map(s => {
+    const tone = s.status === 'completed' ? '🟢' : s.status === 'awaiting_approval' ? '🟡' : s.status === 'failed' ? '🔴' : '◽';
+    const out = s.status === 'completed' && s.output ? `\n${design.it(String(s.output).split('\n')[0].slice(0, 80))}` : '';
+    return `${tone} ${design.b(s.agent_type)} · ${s.step_key}${out}`;
+  });
+  const strategyBlock = extra && extra.strategy
+    ? `\n\n${design.code(extra.strategy.ascii)}`
+    : '';
+  const lines = [
+    `${design.EMOJI.ai} ${design.b('Mission Launched')}`,
+    design.it(plan ? plan.title : 'Mission'),
+    design.divider(),
+    ...stepLines,
+    design.section('STATUS'),
+    design.row('State', design.badge(status === 'completed' ? 'success' : status === 'waiting_approval' ? 'warning' : 'info')),
+    ...(status === 'waiting_approval' ? [design.it('The mission paused for your approval — review it in Approvals.')] : []),
+    strategyBlock,
+    design.divider()
+  ];
+  const rows = [];
+  if (status === 'waiting_approval') rows.push([design.textButton('Review Approval', 'cc_approvals')]);
+  rows.push([design.textButton('Missions', 'cc_missions'), design.textButton('Back to Home', 'cc_home')]);
+  return { text: design.compose(lines), keyboard: design.keyboard(rows) };
+}
+
+async function launchMission1(userId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  const adapter = getStoreAdapter();
+  const progress = await learning.progress(adapter, ctx.workspace.id);
+  if (!progress.complete) {
+    botLearning.begin(userId);
+    const res = await botLearning.buildPrompt(userId, adapter, ctx.workspace.id);
+    return {
+      text: design.compose([
+        `${design.EMOJI.ai} ${design.b('Mission 1 · Sell TEOS Dealmaker')}`,
+        design.it('Step 1 of 10 — Learn your business. The revenue team builds your strategy, prospects and first outreach as soon as you answer.'),
+        design.divider(),
+        res.prompt
+      ]),
+      keyboard: res.keyboard
+    };
+  }
+  try {
+    const result = await runtime.runSalesStrategy(adapter, ctx.workspace.id, {});
+    audit.writeEntry('BOT_MISSION1_RUN', String(userId), 'success', { planId: result.plan.id, status: result.status });
+    return buildMissionRunResult(userId, result.plan.id, result);
+  } catch (err) {
+    audit.writeEntry('BOT_MISSION1_ERROR', String(userId), 'error', { error: err.message });
+    throw err;
+  }
+}
+
+async function launchMarketMission(userId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  const adapter = getStoreAdapter();
+  const result = await runtime.runGoal(adapter, ctx.workspace.id,
+    'Analyze our target market: research the market, competitors, ideal customers and opportunity, then recommend where to focus.',
+    { title: 'Analyze a Market', priority: 'high' });
+  audit.writeEntry('BOT_MISSION_MARKET', String(userId), 'success', { planId: result.plan.id, status: result.status });
+  return buildMissionRunResult(userId, result.plan.id, result);
+}
+
+async function launchMission2(userId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  const adapter = getStoreAdapter();
+  const progress = await learning.progress(adapter, ctx.workspace.id);
+  if (!progress.complete) {
+    return {
+      text: design.compose([
+        `${design.EMOJI.warning} ${design.b('Mission 2 is locked')}`,
+        design.it('Complete Mission 0 first.'),
+        design.divider()
+      ]),
+      keyboard: design.keyboard([
+        [design.textButton('Continue Learning', 'cc_learn')],
+        [design.textButton('Back to Home', 'cc_home')]
+      ])
+    };
+  }
+  const result = await runtime.runGoal(adapter, ctx.workspace.id,
+    'Run a full revenue pipeline for our target accounts: prospect, qualify, engage, propose and close deals for our known products.',
+    { title: 'Revenue Pipeline', priority: 'high', budgetCents: 1200 });
+  audit.writeEntry('BOT_MISSION2_RUN', String(userId), 'success', { planId: result.plan.id, status: result.status });
+  return buildMissionRunResult(userId, result.plan.id, result);
+}
+
+async function launchGoalMission(userId, goal) {
+  const ctx = await getCtx(userId);
+  if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  const adapter = getStoreAdapter();
+  const result = await runtime.runGoal(adapter, ctx.workspace.id, goal, { title: goal.slice(0, 120), priority: 'high' });
+  audit.writeEntry('BOT_MISSION_GOAL', String(userId), 'success', { planId: result.plan.id, status: result.status });
+  return buildMissionRunResult(userId, result.plan.id, result);
 }
 
 async function buildDashboard(userId) {
@@ -196,7 +508,7 @@ async function buildWorkforce(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('AI Workforce')}`,
+        `${design.EMOJI.ai} ${design.b('My Revenue Team')}`,
         design.it('Set up a workspace to see your workforce.'),
         design.divider()
       ]),
@@ -208,8 +520,8 @@ async function buildWorkforce(userId) {
   const view = await workforce.workforceConsole(getStoreAdapter(), ctx.workspace.id);
   const statusLine = (a) => `${design.EMOJI[a.tone]} ${a.label} · ${a.display}`;
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('AI Workforce')}`,
-    design.it(`${view.workers_total} Workers · ${view.busy} Busy · ${view.ready} Ready`),
+    `${design.EMOJI.ai} ${design.b('My Revenue Team')}`,
+    design.it(`${view.workers_total} Specialists · ${view.busy} Busy · ${view.ready} Ready`),
     design.divider(),
     design.row('⚡ Today\'s Cost', `$${(view.today_cost_cents / 100).toFixed(2)}`),
     design.row('✓ Completed Tasks', String(view.completed_tasks)),
@@ -294,7 +606,7 @@ async function buildTimeline(userId, dealId) {
     design.divider()
   ]);
   const keyboardRows = recent.map(d => [design.textButton(`Deal #${d.id}`, `cc_timeline_deal:${d.id}`)]);
-  keyboardRows.push([design.textButton('AI Workforce', 'cc_workforce'), design.textButton('Back to Home', 'cc_home')]);
+  keyboardRows.push([design.textButton('My Revenue Team', 'cc_workforce'), design.textButton('Back to Home', 'cc_home')]);
   return {
     text,
     keyboard: design.keyboard(keyboardRows)
@@ -345,7 +657,7 @@ async function buildCosts(userId) {
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('Providers', 'cc_providers'), design.textButton('AI Workforce', 'cc_workforce')],
+      [design.textButton('AI Settings', 'cc_providers'), design.textButton('My Revenue Team', 'cc_workforce')],
       [design.textButton('Back to Home', 'cc_home')]
     ])
   };
@@ -384,7 +696,7 @@ async function buildHealth(userId) {
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('AI Workforce', 'cc_workforce')],
+      [design.textButton('My Revenue Team', 'cc_workforce')],
       [design.textButton('Back to Home', 'cc_home')]
     ])
   };
@@ -395,7 +707,7 @@ async function buildProviders(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('AI Providers')}`,
+        `${design.EMOJI.ai} ${design.b('AI Settings')}`,
         design.it('Set up a workspace to manage providers.'),
         design.divider()
       ]),
@@ -467,7 +779,7 @@ async function buildQueue(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Deal Queue')}`,
+        `${design.EMOJI.ai} ${design.b('Progress')}`,
         design.it('Set up a workspace to see the queue.'),
         design.divider()
       ]),
@@ -486,8 +798,8 @@ async function buildQueue(userId) {
     `${design.code((m.created_at || '').slice(11, 19))} ${m.company}: ${m.from_stage} → ${m.to_stage}`
   );
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Deal Queue')}`,
-    design.it(`${snap.total} deal${snap.total === 1 ? '' : 's'} in pipeline`),
+        `${design.EMOJI.ai} ${design.b('Progress')}`,
+        design.it(`${snap.total} deal${snap.total === 1 ? '' : 's'} in pipeline`),
     design.divider(),
     ...stageLines,
     design.section('RECENT MOVEMENT'),
@@ -497,7 +809,7 @@ async function buildQueue(userId) {
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('Run Pipeline Demo', 'cc_pipeline_run'), design.textButton('Briefing', 'cc_briefing')],
+      [design.textButton('Run Pipeline Demo', 'cc_pipeline_run'), design.textButton('Daily Summary', 'cc_briefing')],
       [design.textButton('Back to Home', 'cc_home')]
     ])
   };
@@ -508,7 +820,7 @@ async function buildBriefing(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Executive Briefing')}`,
+        `${design.EMOJI.ai} ${design.b('Daily Summary')}`,
         design.it('Set up a workspace to see the briefing.'),
         design.divider()
       ]),
@@ -545,7 +857,7 @@ async function buildBriefing(userId) {
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('Queue', 'cc_queue'), design.textButton('Costs', 'cc_costs')],
+      [design.textButton('Progress', 'cc_queue'), design.textButton('Costs', 'cc_costs')],
       [design.textButton('Back to Home', 'cc_home')]
     ])
   };
@@ -759,7 +1071,7 @@ async function buildActivity(userId) {
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('AI Workforce', 'cc_workforce')],
+      [design.textButton('My Revenue Team', 'cc_workforce')],
       [design.textButton('Back to Home', 'cc_home')]
     ])
   };
@@ -800,7 +1112,7 @@ async function buildAgentDetail(userId, agentType) {
 
 function buildPipeline() {
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Pipeline')}`,
+    `${design.EMOJI.ai} ${design.b('Sales Pipeline')}`,
     design.it('Final deal flow — 5 stages'),
     design.divider(),
     design.progressBar(PIPELINE_STAGES, -1).join('\n'),
@@ -848,20 +1160,22 @@ async function buildDeals(userId) {
 function buildAiGuide() {
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b('AI Guide')}`,
-    design.it('How your AI workforce works'),
+    design.it('How your revenue team works'),
     design.divider(),
-    design.section('WORKFORCE'),
-    design.it('12 specialized agents run your revenue motion: Prospecting → Qualification → Outreach → Sales → Negotiation → Treasurer → Closing.'),
+    design.section('YOUR REVENUE TEAM'),
+    design.it('13 specialists run your revenue motion: Prospecting → Qualification → Outreach → Sales → Negotiation → Treasurer → Closing.'),
+    design.section('MISSIONS'),
+    design.it('Every mission starts with the Revenue Strategist, which decides if it makes sense, picks the specialists, sets success criteria and a budget, and asks for your approval before anything ships.'),
     design.section('FLOW'),
-    design.it('A deal moves Lead → Qualified → Meeting → Proposal → Negotiation → Won → Customer. Agents advance it automatically.'),
+    design.it('A deal moves Lead → Qualified → Meeting → Proposal → Negotiation → Won → Customer. Specialists advance it automatically.'),
     design.section('TEAM'),
-    design.it('Agents hand off work — each leaves notes for the next, like a real team. Run the pipeline demo to watch the chain.'),
-    design.section('COMPANY INTELLIGENCE'),
-    design.it('The system remembers your products, pricing, ICP and competitors — every agent reads the context it needs before acting, and you can ask it questions with /ask.'),
+    design.it('Specialists hand off work — each leaves notes for the next, like a real team.'),
+    design.section('BUSINESS KNOWLEDGE'),
+    design.it('The system remembers your products, pricing, ICP and competitors — every specialist reads the context it needs before acting, and you can ask it questions with /ask.'),
     design.section('INTEGRATION HUB'),
-    design.it('Connect CRM, email, calendar, storage, website and communication tools. Agents use one uniform interface — searchContacts, searchDeals, sendMessage, createMeeting, storeDocument, fetchKnowledge, crawl — and synced data flows straight into Company Intelligence.'),
+    design.it('Connect CRM, email, calendar, storage, website and communication tools. Specialists use one uniform interface — searchContacts, searchDeals, sendMessage, createMeeting, storeDocument, fetchKnowledge, crawl — and synced data flows straight into Company Intelligence.'),
     design.section('CONTROL'),
-    design.it('Run /sales <objection> to test the orchestrator. Open Workforce for per-agent activity.'),
+    design.it('Run /mission <goal> to launch a mission. Open Mission Center for progress and approvals.'),
     design.divider()
   ]);
   return {
@@ -903,7 +1217,7 @@ async function buildMemory(userId) {
   const mem = await memory.getMemory(getStoreAdapter(), ctx.workspace.id);
   const rows = memory.describe(mem);
   const lines = [
-    `${design.EMOJI.ai} ${design.b('Company Intelligence')}`,
+    `${design.EMOJI.ai} ${design.b('Business Knowledge')}`,
     design.it('Core profile every agent reads before working.'),
     design.divider(),
     ...(rows.length ? rows.map(r => design.row(r.split(':')[0], r.split(':').slice(1).join(':'))) : [design.it('Nothing saved yet — add your company details below.')]),
@@ -1230,6 +1544,10 @@ async function editPanel(bot, query, screen) {
   });
 }
 
+function learnScreen(res) {
+  return { text: res.prompt, keyboard: res.keyboard };
+}
+
 async function handleCallback(query, bot) {
   const action = query.data || '';
   const userId = query.from ? query.from.id : null;
@@ -1259,6 +1577,67 @@ async function handleCallback(query, bot) {
       return send(buildAiGuide());
     case 'cc_settings':
       return send(await buildSettings(userId));
+    case 'cc_learn': {
+      const lctx = await getCtx(userId);
+      if (!lctx) return send(denied('learning'));
+      botLearning.begin(userId);
+      return send(learnScreen(await botLearning.buildPrompt(userId, getStoreAdapter(), lctx.workspace.id)));
+    }
+    case 'cc_learn_skip': {
+      const lctx = await getCtx(userId);
+      if (!lctx) return send(denied('learning'));
+      const res = await botLearning.handleSkip(userId, getStoreAdapter(), lctx.workspace.id);
+      if (!res) return send(learnScreen(await botLearning.buildPrompt(userId, getStoreAdapter(), lctx.workspace.id)));
+      return send(learnScreen(res));
+    }
+    case 'cc_learn_done': {
+      const lctx = await getCtx(userId);
+      if (!lctx) return send(denied('learning'));
+      return send(learnScreen(await botLearning.handleAnswer(userId, getStoreAdapter(), lctx.workspace.id, 'done')));
+    }
+    case 'cc_learn_more': {
+      const lctx = await getCtx(userId);
+      if (!lctx) return send(denied('learning'));
+      botLearning.another(userId);
+      return send(learnScreen(await botLearning.buildPrompt(userId, getStoreAdapter(), lctx.workspace.id)));
+    }
+    case 'cc_learn_quit':
+      botLearning.clear(userId);
+      return send(await buildHome(userId));
+    case 'cc_missions':
+      return send(await buildMissions(userId));
+    case 'cc_mission_goal':
+      missionState.begin(userId, {});
+      return send(await buildMissionGoalPrompt(userId));
+    case 'cc_mission1': {
+      try { await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
+      try {
+        return send(await launchMission1(userId));
+      } catch (err) {
+        audit.writeEntry('BOT_MISSION1_ERROR', String(userId), 'error', { error: err.message });
+        return send({ text: design.errorPanel('Mission 1 failed', String(err.message)).text, keyboard: null });
+      }
+    }
+    case 'cc_mission2': {
+      try { await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
+      try {
+        return send(await launchMission2(userId));
+      } catch (err) {
+        audit.writeEntry('BOT_MISSION2_ERROR', String(userId), 'error', { error: err.message });
+        return send({ text: design.errorPanel('Mission 2 failed', String(err.message)).text, keyboard: null });
+      }
+    }
+    case 'cc_mission_market': {
+      try { await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
+      try {
+        return send(await launchMarketMission(userId));
+      } catch (err) {
+        audit.writeEntry('BOT_MISSION_MARKET_ERROR', String(userId), 'error', { error: err.message });
+        return send({ text: design.errorPanel('Market analysis failed', String(err.message)).text, keyboard: null });
+      }
+    }
+    case 'cc_approvals':
+      return send(await buildApprovals(userId));
     case 'cc_memory':
       return send(await buildMemory(userId));
     case 'cc_mem_cancel':
@@ -1482,6 +1861,48 @@ async function handleCallback(query, bot) {
       if (action === 'cc_launch_campaign') {
         return bot.answerCallbackQuery(query.id, { text: 'Coming soon — Campaigns arrive with the revenue pipeline' }).catch(() => {});
       }
+      if (action.startsWith('cc_learn_persona:')) {
+        const name = action.split(':').slice(1).join(':');
+        const lctx = await getCtx(userId);
+        if (!lctx) return send(denied('learning'));
+        return send(learnScreen(await botLearning.handleName(userId, getStoreAdapter(), lctx.workspace.id, name)));
+      }
+      if (action.startsWith('cc_mission:')) {
+        const planId = action.split(':')[1];
+        return send(await buildMissionDetail(userId, planId));
+      }
+      if (action.startsWith('cc_mission_pause:')) {
+        const ctx = await getCtx(userId);
+        if (!ctx) return send(denied('missions'));
+        const planId = action.split(':')[1];
+        try {
+          await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
+        await runtime.pause(getStoreAdapter(), ctx.workspace.id, Number(planId));
+        audit.writeEntry('BOT_MISSION_PAUSE', String(userId), 'success', { planId });
+        return send(await buildMissionDetail(userId, planId));
+      }
+      if (action.startsWith('cc_mission_resume:')) {
+        const ctx = await getCtx(userId);
+        if (!ctx) return send(denied('missions'));
+        const planId = action.split(':')[1];
+        try {
+          await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
+        const result = await runtime.resume(getStoreAdapter(), ctx.workspace.id, Number(planId));
+        audit.writeEntry('BOT_MISSION_RESUME', String(userId), 'success', { planId });
+        return send(buildMissionRunResult(userId, Number(planId), result));
+      }
+      if (action.startsWith('cc_appr:')) {
+        const parts = action.split(':');
+        const requestId = parts[1];
+        const decision = parts[2];
+        const ctx = await getCtx(userId);
+        if (!ctx) return send(denied('approvals'));
+        try {
+          await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
+        await runtime.approveAndResume(getStoreAdapter(), ctx.workspace.id, Number(requestId), userId);
+        audit.writeEntry('BOT_APPROVAL_DECIDE', String(userId), 'success', { requestId, decision });
+        return send(await buildApprovals(userId));
+      }
       return bot.answerCallbackQuery(query.id, { text: 'Unknown action' }).catch(() => {});
     }
   }
@@ -1527,5 +1948,16 @@ module.exports = {
   buildAllConnectors,
   buildConnectorDetail,
   buildSyncResult,
+  buildLearn,
+  buildMissions,
+  buildMissionDetail,
+  buildApprovals,
+  buildMissionGoalPrompt,
+  launchMission1,
+  launchMission2,
+  launchGoalMission,
+  launchMarketMission,
   handleCallback
 };
+
+

@@ -273,7 +273,13 @@ async function resolveRoute(adapter, workspaceId, agentType) {
 
 async function generate(adapter, workspaceId, agentType, prompt, opts) {
   const o = opts || {};
-  const route = await resolveRoute(adapter, workspaceId, agentType);
+  let route;
+  if (o.provider && PROVIDERS[o.provider]) {
+    const model = resolveModel(o.provider, o.model || PROVIDERS[o.provider].defaultModel);
+    route = { provider: o.provider, model, fallback: null, simulated: !isConfigured(o.provider) };
+  } else {
+    route = await resolveRoute(adapter, workspaceId, agentType);
+  }
   let result;
   if (!route.simulated && o.simulate !== true) {
     try {

@@ -5,6 +5,7 @@ const intelligence = require('./intelligence');
 
 const AGENT_TYPES = [
   'orchestrator',
+  'revenue_strategist',
   'prospecting',
   'market_intelligence',
   'qualification',
