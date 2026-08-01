@@ -2,7 +2,7 @@ const { getMode, setMode } = require('../config/mode');
 const audit = require('../utils/auditLogger');
 const { BOT_CONFIG } = require('./config');
 const { isFounder, isAdmin } = require('./access');
-const { buildHome, buildWorkforce, buildPipeline, buildDeals, buildAudit, buildAdmin, buildPricing, buildMemory, buildCosts, buildHealth, buildProviders, buildQueue, buildBriefing, buildIntelligence, buildKnowledgeDocs, buildAskResult } = require('./menu');
+const { buildHome, buildWorkforce, buildPipeline, buildDeals, buildAudit, buildAdmin, buildPricing, buildMemory, buildCosts, buildHealth, buildProviders, buildQueue, buildBriefing, buildIntelligence, buildKnowledgeDocs, buildAskResult, buildIntegrations } = require('./menu');
 const { formatPricingText, pricingButtons } = require('../config/pricing.config');
 const design = require('./design');
 const identity = require('../services/identity');
@@ -207,6 +207,10 @@ async function cmdDocuments(chatId, userId) {
   return screenResult(chatId, await buildKnowledgeDocs(userId));
 }
 
+async function cmdIntegrations(chatId, userId) {
+  return screenResult(chatId, await buildIntegrations(userId));
+}
+
 async function cmdAsk(chatId, userId, remainder) {
   if (!remainder) {
     return {
@@ -259,6 +263,7 @@ const COMMANDS = {
   '/intelligence': cmdIntelligence,
   '/documents': cmdDocuments,
   '/ask': cmdAsk,
+  '/integrations': cmdIntegrations,
   '/admin': cmdAdmin
 };
 

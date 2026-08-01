@@ -232,6 +232,20 @@ CREATE TABLE IF NOT EXISTS knowledge_documents (
 
 CREATE INDEX IF NOT EXISTS idx_knowledge_workspace_source ON knowledge_documents(workspace_id, source_type);
 
+CREATE TABLE IF NOT EXISTS integration_connections (
+    id SERIAL PRIMARY KEY,
+    workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    connector_id VARCHAR(60) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'enabled',
+    config JSONB,
+    last_synced_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (workspace_id, connector_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_integration_workspace_connector ON integration_connections(workspace_id, connector_id);
+
 CREATE OR REPLACE FUNCTION update_modified_column()
 RETURNS TRIGGER AS $$
 BEGIN

@@ -274,6 +274,25 @@ function createRepos(adapter) {
       remove(workspace_id, id) {
         return adapter.delete('knowledge_documents', { workspace_id, id });
       }
+    },
+
+    integrations: {
+      async upsert(workspace_id, connector_id, changes) {
+        const existing = await adapter.findOne('integration_connections', { workspace_id, connector_id });
+        if (existing) {
+          return adapter.update('integration_connections', { workspace_id, connector_id }, changes);
+        }
+        return adapter.insert('integration_connections', { workspace_id, connector_id, status: 'enabled', ...changes });
+      },
+      get(workspace_id, connector_id) {
+        return adapter.findOne('integration_connections', { workspace_id, connector_id });
+      },
+      list(workspace_id) {
+        return adapter.find('integration_connections', { workspace_id }, { orderBy: 'connector_id', order: 'asc' });
+      },
+      remove(workspace_id, connector_id) {
+        return adapter.delete('integration_connections', { workspace_id, connector_id });
+      }
     }
   };
 }
@@ -367,6 +386,12 @@ function forWorkspace(adapter, workspaceId) {
       list: source_type => repos.intelligence.list(workspaceId, source_type),
       update: (id, changes) => repos.intelligence.update(workspaceId, id, changes),
       remove: id => repos.intelligence.remove(workspaceId, id)
+    },
+    integrations: {
+      upsert: (connector_id, changes) => repos.integrations.upsert(workspaceId, connector_id, changes),
+      get: connector_id => repos.integrations.get(workspaceId, connector_id),
+      list: () => repos.integrations.list(workspaceId),
+      remove: connector_id => repos.integrations.remove(workspaceId, connector_id)
     },
     pipeline: {
       listAll: opts => repos.pipeline.listAll(workspaceId, opts)

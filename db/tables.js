@@ -64,6 +64,10 @@ const TABLES = {
   knowledge_documents: {
     columns: ['workspace_id', 'title', 'source_type', 'content', 'metadata'],
     timestamps: true
+  },
+  integration_connections: {
+    columns: ['workspace_id', 'connector_id', 'status', 'config', 'last_synced_at'],
+    timestamps: true
   }
 };
 

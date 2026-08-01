@@ -4,10 +4,22 @@ const queue = require('./queue');
 
 async function intelligencePrompt(adapter, workspaceId, agentType, prompt) {
   const intelligence = require('./intelligence');
+  const integrations = require('./integrations');
   const hits = await intelligence.retrieve(adapter, workspaceId, prompt, { topK: 3 });
-  if (!hits.length) return prompt;
-  const block = hits.map((h, i) => `[${i + 1}] ${h.title} — ${h.text}`).join('\n');
-  return `${prompt}\n\nCompany knowledge from the Enterprise Intelligence layer:\n${block}`;
+  let enriched = prompt;
+  if (hits.length) {
+    const block = hits.map((h, i) => `[${i + 1}] ${h.title} — ${h.text}`).join('\n');
+    enriched = `${prompt}\n\nCompany knowledge from the Enterprise Intelligence layer:\n${block}`;
+  }
+  try {
+    const st = await integrations.manager.status(adapter, workspaceId);
+    const enabled = st.categories.flatMap(c => c.connectors.filter(x => x.enabled));
+    if (enabled.length) {
+      const names = enabled.map(x => x.label).join(', ');
+      enriched = `${enriched}\n\nConnected systems via the Integration Hub: ${names}. You may use integration.searchContacts, integration.searchDeals, integration.sendMessage, integration.createMeeting, integration.storeDocument, integration.fetchKnowledge or integration.crawl to work with them.`;
+    }
+  } catch (_) { /* integrations are optional context */ }
+  return enriched;
 }
 
 const REGISTRY = {

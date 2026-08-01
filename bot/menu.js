@@ -12,6 +12,7 @@ const memory = require('../services/memory');
 const memoryEdit = require('./memoryEdit');
 const providers = require('../services/providers');
 const intelligence = require('../services/intelligence');
+const integrations = require('../services/integrations');
 const { costIntelligence } = require('../services/cost');
 const { executiveBriefing } = require('../services/briefing');
 const queue = require('../services/queue');
@@ -117,7 +118,7 @@ async function buildHome(userId) {
         [design.textButton('Dashboard', 'cc_dashboard'), design.textButton('Pipeline', 'cc_pipeline')],
         [design.textButton('Timeline', 'cc_timeline'), design.textButton('Costs', 'cc_costs'), design.textButton('Health', 'cc_health')],
         [design.textButton('Providers', 'cc_providers'), design.textButton('Queue', 'cc_queue'), design.textButton('Briefing', 'cc_briefing')],
-        [design.textButton('Intelligence', 'cc_intelligence'), design.textButton('Ask the AI', 'cc_kg_ask')],
+        [design.textButton('Intelligence', 'cc_intelligence'), design.textButton('Integrations', 'cc_integrations'), design.textButton('Ask the AI', 'cc_kg_ask')],
         [design.textButton('Settings', 'cc_settings'), design.textButton('Audit Log', 'cc_audit'), design.textButton('Pricing', 'cc_pricing')],
         [design.textButton('Admin', 'cc_admin')]
       ])
@@ -550,6 +551,181 @@ async function buildBriefing(userId) {
   };
 }
 
+async function buildIntegrations(userId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) {
+    return {
+      text: design.compose([
+        `${design.EMOJI.ai} ${design.b('Enterprise Integration Hub')}`,
+        design.it('Set up a workspace to manage integrations.'),
+        design.divider()
+      ]),
+      keyboard: design.keyboard([
+        [design.textButton('Back to Home', 'cc_home')]
+      ])
+    };
+  }
+  const st = await integrations.manager.status(getStoreAdapter(), ctx.workspace.id);
+  const lines = [];
+  for (const cat of st.categories) {
+    lines.push(design.section(titleCase(cat.label)));
+    for (const c of cat.connectors) {
+      const flag = c.enabled ? design.EMOJI.success : c.configured ? design.EMOJI.info : design.EMOJI.critical;
+      lines.push(design.row(`${c.label}`, `${flag} ${c.enabled ? 'Enabled' : c.configured ? 'Configured' : 'Off'}`));
+    }
+  }
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('Enterprise Integration Hub')}`,
+    design.it('One interface for every external system your agents use.'),
+    design.divider(),
+    design.row('Enabled connectors', String(st.enabled_total)),
+    ...lines,
+    design.it('Agents call searchContacts, searchDeals, sendMessage, createMeeting, storeDocument, fetchKnowledge and crawl — the hub routes them.'),
+    design.divider()
+  ]);
+  const rows = [];
+  for (const cat of st.categories) {
+    const ids = cat.connectors.filter(c => c.enabled).map(c => c.id);
+    for (let i = 0; i < ids.length; i += 2) {
+      const a = ids[i];
+      const b = ids[i + 1];
+      rows.push([
+        design.textButton(integrations.catalog.CONNECTORS[a].label, `cc_int_conn:${a}`),
+        b ? design.textButton(integrations.catalog.CONNECTORS[b].label, `cc_int_conn:${b}`) : null
+      ].filter(Boolean));
+    }
+  }
+  rows.push([design.textButton('All Connectors', 'cc_int_all'), design.textButton('Sync Now', 'cc_sync_now')]);
+  rows.push([design.textButton('Back to Home', 'cc_home')]);
+  return {
+    text,
+    keyboard: design.keyboard(rows)
+  };
+}
+
+async function buildAllConnectors(userId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) {
+    return {
+      text: design.compose([
+        `${design.EMOJI.ai} ${design.b('Enterprise Integration Hub')}`,
+        design.it('Set up a workspace to manage integrations.'),
+        design.divider()
+      ]),
+      keyboard: design.keyboard([
+        [design.textButton('Back to Home', 'cc_home')]
+      ])
+    };
+  }
+  const st = await integrations.manager.status(getStoreAdapter(), ctx.workspace.id);
+  const lines = [];
+  for (const cat of st.categories) {
+    lines.push(design.section(titleCase(cat.label)));
+    for (const c of cat.connectors) {
+      const flag = c.enabled ? design.EMOJI.success : c.configured ? design.EMOJI.info : design.EMOJI.critical;
+      lines.push(design.row(`${c.label} (${c.auth})`, `${flag} ${c.enabled ? 'Enabled' : c.configured ? 'Configured' : 'Off'}`));
+    }
+  }
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('All Connectors')}`,
+    design.it(`${st.enabled_total} enabled · ${integrations.catalog.CONNECTORS ? Object.keys(integrations.catalog.CONNECTORS).length : 0} available`),
+    design.divider(),
+    ...lines,
+    design.divider()
+  ]);
+  const rows = [];
+  for (const cat of st.categories) {
+    for (const c of cat.connectors) {
+      rows.push([design.textButton(`${c.label}`, `cc_int_conn:${c.id}`)]);
+    }
+  }
+  rows.push([design.textButton('Integration Hub', 'cc_integrations'), design.textButton('Back to Home', 'cc_home')]);
+  return {
+    text,
+    keyboard: design.keyboard(rows)
+  };
+}
+
+async function buildConnectorDetail(userId, connectorId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) {
+    return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  }
+  const c = integrations.catalog.CONNECTORS[connectorId];
+  if (!c) {
+    return { text: design.errorPanel('Unknown connector', connectorId).text, keyboard: null };
+  }
+  const st = await integrations.manager.status(getStoreAdapter(), ctx.workspace.id);
+  const cat = st.categories.find(g => g.category === c.category);
+  const info = cat ? cat.connectors.find(x => x.id === connectorId) : null;
+  const capLines = Object.keys(c)
+    .filter(k => !['label', 'category', 'auth', 'keyEnv', 'baseUrl', 'defaultModel'].includes(k) && typeof c[k] === 'object' && c[k] && c[k].method)
+    .map(k => design.row(k, `${c[k].method} ${c[k].path}`));
+  const statusText = info
+    ? (info.enabled ? design.EMOJI.success + ' Enabled' : info.configured ? design.EMOJI.info + ' Configured' : design.EMOJI.critical + ' Off')
+    : design.EMOJI.critical + ' Off';
+  const setupHint = c.auth === 'oauth'
+    ? 'OAuth — use Connect to authorize this connector.'
+    : c.keyEnv
+      ? `Set the API key env var ${design.code(c.keyEnv)} and restart.`
+      : 'No credentials required.';
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b(c.label)}`,
+    design.it(titleCase(c.category) + ' connector'),
+    design.divider(),
+    design.row('Status', statusText),
+    design.row('Auth', c.auth),
+    design.row('Configured', info ? (info.configured ? design.EMOJI.success + ' Yes' : design.EMOJI.info + ' No') : design.EMOJI.info + ' No'),
+    design.row('Last sync', info && info.last_synced_at ? info.last_synced_at.slice(0, 16).replace('T', ' ') : '—'),
+    design.section('CAPABILITIES'),
+    ...capLines,
+    design.section('SETUP'),
+    design.it(setupHint),
+    design.divider()
+  ]);
+  const rows = [];
+  if (info && info.enabled) {
+    rows.push([design.textButton('Disable', `cc_int_disable:${connectorId}`)]);
+  } else {
+    rows.push([design.textButton('Enable', `cc_int_enable:${connectorId}`)]);
+  }
+  if (c.auth === 'oauth') {
+    rows.push([design.textButton('Connect (OAuth)', `cc_int_auth:${connectorId}`)]);
+  } else {
+    rows.push([design.textButton('Test Connection', `cc_int_test:${connectorId}`)]);
+  }
+  rows.push([design.textButton('Back to Integrations', 'cc_integrations')]);
+  return {
+    text,
+    keyboard: design.keyboard(rows)
+  };
+}
+
+async function buildSyncResult(userId, result) {
+  const lines = (result.connectors || []).map(entry => {
+    const err = entry.error ? design.EMOJI.critical + ' ' + entry.error : design.EMOJI.success + ' ' + entry.actions.join(' · ');
+    return `${design.b(entry.label)} (${entry.category})\n${design.it(err)}`;
+  });
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('Integration Sync')}`,
+    design.it(`${result.connectors.length} connector${result.connectors.length === 1 ? '' : 's'} synced`),
+    design.divider(),
+    ...(lines.length ? lines : [design.it('No connectors enabled — enable one in the hub, then sync.')]),
+    design.section('WRITE-OUT'),
+    design.row('Knowledge documents', String(result.docs_written)),
+    design.row('Deals upserted', String(result.deals_upserted)),
+    design.row('Audit entries', String(result.audits)),
+    design.divider()
+  ]);
+  return {
+    text,
+    keyboard: design.keyboard([
+      [design.textButton('Sync Again', 'cc_sync_now'), design.textButton('Integration Hub', 'cc_integrations')],
+      [design.textButton('Back to Home', 'cc_home')]
+    ])
+  };
+}
+
 async function buildActivity(userId) {
   const ctx = await getCtx(userId);
   if (!ctx) {
@@ -682,6 +858,8 @@ function buildAiGuide() {
     design.it('Agents hand off work — each leaves notes for the next, like a real team. Run the pipeline demo to watch the chain.'),
     design.section('COMPANY INTELLIGENCE'),
     design.it('The system remembers your products, pricing, ICP and competitors — every agent reads the context it needs before acting, and you can ask it questions with /ask.'),
+    design.section('INTEGRATION HUB'),
+    design.it('Connect CRM, email, calendar, storage, website and communication tools. Agents use one uniform interface — searchContacts, searchDeals, sendMessage, createMeeting, storeDocument, fetchKnowledge, crawl — and synced data flows straight into Company Intelligence.'),
     design.section('CONTROL'),
     design.it('Run /sales <objection> to test the orchestrator. Open Workforce for per-agent activity.'),
     design.divider()
@@ -1104,6 +1282,22 @@ async function handleCallback(query, bot) {
       return send(await buildQueue(userId));
     case 'cc_briefing':
       return send(await buildBriefing(userId));
+    case 'cc_integrations':
+      return send(await buildIntegrations(userId));
+    case 'cc_int_all':
+      return send(await buildAllConnectors(userId));
+    case 'cc_sync_now': {
+      const ctx = await getCtx(userId);
+      if (!ctx) return send(denied('integration sync'));
+      try { await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
+      try {
+        const result = await integrations.createIntegrations(getStoreAdapter(), ctx.workspace.id).sync();
+        return send(await buildSyncResult(userId, result));
+      } catch (err) {
+        audit.writeEntry('BOT_INTEGRATION_SYNC', String(userId), 'error', { error: err.message });
+        return send({ text: design.errorPanel('Sync failed', String(err.message)).text, keyboard: null });
+      }
+    }
     case 'cc_intelligence':
       return send(await buildIntelligence(userId));
     case 'cc_kg_docs':
@@ -1200,6 +1394,54 @@ async function handleCallback(query, bot) {
         audit.writeEntry('BOT_INTEL_DOC_DEL', String(userId), 'success', { id });
         return send(await buildKnowledgeDocs(userId));
       }
+      if (action.startsWith('cc_int_conn:')) {
+        const connectorId = action.split(':')[1];
+        return send(await buildConnectorDetail(userId, connectorId));
+      }
+      if (action.startsWith('cc_int_enable:')) {
+        const connectorId = action.split(':')[1];
+        const ctx = await getCtx(userId);
+        if (!ctx) return send(denied('integrations'));
+        try {
+          await integrations.manager.enable(getStoreAdapter(), ctx.workspace.id, connectorId);
+          audit.writeEntry('BOT_INT_ENABLE', String(userId), 'success', { connector: connectorId });
+        } catch (err) {
+          audit.writeEntry('BOT_INT_ENABLE', String(userId), 'error', { connector: connectorId, error: err.message });
+        }
+        return send(await buildConnectorDetail(userId, connectorId));
+      }
+      if (action.startsWith('cc_int_disable:')) {
+        const connectorId = action.split(':')[1];
+        const ctx = await getCtx(userId);
+        if (!ctx) return send(denied('integrations'));
+        try {
+          await integrations.manager.disable(getStoreAdapter(), ctx.workspace.id, connectorId);
+          audit.writeEntry('BOT_INT_DISABLE', String(userId), 'success', { connector: connectorId });
+        } catch (err) {
+          audit.writeEntry('BOT_INT_DISABLE', String(userId), 'error', { connector: connectorId, error: err.message });
+        }
+        return send(await buildConnectorDetail(userId, connectorId));
+      }
+      if (action.startsWith('cc_int_test:')) {
+        const connectorId = action.split(':')[1];
+        const ctx = await getCtx(userId);
+        if (!ctx) return send(denied('integrations'));
+        const t = await integrations.manager.test(getStoreAdapter(), ctx.workspace.id, connectorId);
+        return bot.answerCallbackQuery(query.id, {
+          text: t.ok ? (t.live ? t.label + ': connected (live)' : t.label + ': dry-run OK') : t.detail
+        }).catch(() => {});
+      }
+      if (action.startsWith('cc_int_auth:')) {
+        const connectorId = action.split(':')[1];
+        const ctx = await getCtx(userId);
+        if (!ctx) return send(denied('integrations'));
+        const c = integrations.catalog.CONNECTORS[connectorId];
+        const auth = integrations.oauth.beginAuth(connectorId, userId);
+        if (!auth.url) {
+          return bot.answerCallbackQuery(query.id, { text: c.label + ' does not support OAuth' }).catch(() => {});
+        }
+        return bot.answerCallbackQuery(query.id, { text: 'Authorize here: ' + auth.url }).catch(() => {});
+      }
       if (action === 'cc_live') {
         if (!isFounder(userId)) return send(denied('founder actions'));
         return send(modeConfirm('LIVE'));
@@ -1232,7 +1474,7 @@ async function handleCallback(query, bot) {
         return send(await buildSettings(userId));
       }
       if (action === 'cc_connect_crm') {
-        return bot.answerCallbackQuery(query.id, { text: 'Coming soon — CRM integration is on the roadmap' }).catch(() => {});
+        return send(await buildIntegrations(userId));
       }
       if (action === 'cc_upload_catalog') {
         return bot.answerCallbackQuery(query.id, { text: 'Coming soon — Company Knowledge is on the roadmap' }).catch(() => {});
@@ -1281,5 +1523,9 @@ module.exports = {
   buildIntelligence,
   buildKnowledgeDocs,
   buildAskResult,
+  buildIntegrations,
+  buildAllConnectors,
+  buildConnectorDetail,
+  buildSyncResult,
   handleCallback
 };

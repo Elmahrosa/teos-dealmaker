@@ -331,5 +331,6 @@ module.exports = {
   resolveRoute,
   generate,
   simulate,
+  hash,
   costFromTokens
 };

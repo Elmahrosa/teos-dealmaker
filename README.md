@@ -1,6 +1,6 @@
 # TEOS DealMaker
 
-**Status: FOUNDATION + 12 AGENTS + MULTI-TENANT PERSISTENCE + WORKSPACE IDENTITY + PROACTIVE DASHBOARD + AI WORKFORCE RUNTIME + WORKSPACE MEMORY + AGENT COLLABORATION + WORKFORCE CONSOLE + MULTI-PROVIDER AI LAYER + COST INTELLIGENCE + AGENT HEALTH + QUEUE MANAGER + EXECUTIVE BRIEFING + ENTERPRISE INTELLIGENCE LAYER (v0.6.0)**
+**Status: FOUNDATION + 12 AGENTS + MULTI-TENANT PERSISTENCE + WORKSPACE IDENTITY + PROACTIVE DASHBOARD + AI WORKFORCE RUNTIME + WORKSPACE MEMORY + AGENT COLLABORATION + WORKFORCE CONSOLE + MULTI-PROVIDER AI LAYER + COST INTELLIGENCE + AGENT HEALTH + QUEUE MANAGER + EXECUTIVE BRIEFING + ENTERPRISE INTELLIGENCE LAYER + ENTERPRISE INTEGRATION HUB (v0.7.0)**
 
 **✅ IMPLEMENTED:**
 - [Implemented v0.1.0] Outreach agent (draft → gatekeeper → vault)
@@ -48,11 +48,24 @@
 - [Implemented] Agent knowledge grounding (agents run with retrieved company knowledge appended to their prompts via `intelligencePrompt`; `getAgentContext` returns per-agent memory + relevant knowledge chunks)
 - [Implemented] Renamed product surface: "Workspace Memory" → **Company Intelligence** (Settings, AI Guide, memory editor, new Intelligence hub `/intelligence`, Documents `/documents`, Add Knowledge flow with source-type picker, Ask the AI)
 - [Implemented] Intelligence copilot policy (13th routing policy `intelligence` → openai/gpt-4o-mini for cheap RAG answers, editable from the Providers screen)
+- [Implemented] Enterprise Integration Hub (v0.7.0: services/integrations/ — catalog, adapter, registry, manager, oauth, sync, webhooks, cache, index facade. Every external system looks the same to agents through one uniform interface: `integration.searchContacts()`, `integration.searchDeals()`, `integration.sendMessage()`, `integration.createMeeting()`, `integration.storeDocument()`, `integration.fetchKnowledge()`, `integration.crawl()` — the provider adapter translates each call into the vendor's API shape.)
+- [Implemented] Connector catalog (17 connectors across 6 categories — CRM: HubSpot/Salesforce/Zoho/Pipedrive; Email: Gmail/Microsoft 365/Resend/SendGrid; Calendar: Google Calendar/Outlook Calendar; Storage: Google Drive/OneDrive/Dropbox; Website: crawl; Communication: Telegram/Slack/Microsoft Teams — each with per-capability request shapes (method/path/auth/body/query/headers), auth type (apikey/oauth/none), and key env var)
+- [Implemented] Integration Manager + self-registering connectors (services/integrations/manager.js `status`/`enable`/`disable`/`test`; connectors stored in the `integration_connections` table (workspace_id + connector_id UNIQUE, status, config JSONB, last_synced_at) with per-workspace enable/disable + audit events)
+- [Implemented] Request adapter (services/integrations/adapter.js — builds vendor requests from the catalog, resolves base URLs/tokens/env keys, gates real outbound calls to LIVE mode and falls back to deterministic seeded simulation in DRY mode; simulates CRM contacts/deals, messages, meetings, files and website crawls at zero cost)
+- [Implemented] OAuth helper (services/integrations/oauth.js — per-connector authorize URLs + scopes, state generation, simulated token exchange, token storage in the connection config)
+- [Implemented] Auto-sync into Company Intelligence (services/integrations/sync.js — `runSync` walks enabled connectors: CRM deals upserted into the pipeline + contacts written as `crm_data` knowledge docs, website crawls written as `website`/`faqs`/`products` docs, plus email/calendar/storage/communication dry checks; every connector's `last_synced_at` refreshed and an `INTEGRATION_SYNC` audit written)
+- [Implemented] Webhook ingestion (services/integrations/webhooks.js — signature verify (no secret configured → simulated pass), payload ingested into the intelligence layer as `conversations` docs for enabled connectors, audited)
+- [Implemented] Response cache (services/integrations/cache.js — per-workspace TTL cache on adapter calls)
+- [Implemented] Uniform client facade (services/integrations/index.js `createIntegrations(adapter, workspaceId)` — agents get `client` (searchContacts/searchDeals/sendMessage/createMeeting/storeDocument/crawl + fetchKnowledge), `sync()`, `webhook()`, `oauth`, `manager`, `cache`; auto-routes each op to an enabled connector of the right category)
+- [Implemented] Integration Hub screens (bot — `/integrations`, `cc_integrations` hub with per-category connector status, `cc_int_all` full catalog, per-connector detail (enable/disable/test/OAuth connect), `cc_sync_now` sync report; home screen Connect CRM + new Integrations button)
+- [Implemented] Agent integration context (agent prompts now include enabled connectors and the uniform interface so LLM runs can call integration.searchContacts/searchDeals/etc.)
+- [Implemented] Verified by tests/test-integrations.js (134 assertions — catalog integrity, request building, uniform ops, sync→intelligence, oauth, webhooks, cache, per-workspace isolation)
 
 **❌ PENDING:**
-- [Pending] Live Postgres verification (schema never migrated — no `DATABASE_URL` provided; pending: `agent_runs.deal_id` ALTER + `provider_policies` + `knowledge_documents` tables on real PG/Supabase)
+- [Pending] Live Postgres verification (schema never migrated — no `DATABASE_URL` provided; pending: `agent_runs.deal_id` ALTER + `provider_policies` + `knowledge_documents` + `integration_connections` tables on real PG/Supabase)
 - [Pending] Document upload parsing (PDF/DOCX/CSV ingestion into the intelligence layer — paste-based text input works today; binary parsing libs not yet installed)
-- [Pending] Website crawl + CRM/email/calendar imports as intelligence sources (scheduled for the v0.7 integration phase)
+- [Pending] Real connector calls (the hub ships with deterministic simulation in DRY mode; enable LIVE mode + set a provider API key/OAuth to make real vendor calls)
+- [Pending] Live OAuth flows (authorize URLs + token exchange are stubbed — real provider callback + refresh not wired)
 - [Pending] Subscription activation wiring (onboarding creates pending subscription; checkout/payment activation is next)
 - [Pending] Real multi-provider live calls (provider layer ships with seeded simulation; set any provider API key to go live)
 - [Pending] Real Dodo Payments integration (LIVE key)
@@ -69,10 +82,10 @@
 ## Database (Phase 1 + Phase 2)
 
 - Schema: `db/schema.sql` (multi-tenant, forward-only, `CREATE TABLE IF NOT EXISTS`, updated_at triggers).
-- Tables: workspaces (owner_user_id, subscription_id), users (telegram_id UNIQUE), workspace_members (role RBAC), subscriptions, dodo_customers, deals, audit_trail (user_id), conversations, messages, agent_runs (incl. deal_id), provider_usage, pipeline_events, provider_policies (workspace agent routing), agents (provisioned workforce), workspace_settings (lang/timezone/notifications/theme), workspace_memory (key/value JSONB), deal_notes (agent collaboration hand-offs), knowledge_documents (Enterprise Intelligence sources: title/source_type/content/metadata, workspace-scoped).
+- Tables: workspaces (owner_user_id, subscription_id), users (telegram_id UNIQUE), workspace_members (role RBAC), subscriptions, dodo_customers, deals, audit_trail (user_id), conversations, messages, agent_runs (incl. deal_id), provider_usage, pipeline_events, provider_policies (workspace agent routing), agents (provisioned workforce), workspace_settings (lang/timezone/notifications/theme), workspace_memory (key/value JSONB), deal_notes (agent collaboration hand-offs), knowledge_documents (Enterprise Intelligence sources: title/source_type/content/metadata, workspace-scoped), integration_connections (Integration Hub: workspace_id + connector_id UNIQUE, status, config JSONB, last_synced_at).
 - Isolation rule: every tenant-owned table carries `workspace_id`; all repository reads/writes filter by it, enforced by `forWorkspace()`.
 - Identity flow: `services/identity.js` — `ensureUser` (telegram_id → user), `getWorkspaceForUser` (user → member → workspace), `onboardWorkspace` (transactional: workspace + owner membership + pending subscription + provision), `uniqueSlug` (collision-safe slug).
-- Verify locally: `node tests/test-multitenancy.js` and `node tests/test-identity.js` and `node tests/test-workspace.js` and `node tests/test-workforce.js` and `node tests/test-memory.js` and `node tests/test-console.js` and `node tests/test-providers.js` and `node tests/test-operations.js` and `node tests/test-intelligence.js` (in-memory adapter, no DB required).
+- Verify locally: `node tests/test-multitenancy.js` and `node tests/test-identity.js` and `node tests/test-workspace.js` and `node tests/test-workforce.js` and `node tests/test-memory.js` and `node tests/test-console.js` and `node tests/test-providers.js` and `node tests/test-operations.js` and `node tests/test-intelligence.js` and `node tests/test-integrations.js` (in-memory adapter, no DB required).
 - Live: set `DATABASE_URL` then `npm run db:migrate`; adapter + repos then target Postgres.
 
 ## Known Issues
