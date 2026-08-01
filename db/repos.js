@@ -254,6 +254,26 @@ function createRepos(adapter) {
       list(workspace_id, deal_id) {
         return adapter.find('deal_notes', { workspace_id, deal_id }, { orderBy: 'id', order: 'asc' });
       }
+    },
+
+    intelligence: {
+      add({ workspace_id, title, source_type, content, metadata = null }) {
+        return adapter.insert('knowledge_documents', { workspace_id, title, source_type, content, metadata });
+      },
+      get(workspace_id, id) {
+        return adapter.findOne('knowledge_documents', { workspace_id, id });
+      },
+      list(workspace_id, source_type = null) {
+        const where = { workspace_id };
+        if (source_type) where.source_type = source_type;
+        return adapter.find('knowledge_documents', where, { orderBy: 'id', order: 'desc' });
+      },
+      update(workspace_id, id, changes) {
+        return adapter.update('knowledge_documents', { workspace_id, id }, changes);
+      },
+      remove(workspace_id, id) {
+        return adapter.delete('knowledge_documents', { workspace_id, id });
+      }
     }
   };
 }
@@ -340,6 +360,13 @@ function forWorkspace(adapter, workspaceId) {
       get: agent_type => repos.providerPolicies.get(workspaceId, agent_type),
       list: () => repos.providerPolicies.list(workspaceId),
       remove: agent_type => repos.providerPolicies.remove(workspaceId, agent_type)
+    },
+    intelligence: {
+      add: data => repos.intelligence.add({ ...data, workspace_id: workspaceId }),
+      get: id => repos.intelligence.get(workspaceId, id),
+      list: source_type => repos.intelligence.list(workspaceId, source_type),
+      update: (id, changes) => repos.intelligence.update(workspaceId, id, changes),
+      remove: id => repos.intelligence.remove(workspaceId, id)
     },
     pipeline: {
       listAll: opts => repos.pipeline.listAll(workspaceId, opts)

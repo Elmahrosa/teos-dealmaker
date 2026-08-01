@@ -1,6 +1,7 @@
 const { createRepos } = require('../db/repos');
 const memory = require('./memory');
 const providers = require('./providers');
+const intelligence = require('./intelligence');
 
 const AGENT_TYPES = [
   'orchestrator',
@@ -82,12 +83,13 @@ async function provisionWorkspace(adapter, workspaceId, lang) {
   await repos.settings.create({ workspace_id: workspaceId, lang: lang || 'en', timezone: 'UTC', notifications: 'on', theme: 'system' });
   await memory.ensureDefaults(adapter, workspaceId);
   await providers.ensurePolicies(adapter, workspaceId);
+  await intelligence.seedSources(adapter, workspaceId);
   await repos.audit.add({
     workspace_id: workspaceId,
     agent_name: 'orchestrator',
     action_type: 'WORKSPACE_PROVISIONED',
-    details: { agents: AGENT_TYPES.length, version: 'v0.2.0' },
-    version: 'v0.2.0'
+    details: { agents: AGENT_TYPES.length, version: 'v0.6.0' },
+    version: 'v0.6.0'
   });
   return AGENT_TYPES.length;
 }

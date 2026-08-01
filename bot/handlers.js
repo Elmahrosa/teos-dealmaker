@@ -2,9 +2,11 @@ const { COMMANDS } = require('./commands');
 const onboarding = require('./onboarding');
 const identity = require('../services/identity');
 const memory = require('../services/memory');
+const intelligence = require('../services/intelligence');
 const memoryEdit = require('./memoryEdit');
+const knowledgeState = require('./knowledgeState');
 const { getStoreAdapter } = require('./store');
-const { buildHome, buildMemory } = require('./menu');
+const { buildHome, buildMemory, buildAskResult } = require('./menu');
 const audit = require('../utils/auditLogger');
 const { getMode } = require('../config/mode');
 
@@ -66,6 +68,42 @@ async function handleMessage(msg) {
 
   if (onboarding.isActive(userId) && !text.startsWith('/')) {
     return onboarding.handleText(chatId, userId, text);
+  }
+
+  const kgFlow = knowledgeState.pending(userId);
+  if (kgFlow && !text.startsWith('/')) {
+    const adapter = getStoreAdapter();
+    try {
+      const user = await identity.getUserByTelegram(adapter, userId);
+      const workspace = user ? await identity.getWorkspaceForUser(adapter, user.id) : null;
+      if (!workspace) {
+        return { chatId, text: 'No workspace found. Run /start to provision one.' };
+      }
+      if (kgFlow === 'kg_ask') {
+        knowledgeState.clear(userId);
+        audit.writeEntry('BOT_INTEL_ASK', String(userId), 'success', { mode: getMode() });
+        const result = await intelligence.ask(adapter, workspace.id, text);
+        return screenResult(chatId, buildAskResult(userId, text, result));
+      }
+      if (kgFlow === 'kg_add') {
+        const payload = knowledgeState.payload(userId) || {};
+        knowledgeState.clear(userId);
+        const lines = text.split(/\n+/).filter(l => l.trim());
+        const title = payload.title || (lines.length > 1 ? lines[0].slice(0, 80) : 'Document');
+        const content = lines.length > 1 ? lines.slice(1).join('\n') : text;
+        await intelligence.addDocument(adapter, workspace.id, {
+          title,
+          source_type: payload.source_type || 'documents',
+          content
+        });
+        audit.writeEntry('BOT_INTEL_DOC_ADD', String(userId), 'success', { title, source: payload.source_type || 'documents' });
+        const { buildKnowledgeDocs } = require('./menu');
+        return screenResult(chatId, await buildKnowledgeDocs(userId));
+      }
+    } catch (err) {
+      audit.writeEntry('BOT_INTEL_ERROR', String(userId), 'error', { error: err.message });
+      return { chatId, text: `Intelligence update failed: ${err.message}` };
+    }
   }
 
   const pendingKey = memoryEdit.pending(userId);

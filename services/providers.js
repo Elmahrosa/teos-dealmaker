@@ -108,7 +108,8 @@ const DEFAULT_POLICY = {
   negotiator: { provider: 'openai', model: 'gpt-5' },
   treasurer: { provider: 'openai', model: 'gpt-4o-mini' },
   gatekeeper: { provider: 'groq', model: 'llama-3.1-8b-instant' },
-  closing: { provider: 'openai', model: 'gpt-4o-mini' }
+  closing: { provider: 'openai', model: 'gpt-4o-mini' },
+  intelligence: { provider: 'openai', model: 'gpt-4o-mini' }
 };
 
 const FALLBACK_CHAIN = ['openrouter', 'openai', 'groq', 'anthropic', 'gemini', 'nvidia_nim', 'ollama', 'lm_studio'];
@@ -168,7 +169,8 @@ function simulate(agentType, prompt, providerKey, model) {
     negotiator: 'set terms and discount thresholds',
     treasurer: 'prepare the contract and checkout',
     gatekeeper: 'review the draft against safety policy',
-    closing: 'finalize close or block the deal'
+    closing: 'finalize close or block the deal',
+    intelligence: 'answer the question from retrieved company knowledge with cited sources'
   };
   const next = actions[agentType] || 'process the lead through the workforce';
   const confidence = 65 + (seed % 30);

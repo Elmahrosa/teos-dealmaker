@@ -60,6 +60,10 @@ const TABLES = {
   deal_notes: {
     columns: ['workspace_id', 'deal_id', 'agent_name', 'note'],
     timestamps: true
+  },
+  knowledge_documents: {
+    columns: ['workspace_id', 'title', 'source_type', 'content', 'metadata'],
+    timestamps: true
   }
 };
 

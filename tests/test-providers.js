@@ -18,7 +18,8 @@ const providers = require('../services/providers');
   });
 
   const policy = await providers.getPolicy(adapter, ws.id);
-  assert.strictEqual(Object.keys(policy).length, 12, 'policies seeded for 12 agents');
+  assert.strictEqual(Object.keys(policy).length, 13, 'policies seeded for 12 agents + intelligence copilot');
+  assert.deepStrictEqual(policy.intelligence, { provider: 'openai', model: 'gpt-4o-mini' }, 'intelligence copilot routed cheap');
   assert.deepStrictEqual(policy.prospecting, { provider: 'gemini', model: 'gemini-2.0-flash' }, 'prospector → Gemini Flash');
   assert.deepStrictEqual(policy.market_intelligence, { provider: 'anthropic', model: 'claude-sonnet-4-5' }, 'researcher → Claude Sonnet');
   assert.deepStrictEqual(policy.negotiator, { provider: 'openai', model: 'gpt-5' }, 'negotiator → GPT-5');

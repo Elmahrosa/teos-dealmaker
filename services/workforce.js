@@ -2,6 +2,14 @@ const { createRepos } = require('../db/repos');
 const providers = require('./providers');
 const queue = require('./queue');
 
+async function intelligencePrompt(adapter, workspaceId, agentType, prompt) {
+  const intelligence = require('./intelligence');
+  const hits = await intelligence.retrieve(adapter, workspaceId, prompt, { topK: 3 });
+  if (!hits.length) return prompt;
+  const block = hits.map((h, i) => `[${i + 1}] ${h.title} — ${h.text}`).join('\n');
+  return `${prompt}\n\nCompany knowledge from the Enterprise Intelligence layer:\n${block}`;
+}
+
 const REGISTRY = {
   orchestrator: { label: 'Orchestrator', role: 'Routes every request through the right agent', cadence: 5, queue: 'incoming' },
   prospecting: { label: 'Prospector', role: 'Finds and scores new companies', cadence: 60, queue: 'research' },
@@ -96,7 +104,8 @@ async function runAgent(adapter, workspaceId, agentType, fn, opts) {
   let llm = null;
   try {
     if (o.prompt !== undefined && o.prompt !== null) {
-      llm = await providers.generate(adapter, workspaceId, agentType, o.prompt, {
+      const enriched = await intelligencePrompt(adapter, workspaceId, agentType, o.prompt);
+      llm = await providers.generate(adapter, workspaceId, agentType, enriched, {
         provider: o.provider,
         model: o.model,
         temperature: o.temperature
@@ -140,7 +149,7 @@ async function runAgent(adapter, workspaceId, agentType, fn, opts) {
     agent_name: agentType,
     action_type: 'AGENT_RUN_' + (status === 'completed' ? 'SUCCESS' : 'ERROR'),
     details: { agent: meta.label, duration_ms: durationMs, cost_cents: costCents, provider: runProvider, model: runModel, deal_id: o.deal_id || null },
-    version: 'v0.5.0'
+    version: 'v0.6.0'
   });
 
   if (error) throw error;

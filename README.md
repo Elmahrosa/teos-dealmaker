@@ -1,6 +1,6 @@
 # TEOS DealMaker
 
-**Status: FOUNDATION + 12 AGENTS + MULTI-TENANT PERSISTENCE + WORKSPACE IDENTITY + PROACTIVE DASHBOARD + AI WORKFORCE RUNTIME + WORKSPACE MEMORY + AGENT COLLABORATION + WORKFORCE CONSOLE + MULTI-PROVIDER AI LAYER + COST INTELLIGENCE + AGENT HEALTH + QUEUE MANAGER + EXECUTIVE BRIEFING (v0.5.0)**
+**Status: FOUNDATION + 12 AGENTS + MULTI-TENANT PERSISTENCE + WORKSPACE IDENTITY + PROACTIVE DASHBOARD + AI WORKFORCE RUNTIME + WORKSPACE MEMORY + AGENT COLLABORATION + WORKFORCE CONSOLE + MULTI-PROVIDER AI LAYER + COST INTELLIGENCE + AGENT HEALTH + QUEUE MANAGER + EXECUTIVE BRIEFING + ENTERPRISE INTELLIGENCE LAYER (v0.6.0)**
 
 **✅ IMPLEMENTED:**
 - [Implemented v0.1.0] Outreach agent (draft → gatekeeper → vault)
@@ -42,9 +42,17 @@
 - [Implemented] Queue manager (services/queue.js — 7-stage deal queue incoming → research → qualification → proposal → negotiation → closing → won; `enqueueDeal`/`advanceQueue` (closes deal on `won`)/`queueSnapshot`/`queueMovements`; `runPipelineDemo` now walks the queue and closes won deals; Deal Queue screen at `/queue` with stage counts + live movement feed)
 - [Implemented] Executive briefing (services/briefing.js `executiveBriefing` — yesterday prospects/qualified/emails/proposals, today's opportunities, open pipeline value, meetings needed, 20% revenue forecast, high-risk deals stalled >14 days, recommended action; Executive Briefing screen at `/briefing`)
 - [Implemented] LLM-driven agent runs (`runAgent` now accepts a `prompt` — executed through the provider layer via `providers.generate` — alongside the deterministic `fn` path; runs carry `deal_id` and record provider/model into `agent_runs`; audited as `AGENT_RUN_*` with provider/model/cost/deal_id)
+- [Implemented] Enterprise Intelligence Layer (v0.6.0: services/intelligence.js — multi-source knowledge the workforce answers from: company profile, products & services, pricing, FAQs, playbooks, CRM data, website, email templates, previous proposals, sales conversations, competitor profiles, customer personas, uploaded documents; sources stored in the `knowledge_documents` table (workspace-scoped, chunked, metadata-tagged); `seedSources` re-syncs profile sources from workspace memory idempotently on provision)
+- [Implemented] Semantic-style retrieval (TF-IDF token scoring with document-frequency weighting + intent-aware source boosts; `retrieve(query, topK)` returns ranked knowledge chunks with scores and source labels)
+- [Implemented] Enterprise copilot (`ask(question)` — detects intent (pricing/product fit/proposal/objections/competitor/persona/FAQ), retrieves evidence, and answers via the LLM when a provider key is configured (RAG prompt with cited sources) or synthesizes an evidence-based answer offline; `/ask <question>` command + Ask the AI flow)
+- [Implemented] Agent knowledge grounding (agents run with retrieved company knowledge appended to their prompts via `intelligencePrompt`; `getAgentContext` returns per-agent memory + relevant knowledge chunks)
+- [Implemented] Renamed product surface: "Workspace Memory" → **Company Intelligence** (Settings, AI Guide, memory editor, new Intelligence hub `/intelligence`, Documents `/documents`, Add Knowledge flow with source-type picker, Ask the AI)
+- [Implemented] Intelligence copilot policy (13th routing policy `intelligence` → openai/gpt-4o-mini for cheap RAG answers, editable from the Providers screen)
 
 **❌ PENDING:**
-- [Pending] Live Postgres verification (schema never migrated — no `DATABASE_URL` provided; pending: `agent_runs.deal_id` ALTER + `provider_policies` table on real PG/Supabase)
+- [Pending] Live Postgres verification (schema never migrated — no `DATABASE_URL` provided; pending: `agent_runs.deal_id` ALTER + `provider_policies` + `knowledge_documents` tables on real PG/Supabase)
+- [Pending] Document upload parsing (PDF/DOCX/CSV ingestion into the intelligence layer — paste-based text input works today; binary parsing libs not yet installed)
+- [Pending] Website crawl + CRM/email/calendar imports as intelligence sources (scheduled for the v0.7 integration phase)
 - [Pending] Subscription activation wiring (onboarding creates pending subscription; checkout/payment activation is next)
 - [Pending] Real multi-provider live calls (provider layer ships with seeded simulation; set any provider API key to go live)
 - [Pending] Real Dodo Payments integration (LIVE key)
@@ -61,10 +69,10 @@
 ## Database (Phase 1 + Phase 2)
 
 - Schema: `db/schema.sql` (multi-tenant, forward-only, `CREATE TABLE IF NOT EXISTS`, updated_at triggers).
-- Tables: workspaces (owner_user_id, subscription_id), users (telegram_id UNIQUE), workspace_members (role RBAC), subscriptions, dodo_customers, deals, audit_trail (user_id), conversations, messages, agent_runs (incl. deal_id), provider_usage, pipeline_events, provider_policies (workspace agent routing), agents (provisioned workforce), workspace_settings (lang/timezone/notifications/theme), workspace_memory (key/value JSONB), deal_notes (agent collaboration hand-offs).
+- Tables: workspaces (owner_user_id, subscription_id), users (telegram_id UNIQUE), workspace_members (role RBAC), subscriptions, dodo_customers, deals, audit_trail (user_id), conversations, messages, agent_runs (incl. deal_id), provider_usage, pipeline_events, provider_policies (workspace agent routing), agents (provisioned workforce), workspace_settings (lang/timezone/notifications/theme), workspace_memory (key/value JSONB), deal_notes (agent collaboration hand-offs), knowledge_documents (Enterprise Intelligence sources: title/source_type/content/metadata, workspace-scoped).
 - Isolation rule: every tenant-owned table carries `workspace_id`; all repository reads/writes filter by it, enforced by `forWorkspace()`.
 - Identity flow: `services/identity.js` — `ensureUser` (telegram_id → user), `getWorkspaceForUser` (user → member → workspace), `onboardWorkspace` (transactional: workspace + owner membership + pending subscription + provision), `uniqueSlug` (collision-safe slug).
-- Verify locally: `node tests/test-multitenancy.js` and `node tests/test-identity.js` and `node tests/test-workspace.js` and `node tests/test-workforce.js` and `node tests/test-memory.js` and `node tests/test-console.js` and `node tests/test-providers.js` and `node tests/test-operations.js` (in-memory adapter, no DB required).
+- Verify locally: `node tests/test-multitenancy.js` and `node tests/test-identity.js` and `node tests/test-workspace.js` and `node tests/test-workforce.js` and `node tests/test-memory.js` and `node tests/test-console.js` and `node tests/test-providers.js` and `node tests/test-operations.js` and `node tests/test-intelligence.js` (in-memory adapter, no DB required).
 - Live: set `DATABASE_URL` then `npm run db:migrate`; adapter + repos then target Postgres.
 
 ## Known Issues

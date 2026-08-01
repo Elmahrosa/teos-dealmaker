@@ -2,9 +2,12 @@ const { getMode, setMode } = require('../config/mode');
 const audit = require('../utils/auditLogger');
 const { BOT_CONFIG } = require('./config');
 const { isFounder, isAdmin } = require('./access');
-const { buildHome, buildWorkforce, buildPipeline, buildDeals, buildAudit, buildAdmin, buildPricing, buildMemory, buildCosts, buildHealth, buildProviders, buildQueue, buildBriefing } = require('./menu');
+const { buildHome, buildWorkforce, buildPipeline, buildDeals, buildAudit, buildAdmin, buildPricing, buildMemory, buildCosts, buildHealth, buildProviders, buildQueue, buildBriefing, buildIntelligence, buildKnowledgeDocs, buildAskResult } = require('./menu');
 const { formatPricingText, pricingButtons } = require('../config/pricing.config');
 const design = require('./design');
+const identity = require('../services/identity');
+const intelligence = require('../services/intelligence');
+const { getStoreAdapter } = require('./store');
 
 function screenResult(chatId, screen) {
   return { chatId, text: screen.text, replyMarkup: screen.keyboard };
@@ -196,6 +199,37 @@ async function cmdBriefing(chatId, userId) {
   return screenResult(chatId, await buildBriefing(userId));
 }
 
+async function cmdIntelligence(chatId, userId) {
+  return screenResult(chatId, await buildIntelligence(userId));
+}
+
+async function cmdDocuments(chatId, userId) {
+  return screenResult(chatId, await buildKnowledgeDocs(userId));
+}
+
+async function cmdAsk(chatId, userId, remainder) {
+  if (!remainder) {
+    return {
+      chatId,
+      text: design.compose([
+        `${design.EMOJI.ai} ${design.b('Ask Company Intelligence')}`,
+        design.divider(),
+        design.it('Usage: /ask <your question>'),
+        design.it('Example: /ask Which plan fits a company with 300 employees?'),
+        design.divider()
+      ])
+    };
+  }
+  const adapter = getStoreAdapter();
+  const user = await identity.getUserByTelegram(adapter, userId);
+  const workspace = user ? await identity.getWorkspaceForUser(adapter, user.id) : null;
+  if (!workspace) {
+    return { chatId, text: design.errorPanel('No workspace', 'Provision a workspace first with /start.').text };
+  }
+  const result = await intelligence.ask(adapter, workspace.id, remainder);
+  return screenResult(chatId, buildAskResult(userId, remainder, result));
+}
+
 function cmdAdmin(chatId, userId) {
   return screenResult(chatId, buildAdmin(userId));
 }
@@ -222,6 +256,9 @@ const COMMANDS = {
   '/providers': cmdProviders,
   '/queue': cmdQueue,
   '/briefing': cmdBriefing,
+  '/intelligence': cmdIntelligence,
+  '/documents': cmdDocuments,
+  '/ask': cmdAsk,
   '/admin': cmdAdmin
 };
 

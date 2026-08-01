@@ -11,9 +11,11 @@ const workforce = require('../services/workforce');
 const memory = require('../services/memory');
 const memoryEdit = require('./memoryEdit');
 const providers = require('../services/providers');
+const intelligence = require('../services/intelligence');
 const { costIntelligence } = require('../services/cost');
 const { executiveBriefing } = require('../services/briefing');
 const queue = require('../services/queue');
+const knowledgeState = require('./knowledgeState');
 
 const PIPELINE_STAGES = ['Strategist', 'Marketer', 'Negotiator', 'Treasurer', 'Closing'];
 
@@ -115,6 +117,7 @@ async function buildHome(userId) {
         [design.textButton('Dashboard', 'cc_dashboard'), design.textButton('Pipeline', 'cc_pipeline')],
         [design.textButton('Timeline', 'cc_timeline'), design.textButton('Costs', 'cc_costs'), design.textButton('Health', 'cc_health')],
         [design.textButton('Providers', 'cc_providers'), design.textButton('Queue', 'cc_queue'), design.textButton('Briefing', 'cc_briefing')],
+        [design.textButton('Intelligence', 'cc_intelligence'), design.textButton('Ask the AI', 'cc_kg_ask')],
         [design.textButton('Settings', 'cc_settings'), design.textButton('Audit Log', 'cc_audit'), design.textButton('Pricing', 'cc_pricing')],
         [design.textButton('Admin', 'cc_admin')]
       ])
@@ -677,8 +680,8 @@ function buildAiGuide() {
     design.it('A deal moves Lead → Qualified → Meeting → Proposal → Negotiation → Won → Customer. Agents advance it automatically.'),
     design.section('TEAM'),
     design.it('Agents hand off work — each leaves notes for the next, like a real team. Run the pipeline demo to watch the chain.'),
-    design.section('MEMORY'),
-    design.it('Open Settings → Workspace Memory so every agent knows your company, products, ICP and competitors before acting.'),
+    design.section('COMPANY INTELLIGENCE'),
+    design.it('The system remembers your products, pricing, ICP and competitors — every agent reads the context it needs before acting, and you can ask it questions with /ask.'),
     design.section('CONTROL'),
     design.it('Run /sales <objection> to test the orchestrator. Open Workforce for per-agent activity.'),
     design.divider()
@@ -703,14 +706,14 @@ async function buildSettings(userId) {
     design.row('Notifications', s.notifications),
     design.row('Theme', s.theme),
     design.section('KNOWLEDGE'),
-    design.it('Store what your company knows so every agent works from the same truth.'),
+    design.it('Company Intelligence stores what your company knows — products, pricing, FAQs, playbooks, competitor and customer profiles, and past proposals and conversations.'),
     design.divider()
   ]);
   return {
     text,
     keyboard: design.keyboard([
       [design.textButton('English', 'cc_set_lang:en'), design.textButton('العربية', 'cc_set_lang:ar')],
-      [design.textButton('Workspace Memory', 'cc_memory')],
+      [design.textButton('Company Intelligence', 'cc_intelligence')],
       [design.textButton('Back to Home', 'cc_home')]
     ])
   };
@@ -722,8 +725,8 @@ async function buildMemory(userId) {
   const mem = await memory.getMemory(getStoreAdapter(), ctx.workspace.id);
   const rows = memory.describe(mem);
   const lines = [
-    `${design.EMOJI.ai} ${design.b('Workspace Memory')}`,
-    design.it('Every agent reads the context it needs before working.'),
+    `${design.EMOJI.ai} ${design.b('Company Intelligence')}`,
+    design.it('Core profile every agent reads before working.'),
     design.divider(),
     ...(rows.length ? rows.map(r => design.row(r.split(':')[0], r.split(':').slice(1).join(':'))) : [design.it('Nothing saved yet — add your company details below.')]),
     design.section('HOW AGENTS USE IT'),
@@ -739,7 +742,8 @@ async function buildMemory(userId) {
       [design.textButton('Edit Products', 'cc_mem_edit:products'), design.textButton('Edit Services', 'cc_mem_edit:services')],
       [design.textButton('Edit ICP', 'cc_mem_edit:icp'), design.textButton('Edit Competitors', 'cc_mem_edit:competitors')],
       [design.textButton('Edit Brand Voice', 'cc_mem_edit:brand_voice'), design.textButton('Edit Playbook', 'cc_mem_edit:sales_playbook')],
-      [design.textButton('Back to Settings', 'cc_settings')]
+      [design.textButton('Intelligence Hub', 'cc_intelligence')],
+      [design.textButton('Back to Home', 'cc_home')]
     ])
   };
 }
@@ -767,6 +771,144 @@ function buildMemoryEdit(userId, key) {
     ]),
     keyboard: design.keyboard([
       [design.textButton('Cancel', 'cc_mem_cancel')]
+    ])
+  };
+}
+
+async function buildIntelligence(userId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) {
+    return {
+      text: design.compose([
+        `${design.EMOJI.ai} ${design.b('Company Intelligence')}`,
+        design.it('Set up a workspace to build your intelligence layer.'),
+        design.divider()
+      ]),
+      keyboard: design.keyboard([
+        [design.textButton('Back to Home', 'cc_home')]
+      ])
+    };
+  }
+  const d = await intelligence.describe(getStoreAdapter(), ctx.workspace.id);
+  const sourceRows = d.sources
+    .filter(s => s.count > 0)
+    .map(s => design.row(s.label, String(s.count)));
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('Company Intelligence')}`,
+    design.it('The knowledge your workforce answers from.'),
+    design.divider(),
+    design.row('Documents', String(d.total_docs)),
+    design.row('Knowledge chunks', String(d.total_chunks)),
+    design.row('From your profile', String(d.seeded)),
+    design.row('Uploaded', String(d.uploaded)),
+    design.section('SOURCES'),
+    ...(sourceRows.length ? sourceRows : [design.it('No knowledge yet — add your products, pricing, FAQs and past proposals.')]),
+    design.section('COPILOT'),
+    design.it('Ask questions like "Which plan fits a 300-person company?" or "Draft a proposal with Enterprise pricing."'),
+    design.divider()
+  ]);
+  return {
+    text,
+    keyboard: design.keyboard([
+      [design.textButton('Ask the AI', 'cc_kg_ask'), design.textButton('Add Knowledge', 'cc_kg_add')],
+      [design.textButton('Documents', 'cc_kg_docs'), design.textButton('Edit Company Details', 'cc_memory')],
+      [design.textButton('Back to Home', 'cc_home')]
+    ])
+  };
+}
+
+async function buildKnowledgeDocs(userId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) {
+    return {
+      text: design.compose([
+        `${design.EMOJI.ai} ${design.b('Intelligence Documents')}`,
+        design.it('Set up a workspace first.'),
+        design.divider()
+      ]),
+      keyboard: design.keyboard([
+        [design.textButton('Back to Home', 'cc_home')]
+      ])
+    };
+  }
+  const docs = await intelligence.listDocuments(getStoreAdapter(), ctx.workspace.id);
+  const lines = docs.length ? docs.map(d =>
+    `${design.EMOJI.info} ${design.b(d.title)}${d.seeded ? ' · ' + design.badge('profile') : ''}\n${design.it(d.label + ' · ' + d.chunks + ' chunk' + (d.chunks === 1 ? '' : 's'))}`
+  ) : [design.it('No documents yet — add pricing, FAQs, proposals or notes.')];
+  const text = design.compose([
+    `${design.EMOJI.ai} ${design.b('Intelligence Documents')}`,
+    design.it(`${docs.length} document${docs.length === 1 ? '' : 's'} in this workspace`),
+    design.divider(),
+    ...lines,
+    design.divider()
+  ]);
+  const rows = docs.slice(0, 6).map(d => [design.textButton('Delete: ' + d.title.slice(0, 18), `cc_kg_del:${d.id}`)]);
+  rows.push([design.textButton('Add Knowledge', 'cc_kg_add'), design.textButton('Intelligence Hub', 'cc_intelligence')]);
+  rows.push([design.textButton('Back to Home', 'cc_home')]);
+  return {
+    text,
+    keyboard: design.keyboard(rows)
+  };
+}
+
+function buildKnowledgeAdd(userId, sourceType) {
+  const label = intelligence.SOURCE_TYPES[sourceType] ? intelligence.SOURCE_TYPES[sourceType].label : sourceType;
+  return {
+    text: design.compose([
+      `${design.EMOJI.ai} ${design.b('Add Knowledge · ' + label)}`,
+      design.divider(),
+      design.it('Paste the knowledge text now.'),
+      design.it('First line becomes the title, the rest is the content.'),
+      design.it('Example:'),
+      design.code('Enterprise Pricing\n$2,999/year for teams up to 100 seats. Includes onboarding, priority support and a dedicated CSM.'),
+      design.divider()
+    ]),
+    keyboard: design.keyboard([
+      [design.textButton('Cancel', 'cc_kg_cancel')]
+    ])
+  };
+}
+
+function buildKnowledgeAskPrompt(userId) {
+  return {
+    text: design.compose([
+      `${design.EMOJI.ai} ${design.b('Ask Company Intelligence')}`,
+      design.divider(),
+      design.it('Type your question. The layer searches products, pricing, FAQs, playbooks and past conversations.'),
+      design.it('Examples:'),
+      design.code('Which plan fits a company with 300 employees?'),
+      design.code('Draft a proposal with our Enterprise pricing.'),
+      design.code('What objections has Acme raised before?'),
+      design.divider()
+    ]),
+    keyboard: design.keyboard([
+      [design.textButton('Cancel', 'cc_kg_cancel')]
+    ])
+  };
+}
+
+function buildAskResult(userId, question, result) {
+  const answerLines = result.answer
+    ? result.answer.split('\n')
+    : [design.it('I could not find an answer in your intelligence layer yet. Add documents about this topic, then ask again.')];
+  const evidenceLines = result.evidence.slice(0, 3).map(e =>
+    `${design.code(e.label)} ${design.b(e.title)} · score ${e.score}\n${design.it(e.excerpt.length > 90 ? e.excerpt.slice(0, 90) + '…' : e.excerpt)}`
+  );
+  const lines = [
+    `${design.EMOJI.ai} ${design.b('Company Intelligence Answer')}`,
+    design.it('Question: ' + question),
+    design.it('Intent: ' + result.intent.label + (result.provider ? ` · ${result.provider_label || result.provider} ${result.model}` : ' · offline evidence')),
+    design.divider(),
+    ...answerLines,
+    design.section('EVIDENCE'),
+    ...(evidenceLines.length ? evidenceLines : [design.it('No evidence retrieved.')]),
+    design.divider()
+  ];
+  return {
+    text: design.compose(lines),
+    keyboard: design.keyboard([
+      [design.textButton('Ask Again', 'cc_kg_ask'), design.textButton('Intelligence Hub', 'cc_intelligence')],
+      [design.textButton('Back to Home', 'cc_home')]
     ])
   };
 }
@@ -962,6 +1104,31 @@ async function handleCallback(query, bot) {
       return send(await buildQueue(userId));
     case 'cc_briefing':
       return send(await buildBriefing(userId));
+    case 'cc_intelligence':
+      return send(await buildIntelligence(userId));
+    case 'cc_kg_docs':
+      return send(await buildKnowledgeDocs(userId));
+    case 'cc_kg_cancel':
+      knowledgeState.clear(userId);
+      return send(await buildIntelligence(userId));
+    case 'cc_kg_ask': {
+      knowledgeState.begin(userId, 'kg_ask', {});
+      return send(buildKnowledgeAskPrompt(userId));
+    }
+    case 'cc_kg_add': {
+      const rows = Object.keys(intelligence.SOURCE_TYPES).map(k => [
+        design.textButton(intelligence.SOURCE_TYPES[k].label, `cc_kg_source:${k}`)
+      ]);
+      rows.push([design.textButton('Cancel', 'cc_intelligence')]);
+      return send({
+        text: design.compose([
+          `${design.EMOJI.ai} ${design.b('Add Knowledge')}`,
+          design.it('Choose the type of knowledge you are adding.'),
+          design.divider()
+        ]),
+        keyboard: design.keyboard(rows)
+      });
+    }
     case 'cc_audit': {
       if (!isAdmin(userId)) return send(denied('audit feed'));
       return send(buildAudit(0));
@@ -1019,6 +1186,19 @@ async function handleCallback(query, bot) {
           agent: agentType, provider: providerKey, model
         });
         return send(await buildProviders(userId));
+      }
+      if (action.startsWith('cc_kg_source:')) {
+        const sourceType = action.split(':')[1];
+        knowledgeState.begin(userId, 'kg_add', { source_type: sourceType });
+        return send(buildKnowledgeAdd(userId, sourceType));
+      }
+      if (action.startsWith('cc_kg_del:')) {
+        const id = action.split(':')[1];
+        const ctx = await getCtx(userId);
+        if (!ctx) return send(denied('intelligence'));
+        await intelligence.removeDocument(getStoreAdapter(), ctx.workspace.id, id);
+        audit.writeEntry('BOT_INTEL_DOC_DEL', String(userId), 'success', { id });
+        return send(await buildKnowledgeDocs(userId));
       }
       if (action === 'cc_live') {
         if (!isFounder(userId)) return send(denied('founder actions'));
@@ -1098,5 +1278,8 @@ module.exports = {
   buildProviders,
   buildQueue,
   buildBriefing,
+  buildIntelligence,
+  buildKnowledgeDocs,
+  buildAskResult,
   handleCallback
 };

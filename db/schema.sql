@@ -219,6 +219,19 @@ CREATE TABLE IF NOT EXISTS deal_notes (
 
 CREATE INDEX IF NOT EXISTS idx_deal_notes_workspace_deal ON deal_notes(workspace_id, deal_id);
 
+CREATE TABLE IF NOT EXISTS knowledge_documents (
+    id SERIAL PRIMARY KEY,
+    workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    source_type VARCHAR(50) NOT NULL DEFAULT 'documents',
+    content TEXT NOT NULL,
+    metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_knowledge_workspace_source ON knowledge_documents(workspace_id, source_type);
+
 CREATE OR REPLACE FUNCTION update_modified_column()
 RETURNS TRIGGER AS $$
 BEGIN
