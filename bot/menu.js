@@ -1,4 +1,4 @@
-const design = require('./design');
+﻿const design = require('./design');
 const audit = require('../utils/auditLogger');
 const { getMode, setMode } = require('../config/mode');
 const { BOT_CONFIG } = require('./config');
@@ -72,7 +72,7 @@ function recentErrors() {
 
 function nextRecommendation(ctx) {
   if (ctx.deals.total === 0) return 'Import your first leads to start the pipeline.';
-  if (ctx.deals.open === 0) return 'Your pipeline is closed — import new leads to keep revenue flowing.';
+  if (ctx.deals.open === 0) return 'Your pipeline is closed â€” import new leads to keep revenue flowing.';
   if (outreachToday() === 0) return 'Run an outreach cycle on your active deals.';
   return 'Follow up on your active deals to move them forward.';
 }
@@ -83,13 +83,13 @@ async function buildHome(userId) {
   if (!ctx) {
     const entries = audit.readVault();
     const text = design.compose([
-      \`\${design.EMOJI.ai} \${design.b('TEOS DEALMAKER')}\`,
-      design.it('Mission Control — AI Revenue Workforce'),
+      `${design.EMOJI.ai} `${design.b('TEOS DEALMAKER')}`,
+      design.it('Mission Control â€” AI Revenue Workforce'),
       design.divider(),
-      \`\${design.row('Status', design.modeBadge(getMode()))}\`,
-      \`\${design.row('Revenue Team', '13 specialists available')}\`,
-      \`\${design.row('Audit', \`\${entries.length} entries\`)}\n\${design.divider()}\`,
-      \`${design.it('Select a module to manage the workforce.')}\`
+      `${design.row('Status', design.modeBadge(getMode()))}`,
+      `${design.row('Revenue Team', '13 specialists available')}`,
+      `${design.row('Audit', `${entries.length} entries`)}\n`${design.divider()}`,
+      `${design.it('Select a module to manage the workforce.')}`
     ]);
     // Build keyboard with conditional infrastructure buttons
     const row1 = [design.textButton('Dashboard', 'cc_dashboard'), design.textButton('My Revenue Team', 'cc_workforce')];
@@ -122,17 +122,17 @@ async function buildHome(userId) {
   const completed = missions.filter(m => m.status === 'completed').length;
   const nextMission = missions.find(m => !['completed', 'failed', 'cancelled'].includes(m.status));
   const recommendation = nextMission
-    ? \`\${nextMission.title} · \${nextMission.progress}% · next: \${nextMission.next_agent || '—'}\`
+    ? `${nextMission.title} Â· `${nextMission.progress}% Â· next: `${nextMission.next_agent || 'â€”'}`
     : 'Start Mission 1 to define your sales strategy.';
   const text = design.compose([
-    \`\${design.EMOJI.ai} \${design.b('MISSION CONTROL')}\`,
-    design.it(\`\${greetingFor(timezone)}, \${name}.\`),
+    `${design.EMOJI.ai} `${design.b('MISSION CONTROL')}`,
+    design.it(`${greetingFor(timezone)}, `${name}.`),
     design.divider(),
     design.section('MISSIONS'),
     design.row('In flight', String(running)),
     design.row('Completed', String(completed)),
     design.section('WORKFORCE'),
-    \`\${healthy ? design.EMOJI.success : design.EMOJI.warning} \${ctx.agents.active} agents ready · \${ctx.deals.open} active deals\`,
+    `${healthy ? design.EMOJI.success : design.EMOJI.warning} `${ctx.agents.active} agents ready Â· `${ctx.deals.open} active deals`,
     design.section('NEXT ACTION'),
     design.it(recommendation),
     design.divider()
@@ -142,7 +142,7 @@ async function buildHome(userId) {
     return {
       text,
       keyboard: design.keyboard([
-        [design.textButton('Mission 1 · Sell TEOS Dealmaker', 'cc_mission1'), design.textButton('New Mission', 'cc_mission_goal')],
+        [design.textButton('Mission 1 Â· Sell TEOS Dealmaker', 'cc_mission1'), design.textButton('New Mission', 'cc_mission_goal')],
         [design.textButton('Mission Center', 'cc_missions'), design.textButton('Approvals', 'cc_approvals')],
         [design.textButton('Sales Pipeline', 'cc_pipeline'), design.textButton('My Revenue Team', 'cc_workforce')],
         [design.textButton('Activity', 'cc_activity'), design.textButton('Daily Summary', 'cc_briefing'), design.textButton('Costs', 'cc_costs')],
@@ -153,7 +153,7 @@ async function buildHome(userId) {
   } else {
     // Regular users see only a restricted set
     const allowedButtons = [
-      { text: 'Mission 1 · Sell TEOS Dealmaker', callback: 'cc_mission1' },
+      { text: 'Mission 1 Â· Sell TEOS Dealmaker', callback: 'cc_mission1' },
       { text: 'New Mission', callback: 'cc_mission_goal' },
       { text: 'Mission Center', callback: 'cc_missions' },
       { text: 'Approvals', callback: 'cc_approvals' },
@@ -178,32 +178,32 @@ async function buildLearn(userId, progress, ctx) {
   const p = progress || {};
   const pct = p.pct || 0;
   const fill = Math.round((pct / 100) * 10);
-  const bar = '█'.repeat(fill) + '░'.repeat(10 - fill);
+  const bar = 'â–ˆ'.repeat(fill) + 'â–‘'.repeat(10 - fill);
   const sectionLines = [
-    `🏢 Company Intelligence    ${p.companyAnswered || 0}/${p.companyTotal || 0}`,
-    `📦 Product Intelligence    ${p.products || 0} product${(p.products || 0) === 1 ? '' : 's'}`,
-    `📖 Sales Playbook          ${p.playbookAnswered || 0}/${p.playbookTotal || 0}`,
-    `👥 Customer Personas       ${p.personas || 0} persona${(p.personas || 0) === 1 ? '' : 's'}`
+    `ðŸ¢ Company Intelligence    ${p.companyAnswered || 0}/${p.companyTotal || 0}`,
+    `ðŸ“¦ Product Intelligence    ${p.products || 0} product${(p.products || 0) === 1 ? '' : 's'}`,
+    `ðŸ“– Sales Playbook          ${p.playbookAnswered || 0}/${p.playbookTotal || 0}`,
+    `ðŸ‘¥ Customer Personas       ${p.personas || 0} persona${(p.personas || 0) === 1 ? '' : 's'}`
   ];
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Welcome! Your AI Revenue Team is ready.')}`,
+    ${design.EMOJI.ai} ${design.b('Welcome! Your AI Revenue Team is ready.')}`,
     design.it('What would you like to accomplish?'),
     design.divider(),
-    `${design.EMOJI.rocket} ${design.b('Sell TEOS Dealmaker')} — learn your business, then build strategy, prospects and first outreach.`,
-    `${design.EMOJI.target} ${design.b('Find New Customers')} — run a full revenue pipeline for your known products.`,
-    `${design.EMOJI.globe} ${design.b('Analyze a Market')} — research a market and map opportunity.`,
-    `${design.EMOJI.brain} ${design.b('Build Company Intelligence')} — finish the learning interview.`,
+    ${design.EMOJI.rocket} ${design.b('Sell TEOS Dealmaker')} â€” learn your business, then build strategy, prospects and first outreach.`,
+    ${design.EMOJI.target} ${design.b('Find New Customers')} â€” run a full revenue pipeline for your known products.`,
+    ${design.EMOJI.globe} ${design.b('Analyze a Market')} â€” research a market and map opportunity.`,
+    ${design.EMOJI.brain} ${design.b('Build Company Intelligence')} â€” finish the learning interview.`,
     design.divider(),
-    `${design.code(bar)} ${design.b('Company Knowledge ' + pct + '%')}`,
+    ${design.code(bar)} ${design.b('Company Knowledge ' + pct + '%')}`,
     ...sectionLines,
     design.divider()
   ]);
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('🚀 Sell TEOS Dealmaker', 'cc_mission1')],
-      [design.textButton('📈 Find New Customers', 'cc_mission2'), design.textButton('🌍 Analyze a Market', 'cc_mission_market')],
-      [design.textButton('🧠 Build Company Intelligence', 'cc_learn')],
+      [design.textButton('ðŸš€ Sell TEOS Dealmaker', 'cc_mission1')],
+      [design.textButton('ðŸ“ˆ Find New Customers', 'cc_mission2'), design.textButton('ðŸŒ Analyze a Market', 'cc_mission_market')],
+      [design.textButton('ðŸ§  Build Company Intelligence', 'cc_learn')],
       [design.textButton('Mission Center', 'cc_missions')]
     ])
   };
@@ -214,7 +214,7 @@ async function buildMissions(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-      `${design.EMOJI.ai} ${design.b('Mission Center')}`,
+      ${design.EMOJI.ai} ${design.b('Mission Center')}`,
       design.it('Set up a workspace to run missions.'),
         design.divider()
       ]),
@@ -228,16 +228,16 @@ async function buildMissions(userId) {
   const missions = await runtime.listMissions(adapter, ctx.workspace.id);
   const missionLines = missions.length
     ? missions.slice(0, 8).map(m => {
-      const status = m.status === 'waiting_approval' ? '🟡 awaiting your approval' : m.status === 'completed' ? '🟢 completed' : m.status === 'failed' ? '🔴 failed' : m.status === 'budget_exceeded' ? '🔴 budget exceeded' : '🟡 in flight';
-      return `${design.b(m.title)}\n${design.it(status + ' · ' + m.progress + '% · ' + m.completed_steps + '/' + m.total_steps + ' steps')}`;
+      const status = m.status === 'waiting_approval' ? 'ðŸŸ¡ awaiting your approval' : m.status === 'completed' ? 'ðŸŸ¢ completed' : m.status === 'failed' ? 'ðŸ”´ failed' : m.status === 'budget_exceeded' ? 'ðŸ”´ budget exceeded' : 'ðŸŸ¡ in flight';
+      return ${design.b(m.title)}\n${design.it(status + ' Â· ' + m.progress + '% Â· ' + m.completed_steps + '/' + m.total_steps + ' steps')}`;
     })
-    : [design.it('No missions yet — start Mission 1 below.')];
+    : [design.it('No missions yet â€” start Mission 1 below.')];
   const rows = [];
     if (progress.complete) {
-      rows.push([design.textButton('Mission 1 · Sell TEOS Dealmaker', 'cc_mission1'), design.textButton('Mission 2 · Revenue Pipeline', 'cc_mission2')]);
+      rows.push([design.textButton('Mission 1 Â· Sell TEOS Dealmaker', 'cc_mission1'), design.textButton('Mission 2 Â· Revenue Pipeline', 'cc_mission2')]);
       rows.push([design.textButton('New Custom Mission', 'cc_mission_goal')]);
     } else {
-      rows.push([design.textButton('Complete Mission 0 · Learn First', 'cc_learn')]);
+      rows.push([design.textButton('Complete Mission 0 Â· Learn First', 'cc_learn')]);
     }
   if (missions.length) {
     const missionRows = missions.slice(0, 8).map(m => [design.textButton(`#${m.id} ${m.title.slice(0, 22)}`, `cc_mission:${m.id}`)]);
@@ -245,7 +245,7 @@ async function buildMissions(userId) {
   }
   rows.push([design.textButton('Approvals', 'cc_approvals'), design.textButton('Back to Home', 'cc_home')]);
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Mission Center')}`,
+    ${design.EMOJI.ai} ${design.b('Mission Center')}`,
     design.it('Every mission starts with the Revenue Strategist: it decides if the mission makes sense, picks the specialists, sets success criteria and a budget, and asks for human approval before anything ships.'),
     design.divider(),
     design.section('YOUR MISSIONS'),
@@ -264,12 +264,12 @@ async function buildMissionDetail(userId, planId) {
   if (!plan) return { text: design.errorPanel('Mission not found', String(planId)).text, keyboard: null };
   const steps = await repos.planSteps.list(ctx.workspace.id, Number(planId));
   const stepLines = steps.map(s => {
-    const tone = s.status === 'completed' ? '🟢' : s.status === 'awaiting_approval' ? '🟡' : s.status === 'failed' ? '🔴' : s.status === 'skipped' ? '⚪' : '◽';
+    const tone = s.status === 'completed' ? 'ðŸŸ¢' : s.status === 'awaiting_approval' ? 'ðŸŸ¡' : s.status === 'failed' ? 'ðŸ”´' : s.status === 'skipped' ? 'âšª' : 'â—½';
     const out = s.status === 'completed' && s.output ? `\n${design.it(String(s.output).split('\n')[0].slice(0, 80))}` : '';
-    return `${tone} ${design.b(s.agent_type)} · ${s.step_key}${out}`;
+    return ${tone} ${design.b(s.agent_type)} Â· ${s.step_key}${out}`;
   });
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Mission #' + plan.id + ' · ' + plan.title)}`,
+    ${design.EMOJI.ai} ${design.b('Mission #' + plan.id + ' Â· ' + plan.title)}`,
     design.it(plan.goal),
     design.divider(),
     design.row('Status', design.badge(plan.status === 'completed' ? 'success' : plan.status === 'waiting_approval' ? 'warning' : 'info')),
@@ -295,7 +295,7 @@ async function buildApprovals(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Approvals')}`,
+        ${design.EMOJI.ai} ${design.b('Approvals')}`,
         design.it('Set up a workspace first.'),
         design.divider()
       ]),
@@ -316,7 +316,7 @@ async function buildApprovals(userId) {
         const p = planCache[a.plan_id];
         if (p) title = p.title;
       }
-      return `${design.EMOJI.warning} ${design.b(title)}\n${design.it((a.reason || '').slice(0, 120))}`;
+      return ${design.EMOJI.warning} ${design.b(title)}\n${design.it((a.reason || '').slice(0, 120))}`;
     })
     : [design.it('No pending approvals.')];
   const rows = [];
@@ -326,8 +326,8 @@ async function buildApprovals(userId) {
   }
   rows.push([design.textButton('Missions', 'cc_missions'), design.textButton('Back to Home', 'cc_home')]);
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Approvals')}`,
-    design.it('Missions pause here until you decide — nothing is sent, created or issued without your approval.'),
+    ${design.EMOJI.ai} ${design.b('Approvals')}`,
+    design.it('Missions pause here until you decide â€” nothing is sent, created or issued without your approval.'),
     design.divider(),
     ...lines,
     design.divider()
@@ -338,7 +338,7 @@ async function buildApprovals(userId) {
 async function buildMissionGoalPrompt(userId) {
   return {
     text: design.compose([
-      `${design.EMOJI.ai} ${design.b('New Mission')}`,
+      ${design.EMOJI.ai} ${design.b('New Mission')}`,
       design.divider(),
       design.it('Type your mission goal. The Revenue Strategist will decide whether it makes sense and which specialists to deploy.'),
       design.it('Examples:'),
@@ -361,21 +361,21 @@ async function buildMissionRunResult(userId, planId, extra) {
   const steps = await repos.planSteps.list(ctx.workspace.id, planId);
   const status = plan ? plan.status : 'completed';
   const stepLines = steps.map(s => {
-    const tone = s.status === 'completed' ? '🟢' : s.status === 'awaiting_approval' ? '🟡' : s.status === 'failed' ? '🔴' : '◽';
+    const tone = s.status === 'completed' ? 'ðŸŸ¢' : s.status === 'awaiting_approval' ? 'ðŸŸ¡' : s.status === 'failed' ? 'ðŸ”´' : 'â—½';
     const out = s.status === 'completed' && s.output ? `\n${design.it(String(s.output).split('\n')[0].slice(0, 80))}` : '';
-    return `${tone} ${design.b(s.agent_type)} · ${s.step_key}${out}`;
+    return ${tone} ${design.b(s.agent_type)} Â· ${s.step_key}${out}`;
   });
   const strategyBlock = extra && extra.strategy
     ? `\n\n${design.code(extra.strategy.ascii)}`
     : '';
   const lines = [
-    `${design.EMOJI.ai} ${design.b('Mission Launched')}`,
+    ${design.EMOJI.ai} ${design.b('Mission Launched')}`,
     design.it(plan ? plan.title : 'Mission'),
     design.divider(),
     ...stepLines,
     design.section('STATUS'),
     design.row('State', design.badge(status === 'completed' ? 'success' : status === 'waiting_approval' ? 'warning' : 'info')),
-    ...(status === 'waiting_approval' ? [design.it('The mission paused for your approval — review it in Approvals.')] : []),
+    ...(status === 'waiting_approval' ? [design.it('The mission paused for your approval â€” review it in Approvals.')] : []),
     strategyBlock,
     design.divider()
   ];
@@ -395,8 +395,8 @@ async function launchMission1(userId) {
     const res = await botLearning.buildPrompt(userId, adapter, ctx.workspace.id);
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Mission 1 · Sell TEOS Dealmaker')}`,
-        design.it('Step 1 of 10 — Learn your business. The revenue team builds your strategy, prospects and first outreach as soon as you answer.'),
+        ${design.EMOJI.ai} ${design.b('Mission 1 Â· Sell TEOS Dealmaker')}`,
+        design.it('Step 1 of 10 â€” Learn your business. The revenue team builds your strategy, prospects and first outreach as soon as you answer.'),
         design.divider(),
         res.prompt
       ]),
@@ -432,7 +432,7 @@ async function launchMission2(userId) {
   if (!progress.complete) {
     return {
       text: design.compose([
-        `${design.EMOJI.warning} ${design.b('Mission 2 is locked')}`,
+        ${design.EMOJI.warning} ${design.b('Mission 2 is locked')}`,
         design.it('Complete Mission 0 first.'),
         design.divider()
       ]),
@@ -466,10 +466,10 @@ async function buildDashboard(userId) {
     ? ctx.deals.closed
     : entries.filter(e => e.action === 'CLOSING_AGENT_DEAL_CLOSED').length;
   const recent = entries.slice(-3).reverse().map(e =>
-    `${design.code((e.timestamp || '').slice(11, 19))} ${e.action} → ${e.target}`
+    ${design.code((e.timestamp || '').slice(11, 19))} ${e.action} â†’ ${e.target}`
   );
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Dashboard')}`,
+    ${design.EMOJI.ai} ${design.b('Dashboard')}`,
     design.it('Operational overview'),
     design.divider(),
     ctx ? design.row('Workspace', ctx.workspace.name) : null,
@@ -477,11 +477,11 @@ async function buildDashboard(userId) {
     design.row('Bot', `@${BOT_CONFIG.botName}`),
     ctx ? design.row('Plan', titleCase(ctx.workspace.plan)) : null,
     ctx ? design.row('Members', String(ctx.membersCount)) : null,
-    ctx ? design.row('Agents', `${ctx.agents.active} active`) : null,
+    ctx ? design.row('Agents', ${ctx.agents.active} active`) : null,
     ctx ? design.row('Subscription', ctx.subscriptionLabel) : null,
-    design.row('Audit', `${entries.length} entries`),
-    design.row('Closed deals', `${closed}`),
-    design.row('Last activity', last ? `${last.action} · ${(last.timestamp || '').slice(11, 19)}` : '—'),
+    design.row('Audit', ${entries.length} entries`),
+    design.row('Closed deals', ${closed}`),
+    design.row('Last activity', last ? ${last.action} Â· ${(last.timestamp || '').slice(11, 19)}` : 'â€”'),
     design.section('RECENT ACTIVITY'),
     recent.length ? design.list(recent) : design.it('No activity yet.'),
     design.section('QUICK ACTIONS')
@@ -497,10 +497,10 @@ async function buildDashboard(userId) {
 
 function workforceStatus(agent) {
   const status = agent.status;
-  if (status === 'running') return `${design.EMOJI.warning} Working`;
-  if (status === 'waiting') return `${design.EMOJI.warning} Waiting`;
-  if (status === 'paused') return `${design.EMOJI.critical} Paused`;
-  return `${design.EMOJI.success} Ready`;
+  if (status === 'running') return ${design.EMOJI.warning} Working`;
+  if (status === 'waiting') return ${design.EMOJI.warning} Waiting`;
+  if (status === 'paused') return ${design.EMOJI.critical} Paused`;
+  return ${design.EMOJI.success} Ready`;
 }
 
 async function buildWorkforce(userId) {
@@ -508,7 +508,7 @@ async function buildWorkforce(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('My Revenue Team')}`,
+        ${design.EMOJI.ai} ${design.b('My Revenue Team')}`,
         design.it('Set up a workspace to see your workforce.'),
         design.divider()
       ]),
@@ -518,14 +518,14 @@ async function buildWorkforce(userId) {
     };
   }
   const view = await workforce.workforceConsole(getStoreAdapter(), ctx.workspace.id);
-  const statusLine = (a) => `${design.EMOJI[a.tone]} ${a.label} · ${a.display}`;
+  const statusLine = (a) => ${design.EMOJI[a.tone]} ${a.label} Â· ${a.display}`;
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('My Revenue Team')}`,
-    design.it(`${view.workers_total} Specialists · ${view.busy} Busy · ${view.ready} Ready`),
+    ${design.EMOJI.ai} ${design.b('My Revenue Team')}`,
+    design.it(${view.workers_total} Specialists Â· ${view.busy} Busy Â· ${view.ready} Ready`),
     design.divider(),
-    design.row('⚡ Today\'s Cost', `$${(view.today_cost_cents / 100).toFixed(2)}`),
-    design.row('✓ Completed Tasks', String(view.completed_tasks)),
-    design.row('💰 Estimated Pipeline', `$${(view.estimated_pipeline_cents / 100).toFixed(2)}`),
+    design.row('âš¡ Today\'s Cost', `$${(view.today_cost_cents / 100).toFixed(2)}`),
+    design.row('âœ“ Completed Tasks', String(view.completed_tasks)),
+    design.row('ðŸ’° Estimated Pipeline', `$${(view.estimated_pipeline_cents / 100).toFixed(2)}`),
     design.section('WORKFORCE'),
     ...view.agents.map(a => statusLine(a)),
     design.divider()
@@ -545,7 +545,7 @@ async function buildTimeline(userId, dealId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Deal Timeline')}`,
+        ${design.EMOJI.ai} ${design.b('Deal Timeline')}`,
         design.it('Set up a workspace to see the timeline.'),
         design.divider()
       ]),
@@ -560,7 +560,7 @@ async function buildTimeline(userId, dealId) {
     if (!tl) {
       return {
         text: design.compose([
-          `${design.EMOJI.ai} ${design.b('Deal Timeline')}`,
+          ${design.EMOJI.ai} ${design.b('Deal Timeline')}`,
           design.it('Deal not found.'),
           design.divider()
         ]),
@@ -571,12 +571,12 @@ async function buildTimeline(userId, dealId) {
       };
     }
     const rows = [
-      ...tl.notes.map(n => `${design.code(n.time ? workforce.shortTime(n.time) : '—')} ${design.b(titleCase(n.agent_name))} ${n.text}`),
-      ...tl.events.map(e => `${design.code(e.time ? workforce.shortTime(e.time) : '—')} ${design.it('Stage')} ${e.text}`)
+      ...tl.notes.map(n => ${design.code(n.time ? workforce.shortTime(n.time) : 'â€”')} ${design.b(titleCase(n.agent_name))} ${n.text}`),
+      ...tl.events.map(e => ${design.code(e.time ? workforce.shortTime(e.time) : 'â€”')} ${design.it('Stage')} ${e.text}`)
     ];
     const text = design.compose([
-      `${design.EMOJI.ai} ${design.b('Deal Timeline')}`,
-      design.it(`#${tl.deal.id} · ${tl.deal.company_name} · ${tl.deal.stage}`),
+      ${design.EMOJI.ai} ${design.b('Deal Timeline')}`,
+      design.it(`#${tl.deal.id} Â· ${tl.deal.company_name} Â· ${tl.deal.stage}`),
       design.divider(),
       ...rows,
       design.divider()
@@ -594,12 +594,12 @@ async function buildTimeline(userId, dealId) {
   const blocks = recent.length ? (await Promise.all(recent.map(async d => {
     const notes = await repos.dealNotes.list(ctx.workspace.id, d.id);
     return [
-      `${design.b(`#${d.id} · ${d.company_name} · ${d.stage}`)}`,
-      ...(notes.length ? notes.map(n => `${design.code('  ·')} ${design.b(titleCase(n.agent_name))} ${n.note}`) : [design.it('  no notes yet')])
+      ${design.b(`#${d.id} Â· ${d.company_name} Â· ${d.stage}`)}`,
+      ...(notes.length ? notes.map(n => ${design.code('  Â·')} ${design.b(titleCase(n.agent_name))} ${n.note}`) : [design.it('  no notes yet')])
     ];
-  }))).flat() : [design.it('No deals yet — run the pipeline demo.')];
+  }))).flat() : [design.it('No deals yet â€” run the pipeline demo.')];
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Deal Timeline')}`,
+    ${design.EMOJI.ai} ${design.b('Deal Timeline')}`,
     design.it('How the team collaborated on each deal.'),
     design.divider(),
     ...blocks,
@@ -618,7 +618,7 @@ async function buildCosts(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('AI Cost Intelligence')}`,
+        ${design.EMOJI.ai} ${design.b('AI Cost Intelligence')}`,
         design.it('Set up a workspace to see costs.'),
         design.divider()
       ]),
@@ -629,14 +629,14 @@ async function buildCosts(userId) {
   }
   const c = await costIntelligence(getStoreAdapter(), ctx.workspace.id);
   const providerRows = c.by_provider.length
-    ? c.by_provider.map(p => design.row(titleCase(p.provider), `$${(p.cost_cents / 100).toFixed(2)} · ${p.tasks} tasks · ${p.tokens} tokens`))
+    ? c.by_provider.map(p => design.row(titleCase(p.provider), `$${(p.cost_cents / 100).toFixed(2)} Â· ${p.tasks} tasks Â· ${p.tokens} tokens`))
     : [design.it('No provider usage today yet.')];
   const agentRows = c.by_agent.filter(a => a.tasks > 0).slice(0, 5)
-    .map(a => design.row(a.label, `$${(a.cost_cents / 100).toFixed(2)} · ${a.tasks} tasks`));
+    .map(a => design.row(a.label, `$${(a.cost_cents / 100).toFixed(2)} Â· ${a.tasks} tasks`));
   const dealRows = c.by_deal.slice(0, 3)
-    .map(d => design.row(d.company, `$${(d.cost_cents / 100).toFixed(2)} · ${d.tasks} runs`));
+    .map(d => design.row(d.company, `$${(d.cost_cents / 100).toFixed(2)} Â· ${d.tasks} runs`));
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('AI Cost Intelligence')}`,
+    ${design.EMOJI.ai} ${design.b('AI Cost Intelligence')}`,
     design.it('Spend, tokens and averages'),
     design.divider(),
     design.section('TODAY'),
@@ -645,7 +645,7 @@ async function buildCosts(userId) {
     design.row('Tokens', String(c.today_tokens)),
     design.row('Tasks', String(c.tasks_today)),
     design.row('Avg per task', `$${(c.avg_cost_cents / 100).toFixed(4)}`),
-    design.row('Avg runtime', `${c.avg_runtime_ms} ms`),
+    design.row('Avg runtime', ${c.avg_runtime_ms} ms`),
     design.section('BY AGENT'),
     ...(agentRows.length ? agentRows : [design.it('No agent runs today.')]),
     design.section('BY DEAL'),
@@ -668,7 +668,7 @@ async function buildHealth(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Platform Health')}`,
+        ${design.EMOJI.ai} ${design.b('Platform Health')}`,
         design.it('Set up a workspace to see health.'),
         design.divider()
       ]),
@@ -681,14 +681,14 @@ async function buildHealth(userId) {
   const health = await workforce.agentHealth(getStoreAdapter(), ctx.workspace.id);
   const agentLines = health.map(h => {
     const tone = h.display === 'Ready' ? 'success' : h.display === 'Busy' ? 'warning' : h.display === 'Failed' ? 'critical' : 'info';
-    const detail = h.success_pct !== null ? ` · ${h.success_pct}% ok · ${h.avg_runtime_ms} ms` : '';
-    return `${design.EMOJI[tone]} ${h.label} · ${h.display}${detail}`;
+    const detail = h.success_pct !== null ? ` Â· ${h.success_pct}% ok Â· ${h.avg_runtime_ms} ms` : '';
+    return ${design.EMOJI[tone]} ${h.label} Â· ${h.display}${detail}`;
   });
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Platform Health')}`,
+    ${design.EMOJI.ai} ${design.b('Platform Health')}`,
     design.it('System status'),
     design.divider(),
-    ...checks.map(ch => design.row(ch.label, `${ch.ok ? design.EMOJI.success : design.EMOJI.warning} ${ch.detail}`)),
+    ...checks.map(ch => design.row(ch.label, ${ch.ok ? design.EMOJI.success : design.EMOJI.warning} ${ch.detail}`)),
     design.section('AGENT HEALTH'),
     ...agentLines,
     design.divider()
@@ -707,7 +707,7 @@ async function buildProviders(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('AI Settings')}`,
+        ${design.EMOJI.ai} ${design.b('AI Settings')}`,
         design.it('Set up a workspace to manage providers.'),
         design.divider()
       ]),
@@ -718,16 +718,16 @@ async function buildProviders(userId) {
   }
   const catalogRows = Object.entries(providers.PROVIDERS).map(([key, p]) => {
     const cfg = providers.isConfigured(key);
-    return design.row(p.label, cfg ? `${design.EMOJI.success} ${p.defaultModel}` : `${design.EMOJI.info} no key`);
+    return design.row(p.label, cfg ? ${design.EMOJI.success} ${p.defaultModel}` : ${design.EMOJI.info} no key`);
   });
   const policy = await providers.getPolicy(getStoreAdapter(), ctx.workspace.id);
   const policyRows = Object.entries(policy).map(([agentType, p]) => {
     const label = (workforce.REGISTRY[agentType] || {}).label || agentType;
-    return design.row(label, `${titleCase(p.provider)} · ${p.model}`);
+    return design.row(label, ${titleCase(p.provider)} Â· ${p.model}`);
   });
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('AI Providers')}`,
-    design.it('Routing · policies · costs'),
+    ${design.EMOJI.ai} ${design.b('AI Providers')}`,
+    design.it('Routing Â· policies Â· costs'),
     design.divider(),
     design.section('PROVIDER CATALOG'),
     ...catalogRows,
@@ -757,15 +757,15 @@ async function buildProviderPicker(userId, agentType) {
   const ctx = await getCtx(userId);
   const label = (workforce.REGISTRY[agentType] || {}).label || agentType;
   const policy = await providers.getPolicy(getStoreAdapter(), ctx.workspace.id);
-  const current = policy[agentType] || { provider: '—', model: '—' };
+  const current = policy[agentType] || { provider: 'â€”', model: 'â€”' };
   const rows = Object.keys(providers.PROVIDERS).map(key => [
     design.textButton(providers.PROVIDERS[key].label, `cc_pol_set:${agentType}:${key}`)
   ]);
   rows.push([design.textButton('Cancel', 'cc_providers')]);
   return {
     text: design.compose([
-      `${design.EMOJI.ai} ${design.b('Provider for ' + label)}`,
-      design.it(`Current: ${titleCase(current.provider)} · ${current.model}`),
+      ${design.EMOJI.ai} ${design.b('Provider for ' + label)}`,
+      design.it(`Current: ${titleCase(current.provider)} Â· ${current.model}`),
       design.divider(),
       design.it('Choose a provider to route this agent.'),
       design.divider()
@@ -779,7 +779,7 @@ async function buildQueue(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Progress')}`,
+        ${design.EMOJI.ai} ${design.b('Progress')}`,
         design.it('Set up a workspace to see the queue.'),
         design.divider()
       ]),
@@ -792,18 +792,18 @@ async function buildQueue(userId) {
   const movements = await queue.queueMovements(getStoreAdapter(), ctx.workspace.id, 6);
   const stageLines = snap.stages.map(s => {
     const tone = s.count > 0 ? 'warning' : 'info';
-    return design.row(`${s.label}`, `${design.EMOJI[tone]} ${s.count}`);
+    return design.row(${s.label}`, ${design.EMOJI[tone]} ${s.count}`);
   });
   const movementLines = movements.map(m =>
-    `${design.code((m.created_at || '').slice(11, 19))} ${m.company}: ${m.from_stage} → ${m.to_stage}`
+    ${design.code((m.created_at || '').slice(11, 19))} ${m.company}: ${m.from_stage} â†’ ${m.to_stage}`
   );
   const text = design.compose([
-        `${design.EMOJI.ai} ${design.b('Progress')}`,
-        design.it(`${snap.total} deal${snap.total === 1 ? '' : 's'} in pipeline`),
+        ${design.EMOJI.ai} ${design.b('Progress')}`,
+        design.it(${snap.total} deal${snap.total === 1 ? '' : 's'} in pipeline`),
     design.divider(),
     ...stageLines,
     design.section('RECENT MOVEMENT'),
-    ...(movementLines.length ? movementLines : [design.it('No movement yet — run the pipeline demo.')]),
+    ...(movementLines.length ? movementLines : [design.it('No movement yet â€” run the pipeline demo.')]),
     design.divider()
   ]);
   return {
@@ -820,7 +820,7 @@ async function buildBriefing(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Daily Summary')}`,
+        ${design.EMOJI.ai} ${design.b('Daily Summary')}`,
         design.it('Set up a workspace to see the briefing.'),
         design.divider()
       ]),
@@ -831,7 +831,7 @@ async function buildBriefing(userId) {
   }
   const b = await executiveBriefing(getStoreAdapter(), ctx.workspace.id);
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Executive Briefing')}`,
+    ${design.EMOJI.ai} ${design.b('Executive Briefing')}`,
     design.it(b.date),
     design.divider(),
     design.section('YESTERDAY'),
@@ -848,7 +848,7 @@ async function buildBriefing(userId) {
     design.row('Revenue forecast', `$${(b.revenue_forecast_cents / 100).toFixed(2)}`),
     design.section('ATTENTION'),
     ...(b.high_risk_deals.length
-      ? b.high_risk_deals.map(d => design.it(`⚠ ${d.company} stalled in ${d.stage} (${d.days} days)`))
+      ? b.high_risk_deals.map(d => design.it(`âš  ${d.company} stalled in ${d.stage} (${d.days} days)`))
       : [design.it('No stalled deals.')]),
     design.section('RECOMMENDED ACTION'),
     design.it(b.recommended_action),
@@ -868,7 +868,7 @@ async function buildIntegrations(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Enterprise Integration Hub')}`,
+        ${design.EMOJI.ai} ${design.b('Enterprise Integration Hub')}`,
         design.it('Set up a workspace to manage integrations.'),
         design.divider()
       ]),
@@ -883,16 +883,16 @@ async function buildIntegrations(userId) {
     lines.push(design.section(titleCase(cat.label)));
     for (const c of cat.connectors) {
       const flag = c.enabled ? design.EMOJI.success : c.configured ? design.EMOJI.info : design.EMOJI.critical;
-      lines.push(design.row(`${c.label}`, `${flag} ${c.enabled ? 'Enabled' : c.configured ? 'Configured' : 'Off'}`));
+      lines.push(design.row(${c.label}`, ${flag} ${c.enabled ? 'Enabled' : c.configured ? 'Configured' : 'Off'}`));
     }
   }
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Enterprise Integration Hub')}`,
+    ${design.EMOJI.ai} ${design.b('Enterprise Integration Hub')}`,
     design.it('One interface for every external system your agents use.'),
     design.divider(),
     design.row('Enabled connectors', String(st.enabled_total)),
     ...lines,
-    design.it('Agents call searchContacts, searchDeals, sendMessage, createMeeting, storeDocument, fetchKnowledge and crawl — the hub routes them.'),
+    design.it('Agents call searchContacts, searchDeals, sendMessage, createMeeting, storeDocument, fetchKnowledge and crawl â€” the hub routes them.'),
     design.divider()
   ]);
   const rows = [];
@@ -920,7 +920,7 @@ async function buildAllConnectors(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Enterprise Integration Hub')}`,
+        ${design.EMOJI.ai} ${design.b('Enterprise Integration Hub')}`,
         design.it('Set up a workspace to manage integrations.'),
         design.divider()
       ]),
@@ -935,12 +935,12 @@ async function buildAllConnectors(userId) {
     lines.push(design.section(titleCase(cat.label)));
     for (const c of cat.connectors) {
       const flag = c.enabled ? design.EMOJI.success : c.configured ? design.EMOJI.info : design.EMOJI.critical;
-      lines.push(design.row(`${c.label} (${c.auth})`, `${flag} ${c.enabled ? 'Enabled' : c.configured ? 'Configured' : 'Off'}`));
+      lines.push(design.row(${c.label} (${c.auth})`, ${flag} ${c.enabled ? 'Enabled' : c.configured ? 'Configured' : 'Off'}`));
     }
   }
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('All Connectors')}`,
-    design.it(`${st.enabled_total} enabled · ${integrations.catalog.CONNECTORS ? Object.keys(integrations.catalog.CONNECTORS).length : 0} available`),
+    ${design.EMOJI.ai} ${design.b('All Connectors')}`,
+    design.it(${st.enabled_total} enabled Â· ${integrations.catalog.CONNECTORS ? Object.keys(integrations.catalog.CONNECTORS).length : 0} available`),
     design.divider(),
     ...lines,
     design.divider()
@@ -948,7 +948,7 @@ async function buildAllConnectors(userId) {
   const rows = [];
   for (const cat of st.categories) {
     for (const c of cat.connectors) {
-      rows.push([design.textButton(`${c.label}`, `cc_int_conn:${c.id}`)]);
+      rows.push([design.textButton(${c.label}`, `cc_int_conn:${c.id}`)]);
     }
   }
   rows.push([design.textButton('Integration Hub', 'cc_integrations'), design.textButton('Back to Home', 'cc_home')]);
@@ -972,23 +972,23 @@ async function buildConnectorDetail(userId, connectorId) {
   const info = cat ? cat.connectors.find(x => x.id === connectorId) : null;
   const capLines = Object.keys(c)
     .filter(k => !['label', 'category', 'auth', 'keyEnv', 'baseUrl', 'defaultModel'].includes(k) && typeof c[k] === 'object' && c[k] && c[k].method)
-    .map(k => design.row(k, `${c[k].method} ${c[k].path}`));
+    .map(k => design.row(k, ${c[k].method} ${c[k].path}`));
   const statusText = info
     ? (info.enabled ? design.EMOJI.success + ' Enabled' : info.configured ? design.EMOJI.info + ' Configured' : design.EMOJI.critical + ' Off')
     : design.EMOJI.critical + ' Off';
   const setupHint = c.auth === 'oauth'
-    ? 'OAuth — use Connect to authorize this connector.'
+    ? 'OAuth â€” use Connect to authorize this connector.'
     : c.keyEnv
       ? `Set the API key env var ${design.code(c.keyEnv)} and restart.`
       : 'No credentials required.';
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b(c.label)}`,
+    ${design.EMOJI.ai} ${design.b(c.label)}`,
     design.it(titleCase(c.category) + ' connector'),
     design.divider(),
     design.row('Status', statusText),
     design.row('Auth', c.auth),
     design.row('Configured', info ? (info.configured ? design.EMOJI.success + ' Yes' : design.EMOJI.info + ' No') : design.EMOJI.info + ' No'),
-    design.row('Last sync', info && info.last_synced_at ? info.last_synced_at.slice(0, 16).replace('T', ' ') : '—'),
+    design.row('Last sync', info && info.last_synced_at ? info.last_synced_at.slice(0, 16).replace('T', ' ') : 'â€”'),
     design.section('CAPABILITIES'),
     ...capLines,
     design.section('SETUP'),
@@ -1015,14 +1015,14 @@ async function buildConnectorDetail(userId, connectorId) {
 
 async function buildSyncResult(userId, result) {
   const lines = (result.connectors || []).map(entry => {
-    const err = entry.error ? design.EMOJI.critical + ' ' + entry.error : design.EMOJI.success + ' ' + entry.actions.join(' · ');
-    return `${design.b(entry.label)} (${entry.category})\n${design.it(err)}`;
+    const err = entry.error ? design.EMOJI.critical + ' ' + entry.error : design.EMOJI.success + ' ' + entry.actions.join(' Â· ');
+    return ${design.b(entry.label)} (${entry.category})\n${design.it(err)}`;
   });
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Integration Sync')}`,
-    design.it(`${result.connectors.length} connector${result.connectors.length === 1 ? '' : 's'} synced`),
+    ${design.EMOJI.ai} ${design.b('Integration Sync')}`,
+    design.it(${result.connectors.length} connector${result.connectors.length === 1 ? '' : 's'} synced`),
     design.divider(),
-    ...(lines.length ? lines : [design.it('No connectors enabled — enable one in the hub, then sync.')]),
+    ...(lines.length ? lines : [design.it('No connectors enabled â€” enable one in the hub, then sync.')]),
     design.section('WRITE-OUT'),
     design.row('Knowledge documents', String(result.docs_written)),
     design.row('Deals upserted', String(result.deals_upserted)),
@@ -1043,7 +1043,7 @@ async function buildActivity(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Today\'s Activity')}`,
+        ${design.EMOJI.ai} ${design.b('Today\'s Activity')}`,
         design.it('Set up a workspace to see activity.'),
         design.divider()
       ]),
@@ -1055,15 +1055,15 @@ async function buildActivity(userId) {
   const today = await workforce.todayActivity(getStoreAdapter(), ctx.workspace.id);
   const lines = today.flatMap(a => {
     const line = a.runs > 0
-      ? `${design.EMOJI.success} ${a.label} · ${a.runs} run${a.runs === 1 ? '' : 's'}`
-      : `${design.EMOJI.info} ${a.label} · waiting`;
+      ? ${design.EMOJI.success} ${a.label} Â· ${a.runs} run${a.runs === 1 ? '' : 's'}`
+      : ${design.EMOJI.info} ${a.label} Â· waiting`;
     const detail = a.last_output ? `\n${design.it(String(a.last_output))}` : '';
-    return [`${line}${detail}`];
+    return [${line}${detail}`];
   });
   const total = today.reduce((acc, a) => acc + a.runs, 0);
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Today\'s Activity')}`,
-    design.it(`${total} agent run${total === 1 ? '' : 's'} so far`),
+    ${design.EMOJI.ai} ${design.b('Today\'s Activity')}`,
+    design.it(${total} agent run${total === 1 ? '' : 's'} so far`),
     design.divider(),
     ...lines,
     design.divider()
@@ -1088,7 +1088,7 @@ async function buildAgentDetail(userId, agentType) {
     return { text: design.errorPanel('Agent not found', agentType).text, keyboard: null };
   }
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b(agent.label)}`,
+    ${design.EMOJI.ai} ${design.b(agent.label)}`,
     design.it(agent.role),
     design.divider(),
     design.row('Status', workforceStatus(agent)),
@@ -1097,7 +1097,7 @@ async function buildAgentDetail(userId, agentType) {
     design.row('Last run', workforce.shortTime(agent.last_run_at)),
     design.row('Next run', workforce.shortTime(agent.next_run_at)),
     design.row('Provider', agent.provider || 'not configured'),
-    design.row('Model', agent.model || '—'),
+    design.row('Model', agent.model || 'â€”'),
     design.row('Cost', `$${(agent.total_cost_cents / 100).toFixed(2)}`),
     design.divider()
   ]);
@@ -1112,8 +1112,8 @@ async function buildAgentDetail(userId, agentType) {
 
 function buildPipeline() {
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Sales Pipeline')}`,
-    design.it('Final deal flow — 5 stages'),
+    ${design.EMOJI.ai} ${design.b('Sales Pipeline')}`,
+    design.it('Final deal flow â€” 5 stages'),
     design.divider(),
     design.progressBar(PIPELINE_STAGES, -1).join('\n'),
     design.divider(),
@@ -1136,14 +1136,14 @@ async function buildDeals(userId) {
     : entries.filter(e => e.action === 'CLOSING_AGENT_DEAL_CLOSED').length;
   const dbConfigured = Boolean(process.env.DATABASE_URL);
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Deals')}`,
+    ${design.EMOJI.ai} ${design.b('Deals')}`,
     design.it('Deal ledger'),
     design.divider(),
-    design.row('Open', ctx ? String(ctx.deals.open) : '—'),
-    design.row('Closed', `${closed}`),
+    design.row('Open', ctx ? String(ctx.deals.open) : 'â€”'),
+    design.row('Closed', ${closed}`),
     design.row('Persistence', dbConfigured ? design.badge('success') : design.badge('warning') + ' ' + design.it('Postgres not configured')),
     design.section('NOTES'),
-    design.it('Run the pipeline demo to record a deal through Strategist → Closing.'),
+    design.it('Run the pipeline demo to record a deal through Strategist â†’ Closing.'),
     design.it(dbConfigured
       ? 'Postgres persistence active via DATABASE_URL.'
       : 'Set DATABASE_URL and run `npm run db:migrate` to persist deals.')
@@ -1159,21 +1159,21 @@ async function buildDeals(userId) {
 
 function buildAiGuide() {
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('AI Guide')}`,
+    ${design.EMOJI.ai} ${design.b('AI Guide')}`,
     design.it('How your revenue team works'),
     design.divider(),
     design.section('YOUR REVENUE TEAM'),
-    design.it('13 specialists run your revenue motion: Prospecting → Qualification → Outreach → Sales → Negotiation → Treasurer → Closing.'),
+    design.it('13 specialists run your revenue motion: Prospecting â†’ Qualification â†’ Outreach â†’ Sales â†’ Negotiation â†’ Treasurer â†’ Closing.'),
     design.section('MISSIONS'),
     design.it('Every mission starts with the Revenue Strategist, which decides if it makes sense, picks the specialists, sets success criteria and a budget, and asks for your approval before anything ships.'),
     design.section('FLOW'),
-    design.it('A deal moves Lead → Qualified → Meeting → Proposal → Negotiation → Won → Customer. Specialists advance it automatically.'),
+    design.it('A deal moves Lead â†’ Qualified â†’ Meeting â†’ Proposal â†’ Negotiation â†’ Won â†’ Customer. Specialists advance it automatically.'),
     design.section('TEAM'),
-    design.it('Specialists hand off work — each leaves notes for the next, like a real team.'),
+    design.it('Specialists hand off work â€” each leaves notes for the next, like a real team.'),
     design.section('BUSINESS KNOWLEDGE'),
-    design.it('The system remembers your products, pricing, ICP and competitors — every specialist reads the context it needs before acting, and you can ask it questions with /ask.'),
+    design.it('The system remembers your products, pricing, ICP and competitors â€” every specialist reads the context it needs before acting, and you can ask it questions with /ask.'),
     design.section('INTEGRATION HUB'),
-    design.it('Connect CRM, email, calendar, storage, website and communication tools. Specialists use one uniform interface — searchContacts, searchDeals, sendMessage, createMeeting, storeDocument, fetchKnowledge, crawl — and synced data flows straight into Company Intelligence.'),
+    design.it('Connect CRM, email, calendar, storage, website and communication tools. Specialists use one uniform interface â€” searchContacts, searchDeals, sendMessage, createMeeting, storeDocument, fetchKnowledge, crawl â€” and synced data flows straight into Company Intelligence.'),
     design.section('CONTROL'),
     design.it('Run /mission <goal> to launch a mission. Open Mission Center for progress and approvals.'),
     design.divider()
@@ -1190,7 +1190,7 @@ async function buildSettings(userId) {
   const ctx = await getCtx(userId);
   const s = (ctx && ctx.settings) || { lang: 'en', timezone: 'UTC', notifications: 'on', theme: 'system' };
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Settings')}`,
+    ${design.EMOJI.ai} ${design.b('Settings')}`,
     design.it('Workspace configuration'),
     design.divider(),
     design.row('Language', s.lang),
@@ -1198,13 +1198,13 @@ async function buildSettings(userId) {
     design.row('Notifications', s.notifications),
     design.row('Theme', s.theme),
     design.section('KNOWLEDGE'),
-    design.it('Company Intelligence stores what your company knows — products, pricing, FAQs, playbooks, competitor and customer profiles, and past proposals and conversations.'),
+    design.it('Company Intelligence stores what your company knows â€” products, pricing, FAQs, playbooks, competitor and customer profiles, and past proposals and conversations.'),
     design.divider()
   ]);
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('English', 'cc_set_lang:en'), design.textButton('العربية', 'cc_set_lang:ar')],
+      [design.textButton('English', 'cc_set_lang:en'), design.textButton('Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©', 'cc_set_lang:ar')],
       [design.textButton('Company Intelligence', 'cc_intelligence')],
       [design.textButton('Back to Home', 'cc_home')]
     ])
@@ -1217,14 +1217,14 @@ async function buildMemory(userId) {
   const mem = await memory.getMemory(getStoreAdapter(), ctx.workspace.id);
   const rows = memory.describe(mem);
   const lines = [
-    `${design.EMOJI.ai} ${design.b('Business Knowledge')}`,
+    ${design.EMOJI.ai} ${design.b('Business Knowledge')}`,
     design.it('Core profile every agent reads before working.'),
     design.divider(),
-    ...(rows.length ? rows.map(r => design.row(r.split(':')[0], r.split(':').slice(1).join(':'))) : [design.it('Nothing saved yet — add your company details below.')]),
+    ...(rows.length ? rows.map(r => design.row(r.split(':')[0], r.split(':').slice(1).join(':'))) : [design.it('Nothing saved yet â€” add your company details below.')]),
     design.section('HOW AGENTS USE IT'),
-    design.it('Prospector: industry · ICP · competitors'),
-    design.it('Outreach: brand voice · playbook · languages'),
-    design.it('Negotiator: products · preferred providers'),
+    design.it('Prospector: industry Â· ICP Â· competitors'),
+    design.it('Outreach: brand voice Â· playbook Â· languages'),
+    design.it('Negotiator: products Â· preferred providers'),
     design.divider()
   ];
   return {
@@ -1254,7 +1254,7 @@ function buildMemoryEdit(userId, key) {
   const label = hints[key] || key;
   return {
     text: design.compose([
-      `${design.EMOJI.ai} ${design.b('Edit ' + titleCase(key))}`,
+      ${design.EMOJI.ai} ${design.b('Edit ' + titleCase(key))}`,
       design.it(label),
       design.divider(),
       design.it('Type the new value below.'),
@@ -1272,7 +1272,7 @@ async function buildIntelligence(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Company Intelligence')}`,
+        ${design.EMOJI.ai} ${design.b('Company Intelligence')}`,
         design.it('Set up a workspace to build your intelligence layer.'),
         design.divider()
       ]),
@@ -1286,7 +1286,7 @@ async function buildIntelligence(userId) {
     .filter(s => s.count > 0)
     .map(s => design.row(s.label, String(s.count)));
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Company Intelligence')}`,
+    ${design.EMOJI.ai} ${design.b('Company Intelligence')}`,
     design.it('The knowledge your workforce answers from.'),
     design.divider(),
     design.row('Documents', String(d.total_docs)),
@@ -1294,7 +1294,7 @@ async function buildIntelligence(userId) {
     design.row('From your profile', String(d.seeded)),
     design.row('Uploaded', String(d.uploaded)),
     design.section('SOURCES'),
-    ...(sourceRows.length ? sourceRows : [design.it('No knowledge yet — add your products, pricing, FAQs and past proposals.')]),
+    ...(sourceRows.length ? sourceRows : [design.it('No knowledge yet â€” add your products, pricing, FAQs and past proposals.')]),
     design.section('COPILOT'),
     design.it('Ask questions like "Which plan fits a 300-person company?" or "Draft a proposal with Enterprise pricing."'),
     design.divider()
@@ -1314,7 +1314,7 @@ async function buildKnowledgeDocs(userId) {
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Intelligence Documents')}`,
+        ${design.EMOJI.ai} ${design.b('Intelligence Documents')}`,
         design.it('Set up a workspace first.'),
         design.divider()
       ]),
@@ -1325,11 +1325,11 @@ async function buildKnowledgeDocs(userId) {
   }
   const docs = await intelligence.listDocuments(getStoreAdapter(), ctx.workspace.id);
   const lines = docs.length ? docs.map(d =>
-    `${design.EMOJI.info} ${design.b(d.title)}${d.seeded ? ' · ' + design.badge('profile') : ''}\n${design.it(d.label + ' · ' + d.chunks + ' chunk' + (d.chunks === 1 ? '' : 's'))}`
-  ) : [design.it('No documents yet — add pricing, FAQs, proposals or notes.')];
+    ${design.EMOJI.info} ${design.b(d.title)}${d.seeded ? ' Â· ' + design.badge('profile') : ''}\n${design.it(d.label + ' Â· ' + d.chunks + ' chunk' + (d.chunks === 1 ? '' : 's'))}`
+  ) : [design.it('No documents yet â€” add pricing, FAQs, proposals or notes.')];
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Intelligence Documents')}`,
-    design.it(`${docs.length} document${docs.length === 1 ? '' : 's'} in this workspace`),
+    ${design.EMOJI.ai} ${design.b('Intelligence Documents')}`,
+    design.it(${docs.length} document${docs.length === 1 ? '' : 's'} in this workspace`),
     design.divider(),
     ...lines,
     design.divider()
@@ -1347,7 +1347,7 @@ function buildKnowledgeAdd(userId, sourceType) {
   const label = intelligence.SOURCE_TYPES[sourceType] ? intelligence.SOURCE_TYPES[sourceType].label : sourceType;
   return {
     text: design.compose([
-      `${design.EMOJI.ai} ${design.b('Add Knowledge · ' + label)}`,
+      ${design.EMOJI.ai} ${design.b('Add Knowledge Â· ' + label)}`,
       design.divider(),
       design.it('Paste the knowledge text now.'),
       design.it('First line becomes the title, the rest is the content.'),
@@ -1364,7 +1364,7 @@ function buildKnowledgeAdd(userId, sourceType) {
 function buildKnowledgeAskPrompt(userId) {
   return {
     text: design.compose([
-      `${design.EMOJI.ai} ${design.b('Ask Company Intelligence')}`,
+      ${design.EMOJI.ai} ${design.b('Ask Company Intelligence')}`,
       design.divider(),
       design.it('Type your question. The layer searches products, pricing, FAQs, playbooks and past conversations.'),
       design.it('Examples:'),
@@ -1384,12 +1384,12 @@ function buildAskResult(userId, question, result) {
     ? result.answer.split('\n')
     : [design.it('I could not find an answer in your intelligence layer yet. Add documents about this topic, then ask again.')];
   const evidenceLines = result.evidence.slice(0, 3).map(e =>
-    `${design.code(e.label)} ${design.b(e.title)} · score ${e.score}\n${design.it(e.excerpt.length > 90 ? e.excerpt.slice(0, 90) + '…' : e.excerpt)}`
+    ${design.code(e.label)} ${design.b(e.title)} Â· score ${e.score}\n${design.it(e.excerpt.length > 90 ? e.excerpt.slice(0, 90) + 'â€¦' : e.excerpt)}`
   );
   const lines = [
-    `${design.EMOJI.ai} ${design.b('Company Intelligence Answer')}`,
+    ${design.EMOJI.ai} ${design.b('Company Intelligence Answer')}`,
     design.it('Question: ' + question),
-    design.it('Intent: ' + result.intent.label + (result.provider ? ` · ${result.provider_label || result.provider} ${result.model}` : ' · offline evidence')),
+    design.it('Intent: ' + result.intent.label + (result.provider ? ` Â· ${result.provider_label || result.provider} ${result.model}` : ' Â· offline evidence')),
     design.divider(),
     ...answerLines,
     design.section('EVIDENCE'),
@@ -1419,11 +1419,11 @@ function buildAudit(offset) {
   const start = Math.max(0, entries.length - size - (offset || 0));
   const page = entries.slice(start, start + size).reverse();
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Audit Log')}`,
+    ${design.EMOJI.ai} ${design.b('Audit Log')}`,
     design.it('Immutable activity feed'),
     design.divider(),
     ...(page.length ? page.map(e =>
-      `${design.code((e.timestamp || '').slice(11, 19))} ${e.action} → ${e.target}\n${design.badge(statusEmoji(e.status))}`
+      ${design.code((e.timestamp || '').slice(11, 19))} ${e.action} â†’ ${e.target}\n${design.badge(statusEmoji(e.status))}`
     ) : [design.it('No entries.')]),
     design.divider()
   ]);
@@ -1447,7 +1447,7 @@ function buildAdmin(userId) {
   const mode = getMode();
   const rows = [];
   const body = [
-    `${design.EMOJI.ai} ${design.b('Admin')}`,
+    ${design.EMOJI.ai} ${design.b('Admin')}`,
     design.it('Operational control'),
     design.divider(),
     design.row('Mode', design.modeBadge(mode)),
@@ -1465,8 +1465,8 @@ function buildSalesDemo() {
   const { runSalesFlow } = require('../agents/orchestrator');
   const result = runSalesFlow('The price is too high for our budget.', 'bot_demo');
   const lines = [
-    `${design.EMOJI.ai} ${design.b('Sales Demo')}`,
-    design.it('Orchestrator → Sales → Gatekeeper'),
+    ${design.EMOJI.ai} ${design.b('Sales Demo')}`,
+    design.it('Orchestrator â†’ Sales â†’ Gatekeeper'),
     design.divider(),
     design.row('Objection', result.draft.objectionType),
     design.row('Gatekeeper', design.badge(result.review.decision === 'APPROVE' ? 'success' : 'warning')),
@@ -1485,11 +1485,11 @@ function buildSalesDemo() {
 
 function buildPipelineResult(userId, result) {
   const notes = (result.notes || []).map(n =>
-    `${design.code(n.agent_name)} ${n.note}`
+    ${design.code(n.agent_name)} ${n.note}`
   );
   const lines = [
-    `${design.EMOJI.ai} ${design.b('Pipeline Demo')}`,
-    design.it('Strategist → Marketer → Negotiator → Treasurer → Closing'),
+    ${design.EMOJI.ai} ${design.b('Pipeline Demo')}`,
+    design.it('Strategist â†’ Marketer â†’ Negotiator â†’ Treasurer â†’ Closing'),
     design.divider(),
     design.row('Strategy', result.strategy.style),
     design.row('Positioning', result.marketing.headline),
@@ -1519,7 +1519,7 @@ function modeConfirm(mode) {
   const target = live ? 'LIVE' : 'DRY';
   return design.confirmPanel(
     `Switch to ${target} mode?`,
-    `${design.it(live
+    ${design.it(live
       ? 'Messages will be dispatched to customers without vault-only protection.'
       : 'All agent output will be vaulted and nothing is sent to customers.')}\n\n${design.row('Current mode', design.modeBadge(getMode()))}`,
     live ? 'cc_live_confirm' : 'cc_dry_confirm',
@@ -1695,7 +1695,7 @@ async function handleCallback(query, bot) {
       rows.push([design.textButton('Cancel', 'cc_intelligence')]);
       return send({
         text: design.compose([
-          `${design.EMOJI.ai} ${design.b('Add Knowledge')}`,
+          ${design.EMOJI.ai} ${design.b('Add Knowledge')}`,
           design.it('Choose the type of knowledge you are adding.'),
           design.divider()
         ]),
@@ -1856,10 +1856,10 @@ async function handleCallback(query, bot) {
         return send(await buildIntegrations(userId));
       }
       if (action === 'cc_upload_catalog') {
-        return bot.answerCallbackQuery(query.id, { text: 'Coming soon — Company Knowledge is on the roadmap' }).catch(() => {});
+        return bot.answerCallbackQuery(query.id, { text: 'Coming soon â€” Company Knowledge is on the roadmap' }).catch(() => {});
       }
       if (action === 'cc_launch_campaign') {
-        return bot.answerCallbackQuery(query.id, { text: 'Coming soon — Campaigns arrive with the revenue pipeline' }).catch(() => {});
+        return bot.answerCallbackQuery(query.id, { text: 'Coming soon â€” Campaigns arrive with the revenue pipeline' }).catch(() => {});
       }
       if (action.startsWith('cc_learn_persona:')) {
         const name = action.split(':').slice(1).join(':');
@@ -1959,5 +1959,10 @@ module.exports = {
   launchMarketMission,
   handleCallback
 };
+
+
+
+
+
 
 
