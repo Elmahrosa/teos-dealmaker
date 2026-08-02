@@ -369,7 +369,8 @@ function forWorkspace(adapter, workspaceId) {
     },
     pipeline: {
       record: data => repos.pipeline.record({ ...data, workspace_id: workspaceId }),
-      list: deal_id => repos.pipeline.list(workspaceId, deal_id)
+      list: deal_id => repos.pipeline.list(workspaceId, deal_id),
+      listAll: opts => repos.pipeline.listAll(workspaceId, opts)
     },
     audit: {
       add: data => repos.audit.add({ ...data, workspace_id: workspaceId }),
@@ -452,9 +453,6 @@ function forWorkspace(adapter, workspaceId) {
       get: id => repos.approvals.get(workspaceId, id),
       list: status => repos.approvals.list(workspaceId, status),
       update: (id, changes) => repos.approvals.update(workspaceId, id, changes)
-    },
-    pipeline: {
-      listAll: opts => repos.pipeline.listAll(workspaceId, opts)
     }
   };
 }
