@@ -1,12 +1,6 @@
 const { CONNECTORS } = require('./catalog');
 const adapterUtil = require('./adapter');
 
-const SYNC_MAP = {
-  crm: { op: 'searchDeals', sourceType: 'crm_data', label: 'CRM Data', title: 'CRM Pipeline (from {connector})' },
-  email: { op: 'sendMessage', sourceType: 'email_templates', label: 'Email Templates', title: 'Email Activity (from {connector})' },
-  website: { op: 'crawl', sourceType: 'website', label: 'Website', title: 'Website Intelligence ({domain})' }
-};
-
 async function runSync(adapter, workspaceId) {
   const repos = require('../../db/repos').createRepos(adapter);
   const rows = await repos.integrations.list(workspaceId);
@@ -110,7 +104,6 @@ async function runSync(adapter, workspaceId) {
 }
 
 async function syncDocument(adapter, workspaceId, sourceType, title, content) {
-  const intelligence = require('../intelligence');
   const repos = require('../../db/repos').createRepos(adapter);
   const existing = await repos.intelligence.list(workspaceId, sourceType);
   const syncDoc = existing.find(d => d.metadata && d.metadata.synced && d.title === title);

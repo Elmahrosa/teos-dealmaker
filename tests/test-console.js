@@ -1,13 +1,11 @@
 const assert = require('assert');
 const { createMemoryAdapter } = require('../db/adapter');
-const { createRepos } = require('../db/repos');
 const identity = require('../services/identity');
 const workforce = require('../services/workforce');
 const queue = require('../services/queue');
 
 (async () => {
   const adapter = createMemoryAdapter();
-  const repos = createRepos(adapter);
 
   const tg = 5001;
   await identity.ensureUser(adapter, tg, { display_name: 'Console Owner' });

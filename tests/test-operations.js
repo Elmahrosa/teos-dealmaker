@@ -71,7 +71,7 @@ const queue = require('../services/queue');
     await workforce.runAgent(adapter, ws.id, 'outreach', async () => {
       throw new Error('SMTP down');
     });
-  } catch (err) {
+  } catch (_) {
     threw = true;
   }
   assert.strictEqual(threw, true, 'runAgent surfaces agent errors');

@@ -1,6 +1,6 @@
 const { analyzeProspect } = require('../agents/marketIntelligence');
 
-console.log("Testing Market Intelligence Agent...\n");
+console.log('Testing Market Intelligence Agent...\n');
 
 const testCases = [
   { id: 'p_001', company: 'TechCorp Enterprise', industry: 'Technology', employeeCount: 250 },
@@ -14,4 +14,4 @@ testCases.forEach((prospect, index) => {
   console.log(`  Result: Fit Score ${result.fitScore} | Priority: ${result.priority}`);
 });
 
-console.log("\nVerification complete. Inspect data/vault/audit.log for MARKET_INTELLIGENCE_* entries.");
+console.log('\nVerification complete. Inspect data/vault/audit.log for MARKET_INTELLIGENCE_* entries.');

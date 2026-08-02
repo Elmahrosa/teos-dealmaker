@@ -11,7 +11,6 @@ const webhooks = require('../services/integrations/webhooks');
 const cache = require('../services/integrations/cache');
 
 const CATEGORY_COUNTS = { crm: 4, email: 4, calendar: 2, storage: 3, website: 1, communication: 3 };
-const OP_CATEGORY = { searchContacts: 'crm', searchDeals: 'crm', sendMessage: 'communication', createMeeting: 'calendar', storeDocument: 'storage', crawl: 'website' };
 
 (async () => {
   let n = 0;
