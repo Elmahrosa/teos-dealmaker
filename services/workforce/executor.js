@@ -1,5 +1,5 @@
 const { forWorkspace } = require('../../db/repos');
-const workforce = require('../workforce');
+const { runAgent } = require('./runner');
 const dispatcher = require('./dispatcher');
 const reviewer = require('./reviewer');
 const confidence = require('./confidence');
@@ -27,7 +27,7 @@ async function executeStep(adapter, workspaceId, step, opts) {
 
   const runOnce = async (taskPrompt) => {
     attempts += 1;
-    return workforce.runAgent(adapter, workspaceId, step.agent_type, null, {
+    return runAgent(adapter, workspaceId, step.agent_type, null, {
       prompt: taskPrompt,
       plan_id: step.plan_id,
       provider: route.provider,
