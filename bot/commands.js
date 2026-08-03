@@ -1,8 +1,7 @@
 const { getMode, setMode } = require('../config/mode');
 const audit = require('../utils/auditLogger');
-const { BOT_CONFIG } = require('./config');
 const { isFounder, isAdmin } = require('./access');
-const { buildHome, buildWorkforce, buildPipeline, buildDeals, buildAudit, buildAdmin, buildPricing, buildMemory, buildCosts, buildHealth, buildProviders, buildQueue, buildBriefing, buildIntelligence, buildKnowledgeDocs, buildAskResult, buildIntegrations, buildLearn, buildMissions, buildApprovals, buildMissionGoalPrompt, launchMission1, launchGoalMission } = require('./menu');
+const { buildHome, buildWorkforce, buildPipeline, buildDeals, buildAudit, buildAdmin, buildMemory, buildCosts, buildHealth, buildProviders, buildQueue, buildBriefing, buildIntelligence, buildKnowledgeDocs, buildAskResult, buildIntegrations, buildLearn, buildMissions, buildApprovals, buildMissionGoalPrompt, launchGoalMission } = require('./menu');
 const { formatPricingText, pricingButtons } = require('../config/pricing.config');
 const design = require('./design');
 const identity = require('../services/identity');
@@ -16,23 +15,6 @@ function screenResult(chatId, screen) {
 
 async function cmdStart(chatId, userId) {
   return screenResult(chatId, await buildHome(userId));
-}
-
-function cmdHealth(chatId) {
-  const entries = audit.readVault();
-  const last = entries[entries.length - 1];
-  const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Health Check')}`,
-    design.it('System status'),
-    design.divider(),
-    design.row('Mode', design.modeBadge(getMode())),
-    design.row('Bot', `@${BOT_CONFIG.botName}`),
-    design.row('Audit entries', `${entries.length}`),
-    design.row('Last activity', last ? `${last.action} · ${(last.timestamp || '').slice(11, 19)}` : '—'),
-    design.row('Timestamp', new Date().toISOString()),
-    design.divider()
-  ]);
-  return { chatId, text };
 }
 
 function cmdMode(chatId) {

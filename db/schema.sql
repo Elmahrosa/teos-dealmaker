@@ -2,6 +2,15 @@
 -- Forward-only: safe to re-run, never drops tables.
 -- Every tenant-owned table carries workspace_id; all access is scoped by it.
 
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE,
+    display_name VARCHAR(255),
+    telegram_id BIGINT UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS workspaces (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -10,15 +19,6 @@ CREATE TABLE IF NOT EXISTS workspaces (
     status VARCHAR(50) NOT NULL DEFAULT 'active',
     owner_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     subscription_id INTEGER,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR(255) UNIQUE,
-    display_name VARCHAR(255),
-    telegram_id BIGINT UNIQUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -246,9 +246,6 @@ CREATE TABLE IF NOT EXISTS integration_connections (
 
 CREATE INDEX IF NOT EXISTS idx_integration_workspace_connector ON integration_connections(workspace_id, connector_id);
 
-ALTER TABLE agent_runs ADD COLUMN IF NOT EXISTS plan_id INTEGER REFERENCES plans(id) ON DELETE SET NULL;
-CREATE INDEX IF NOT EXISTS idx_agent_runs_workspace_plan ON agent_runs(workspace_id, plan_id);
-
 CREATE TABLE IF NOT EXISTS plans (
     id SERIAL PRIMARY KEY,
     workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -263,6 +260,9 @@ CREATE TABLE IF NOT EXISTS plans (
 );
 
 CREATE INDEX IF NOT EXISTS idx_plans_workspace_time ON plans(workspace_id, created_at);
+
+ALTER TABLE agent_runs ADD COLUMN IF NOT EXISTS plan_id INTEGER REFERENCES plans(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_agent_runs_workspace_plan ON agent_runs(workspace_id, plan_id);
 
 CREATE TABLE IF NOT EXISTS plan_steps (
     id SERIAL PRIMARY KEY,

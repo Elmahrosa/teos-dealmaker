@@ -1,5 +1,3 @@
-const audit = require('../../utils/auditLogger');
-
 const SPECIALISTS = {
   intelligence: { label: 'Researcher (market_intelligence)', role: 'Industry and prospect research' },
   prospecting: { label: 'Prospector (prospecting)', role: 'Find and score target accounts' },

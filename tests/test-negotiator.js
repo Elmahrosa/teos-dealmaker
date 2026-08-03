@@ -1,6 +1,6 @@
 const { buildTerms } = require('../agents/negotiator');
 
-console.log("Testing Negotiator Agent...\n");
+console.log('Testing Negotiator Agent...\n');
 
 const cases = [
   { id: 'lead_hot', company: 'FinServe Global', targetPrice: 12500, budget: 15000 },
@@ -14,4 +14,4 @@ cases.forEach(c => {
   console.log(`  offer ladder: ${terms.offerLadder.join(' -> ')}`);
 });
 
-console.log("\nVerification complete. Inspect data/vault/audit.log for NEGOTIATOR_AGENT_* entries.");
+console.log('\nVerification complete. Inspect data/vault/audit.log for NEGOTIATOR_AGENT_* entries.');

@@ -22,7 +22,7 @@ async function main() {
   };
   const targetPrice = 12500;
 
-  console.log("🧪 Final Pipeline Test\n");
+  console.log('🧪 Final Pipeline Test\n');
   console.log(`Processing deal for ${lead.company} (target ${targetPrice}).`);
 
   const playbook = buildPlaybook(lead);
@@ -59,6 +59,6 @@ async function main() {
 }
 
 main().catch(err => {
-  console.error("PIPELINE FAILED:", err);
+  console.error('PIPELINE FAILED:', err);
   process.exit(1);
 });

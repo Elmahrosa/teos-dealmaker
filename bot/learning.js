@@ -3,7 +3,7 @@ const design = require('./design');
 
 const sessions = new Map();
 
-function current(session, adapter, workspaceId) {
+function current(session) {
   const q = questionFor(session);
   const context = session.currentName || null;
   const section = session.section;
@@ -36,7 +36,7 @@ function questionFor(session) {
   return listFor(session.section)[session.qIdx] || null;
 }
 
-function buildQuestionText(q, context, idx, total, section) {
+function buildQuestionText(q, context, idx, total) {
   const ctx = context ? ` · ${design.b(context)}` : '';
   const optional = q.required ? '' : ' (optional)';
   return `${design.EMOJI.info} Question ${idx}/${total}${ctx}${optional}\n${design.b(q.text)}`;

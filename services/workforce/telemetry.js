@@ -1,7 +1,7 @@
 const { forWorkspace } = require('../../db/repos');
 const { emit, EVENT_NAMES } = require('./events');
 
-async function record(adapter, workspaceId, { provider, model, input_tokens = 0, output_tokens = 0, cost_cents = 0, latency_ms = 0, retries = 0, failures = 0, confidence = null }) {
+async function record(adapter, workspaceId, { provider, model, input_tokens = 0, output_tokens = 0, cost_cents = 0, latency_ms = 0, retries = 0, failures: _failures = 0, confidence = null }) {
   const repos = forWorkspace(adapter, workspaceId);
   await repos.usage.record({ provider, model, input_tokens, output_tokens, cost_cents });
   emit(EVENT_NAMES.TASK_COMPLETED, { provider, model, cost_cents, latency_ms, retries, confidence });

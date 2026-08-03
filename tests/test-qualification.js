@@ -1,6 +1,6 @@
 const { classifyLead } = require('../agents/qualification/index');
 
-console.log("Testing Qualification Agent (BANT Auto-Classification)...\n");
+console.log('Testing Qualification Agent (BANT Auto-Classification)...\n');
 
 const testLeads = [
   { id: 'L-100', company: 'Nexus AI', budget: 10000, isDecisionMaker: true, hasClearNeed: true, timelineInMonths: 1 },
@@ -20,5 +20,5 @@ testLeads.forEach((lead) => {
   console.log('---');
 });
 
-console.log("\nQualification pipeline simulation complete.");
-console.log("Inspect data/vault/audit.log to verify QUALIFICATION_AGENT_* entries.");
+console.log('\nQualification pipeline simulation complete.');
+console.log('Inspect data/vault/audit.log to verify QUALIFICATION_AGENT_* entries.');

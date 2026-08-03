@@ -63,7 +63,7 @@ const { schema, validate, planner, coordinator, state } = mc;
   ok(!state.canTransition('failed', 'completed'), 'terminal failed cannot recover');
   assert.throws(() => state.assertTransition('completed', 'running'), 'assertTransition throws on illegal move');
 
-  const rec = state.begin(1, { status: 'planned', mission: p.mission });
+  state.begin(1, { status: 'planned', mission: p.mission });
   state.transition(1, 'running');
   state.transition(1, 'waiting_approval');
   state.transition(1, 'running');
@@ -119,7 +119,7 @@ const { schema, validate, planner, coordinator, state } = mc;
   ok(custom.plan && custom.plan.id, 'launch with explicit steps works');
 
   let threw = false;
-  try { await coordinator.launch(adapter, ws.id, { goal: '' }); } catch (e) { threw = true; }
+  try { await coordinator.launch(adapter, ws.id, { goal: '' }); } catch (_) { threw = true; }
   ok(threw, 'invalid launch is rejected');
 
   console.log(`✓ mission-controller scaffolding (${passed} assertions passed)`);

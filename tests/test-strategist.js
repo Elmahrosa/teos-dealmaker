@@ -1,6 +1,6 @@
 const { buildPlaybook } = require('../agents/strategist');
 
-console.log("Testing Strategist Agent...\n");
+console.log('Testing Strategist Agent...\n');
 
 const leads = [
   { id: 'lead_hot', company: 'FinServe Global', classification: 'Hot', fitScore: 92, budget: 30000 },
@@ -15,4 +15,4 @@ leads.forEach(lead => {
   console.log(`  phases: ${playbook.phases.length}`);
 });
 
-console.log("\nVerification complete. Inspect data/vault/audit.log for STRATEGIST_AGENT_* entries.");
+console.log('\nVerification complete. Inspect data/vault/audit.log for STRATEGIST_AGENT_* entries.');

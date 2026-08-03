@@ -34,7 +34,7 @@ function emit(event, payload) {
   for (const fn of [...set]) {
     try {
       fn(payload);
-    } catch (err) {
+    } catch (_) {
       /* listener errors never break the runtime */
     }
   }

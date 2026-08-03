@@ -191,11 +191,11 @@ async function runSalesStrategy(adapter, workspaceId, opts) {
     { step_key: 'targets', agent_type: 'market_intelligence', task: `Identify target industries and build the ideal customer profile for ${company} using the known ICP and personas.`, group: 'parallel' },
     { step_key: 'positioning', agent_type: 'strategist', task: `Recommend positioning and a pricing strategy for these products: ${products}. Anchor prices and define the value message.`, depends_on: ['competitors'] },
     { step_key: 'accounts', agent_type: 'revenue_strategist', task: `Produce a prioritized target account list and estimate pipeline potential for ${company}.`, depends_on: ['targets', 'positioning'] },
-    { step_key: 'present', agent_type: 'gatekeeper', task: `Present the final sales strategy, prioritized target account list and pipeline estimate to the founder. Requires founder approval before presenting.`, depends_on: ['accounts'] }
+    { step_key: 'present', agent_type: 'gatekeeper', task: 'Present the final sales strategy, prioritized target account list and pipeline estimate to the founder. Requires founder approval before presenting.', depends_on: ['accounts'] }
   ];
 
   const plan = await runPlan(adapter, workspaceId, {
-    title: o.title || `Sell TEOS Dealmaker`,
+    title: o.title || 'Sell TEOS Dealmaker',
     goal: o.goal || 'Create a sales strategy to sell TEOS Dealmaker: ideal customer profile, positioning, pricing, target accounts and pipeline estimate.',
     priority: o.priority || 'high',
     steps,

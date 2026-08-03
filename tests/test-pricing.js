@@ -1,11 +1,11 @@
 const PRICING = require('../config/pricing.config');
 const { formatPricingText, pricingButtons } = require('../config/pricing.config');
 
-console.log("Testing Pricing Config...\n");
+console.log('Testing Pricing Config...\n');
 
 let ok = true;
 
-if (PRICING.length !== 3) { console.log("FAIL: expected 3 tiers"); ok = false; }
+if (PRICING.length !== 3) { console.log('FAIL: expected 3 tiers'); ok = false; }
 
 PRICING.forEach(t => {
   if (!/^https:\/\/dodo\.pe\//.test(t.monthly.url) || !/^https:\/\/dodo\.pe\//.test(t.annual.url)) {
@@ -23,13 +23,13 @@ const text = formatPricingText();
 const buttons = pricingButtons().inline_keyboard;
 
 if (!text.includes('Solo Operator') || !text.includes('Growth Team') || !text.includes('Corporate')) {
-  console.log("FAIL: formatted text missing tiers"); ok = false;
+  console.log('FAIL: formatted text missing tiers'); ok = false;
 }
 if (buttons.length !== 3 || buttons[0].length !== 2) {
-  console.log("FAIL: expected 3 rows x 2 url buttons"); ok = false;
+  console.log('FAIL: expected 3 rows x 2 url buttons'); ok = false;
 }
 
-console.log(ok ? "ALL PRICING CHECKS PASS" : "PRICING CHECKS FAILED");
+console.log(ok ? 'ALL PRICING CHECKS PASS' : 'PRICING CHECKS FAILED');
 if (!ok) process.exit(1);
 
 PRICING.forEach(t => console.log(`${t.tier}: monthly ${t.monthly.price} | annual ${t.annual.price}`));

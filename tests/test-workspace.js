@@ -53,11 +53,11 @@ const { getWorkspaceContext, setWorkspaceLang, subscriptionLabel } = require('..
   ctx = await getWorkspaceContext(adapter, tgA);
   assert.strictEqual(ctx.settings.lang, 'ar', 'workspace language persisted');
 
-  const other = await identity.ensureUser(adapter, 2003);
+  await identity.ensureUser(adapter, 2003);
   const otherCtx = await getWorkspaceContext(adapter, 2003);
   assert.strictEqual(otherCtx, null, 'user without workspace has no context');
 
-  const wsB = await identity.onboardWorkspace(adapter, {
+  await identity.onboardWorkspace(adapter, {
     ownerUserId: (await identity.ensureUser(adapter, 2004)).id,
     companyName: 'Beta Ltd',
     lang: 'en',

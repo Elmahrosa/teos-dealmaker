@@ -193,7 +193,7 @@ const { EVENT_NAMES } = require('../services/workforce/events');
 
   events.clear();
   console.log(`\n✓ autonomous workforce runtime (${n} assertions passed)`);
-  console.log(`  planner·scheduler·dispatcher·executor·reviewer·approvals·confidence·optimizer·recovery·telemetry·runtime`);
+  console.log('  planner·scheduler·dispatcher·executor·reviewer·approvals·confidence·optimizer·recovery·telemetry·runtime');
 })().catch(err => {
   console.error('TEST FAILURE:', err);
   process.exit(1);

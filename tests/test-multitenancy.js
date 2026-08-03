@@ -1,6 +1,6 @@
 const { createMemoryAdapter, createRepos, forWorkspace } = require('../db');
 
-console.log("Testing Multi-tenant Persistence Layer...\n");
+console.log('Testing Multi-tenant Persistence Layer...\n');
 
 let ok = true;
 function check(label, cond) {
@@ -85,10 +85,10 @@ function check(label, cond) {
   }
   check('getAdapter throws without DATABASE_URL', threw);
 
-  console.log(ok ? "ALL MULTI-TENANCY CHECKS PASS" : "MULTI-TENANCY CHECKS FAILED");
+  console.log(ok ? 'ALL MULTI-TENANCY CHECKS PASS' : 'MULTI-TENANCY CHECKS FAILED');
   if (!ok) process.exit(1);
-  console.log(`\nIsolation verified across: deals, pipeline events, audit, subscriptions, agent runs, provider usage, conversations, messages, roles.`);
+  console.log('\nIsolation verified across: deals, pipeline events, audit, subscriptions, agent runs, provider usage, conversations, messages, roles.');
 })().catch(err => {
-  console.error("MULTI-TENANCY TEST ERROR:", err);
+  console.error('MULTI-TENANCY TEST ERROR:', err);
   process.exit(1);
 });

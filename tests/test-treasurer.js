@@ -1,8 +1,8 @@
-const { draftContract, createCheckout, closeDeal, runTreasuryFlow } = require('../agents/treasurer');
+const { draftContract, createCheckout, runTreasuryFlow } = require('../agents/treasurer');
 const mode = require('../config/mode');
 
 async function main() {
-  console.log("Testing Treasurer Agent...\n");
+  console.log('Testing Treasurer Agent...\n');
 
   const deal = {
     id: 'deal_001',
@@ -15,29 +15,29 @@ async function main() {
     paymentMethod: 'invoice'
   };
 
-  console.log("1) Drafting contract (DRY)...");
+  console.log('1) Drafting contract (DRY)...');
   const contract = draftContract(deal);
   console.log(`   Contract: ${contract.contractId} | ${contract.company} | ${contract.currency} ${contract.amount} / ${contract.termMonths}mo | monthly ${contract.monthlyPayment}`);
   console.log(`   Clauses: ${contract.clauses.length} | payment method: ${contract.paymentMethod}`);
 
-  console.log("\n2) Creating DRY checkout...");
+  console.log('\n2) Creating DRY checkout...');
   const checkout = await createCheckout(deal, contract);
   console.log(`   Checkout: ${checkout.checkoutId} | ${checkout.url} | dryRun: ${checkout.dryRun}`);
 
-  console.log("\n3) Attempting LIVE checkout (must be blocked)...");
+  console.log('\n3) Attempting LIVE checkout (must be blocked)...');
   mode.setMode('LIVE');
   const blocked = await createCheckout(deal, contract);
   console.log(`   Result: ${blocked === null ? 'BLOCKED (correct)' : 'FAIL: was not blocked'}`);
 
-  console.log("\n4) Closing deal in DRY...");
+  console.log('\n4) Closing deal in DRY...');
   mode.setMode('DRY');
   const summary = await runTreasuryFlow(deal);
   console.log(`   Closed: ${summary.status} | ${summary.company} | ${summary.contractId} | checkout ${summary.checkoutId}`);
 
-  console.log("\nVerification complete. Inspect data/vault/audit.log for TREASURER_AGENT_* entries.");
+  console.log('\nVerification complete. Inspect data/vault/audit.log for TREASURER_AGENT_* entries.');
 }
 
 main().catch(err => {
-  console.error("TEST FAILED:", err);
+  console.error('TEST FAILED:', err);
   process.exit(1);
 });

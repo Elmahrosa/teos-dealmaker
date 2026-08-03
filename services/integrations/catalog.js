@@ -95,7 +95,7 @@ const CONNECTORS = {
   teams: {
     id: 'teams', category: 'communication', label: 'Microsoft Teams', auth: 'oauth', keyEnv: 'TEAMS_ACCESS_TOKEN',
     baseUrl: 'https://graph.microsoft.com/v1.0',
-    sendMessage: { method: 'POST', path: '/teams/{teamId}/channels/{channelId}/messages', auth: 'Bearer', body: ({ to, body }) => ({ body: { contentType: 'text', content: body } }) }
+    sendMessage: { method: 'POST', path: '/teams/{teamId}/channels/{channelId}/messages', auth: 'Bearer', body: ({ _to, body }) => ({ body: { contentType: 'text', content: body } }) }
   }
 };
 

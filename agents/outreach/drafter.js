@@ -28,7 +28,7 @@ Ayman`
 
   return {
     to: target.email,
-    subject: `Partnership: TEOS Sentinel Shield`,
+    subject: 'Partnership: TEOS Sentinel Shield',
     body: templates[target.template || 'intro'],
     target: target.name,
     drafted_at: new Date().toISOString()

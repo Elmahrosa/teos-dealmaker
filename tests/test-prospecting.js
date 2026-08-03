@@ -1,7 +1,7 @@
 const { runProspectingCycle } = require('../agents/prospecting');
 const { processResponse } = require('../agents/qualification');
 
-console.log("Testing Prospecting Agent...\n");
+console.log('Testing Prospecting Agent...\n');
 
 const leads = [
   { id: 'lead_001', company: 'FinServe Global', industry: 'Finance', employeeCount: 850, hasWebsite: true },
@@ -28,4 +28,4 @@ if (hot) {
   });
 }
 
-console.log("\nVerification complete. Inspect data/vault/audit.log for PROSPECTING_AGENT_* and QUALIFICATION_AGENT_* entries.");
+console.log('\nVerification complete. Inspect data/vault/audit.log for PROSPECTING_AGENT_* and QUALIFICATION_AGENT_* entries.');
