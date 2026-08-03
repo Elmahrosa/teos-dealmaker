@@ -1,4 +1,4 @@
-const TelegramBot = require('node-telegram-bot-api');
+const { TelegramBot } = require('node-telegram-bot-api');
 const { BOT_CONFIG } = require('./config');
 const { handleMessage } = require('./handlers');
 const { handleCallback } = require('./menu');

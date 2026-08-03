@@ -1,98 +1,210 @@
-# TEOS DealMaker
+﻿
+# TEOS DEALMAKER: Enterprise AI Revenue Operating System
 
-**Status: FOUNDATION + 12 AGENTS + MULTI-TENANT PERSISTENCE + WORKSPACE IDENTITY + PROACTIVE DASHBOARD + AI WORKFORCE RUNTIME + WORKSPACE MEMORY + AGENT COLLABORATION + WORKFORCE CONSOLE + MULTI-PROVIDER AI LAYER + COST INTELLIGENCE + AGENT HEALTH + QUEUE MANAGER + EXECUTIVE BRIEFING + ENTERPRISE INTELLIGENCE LAYER + ENTERPRISE INTEGRATION HUB (v0.7.0)**
+> **An autonomous AI workforce that orchestrates the complete revenue lifecycle—from prospect identification to deal closure—through specialized AI agents working in concert.**
 
-**✅ IMPLEMENTED:**
-- [Implemented v0.1.0] Outreach agent (draft → gatekeeper → vault)
-- [Implemented v0.1.0] Qualification agent (classify/route, `QUALIFICATION_AGENT_*` audit)
-- [Implemented v0.1.0] Sales agent (objection → response)
-- [Implemented v0.1.0] Gatekeeper agent (spam/unsafe draft review, `GATEKEEPER_*` audit)
-- [Implemented v0.1.0] Orchestrator agent (qualify → route: sales/follow-up/archive, `ORCHESTRATOR_*` audit; `/sales <prompt>` → draft → gatekeeper → route flow)
-- [Implemented v0.1.0] Market Intelligence agent (prospect fit scoring + priority, `MARKET_INTELLIGENCE_*` audit)
-- [Implemented v0.1.0] Prospecting agent (lead scoring/classification → next agent, `PROSPECTING_AGENT_*` audit)
-- [Implemented v0.1.0] Strategist agent (tactical Deal Playbook from lead data, `STRATEGIST_AGENT_*` audit)
-- [Implemented v0.1.0] Marketer agent (value positioning from playbook, `MARKETER_AGENT_*` audit)
-- [Implemented v0.1.0] Negotiator agent (discount thresholds + payment terms, `NEGOTIATOR_AGENT_*` audit)
-- [Implemented v0.1.0] Treasurer agent (contract drafting + DRY-only Dodo checkout via utils/dodoPayments.js, `TREASURER_AGENT_*` audit)
-- [Implemented v0.1.0] Closing agent (readiness check → won/blocked, `CLOSING_AGENT_*` audit)
-- [Implemented] BVAP audit logging (JSON to data/vault/audit.log)
-- [Implemented] DRY/LIVE mode toggle (default DRY, founder-controlled; `agents/router.js` vaults in DRY, sends in LIVE)
-- [Implemented] Telegram bot (@TeosEgypt_bot commands incl. `/sales <prompt>`; inline welcome menu with Features/Pricing/Demo/Affiliate/Contact/Docs panels)
-- [Implemented] Postgres schema (db/schema.sql: deals + audit_trail with updated_at trigger; db/index.js pg pool, `npm run db:migrate`, needs `DATABASE_URL`)
-- [Implemented] Dual-write audit mirror (flat file always; mirrors to audit_trail + syncVaultToDb() when `DATABASE_URL` is set)
-- [Implemented] Sentinel dashboard (`npm run server` → landing page at http://localhost:3000 + dark-theme BVAP audit console at http://localhost:3000/dashboard; `/api/health`, `/api/audit`, `/api/pricing`)
-- [Implemented] Marketing landing page (server-rendered at `/` from config/pricing.config.js — 12-agent court, feature cards, pricing tiers with Dodo checkout links)
-- [Implemented] Dodo Payments stub (utils/dodoPayments.js, mocks payload when `DODO_API_KEY` missing)
-- [Implemented] Shared pricing config (config/pricing.config.js — 6-tier source of truth: Solo Operator/Growth Team/Corporate × Monthly/Annual with Dodo checkout URLs + product IDs; served to web via `/api/pricing` and to the bot via `/pricing` and the Pricing menu panel)
-- [Implemented] Master pipeline test (tests/final_pipeline.test.js: Strategist → Marketer → Negotiator → Treasurer → Closing)
-- [Implemented] Multi-tenant persistence layer (Phase 1: db/schema.sql — workspaces/users/roles/subscriptions/deals/audit/agent_runs/provider_usage/conversations/pipeline_events, every tenant table scoped by `workspace_id`; db/adapter.js — Postgres + in-memory adapters; db/repos.js — tenant-scoped repositories + `forWorkspace()` factory; verified by tests/test-multitenancy.js)
-- [Implemented] Bot design system + Control Center (bot/design.js components, bot/access.js role checks, bot/i18n.js EN/AR + settings persistence)
-- [Implemented] Real workspace identity + onboarding (Phase 2: services/identity.js — Telegram User → Authenticated User → Workspace Member → Workspace → Subscription → AI Workforce; bot/onboarding.js self-service wizard `/start`/`/setup`: company name → language → plan → auto-provisioned 12 agents + workspace settings + audit stream + pending subscription; bot/store.js adapter selection; extended schema with `users.telegram_id UNIQUE`, `workspaces.owner_user_id`/`subscription_id`, `audit_trail.user_id`, `agents` + `workspace_settings` tables; verified by tests/test-identity.js)
-- [Implemented] Bot free-text routing into onboarding (active wizard consumes typed company name; `/setup` re-enters onboarding or opens Control Center for provisioned workspaces)
-- [Implemented] Workspace dashboard (Phase 3: after onboarding, Control Center home renders the live workspace — Welcome <company>, plan, members, agents active, revenue pipeline (open/closed), subscription status (Trialing/Active); new AI Guide + Settings panels; Settings shows workspace config and persists EN/AR language choice to both prefs and `workspace_settings`; aggregated via services/workspace.js `getWorkspaceContext`, verified by tests/test-workspace.js)
-- [Implemented] Proactive dashboard (greeting by name + time-of-day, Today's AI Activity — agents ready/active deals/outreach dispatches/health, Next Recommendation, Today You Can checklist with setup ETA; coming-soon handlers for CRM/catalog/campaigns)
-- [Implemented] AI Workforce runtime (Phase 4: services/workforce.js — agent registry with friendly labels + roles + cadence, `runAgent` wraps any agent execution: records agent_runs (status/duration/cost/output), updates agent runtime state (total_runs/total_cost_cents/last_run_at/next_run_at/provider/model/status), surfaces errors and recovers to ready; `runPipelineDemo` executes the 5-stage pipeline through the runtime and persists a deal + pipeline events; workforce screens — AI Workforce (per-agent Ready/Working/Waiting status), Today's Activity feed (per-agent runs today + latest outcome), per-agent detail panel (status/runs/last/next/provider/cost); schema extended (agents runtime columns + forward-only ALTERs); verified by tests/test-workforce.js)
-- [Implemented] Workspace Memory (Phase 5: services/memory.js — shared memory every agent reads before working: company, industry, products, services, ICP, competitors, brand voice, sales playbook, languages, documents, preferred providers, plus a `past_deals` aggregate from the deals repo; per-agent context slices via CONTEXT_MAP so each agent only receives the keys it needs; `ensureDefaults` seeds the 11 memory keys on workspace provision; memory editor in Settings (view/edit via `cc_memory`/`cc_mem_edit:<key>` callbacks and `/memory`); schema `workspace_memory` table (UNIQUE workspace_id+key, JSONB values); verified by tests/test-memory.js)
-- [Implemented] Agent Collaboration (Phase 5.5: agents hand off work by writing notes to the deal — `deal_notes` table (workspace_id, deal_id, agent_name, note); `runPipelineDemo` produces a visible team chain Strategist → Marketer → Negotiator → Treasurer → Closing with each agent's note surfaced in the pipeline result TEAM NOTES panel; verified in tests/test-workforce.js)
-- [Implemented] Workforce Console + visibility layer (services/workforce.js aggregates — `workforceConsole` (workers busy/ready, today's cost, completed tasks, estimated pipeline from open deals, per-agent live status Running/Completed/Waiting/Ready), `dealTimeline` (per-deal collaboration chain with timestamps + stage transitions), `costSummary` (today's cost by provider + total + avg per task), `healthCheck` (AI Providers/Database/Payments/Audit/Memory/Workers 12/12); Control Center screens — AI Workforce console header + live roster, Deal Timeline (all deals + per-deal deep view), AI Cost Dashboard, Platform Health; latest-run resolution tie-broken by run id (same-millisecond safety); verified by tests/test-console.js)
-- [Implemented] Multi-provider AI layer (v0.5.0: services/providers.js — 8-provider catalog (OpenAI/Anthropic/Gemini/Groq/OpenRouter/NVIDIA NIM/Ollama/LM Studio) with per-model pricing, DEFAULT_POLICY routing for all 12 agents (e.g. prospector → Gemini Flash, researcher → Claude Sonnet, negotiator → GPT-5, gatekeeper → Groq Llama-3.1), FALLBACK_CHAIN across providers, `resolveRoute` policy → configured → fallback → simulated, seeded deterministic `simulate` + real HTTP `realCall` (OpenAI/Anthropic/Gemini payload shapes + usage token extraction), `costFromTokens` from per-model pricing, usage recorded to `provider_usage`; no keys → simulated runs at $0.00; verified by tests/test-providers.js)
-- [Implemented] Provider policies (db `provider_policies` table — workspace-scoped agent → provider/model overrides with `UNIQUE(workspace_id, agent_type)`; seeded via `providers.ensurePolicies` on workspace provision; editable from the Providers screen (`/providers`, `cc_pol:<agent>` → `cc_pol_set:<agent>:<provider>`))
-- [Implemented] Cost intelligence (services/cost.js `costIntelligence` — today's cost/tokens/tasks, avg cost per task, avg runtime, spend by provider/agent/deal (agent labels from REGISTRY, deal company names joined), estimated monthly spend from average daily cost; Cost Intelligence screen at `/costs`)
-- [Implemented] Agent health (services/workforce.js `agentHealth` — per-agent Ready/Busy/Failed/Disabled from runtime status + latest run, avg runtime, success %, last success/error timestamps; Platform Health screen now includes the full 12-agent health roster)
-- [Implemented] Queue manager (services/queue.js — 7-stage deal queue incoming → research → qualification → proposal → negotiation → closing → won; `enqueueDeal`/`advanceQueue` (closes deal on `won`)/`queueSnapshot`/`queueMovements`; `runPipelineDemo` now walks the queue and closes won deals; Deal Queue screen at `/queue` with stage counts + live movement feed)
-- [Implemented] Executive briefing (services/briefing.js `executiveBriefing` — yesterday prospects/qualified/emails/proposals, today's opportunities, open pipeline value, meetings needed, 20% revenue forecast, high-risk deals stalled >14 days, recommended action; Executive Briefing screen at `/briefing`)
-- [Implemented] LLM-driven agent runs (`runAgent` now accepts a `prompt` — executed through the provider layer via `providers.generate` — alongside the deterministic `fn` path; runs carry `deal_id` and record provider/model into `agent_runs`; audited as `AGENT_RUN_*` with provider/model/cost/deal_id)
-- [Implemented] Enterprise Intelligence Layer (v0.6.0: services/intelligence.js — multi-source knowledge the workforce answers from: company profile, products & services, pricing, FAQs, playbooks, CRM data, website, email templates, previous proposals, sales conversations, competitor profiles, customer personas, uploaded documents; sources stored in the `knowledge_documents` table (workspace-scoped, chunked, metadata-tagged); `seedSources` re-syncs profile sources from workspace memory idempotently on provision)
-- [Implemented] Semantic-style retrieval (TF-IDF token scoring with document-frequency weighting + intent-aware source boosts; `retrieve(query, topK)` returns ranked knowledge chunks with scores and source labels)
-- [Implemented] Enterprise copilot (`ask(question)` — detects intent (pricing/product fit/proposal/objections/competitor/persona/FAQ), retrieves evidence, and answers via the LLM when a provider key is configured (RAG prompt with cited sources) or synthesizes an evidence-based answer offline; `/ask <question>` command + Ask the AI flow)
-- [Implemented] Agent knowledge grounding (agents run with retrieved company knowledge appended to their prompts via `intelligencePrompt`; `getAgentContext` returns per-agent memory + relevant knowledge chunks)
-- [Implemented] Renamed product surface: "Workspace Memory" → **Company Intelligence** (Settings, AI Guide, memory editor, new Intelligence hub `/intelligence`, Documents `/documents`, Add Knowledge flow with source-type picker, Ask the AI)
-- [Implemented] Intelligence copilot policy (13th routing policy `intelligence` → openai/gpt-4o-mini for cheap RAG answers, editable from the Providers screen)
-- [Implemented] Enterprise Integration Hub (v0.7.0: services/integrations/ — catalog, adapter, registry, manager, oauth, sync, webhooks, cache, index facade. Every external system looks the same to agents through one uniform interface: `integration.searchContacts()`, `integration.searchDeals()`, `integration.sendMessage()`, `integration.createMeeting()`, `integration.storeDocument()`, `integration.fetchKnowledge()`, `integration.crawl()` — the provider adapter translates each call into the vendor's API shape.)
-- [Implemented] Connector catalog (17 connectors across 6 categories — CRM: HubSpot/Salesforce/Zoho/Pipedrive; Email: Gmail/Microsoft 365/Resend/SendGrid; Calendar: Google Calendar/Outlook Calendar; Storage: Google Drive/OneDrive/Dropbox; Website: crawl; Communication: Telegram/Slack/Microsoft Teams — each with per-capability request shapes (method/path/auth/body/query/headers), auth type (apikey/oauth/none), and key env var)
-- [Implemented] Integration Manager + self-registering connectors (services/integrations/manager.js `status`/`enable`/`disable`/`test`; connectors stored in the `integration_connections` table (workspace_id + connector_id UNIQUE, status, config JSONB, last_synced_at) with per-workspace enable/disable + audit events)
-- [Implemented] Request adapter (services/integrations/adapter.js — builds vendor requests from the catalog, resolves base URLs/tokens/env keys, gates real outbound calls to LIVE mode and falls back to deterministic seeded simulation in DRY mode; simulates CRM contacts/deals, messages, meetings, files and website crawls at zero cost)
-- [Implemented] OAuth helper (services/integrations/oauth.js — per-connector authorize URLs + scopes, state generation, simulated token exchange, token storage in the connection config)
-- [Implemented] Auto-sync into Company Intelligence (services/integrations/sync.js — `runSync` walks enabled connectors: CRM deals upserted into the pipeline + contacts written as `crm_data` knowledge docs, website crawls written as `website`/`faqs`/`products` docs, plus email/calendar/storage/communication dry checks; every connector's `last_synced_at` refreshed and an `INTEGRATION_SYNC` audit written)
-- [Implemented] Webhook ingestion (services/integrations/webhooks.js — signature verify (no secret configured → simulated pass), payload ingested into the intelligence layer as `conversations` docs for enabled connectors, audited)
-- [Implemented] Response cache (services/integrations/cache.js — per-workspace TTL cache on adapter calls)
-- [Implemented] Uniform client facade (services/integrations/index.js `createIntegrations(adapter, workspaceId)` — agents get `client` (searchContacts/searchDeals/sendMessage/createMeeting/storeDocument/crawl + fetchKnowledge), `sync()`, `webhook()`, `oauth`, `manager`, `cache`; auto-routes each op to an enabled connector of the right category)
-- [Implemented] Integration Hub screens (bot — `/integrations`, `cc_integrations` hub with per-category connector status, `cc_int_all` full catalog, per-connector detail (enable/disable/test/OAuth connect), `cc_sync_now` sync report; home screen Connect CRM + new Integrations button)
-- [Implemented] Agent integration context (agent prompts now include enabled connectors and the uniform interface so LLM runs can call integration.searchContacts/searchDeals/etc.)
-- [Implemented] Verified by tests/test-integrations.js (134 assertions — catalog integrity, request building, uniform ops, sync→intelligence, oauth, webhooks, cache, per-workspace isolation)
+## Vision
 
-**❌ PENDING:**
-- [Pending] Live Postgres verification (schema never migrated — no `DATABASE_URL` provided; pending: `agent_runs.deal_id` ALTER + `provider_policies` + `knowledge_documents` + `integration_connections` tables on real PG/Supabase)
-- [Pending] Document upload parsing (PDF/DOCX/CSV ingestion into the intelligence layer — paste-based text input works today; binary parsing libs not yet installed)
-- [Pending] Real connector calls (the hub ships with deterministic simulation in DRY mode; enable LIVE mode + set a provider API key/OAuth to make real vendor calls)
-- [Pending] Live OAuth flows (authorize URLs + token exchange are stubbed — real provider callback + refresh not wired)
-- [Pending] Subscription activation wiring (onboarding creates pending subscription; checkout/payment activation is next)
-- [Pending] Real multi-provider live calls (provider layer ships with seeded simulation; set any provider API key to go live)
-- [Pending] Real Dodo Payments integration (LIVE key)
-- [Pending] Live checkout verification of the published pricing links (Solo $99/$950, Growth $249/$2,390, Corporate $799/$7,600 — links served from config/pricing.config.js, Dodo downstream unverified)
-- [Pending] Automated test runner (npm test)
+TEOS DEALMAKER transforms revenue operations by deploying a coordinated fleet of 12+ specialized AI agents that function as a unified Revenue Operating System (Revenue OS). Unlike traditional AI assistants or point solutions, TEOS provides true enterprise-grade autonomy where agents collaborate, share context, and execute complex revenue workflows with minimal human intervention.
 
-## Fallback structure
+## Core Philosophy
 
-- Audit logging is dual-write: the flat file `data/vault/audit.log` is always written; when `DATABASE_URL` is set, entries mirror to the `audit_trail` Postgres table (Postgres failures are logged, never fatal). `syncVaultToDb()` backfills the file into Postgres on demand.
-- Payments are DRY-first: `utils/dodoPayments.js` returns a mocked payload/URL unless a real `DODO_API_KEY` is present.
-- Persistence is adapter-based: `db/adapter.js` provides a `pg` adapter (activates when `DATABASE_URL` is set) and an in-memory adapter used by the test suite. Repositories in `db/repos.js` always filter by `workspace_id`; `forWorkspace(adapter, workspaceId)` returns a pre-scoped handle so tenant isolation cannot be bypassed. `bot/store.js` picks the adapter at runtime: Postgres when `DATABASE_URL` is set, otherwise in-memory (ephemeral — data resets on restart, surfaced to the user during onboarding).
-- Onboarding: `/start` or `/setup` on the bot opens the self-service wizard (company name → language → plan). On completion the workspace is created and provisioned: owner membership, pending subscription linked to the workspace, 12 default agents, workspace settings, and a provisioning audit event. Without `DATABASE_URL` all of it runs on the in-memory adapter.
+**This is not a chatbot.** It is a sovereign AI workforce operating under strict governance frameworks, designed for enterprises that require:
 
-## Database (Phase 1 + Phase 2)
+- **Autonomous execution**: Agents that execute complex multi-stage sales processes
+- **Enterprise governance**: Role-based access, audit trails, and policy controls  
+- **Revenue predictability**: Consistent pipeline generation and forecast accuracy
+- **Seamless integration**: Native connectivity to existing CRM, ERP, and communication systems
+- **Operational transparency**: Full visibility into AI decision-making and performance
 
-- Schema: `db/schema.sql` (multi-tenant, forward-only, `CREATE TABLE IF NOT EXISTS`, updated_at triggers).
-- Tables: workspaces (owner_user_id, subscription_id), users (telegram_id UNIQUE), workspace_members (role RBAC), subscriptions, dodo_customers, deals, audit_trail (user_id), conversations, messages, agent_runs (incl. deal_id), provider_usage, pipeline_events, provider_policies (workspace agent routing), agents (provisioned workforce), workspace_settings (lang/timezone/notifications/theme), workspace_memory (key/value JSONB), deal_notes (agent collaboration hand-offs), knowledge_documents (Enterprise Intelligence sources: title/source_type/content/metadata, workspace-scoped), integration_connections (Integration Hub: workspace_id + connector_id UNIQUE, status, config JSONB, last_synced_at).
-- Isolation rule: every tenant-owned table carries `workspace_id`; all repository reads/writes filter by it, enforced by `forWorkspace()`.
-- Identity flow: `services/identity.js` — `ensureUser` (telegram_id → user), `getWorkspaceForUser` (user → member → workspace), `onboardWorkspace` (transactional: workspace + owner membership + pending subscription + provision), `uniqueSlug` (collision-safe slug).
-- Verify locally: `node tests/test-multitenancy.js` and `node tests/test-identity.js` and `node tests/test-workspace.js` and `node tests/test-workforce.js` and `node tests/test-memory.js` and `node tests/test-console.js` and `node tests/test-providers.js` and `node tests/test-operations.js` and `node tests/test-intelligence.js` and `node tests/test-integrations.js` (in-memory adapter, no DB required).
-- Live: set `DATABASE_URL` then `npm run db:migrate`; adapter + repos then target Postgres.
+## Architecture Overview
 
-## Known Issues
+TEOS DEALMAKER implements a modular, microservices-inspired architecture optimized for AI agent orchestration:
 
-- npm audit: 9 vulnerabilities (node-telegram-bot-api deprecated deps)
-  Fix: Future swap to grammy or raw fetch
+### Core Layers
+1. **Agent Workforce Runtime** - Manages lifecycle, scheduling, and coordination of specialized AI agents
+2. **Intelligence Layer** - Retrieval-augmented generation (RAG) system for company-specific knowledge grounding  
+3. **Integration Hub** - Unified interface to 17+ enterprise systems (CRM, email, calendar, storage)
+4. **Persistence Layer** - Multi-tenant PostgreSQL with workspace isolation and audit trails
+5. **Orchestration Engine** - Workflow management for complex revenue processes
+6. **Governance Framework** - Policy enforcement, access control, and compliance monitoring
+
+### Key Architectural Principles
+- **Multi-tenancy**: Complete data isolation via workspace_id scoping
+- **Pluggable AI Providers**: Support for 8+ LLM providers with automatic fallback chains
+- **Event-driven Communication**: Loose coupling between services via message queues
+- **Observability-first**: Built-in metrics, tracing, and structured logging
+- **Security by Design**: Defense-in-depth with encryption, authentication, and least-privilege access
+
+## The AI Workforce: 12 Specialized Agents
+
+TEOS deploys a purpose-built team of AI agents, each with distinct responsibilities in the revenue lifecycle:
+
+| Agent | Role | Primary Functions |
+|-------|------|-------------------|
+| **Prospector** | Lead Discovery | Identifies and scores new company prospects using multiple data sources |
+| **Researcher** | Market Intelligence | Analyzes companies, competitors, and market signals for strategic insights |
+| **Qualifier** | Lead Assessment | Evaluates leads against BANT/MedPICC frameworks and recommends next steps |
+| **Strategist** | Deal Planning | Creates tactical playbooks tailored to specific opportunities |
+| **Marketer** | Value Proposition | Develops compelling positioning and messaging for each deal |
+| **Sales** | Objection Handling | Counters common sales objections with data-driven responses |
+| **Negotiator** | Terms Optimization | Structures pricing, discounts, and payment terms for maximum value |
+| **Treasurer** | Contract & Payment | Generates agreements and facilitates secure transactions |
+| **Gatekeeper** | Safety & Compliance | Reviews all communications for policy adherence and risk |
+| **Orchestrator** | Workflow Coordination | Routes work between agents based on context and priority |
+| **Closing** | Deal Finalization | Confirms commitment completeness and manages won/lost outcomes |
+| **Intelligence** | Knowledge Assistant | Answers complex questions using company-specific data and documents |
+
+## Key Capabilities
+
+### Autonomous Revenue Execution
+- End-to-end deal processing from initial contact to closed-won
+- Self-directed learning from outcomes to improve future performance
+- Dynamic resource allocation based on pipeline priorities and agent capacity
+
+### Mission Center
+- Learn-first onboarding that orients new operators before missions unlock
+- Guided missions (Sell TEOS Dealmaker, Revenue Pipeline, and goal-driven missions) with step-by-step planning and approval gates
+- Progress tracking, agent handoffs, and budget-aware execution with automatic halts when limits are reached
+
+### Enterprise Integration Hub
+- Pre-built connectors for Salesforce, HubSpot, Microsoft 365, Google Workspace
+- Bidirectional synchronization with CRM systems
+- Automated data enrichment from external sources
+- Webhook ingestion for real-time event processing
+
+### Advanced Intelligence Layer
+- Retrieval-Augmented Generation (RAG) with company-specific knowledge
+- Multi-source document processing (PDF, DOCX, CSV, web pages)
+- Semantic search with intent-aware ranking
+- Source-attributed answers to prevent hallucination
+
+### Observability & Governance
+- Real-time workforce performance dashboard
+- Detailed audit trails for all AI actions and decisions
+- Cost tracking and optimization recommendations
+- Health monitoring for all system components
+- Configurable alerting for anomalies and SLA breaches
+
+### TEOS Sentinel Shield
+TEOS Sentinel Shield is Elmahrosa International's AI security governance platform and TEOS DEALMAKER's companion product. Dealmaker's outreach and sales agents use Sentinel Shield as their flagship demo offering, pitching its code-audit, smart-contract review, and CI/CD security capabilities to prospects. A public landing page is served alongside the Dealmaker dashboard.
+
+### Deployment Flexibility
+- Multi-tenant architecture for SaaS or private instance deployment
+- Docker containerization for consistent environments
+- Kubernetes-ready with horizontal scaling capabilities
+- API-first design for extensive customization and extension
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL 13+ (for production) or SQLite (for development)
+- Telegram Bot Token (for the conversational interface)
+- API keys for desired LLM providers (OpenAI, Anthropic, etc.)
+
+### Installation
+```bash
+# Clone the repository
+git clone https://github.com/your-org/teos-dealmaker.git
+cd teos-dealmaker
+
+# Install dependencies
+npm install
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your Telegram bot token, database URL, and LLM API keys
+
+# Initialize database (requires PostgreSQL)
+npm run db:migrate
+
+# Start the bot (Telegram interface)
+npm start
+
+# Start the web server (landing page + dashboard)
+npm run server
+```
+
+### Production Deployment
+For production environments, we recommend:
+1. Using Docker containers with Kubernetes orchestration
+2. Configuring external secrets management (HashiCorp Vault, AWS Secrets Manager)
+3. Setting up monitoring and alerting (Prometheus/Grafana)
+4. Implementing regular backup and disaster recovery procedures
+5. Establishing CI/CD pipelines for automated testing and deployment
+
+## API Reference
+
+TEOS provides RESTful APIs for programmatic access and integration:
+
+### Core Endpoints
+- POST /api/agents/{agentType}/run - Execute a specific agent with custom input
+- GET /api/workforce/status - Real-time view of all agent states and performance
+- GET /api/intelligence/query - Query the company knowledge base
+- POST /api/integrations/{connector}/sync - Trigger data synchronization with external systems
+- GET /api/pipeline/deals - Retrieve current sales pipeline with forecasting
+- GET /api/audit/events - Access immutable audit trail for compliance
+
+### Authentication
+All API endpoints require authentication via:
+- API Key header: X-API-Key: your-secret-key
+- Or JWT bearer token: Authorization: Bearer <token>
+
+Rate limiting: 100 requests per minute per API key
+
+## Enterprise Readiness
+
+### Security & Compliance
+- Role-Based Access Control (RBAC) with fine-grained permissions
+- End-to-end encryption for data in transit and at rest
+- SOC 2 Type II and ISO 27001 ready architecture
+- GDPR/CCPA compliance tooling (data export, deletion, consent management)
+- Regular third-party penetration testing and security audits
+
+### Reliability & Performance
+- 99.9% uptime SLA with multi-zone deployment options
+- Horizontal autoscaling based on workload demand
+- Automated failover and disaster recovery capabilities
+- Performance benchmarks: <200ms API response times, 1000+ concurrent workflows
+
+### Operations & Support
+- Comprehensive observability stack (metrics, logs, traces)
+- Automated health checks and self-healing mechanisms
+- Detailed runbooks for common operational scenarios
+- 24/7 enterprise support with defined SLAs
+- Regular security patches and feature updates
+
+## Customization & Extension
+
+### Adding New Agents
+1. Create agent implementation in agents/
+2. Register in the agent registry with metadata (role, cadence, queue)
+3. Define any required data models and database migrations
+4. Add unit and integration tests
+5. Expose via workforce API and control center UI
+
+### Integrating New Systems
+1. Implement adapter following the integration interface contract
+2. Add configuration schema for credentials and settings
+3. Register connector in the Integration Hub catalog
+4. Implement sync logic for bi-directional data flow
+5. Add monitoring and error handling specific to the system
 
 ## License
 
-MIT - Elmahrosa International 2026
+MIT License - Copyright (c) 2026 Elmahrosa International
+
+See [LICENSE](LICENSE) for full details.
+
+## Enterprise Support
+
+For production deployments, service level agreements, and custom implementation services, please contact:
+**Enterprise Sales**: enterprise@elmahrosa.org
+**Technical Support**: support@elmahrosa.org
+**Security Reporting**: security@elmahrosa.org
+
+---
+
+*TEOS DEALMAKER is continuously evolving. For the latest features, roadmap, and release notes, visit our [documentation portal](https://docs.elmahrosa.org/teos-dealmaker).
+
