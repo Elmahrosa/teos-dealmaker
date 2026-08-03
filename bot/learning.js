@@ -175,10 +175,26 @@ function promptMode(session) {
   return 'question';
 }
 
+function nextSection(section) {
+  const order = ['company', 'product', 'playbook', 'persona'];
+  const idx = order.indexOf(section);
+  return idx >= 0 ? order[idx + 1] || null : null;
+}
+
 async function advance(userId, adapter, workspaceId) {
   const session = sessions.get(userId);
   if (!session) return { type: 'finished' };
   session.qIdx += 1;
+  const list = listFor(session.section);
+  if (session.qIdx >= list.length) {
+    const next = nextSection(session.section);
+    if (next === 'product' || next === 'persona') {
+      session.section = next + '_name';
+    } else if (next) {
+      session.section = next;
+    }
+    session.qIdx = 0;
+  }
   return buildPrompt(userId, adapter, workspaceId);
 }
 
