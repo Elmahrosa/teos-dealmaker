@@ -10,7 +10,7 @@ function escapeHtml(text) {
   return String(text).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
 }
 
-const bot = new TelegramBot(BOT_CONFIG.token, { polling: true });
+const bot = new TelegramBot(BOT_CONFIG.token, { polling: false });
 
 bot.on('message', async (msg) => {
   const start = Date.now();
@@ -54,4 +54,24 @@ bot.on('callback_query', async (query) => {
   }
 });
 
-console.log(`[TEOS DealMaker Bot] @${BOT_CONFIG.botName} polling (mode: ${getMode()})`);
+async function bootstrap() {
+  if (!BOT_CONFIG.token) {
+    console.error('[bot] TELEGRAM_BOT_TOKEN is not set. Create a bot via @BotFather and set TELEGRAM_BOT_TOKEN in the environment.');
+    process.exit(1);
+  }
+  try {
+    const me = await bot.getMe();
+    console.log(`[bot] Telegram bot @${me.username} verified (id ${me.id})`);
+  } catch (err) {
+    console.error(`[bot] TELEGRAM_BOT_TOKEN was rejected by Telegram (${err.message}).`);
+    console.error('[bot] Generate a new token via @BotFather and update TELEGRAM_BOT_TOKEN, then restart.');
+    process.exit(1);
+  }
+  await bot.startPolling();
+  console.log(`[TEOS DealMaker Bot] @${BOT_CONFIG.botName} polling (mode: ${getMode()})`);
+}
+
+bootstrap().catch((err) => {
+  console.error('[bot] failed to start:', err.message);
+  process.exit(1);
+});

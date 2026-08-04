@@ -24,7 +24,7 @@ const OUT_DIR = argOut !== -1
   ? path.resolve(process.argv[argOut + 1])
   : path.join(root, 'hostinger');
 
-const ASSETS = ['favicon.svg', 'og-image.svg'];
+const ASSETS = ['favicon.svg', 'og-image.svg', 'og-image.png'];
 
 const CRC_TABLE = (() => {
   const t = new Uint32Array(256);

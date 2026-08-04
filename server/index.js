@@ -10,6 +10,39 @@ const render = require('./render');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+function contentSecurityPolicy() {
+  const scriptSrc = ['\'self\'', '\'unsafe-inline\''];
+  if (process.env.ANALYTICS_GA4) scriptSrc.push('https://www.googletagmanager.com');
+  if (process.env.ANALYTICS_CLARITY) scriptSrc.push('https://www.clarity.ms');
+  if (process.env.ANALYTICS_LINKEDIN) scriptSrc.push('https://snap.licdn.com');
+  if (process.env.ANALYTICS_META_PIXEL) scriptSrc.push('https://connect.facebook.net');
+  return [
+    `default-src 'self'`,
+    `script-src ${scriptSrc.join(' ')}`,
+    `style-src 'self' 'unsafe-inline'`,
+    `img-src 'self' data: https:`,
+    `font-src 'self' data:`,
+    `connect-src 'self' https:`,
+    `frame-ancestors 'self'`,
+    `base-uri 'self'`,
+    `form-action 'self' https:`
+  ].join('; ');
+}
+
+app.set('trust proxy', 1);
+
+app.use((req, res, next) => {
+  res.set({
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'SAMEORIGIN',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+    'Content-Security-Policy': contentSecurityPolicy()
+  });
+  next();
+});
+
 app.get('/api/pricing', (req, res) => {
   res.json({ tiers: render.PRICING, addons: render.PRICING.ADDONS });
 });
@@ -91,6 +124,10 @@ app.get('/favicon.svg', (req, res) => {
 
 app.get('/og-image.svg', (req, res) => {
   res.type('image/svg+xml').sendFile(path.join(__dirname, 'og-image.svg'));
+});
+
+app.get('/og-image.png', (req, res) => {
+  res.type('image/png').sendFile(path.join(__dirname, 'og-image.png'));
 });
 
 app.get('/dashboard', (req, res) => {

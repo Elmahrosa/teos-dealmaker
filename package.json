@@ -4,9 +4,13 @@
   "main": "index.js",
   "author": "Ayman Seif",
   "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node bot/index.js",
     "server": "node server/index.js",
+    "start:all": "node scripts/prod.js",
     "test": "node tests/run-all.js",
     "test:callbacks": "node tests/test-callback-navigation.js",
     "test:schemas": "node tests/test-schema-order.js",
