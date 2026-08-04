@@ -89,6 +89,7 @@ audit.clearVault();
   const listed = pm.discover();
   ok(listed.some(p => p.id === 'acme-ping' && p.enabled === true), 'discover reports enabled state');
   ok(listed.some(p => p.id === 'civic-mixer' && p.enabled === true), 'civic-mixer auto-loads from the default plugins dir');
+  ok(listed.some(p => p.id === 'sentinel' && p.enabled === true), 'sentinel auto-loads from the default plugins dir');
   ok(listed.find(p => p.id === 'acme-ping').tools.includes('acme.ping'), 'discover lists plugin tools');
   ok(pm.capabilities().includes('ping') && pm.capabilities().includes('acme'), 'capabilities() unions plugin surface');
   ok(pm.status('acme-ping').id === 'acme-ping' && pm.status('acme-ping').enabled === true, 'status reports lifecycle state');

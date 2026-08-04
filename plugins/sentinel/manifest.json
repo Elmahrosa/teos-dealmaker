@@ -1,0 +1,72 @@
+{
+  "id": "sentinel",
+  "name": "TEOS Sentinel Shield",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "engine": "^0.8.0",
+  "description": "Second official plugin: governance shield that scans workspaces, audits activity, checks policy decisions, and lists rules.",
+  "server": "sentinel",
+  "fallback": false,
+  "enabledByDefault": true,
+  "capabilities": ["sentinel", "sentinel.scan", "sentinel.audit", "sentinel.policy", "sentinel.rules", "governance"],
+  "permissions": {
+    "workspace": true,
+    "memoryRead": true
+  },
+  "tools": [
+    {
+      "toolId": "sentinel.scan",
+      "server": "sentinel",
+      "category": "governance",
+      "description": "Scan a workspace for policy violations.",
+      "version": "1.0.0",
+      "capabilities": ["sentinel", "scan", "read"],
+      "operations": ["scan"],
+      "permissions": ["workspace"]
+    },
+    {
+      "toolId": "sentinel.audit",
+      "server": "sentinel",
+      "category": "governance",
+      "description": "Pull the audit trail for a workspace.",
+      "version": "1.0.0",
+      "capabilities": ["sentinel", "audit", "read"],
+      "operations": ["audit"],
+      "permissions": ["workspace", "memoryRead"]
+    },
+    {
+      "toolId": "sentinel.policy.check",
+      "server": "sentinel",
+      "category": "governance",
+      "description": "Check a policy decision without executing the tool.",
+      "version": "1.0.0",
+      "capabilities": ["sentinel", "policy", "read"],
+      "operations": ["check"],
+      "permissions": ["workspace"]
+    },
+    {
+      "toolId": "sentinel.rules.list",
+      "server": "sentinel",
+      "category": "governance",
+      "description": "List active governance rules.",
+      "version": "1.0.0",
+      "capabilities": ["sentinel", "rules", "read"],
+      "operations": ["list"]
+    },
+    {
+      "toolId": "sentinel.health",
+      "server": "sentinel",
+      "category": "governance",
+      "description": "Report sentinel status and latency.",
+      "version": "1.0.0",
+      "capabilities": ["sentinel", "health", "read"],
+      "operations": ["health"]
+    }
+  ],
+  "entries": {
+    "adapter": "./adapter.js",
+    "policy": "./policy.js",
+    "audit": "./audit.js",
+    "schema": "./schema.js"
+  }
+}

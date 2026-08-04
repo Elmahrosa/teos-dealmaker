@@ -241,13 +241,19 @@ plugins; the loader instantiates a factory with no arguments.
   tools, transportAdapter, permissions.{grant,revoke,has,list,check},
   healthCheck, shutdown, subscribe, emit`.
 
-## 11. First-party roadmap
+## 11. First-party plugins
 
-- **civic-mixer** — transport adapter (fallback for the builtin gateway tools)
-  plus civic capabilities: `civic.identity.lookup`, `civic.vote.create`,
-  `civic.vote.cast`, `civic.issue.create`, `civic.issue.list`.
-- **sentinel** — governance capabilities: `sentinel.scan`, `sentinel.audit`,
-  `sentinel.policyCheck`, each backed by policy + audit entries.
+Implemented under this contract:
+
+- **civic-mixer** (`plugins/civic-mixer`) — transport adapter registered as the
+  platform fallback plus civic capabilities: `civic.lookup`,
+  `civic.identity.verify`, `civic.vote.create`, `civic.issue.create`,
+  `civic.issue.list`. Config namespace: `CIVIC_MIXER_*` (falls back to
+  `MCP_*`).
+- **sentinel** (`plugins/sentinel`) — governance shield: `sentinel.scan`,
+  `sentinel.audit`, `sentinel.policy.check`, `sentinel.rules.list`,
+  `sentinel.health`, with a plugin-side audit writer. Config namespace:
+  `SENTINEL_*`.
 
 Future candidates: GitHub, Slack, Notion, Jira, Google Drive, Salesforce, SAP,
 Oracle — each a leaf plugin under this contract, none touching core.
