@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://teos-dealmaker.local/schema/plugin-manifest-v1.json",
+  "title": "TEOS DealMaker Plugin Manifest (apiVersion 1)",
+  "description": "Machine-readable half of the TEOS DealMaker plugin platform contract. Human spec: docs/PLUGIN_CONTRACT.md. Loader: services/plugin-manager/loader.js.",
+  "type": "object",
+  "required": ["id", "name", "version", "apiVersion", "engine", "description"],
+  "additionalProperties": true,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$",
+      "description": "Unique plugin id (kebab-case or dotted, e.g. teos.civic-mixer). Used for enable/disable/discover and dependency references."
+    },
+    "name": { "type": "string", "minLength": 1 },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Plugin release version, semver x.y.z."
+    },
+    "apiVersion": {
+      "const": 1,
+      "description": "Contract version the manifest is written against. The loader rejects any other value."
+    },
+    "engine": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Semver range of the TEOS DealMaker engine this plugin supports, e.g. ^0.10.0. The loader refuses to register a plugin whose engine range the running version does not satisfy."
+    },
+    "description": { "type": "string", "minLength": 1 },
+    "server": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Server key the plugin adapter is registered under. Required when an adapter entry is present."
+    },
+    "fallback": {
+      "type": "boolean",
+      "description": "When true, the adapter is used as the transport fallback for every server without its own adapter. At most one fallback plugin is meaningful."
+    },
+    "enabledByDefault": { "type": "boolean", "description": "Initial lifecycle state. Defaults to true." },
+    "capabilities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Plugin-level capability declarations (discovery surface)."
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": { "type": "boolean" },
+      "description": "Capability-based permission grants merged over the platform defaults. Keys are additive; the loader requires no schema changes to add new keys."
+    },
+    "requires": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Plugin ids that must be loaded before this plugin can run. Missing ones disable the plugin with missing_dependency."
+    },
+    "optional": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Plugin ids that are nice to have; absence is a warning, never a block."
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["toolId"],
+        "additionalProperties": true,
+        "properties": {
+          "toolId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-.]*$",
+            "description": "Namespaced capability id. Must not collide with builtin or other plugin tools; builtins are never shadowed."
+          },
+          "server": { "type": "string" },
+          "category": { "type": "string" },
+          "description": { "type": "string" },
+          "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+          "capabilities": { "type": "array", "items": { "type": "string" } },
+          "operations": { "type": "array", "items": { "type": "string" } },
+          "permissions": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Permission keys the tool requires to execute (checked against the plugin's permission grants)."
+          }
+        }
+      }
+    },
+    "entries": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "adapter": { "type": "string", "description": "Relative path to adapter.js. Auto-detected when absent." },
+        "policy": { "type": "string", "description": "Relative path to policy.js. Auto-detected when absent." },
+        "schema": { "type": "string", "description": "Relative path to schema.js. Auto-detected when absent." },
+        "audit": { "type": "string", "description": "Relative path to audit.js. Auto-detected when absent." },
+        "index": { "type": "string", "description": "Relative path to the install hook (index.js). Auto-detected when absent." }
+      }
+    }
+  }
+}

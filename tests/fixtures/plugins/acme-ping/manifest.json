@@ -1,0 +1,32 @@
+{
+  "id": "acme-ping",
+  "name": "Acme Ping",
+  "version": "1.2.3",
+  "apiVersion": 1,
+  "engine": "^0.8.0",
+  "description": "Fixture plugin: a conforming platform-contract plugin used by the plugin platform tests.",
+  "server": "acme",
+  "fallback": false,
+  "capabilities": ["acme", "ping"],
+  "permissions": {
+    "network": true,
+    "outboundHttp": true
+  },
+  "tools": [
+    {
+      "toolId": "acme.ping",
+      "server": "acme",
+      "category": "custom",
+      "description": "Ping an Acme endpoint.",
+      "version": "1.2.3",
+      "capabilities": ["acme", "ping"],
+      "operations": ["ping"],
+      "permissions": ["network"]
+    }
+  ],
+  "entries": {
+    "adapter": "./adapter.js",
+    "policy": "./policy.js",
+    "schema": "./schema.js"
+  }
+}

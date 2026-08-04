@@ -1,0 +1,10 @@
+{
+  "id": "deps-plugin",
+  "name": "Deps Plugin",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "engine": "^0.8.0",
+  "description": "Fixture plugin: depends on a plugin that is never loaded, so dependency resolution must disable it.",
+  "requires": ["ghost-lib"],
+  "optional": ["acme-ping"]
+}

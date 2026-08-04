@@ -1,0 +1,9 @@
+{
+  "id": "engine-mismatch",
+  "name": "Engine Mismatch",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "engine": "^99.0.0",
+  "description": "Invalid fixture: declares an engine range the running platform cannot satisfy.",
+  "server": "future"
+}

@@ -1,0 +1,6 @@
+{
+  "id": "broken-plugin",
+  "name": "Broken",
+  "apiVersion": "2",
+  "description": "Invalid fixture: violates the manifest contract on purpose (missing version, wrong apiVersion)."
+}

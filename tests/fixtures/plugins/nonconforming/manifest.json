@@ -1,0 +1,9 @@
+{
+  "id": "nonconforming",
+  "name": "Nonconforming",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "engine": "^0.8.0",
+  "description": "Invalid fixture: adapter entry does not satisfy the entry-point contract.",
+  "server": "bad"
+}

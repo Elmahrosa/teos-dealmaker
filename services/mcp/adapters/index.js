@@ -1,10 +1,15 @@
 const { createCivicMixerAdapter } = require('./civicMixer');
+const pm = require('../../plugin-manager').pluginManager;
 
 const byServer = new Map();
 let fallback = null;
 
 function setFallback(adapter) {
   fallback = adapter;
+}
+
+function getFallback() {
+  return fallback;
 }
 
 function register(server, adapter) {
@@ -14,7 +19,11 @@ function register(server, adapter) {
 }
 
 function get(server) {
-  return byServer.get(server) || fallback || null;
+  const local = byServer.get(server);
+  if (local) return local;
+  const viaPlugin = pm.transportAdapter(server);
+  if (viaPlugin) return viaPlugin;
+  return fallback || null;
 }
 
 function unregister(server) {
@@ -25,4 +34,4 @@ function list() {
   return Array.from(byServer.keys());
 }
 
-module.exports = { register, get, unregister, list, setFallback, createCivicMixerAdapter };
+module.exports = { register, get, unregister, list, setFallback, getFallback, createCivicMixerAdapter };
