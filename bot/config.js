@@ -1,5 +1,10 @@
 const path = require('path');
-require('dotenv').config();
+// Never load .env during tests — DATABASE_URL would force the pg adapter and
+// pollute live Supabase with fixture IDs (e.g. 8800001). Unit/DRY suites must
+// stay on the in-memory adapter.
+if (process.env.NODE_ENV !== 'test') {
+  require('dotenv').config();
+}
 
 const BOT_CONFIG = {
   token: process.env.TELEGRAM_BOT_TOKEN || '',
