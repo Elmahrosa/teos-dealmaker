@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentinel Shield — TEOS DealMaker</title>
+<script>window.__PRICING__ = [{"tier":"🚀 Solo","tagline":"For founders and solo teams","monthly":{"price":"$79.00","url":""},"annual":{"price":"$790.00","url":""},"productIds":{"monthly":"","annual":""},"features":["1 workspace","Mission Controller with a 13-agent AI workforce","Core agent capabilities","Community support"]},{"tier":"⚡ Growth","tagline":"For growing revenue teams","monthly":{"price":"$249.00","url":""},"annual":{"price":"$2,490.00","url":""},"productIds":{"monthly":"","annual":""},"features":["10 seats","Civic Mixer + Sentinel Shield plugins","Enterprise Knowledge Intelligence","Email support"]},{"tier":"👑 Business","tagline":"For revenue organizations","monthly":{"price":"$699.00","url":""},"annual":{"price":"$6,990.00","url":""},"productIds":{"monthly":"","annual":""},"features":["25 seats","Third-party plugin installs","All platform add-ons","Priority support"]},{"tier":"🏛️ Enterprise","tagline":"For large and sovereign organizations","monthly":{"price":"Custom","url":""},"annual":{"price":"Custom","url":""},"productIds":{"monthly":"","annual":""},"custom":true,"features":["Unlimited workspaces","Unlimited missions","Private deployment","Sentinel governance at scale","Dedicated success engineer"]}];</script>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --panel: #131a23;
+    --border: #1f2a37;
+    --text: #d7e1ea;
+    --muted: #7c8a99;
+    --gold: #d4af37;
+    --green: #3fbf6f;
+    --red: #e05656;
+    --blue: #4aa3df;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    padding: 24px;
+  }
+  header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  h1 { font-size: 22px; letter-spacing: 2px; color: var(--gold); }
+  header .sub { color: var(--muted); font-size: 13px; }
+  #mode { font-weight: 700; padding: 2px 10px; border-radius: 10px; font-size: 12px; }
+  #mode.dry { background: #2a2410; color: var(--gold); }
+  #mode.live { background: #2a1212; color: var(--red); }
+  .stats { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .stat {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 18px;
+    min-width: 140px;
+  }
+  .stat .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+  .stat .value { font-size: 22px; margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  th, td { text-align: left; padding: 8px 12px; font-size: 12px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-size: 11px; }
+  td.mono { font-family: Consolas, monospace; font-size: 11px; color: var(--blue); }
+  .status-success { color: var(--green); }
+  .status-error, .status-blocked, .status-denied { color: var(--red); }
+  .status-in_progress, .status-dry_run { color: var(--gold); }
+  #empty { color: var(--muted); padding: 20px; text-align: center; }
+  footer { margin-top: 20px; color: var(--muted); font-size: 11px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>🏛️ SENTINEL SHIELD</h1>
+    <span class="sub">TEOS DealMaker · Enterprise AI Governance Console</span>
+    <span id="mode" class="dry">…</span>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="label">Mode</div><div class="value" id="stat-mode">—</div></div>
+    <div class="stat"><div class="label">Audit Entries</div><div class="value" id="stat-total">—</div></div>
+    <div class="stat"><div class="label">Last Update</div><div class="value" id="stat-time" style="font-size:14px;">—</div></div>
+  </div>
+
+  <section id="pricing">
+    <h2 style="color:var(--gold);font-size:16px;letter-spacing:1px;margin-bottom:12px;">💳 PRICING</h2>
+    <div id="pricing-cards" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
+      <div style="color:var(--muted);padding:12px;">Loading pricing…</div>
+    </div>
+  </section>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>Action</th>
+        <th>Target</th>
+        <th>Status</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+    <tbody id="rows">
+      <tr><td id="empty" colspan="5">Loading audit trail…</td></tr>
+    </tbody>
+  </table>
+
+  <footer>Fail-closed governance · every capability decision is policy-evaluated and written to the audit vault</footer>
+
+<script>
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function statusClass(s) {
+    if (/error|blocked|denied|failed/i.test(s)) return 'status-error';
+    if (/in_progress|dry_run/i.test(s)) return 'status-in_progress';
+    if (/success|sent|won/i.test(s)) return 'status-success';
+    return '';
+  }
+
+  async function loadPricing() {
+    try {
+      const res = await fetch('/api/pricing');
+      if (!res.ok) throw new Error('pricing unavailable');
+      const data = await res.json();
+      renderPricing(Array.isArray(data) ? data : (data.tiers || []));
+    } catch (_) {
+      const fallback = window.__PRICING__ || [];
+      if (fallback.length) renderPricing(fallback);
+      else document.getElementById('pricing-cards').innerHTML =
+        '<div style="color:var(--muted);padding:12px;">Pricing unavailable.</div>';
+    }
+  }
+
+  function renderPricing(tiers) {
+      const cards = document.getElementById('pricing-cards');
+      cards.innerHTML = tiers.map(t => {
+        const monthly = t.monthly.url
+          ? `<div style="margin-top:6px;">Monthly <b>${esc(t.monthly.price)}</b> · <a href="${esc(t.monthly.url)}" style="color:var(--blue);font-size:12px;">checkout</a></div>`
+          : `<div style="margin-top:6px;">Monthly <b>${esc(t.monthly.price)}</b></div>`;
+        const annual = t.annual.url
+          ? `<div style="margin-top:6px;">Annual <b>${esc(t.annual.price)}</b> · <a href="${esc(t.annual.url)}" style="color:var(--blue);font-size:12px;">checkout</a></div>`
+          : `<div style="margin-top:6px;">Annual <b>${esc(t.annual.price)}</b></div>`;
+        const features = (t.features || []).map(f => `<li>${esc(f)}</li>`).join('');
+        return `
+          <div class="stat" style="min-width:240px;">
+            <div class="label">${esc(t.tier)}</div>
+            ${monthly}
+            ${annual}
+            <ul style="list-style:none;margin-top:8px;color:var(--muted);font-size:11px;">${features}</ul>
+          </div>
+        `;
+      }).join('');
+  }
+
+  async function refresh() {
+    const [healthRes, auditRes] = await Promise.all([
+      fetch('/api/health').then(r => ({ ok: r.ok, body: r.json().catch(() => null) })),
+      fetch('/api/audit?limit=100').then(r => ({ ok: r.ok, body: r.json().catch(() => null) }))
+    ]);
+
+    if (!healthRes.ok || !auditRes.ok) {
+      document.getElementById('stat-mode').textContent = 'offline';
+      document.getElementById('stat-total').textContent = '—';
+      document.getElementById('stat-time').textContent = '—';
+      const modeEl = document.getElementById('mode');
+      modeEl.textContent = 'STATIC PREVIEW';
+      modeEl.className = 'dry';
+      const rows = document.getElementById('rows');
+      rows.innerHTML = '<tr><td id="empty" colspan="5">Live telemetry unavailable. This is a static preview — connect the TEOS backend server (npm run server) to view the live audit trail, mode, and health.</td></tr>';
+      return;
+    }
+
+    const health = await healthRes.body;
+    const audit = await auditRes.body;
+
+    document.getElementById('stat-mode').textContent = health.mode;
+    document.getElementById('stat-total').textContent = health.totalEntries;
+    document.getElementById('stat-time').textContent = new Date(health.timestamp).toLocaleTimeString();
+
+    const modeEl = document.getElementById('mode');
+    modeEl.textContent = health.mode;
+    modeEl.className = health.mode.toLowerCase();
+
+    const rows = document.getElementById('rows');
+    if (!audit.length) {
+      rows.innerHTML = '<tr><td id="empty" colspan="5">No audit entries yet.</td></tr>';
+      return;
+    }
+    rows.innerHTML = audit.map(e => {
+      const t = (e.timestamp || '').replace('T', ' ').slice(0, 19);
+      const details = e.details ? JSON.stringify(e.details) : '';
+      return `<tr>
+        <td class="mono">${esc(t)}</td>
+        <td>${esc(e.action)}</td>
+        <td>${esc(e.target)}</td>
+        <td class="${statusClass(e.status)}">${esc(e.status)}</td>
+        <td class="mono">${esc(details.length > 120 ? details.slice(0, 120) + '…' : details)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function startRefresh() {
+    refresh();
+    setInterval(refresh, 5000);
+  }
+
+  refresh();
+  loadPricing();
+  startRefresh();
+</script>
+</body>
+</html>
