@@ -4,6 +4,7 @@ const client = require('./client');
 const adapters = require('./adapters');
 const pm = require('../plugin-manager').pluginManager;
 const { createCivicMixerAdapter } = require('./adapters/civicMixer');
+const { createPlatform } = require('../platform');
 
 // Plugin permissions are enforced here as a policy rule: a request for a tool
 // whose owning plugin has lost a required permission is denied before any
@@ -18,7 +19,8 @@ pm.loadPlugins();
 syncPluginTools();
 const effectiveAdapter = pm.fallbackAdapter() || adapter;
 adapters.setFallback(effectiveAdapter);
-const defaultClient = client.createClient({ registry, policy, adapter: effectiveAdapter, adapters });
+const platform = createPlatform();
+const defaultClient = client.createClient({ registry, policy, adapter: effectiveAdapter, adapters, platform });
 
 function syncPluginTools() {
   for (const tool of pm.tools()) {
@@ -55,6 +57,7 @@ module.exports = {
   adapters,
   plugins: pm,
   pluginManager: pm,
+  platform,
   client,
   createClient: client.createClient,
   createAdapter: createCivicMixerAdapter,

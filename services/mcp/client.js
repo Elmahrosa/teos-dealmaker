@@ -8,6 +8,7 @@ function createClient(deps) {
   const policy = o.policy;
   const adapter = o.adapter;
   const adapters = o.adapters;
+  const platform = o.platform || null;
   const enabled = o.enabled !== undefined ? Boolean(o.enabled) : isEnabled();
 
   function resolveAdapter(tool) {
@@ -28,6 +29,18 @@ function createClient(deps) {
     const tool = registry.get(toolId);
     if (!tool) {
       return { ok: false, toolId, error: 'unknown_tool', reason: 'unknown_tool', requester, workspaceId };
+    }
+    if (platform && platform.isEnterprise && platform.isEnterprise()) {
+      const gate = await platform.canUseCapability({
+        workspaceId,
+        userId: options.userId || null,
+        role: options.role || null,
+        capability: toolId,
+        requester
+      });
+      if (!gate.allowed) {
+        return { ok: false, toolId, error: 'denied', reason: gate.reason, decision: gate, requester, workspaceId };
+      }
     }
     const decision = await policy.approve({ toolId, payload: payload || {}, requester, workspaceId });
     if (!decision.allowed) {
