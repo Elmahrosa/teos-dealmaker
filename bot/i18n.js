@@ -115,8 +115,8 @@ const EN = {
   guide_t_agents: 'The 13-agent AI workforce',
   guide_t_setup: 'Onboarding and getting started',
   guide_a_features: 'Orchestrator, Prospecting, Market Intelligence, Qualification, Outreach, Strategist, Marketer, Sales, Negotiator, Treasurer, Gatekeeper, and Closing cooperate across the sales lifecycle. The Treasurer drafts contracts and issues Dodo checkout links.',
-  guide_a_plans: 'Starter suits founders, Growth suits growing teams, and Business is for revenue organizations. Enterprise adds unlimited workspaces, private deployment, and dedicated support. Annual billing saves the most. You can review every option under Plans.',
-  guide_a_pricing: 'Starter is $79/mo or $790/yr, Growth is $249/mo or $2,490/yr, and Business is $699/mo or $6,990/yr. Enterprise is custom-priced. Annual plans include built-in savings.',
+  guide_a_plans: 'Solo suits founders, Growth suits growing teams, and Business is for revenue organizations. Enterprise adds unlimited workspaces, private deployment, and dedicated support. Annual billing saves the most. You can review every option under Plans.',
+  guide_a_pricing: 'Solo is $79/mo or $790/yr, Growth is $249/mo or $2,490/yr, and Business is $699/mo or $6,990/yr. Enterprise is custom-priced. Annual plans include built-in savings.',
   guide_a_billing: 'Payments are routed through Dodo checkout. Until a LIVE Dodo key is configured, payments run in DRY mode and no charges occur.',
   guide_a_agents: 'The workforce covers the full funnel: lead scoring, BANT qualification, outreach review, playbooks, positioning, objection handling, negotiation, contracting, checkout, gatekeeping, and closing.',
   guide_a_setup: 'Open Settings to set your language, then explore Plans, Subscription, and the AI Guide. Founder controls live in the Admin console.',
@@ -196,7 +196,7 @@ const EN = {
   help_items: 'Pricing · Plans · Features · AI Workforce · Getting Started · Billing · Revenue Automation',
   help_free_text: 'You can also pick an option below.',
 
-  plan_solo: '🚀 Starter — $79/mo',
+  plan_solo: '🚀 Solo — $79/mo',
   plan_growth: '⚡ Growth — $249/mo',
   plan_corporate: '👑 Business — $699/mo',
   onb_welcome: '🚀 Set up your workspace',
@@ -368,7 +368,7 @@ const AR = {
   help_items: 'الأسعار · الخطط · الميزات · القوى العاملة · البدء · الفوترة · أتمتة الإيرادات',
   help_free_text: 'يمكنك أيضاً اختيار خيار أدناه.',
 
-  plan_solo: '🚀 خطة ستارتر — 79$ شهرياً',
+  plan_solo: '🚀 خطة سولو — 79$ شهرياً',
   plan_growth: '⚡ خطة النمو — 249$ شهرياً',
   plan_corporate: '👑 خطة الأعمال — 699$ شهرياً',
   onb_welcome: '🚀 إعداد مساحة العمل',

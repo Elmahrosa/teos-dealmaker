@@ -17,7 +17,7 @@ const PLANS = {
     customPlugins: false
   },
   solo: {
-    tier: 'Starter',
+    tier: 'Solo',
     seats: 3,
     agents: 13,
     capabilityScopes: ['core', 'plugin'],

@@ -4,7 +4,7 @@ function generateResponse(objection) {
   const type = classifyObjection(objection);
 
   const responses = {
-    price: 'We offer flexible tiers (Starter $79/mo, Growth $249/mo, Business $699/mo, Enterprise custom). Which fits your budget?',
+    price: 'We offer flexible tiers (Solo $79/mo, Growth $249/mo, Business $699/mo, Enterprise custom). Which fits your budget?',
     timing: 'Understood. We can start with a pilot first. When works for you?',
     fit: 'Sentinel Shield works for: code audits, smart contract review, CI/CD security. Does that apply?',
     authority: 'Perfect. We can schedule a call with your team to align on needs.',

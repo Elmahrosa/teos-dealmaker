@@ -9,7 +9,7 @@ const env = process.env;
 
 const PRICING = [
   {
-    tier: '🚀 Starter',
+    tier: '🚀 Solo',
     tagline: 'For founders and solo teams',
     monthly: { price: '$79.00', url: env.DODO_STARTER_MONTHLY_URL || '' },
     annual: { price: '$790.00', url: env.DODO_STARTER_ANNUAL_URL || '' },

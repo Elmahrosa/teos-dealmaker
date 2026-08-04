@@ -6,9 +6,9 @@ console.log('Testing Pricing Config...\n');
 
 let ok = true;
 
-const TIER_NAMES = ['Starter', 'Growth', 'Business', 'Enterprise'];
+const TIER_NAMES = ['Solo', 'Growth', 'Business', 'Enterprise'];
 const URL_MAP = [
-  { tier: 'Starter', monthly: 'DODO_STARTER_MONTHLY_URL', annual: 'DODO_STARTER_ANNUAL_URL' },
+  { tier: 'Solo', monthly: 'DODO_STARTER_MONTHLY_URL', annual: 'DODO_STARTER_ANNUAL_URL' },
   { tier: 'Growth', monthly: 'DODO_GROWTH_MONTHLY_URL', annual: 'DODO_GROWTH_ANNUAL_URL' },
   { tier: 'Business', monthly: 'DODO_BUSINESS_MONTHLY_URL', annual: 'DODO_BUSINESS_ANNUAL_URL' }
 ];
