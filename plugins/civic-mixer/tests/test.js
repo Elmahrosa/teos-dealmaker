@@ -20,7 +20,7 @@ const path = require('path');
   // -------------------------------------------------------- platform contract
   ok(pm.validateManifest(manifest).valid === true, 'manifest validates against the platform contract');
   ok(manifest.apiVersion === 1 && /^\d+\.\d+\.\d+$/.test(manifest.version), 'manifest pins apiVersion + semver version');
-  ok(manifest.engine === '^0.8.0', 'manifest pins an engine range');
+  ok(manifest.engine === '^1.0.0', 'manifest pins an engine range');
 
   // ----------------------------------------------------------------- register
   const loadRes = pm.loadPlugins();

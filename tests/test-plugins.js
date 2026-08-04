@@ -51,13 +51,13 @@ audit.clearVault();
 
   // ----------------------------------------------------- version compatibility
   ok(compat.API_VERSION === 1 && pm.API_VERSION === 1, 'contract apiVersion is 1');
-  ok(compat.satisfies('0.8.2', '^0.8.0') === true, 'caret range satisfied');
-  ok(compat.satisfies('0.8.2', '^1.0.0') === false, 'caret range rejects major bump');
-  ok(compat.satisfies('0.8.2', '0.8.2') === true, 'exact range satisfied');
-  ok(compat.satisfies('0.8.2', '*') === true, 'wildcard range satisfied');
+  ok(compat.satisfies('1.0.0', '^1.0.0') === true, 'caret range satisfied');
+  ok(compat.satisfies('1.0.0', '^2.0.0') === false, 'caret range rejects major bump');
+  ok(compat.satisfies('1.0.0', '1.0.0') === true, 'exact range satisfied');
+  ok(compat.satisfies('1.0.0', '*') === true, 'wildcard range satisfied');
   ok(compat.checkApiVersion(1) === true && compat.checkApiVersion('1') === true && compat.checkApiVersion('2') === false,
     'apiVersion gate accepts 1 (string or number), rejects anything else');
-  ok(compat.checkEngine('^0.8.0', require('../package.json').version) === true,
+  ok(compat.checkEngine('^1.0.0', require('../package.json').version) === true,
     'fixture engine range satisfied by the running engine');
 
   // ----------------------------------------------------------- load + isolation

@@ -331,6 +331,12 @@ Rate limiting: 100 requests per minute per API key
 
 ## Major Milestones
 
+**v1.0.0 — Public Launch**
+- TEOS DEALMAKER rebrand: Enterprise AI Revenue Operating System
+- Env-driven Dodo production catalog (Solo, Growth, Business, Enterprise + add-ons)
+- Production landing page + Sentinel governance console (SEO, robots, sitemap, analytics hooks)
+- Plugin engine contract frozen at `^1.0.0`
+
 **v0.8.1 — Recovery Release**
 - Repository restored
 - Runtime stabilized
@@ -346,7 +352,7 @@ Rate limiting: 100 requests per minute per API key
 - Enterprise Platform (tenants, entitlements, RBAC authorization)
 
 **Current Status**
-Enterprise Architecture Foundation Complete
+v1.0.0 Public Launch — production catalog configured, release tagged
 
 ## License
 

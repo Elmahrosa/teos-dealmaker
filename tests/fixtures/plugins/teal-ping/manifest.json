@@ -3,7 +3,7 @@
   "name": "Teal Ping",
   "version": "1.0.0",
   "apiVersion": 1,
-  "engine": "^0.8.0",
+  "engine": "^1.0.0",
   "description": "Fixture plugin: depends on acme-ping; dependency resolution must leave it enabled.",
   "server": "teal",
   "requires": ["acme-ping"],

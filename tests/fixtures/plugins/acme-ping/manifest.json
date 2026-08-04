@@ -3,7 +3,7 @@
   "name": "Acme Ping",
   "version": "1.2.3",
   "apiVersion": 1,
-  "engine": "^0.8.0",
+  "engine": "^1.0.0",
   "description": "Fixture plugin: a conforming platform-contract plugin used by the plugin platform tests.",
   "server": "acme",
   "fallback": false,

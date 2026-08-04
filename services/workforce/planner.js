@@ -95,7 +95,7 @@ function planGoal(goal, opts) {
     const route = dispatcher.dispatch({ agentType: step.agent_type, priority: step.priority, quality: o.quality });
     return { ...step, provider: route.provider, model: route.model, simulated: route.simulated };
   });
-  return { intent, version: 'v0.8.0', steps };
+  return { intent, version: 'v1.0.0', steps };
 }
 
 module.exports = { PRIORITY_BY_AGENT, intentOf, buildSteps, planGoal };

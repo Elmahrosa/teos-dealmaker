@@ -34,7 +34,7 @@ async function runPlan(adapter, workspaceId, opts) {
       status: 'planned',
       priority: o.priority || 'normal',
       metrics: { total_steps: steps.length, completed_steps: 0, total_cost_cents: 0, budget_cents: o.budgetCents || null },
-      version: 'v0.8.0'
+      version: 'v1.0.0'
     });
     for (const s of steps) {
       await repos.planSteps.create({
