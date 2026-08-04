@@ -5,11 +5,23 @@
 
 ### Powered by an Extensible AI Workforce Platform
 
-> **An autonomous AI workforce platform that orchestrates the complete revenue lifecycle—from prospect identification to deal closure—through specialized AI agents, an extensible plugin platform, and an enterprise governance layer.**
+> **A governed AI workforce platform that orchestrates the complete revenue lifecycle—from prospect identification to deal closure—through policy-driven, human-supervised AI agents, an extensible plugin platform, and enterprise governance.**
 
 ## Vision
 
-TEOS DEALMAKER transforms revenue operations by deploying a coordinated fleet of specialized AI agents that function as a unified Revenue Operating System (Revenue OS). Unlike traditional AI assistants or point solutions, TEOS is a **platform**: agents collaborate, share context, execute complex revenue workflows with minimal human intervention, and are extended through plugins and enterprise governance rather than core code changes.
+TEOS DEALMAKER transforms revenue operations by deploying a coordinated fleet of specialized AI agents that function as a unified Revenue Operating System (Revenue OS). Unlike traditional AI assistants or point solutions, TEOS is a **platform**: agents collaborate, share context, execute governed revenue workflows with human oversight at every critical juncture, and are extended through plugins and enterprise governance rather than core code changes.
+
+## Governance Commitment
+
+TEOS DEALMAKER operates under enterprise governance principles. The platform enforces:
+
+- **Human oversight**: AI agents assist in decision preparation and workflow execution but do not perform irreversible actions without explicit authorization where required by organizational policy.
+- **Policy enforcement**: Every capability invocation passes through a deny-wins policy evaluator before execution.
+- **Approval workflows**: Mission-critical steps require explicit human approval through the Mission Center.
+- **Immutable audit trails**: Every decision, allowance, and denial is recorded in an append-only audit log.
+- **Role-based authorization**: Agent actions are scoped to tenant roles and plan entitlements.
+
+AI that operates under enterprise governance, not outside it.
 
 ## Platform Architecture
 
@@ -35,7 +47,7 @@ Persistence (PostgreSQL)
 
 **This is not a chatbot.** It is a sovereign AI workforce platform operating under strict governance frameworks, designed for enterprises that require:
 
-- **Autonomous execution**: Agents that execute complex multi-stage sales processes
+- **Governed execution**: Agents that execute complex multi-stage sales processes under human oversight and policy control
 - **Enterprise governance**: Role-based access, entitlements, audit trails, and policy controls
 - **Revenue predictability**: Consistent pipeline generation and forecast accuracy
 - **Extensibility**: New capabilities ship as plugins, never as core changes
@@ -48,7 +60,7 @@ TEOS DEALMAKER implements a modular, platform-oriented architecture for AI agent
 
 ### Core Layers
 1. **Mission Controller** - Orchestration layer for missions: planning, approval workflows, lifecycle management, human checkpoints, budget enforcement, and workforce delegation. It never executes work directly.
-2. **Workforce Runtime** - Executes missions through the autonomous workforce: scheduler, dispatcher, executor, reviewer, approvals, confidence, optimizer, recovery, and telemetry.
+2. **Workforce Runtime** - Executes missions through the governed workforce: scheduler, dispatcher, executor, reviewer, approvals, confidence, optimizer, recovery, and telemetry.
 3. **Plugin Platform** - A transport-agnostic plugin manager. Plugins expose adapters, capabilities, policies, schemas, audits, and permissions. MCP is one transport; the same manager will serve REST, gRPC, and webhook transports.
 4. **MCP Layer** - The Model Context Protocol client through which every external enterprise action flows. The platform consumes **TEOS Civic Mixer** as its MCP gateway and never implements enterprise connectors directly.
 5. **Providers** - Pluggable AI provider abstraction: 8+ LLM providers with automatic fallback chains.
@@ -81,7 +93,7 @@ TEOS ships with **thirteen production agents**. Additional agents can be install
 | **Marketer** | Value Proposition | Develops compelling positioning and messaging for each deal |
 | **Sales** | Objection Handling | Counters common sales objections with data-driven responses |
 | **Negotiator** | Terms Optimization | Structures pricing, discounts, and payment terms for maximum value |
-| **Treasurer** | Contract & Payment | Generates agreements and facilitates secure transactions |
+| **Treasurer** | Contract & Payment | Drafts agreements, prepares payment requests, and submits transactions for human approval per enterprise governance policies |
 | **Gatekeeper** | Safety & Compliance | Reviews all communications for policy adherence and risk |
 | **Orchestrator** | Workflow Coordination | Routes work between agents based on context and priority |
 | **Closing** | Deal Finalization | Confirms commitment completeness and manages won/lost outcomes |
@@ -142,10 +154,12 @@ See [docs/PLUGIN_CONTRACT.md](docs/PLUGIN_CONTRACT.md) for the plugin contract, 
 
 ## Key Capabilities
 
-### Autonomous Revenue Execution
-- End-to-end deal processing from initial contact to closed-won
-- Self-directed learning from outcomes to improve future performance
-- Dynamic resource allocation based on pipeline priorities and agent capacity
+### Governed Revenue Execution
+- Policy-driven execution with human approval workflows at every critical juncture
+- Mission checkpoints and budget enforcement with automatic halts
+- Role-based access control and enterprise entitlements
+- Complete auditability of every AI action and decision
+- Self-directed learning from outcomes to improve future performance under governance constraints
 
 ### Mission Center
 - Learn-first onboarding that orients new operators before missions unlock

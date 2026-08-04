@@ -7,7 +7,7 @@ TEOS DEALMAKER is an **MCP client**, not an MCP server.
 Every external action an agent wants to take (GitHub, PostgreSQL, Redis, Docker,
 Playwright/Browser, Supabase, Stripe, Slack, Notion, CRM, filesystem) is sent to
 **TEOS Civic Mixer** — the shared enterprise MCP Gateway owned by Elmahrosa
-International. DealMaker orchestrates autonomous revenue missions; it never
+International. DealMaker orchestrates governed revenue missions; it never
 implements enterprise connectors itself.
 
 ```

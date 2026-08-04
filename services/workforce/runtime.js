@@ -29,7 +29,7 @@ async function runPlan(adapter, workspaceId, opts) {
   } else {
     const steps = o.steps && o.steps.length ? o.steps : planner.planGoal(o.goal || 'General goal', o).steps;
     plan = await repos.plans.create({
-      title: o.title || String(o.goal || 'Autonomous workflow').slice(0, 200),
+      title: o.title || String(o.goal || 'Governed workflow').slice(0, 200),
       goal: o.goal || o.title || '',
       status: 'planned',
       priority: o.priority || 'normal',
