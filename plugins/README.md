@@ -13,5 +13,11 @@ Plugins load automatically when the MCP facade is required. A plugin that
 violates the contract is skipped with a recorded failure — it can never take
 down core or its siblings.
 
-First-party plugins (civic-mixer, sentinel) land in staged commits; each is a
-leaf package with its own manifest, adapter, and tests.
+First-party plugins:
+
+- `civic-mixer/` — MCP JSON-RPC gateway transport (fallback) + civic
+  capabilities (`civic.lookup`, `civic.identity.verify`, `civic.vote.create`,
+  `civic.issue.create`, `civic.issue.list`).
+- `sentinel/` — governance shield (scans, audit, policy checks).
+
+Each is a leaf package with its own manifest, adapter, and tests.

@@ -165,17 +165,21 @@ function createPluginManager(opts) {
     return flat;
   }
 
+  function fallbackAdapter() {
+    const fallbackRecord = registry.list().find((r) => r.fallback && r.adapter);
+    if (!fallbackRecord) return null;
+    return fallbackRecord.state === lifecycle.STATES.DISABLED
+      ? lifecycle.disabledAdapter(fallbackRecord.id)
+      : fallbackRecord.adapter;
+  }
+
   function transportAdapter(server) {
     for (const record of registry.list()) {
       if (record.adapter && record.server === server) {
         return record.state === lifecycle.STATES.DISABLED ? lifecycle.disabledAdapter(record.id) : record.adapter;
       }
     }
-    const fallbackRecord = registry.list().find((r) => r.fallback && r.adapter);
-    if (fallbackRecord) {
-      return fallbackRecord.state === lifecycle.STATES.DISABLED ? lifecycle.disabledAdapter(fallbackRecord.id) : fallbackRecord.adapter;
-    }
-    return null;
+    return fallbackAdapter();
   }
 
   function loadPlugins(dir) {
@@ -226,6 +230,7 @@ function createPluginManager(opts) {
     capabilities,
     tools,
     transportAdapter,
+    fallbackAdapter,
     permissions: { grant, revoke, has, list: permissionList, check },
     healthCheck,
     shutdown,

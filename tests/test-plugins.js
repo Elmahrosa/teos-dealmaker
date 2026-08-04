@@ -87,8 +87,8 @@ audit.clearVault();
 
   // --------------------------------------------------- discover / capabilities
   const listed = pm.discover();
-  ok(listed.length === 3, 'discover lists every loaded plugin');
   ok(listed.some(p => p.id === 'acme-ping' && p.enabled === true), 'discover reports enabled state');
+  ok(listed.some(p => p.id === 'civic-mixer' && p.enabled === true), 'civic-mixer auto-loads from the default plugins dir');
   ok(listed.find(p => p.id === 'acme-ping').tools.includes('acme.ping'), 'discover lists plugin tools');
   ok(pm.capabilities().includes('ping') && pm.capabilities().includes('acme'), 'capabilities() unions plugin surface');
   ok(pm.status('acme-ping').id === 'acme-ping' && pm.status('acme-ping').enabled === true, 'status reports lifecycle state');
@@ -103,9 +103,10 @@ audit.clearVault();
   ok(res.deps.blocked.some(b => b.id === 'deps-plugin'), 'dependency report lists blocked plugins');
 
   // -------------------------------------------------------------- idempotency
+  const beforeReload = pm.discover().length;
   const again = mcp.loadPlugins(FIXTURE);
   ok(again.loaded.includes('acme-ping'), 'reload is idempotent');
-  ok(pm.discover().length === 3, 'reload does not duplicate plugins');
+  ok(pm.discover().length === beforeReload, 'reload does not duplicate plugins');
   ok(pm.register(acmeDir).id === 'acme-ping', 'register of loaded plugin returns existing record');
   assert.throws(() => pm.register(FIXTURE), /no manifest\.json/, 'register without a manifest throws');
   ok(acmeAdapter.calls.initialized === 2, 'reload re-initializes the live record without duplicating it');
@@ -211,7 +212,8 @@ audit.clearVault();
   const isolated = createPluginManager({ pluginsDir: FIXTURE });
   const isoRes = isolated.loadPlugins();
   ok(isoRes.loaded.includes('acme-ping') && isoRes.loaded.includes('teal-ping'), 'isolated instance loads independently');
-  ok(isolated.discover().length === 3 && pm.discover().length === 3, 'isolated instance has its own registry');
+  ok(isolated.discover().length === 3, 'isolated instance loads fixtures only');
+  ok(pm.discover().length > isolated.discover().length, 'singleton adds auto-loaded first-party plugins');
 
   // ---------------------------------------------------------- facade plugin surface
   ok(typeof mcp.loadPlugins === 'function' && typeof mcp.validatePlugin === 'function', 'facade exposes loadPlugins + validatePlugin');

@@ -14,10 +14,11 @@ policy.addRule((request) => {
 });
 
 const adapter = createCivicMixerAdapter();
-adapters.setFallback(adapter);
 pm.loadPlugins();
 syncPluginTools();
-const defaultClient = client.createClient({ registry, policy, adapter, adapters });
+const effectiveAdapter = pm.fallbackAdapter() || adapter;
+adapters.setFallback(effectiveAdapter);
+const defaultClient = client.createClient({ registry, policy, adapter: effectiveAdapter, adapters });
 
 function syncPluginTools() {
   for (const tool of pm.tools()) {
@@ -50,7 +51,7 @@ function registerPlugin(dir) {
 module.exports = {
   registry,
   policy,
-  adapter,
+  adapter: effectiveAdapter,
   adapters,
   plugins: pm,
   pluginManager: pm,

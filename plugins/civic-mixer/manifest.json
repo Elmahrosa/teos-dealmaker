@@ -1,0 +1,73 @@
+{
+  "id": "civic-mixer",
+  "name": "TEOS Civic Mixer",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "engine": "^0.8.0",
+  "description": "First official plugin: MCP JSON-RPC gateway transport (fallback) plus civic capabilities for lookup, identity, voting, and public issues.",
+  "server": "civic-mixer",
+  "fallback": true,
+  "enabledByDefault": true,
+  "capabilities": ["civic", "civic.identity", "civic.vote", "civic.issue", "gateway"],
+  "permissions": {
+    "network": true,
+    "outboundHttp": true
+  },
+  "tools": [
+    {
+      "toolId": "civic.lookup",
+      "server": "civic-mixer",
+      "category": "civic",
+      "description": "Look up a civic entity by id.",
+      "version": "1.0.0",
+      "capabilities": ["civic", "lookup", "read"],
+      "operations": ["lookup"],
+      "permissions": ["network"]
+    },
+    {
+      "toolId": "civic.identity.verify",
+      "server": "civic-mixer",
+      "category": "civic",
+      "description": "Verify a civic identity.",
+      "version": "1.0.0",
+      "capabilities": ["civic", "identity", "verify"],
+      "operations": ["verify"],
+      "permissions": ["network"]
+    },
+    {
+      "toolId": "civic.vote.create",
+      "server": "civic-mixer",
+      "category": "civic",
+      "description": "Create a ballot for a civic vote.",
+      "version": "1.0.0",
+      "capabilities": ["civic", "vote", "write"],
+      "operations": ["create"],
+      "permissions": ["network"]
+    },
+    {
+      "toolId": "civic.issue.create",
+      "server": "civic-mixer",
+      "category": "civic",
+      "description": "Open a public issue in the civic arena.",
+      "version": "1.0.0",
+      "capabilities": ["civic", "issue", "write"],
+      "operations": ["create"],
+      "permissions": ["network"]
+    },
+    {
+      "toolId": "civic.issue.list",
+      "server": "civic-mixer",
+      "category": "civic",
+      "description": "List public issues in the civic arena.",
+      "version": "1.0.0",
+      "capabilities": ["civic", "issue", "read"],
+      "operations": ["list"],
+      "permissions": ["network"]
+    }
+  ],
+  "entries": {
+    "adapter": "./adapter.js",
+    "policy": "./policy.js",
+    "schema": "./schema.js"
+  }
+}

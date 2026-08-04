@@ -21,6 +21,14 @@ function discover() {
     const testPath = path.join(agentsDir, dir, 'test.js');
     if (fs.existsSync(testPath)) suites.push(testPath);
   }
+  const pluginsDir = path.join(root, 'plugins');
+  for (const dir of fs.readdirSync(pluginsDir)) {
+    const testDir = path.join(pluginsDir, dir, 'tests');
+    if (!fs.existsSync(testDir)) continue;
+    for (const name of fs.readdirSync(testDir)) {
+      if (/\.test\.js$|^test\.js$/.test(name)) suites.push(path.join(testDir, name));
+    }
+  }
   return suites.sort();
 }
 

@@ -32,14 +32,26 @@ function disabledAdapter(pluginId) {
   };
 }
 
-async function initialize(record) {
+function initialize(record) {
   if (typeof record.onInitialize === 'function') {
+    let result;
     try {
-      const result = await record.onInitialize();
-      record.state = result && result.ok === false ? STATES.DEGRADED : STATES.HEALTHY;
+      result = record.onInitialize();
     } catch (err) {
       record.state = STATES.DEGRADED;
       record.lastError = err.message;
+      return record.state;
+    }
+    const apply = (value) => {
+      record.state = value && value.ok === false ? STATES.DEGRADED : STATES.HEALTHY;
+    };
+    if (result && typeof result.then === 'function') {
+      result.then(apply).catch((err) => {
+        record.state = STATES.DEGRADED;
+        record.lastError = err.message;
+      });
+    } else {
+      apply(result);
     }
   } else {
     record.state = STATES.HEALTHY;
