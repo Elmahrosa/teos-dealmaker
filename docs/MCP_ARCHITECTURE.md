@@ -31,13 +31,13 @@ services/mcp/
 ```
 
 Only `services/workforce` may hand a mission step a tool call. The mission
-controller exposes `requestTool(adapter, workspaceId, stepOrTool, payload)` and
-delegates to `workforce.requestTool`, which routes through `services/mcp`.
+controller exposes `executeCapability(adapter, workspaceId, stepOrTool, payload)` and
+delegates to `workforce.executeCapability`, which routes through `services/mcp`.
 Nothing calls the Civic Mixer SDK or an enterprise API directly.
 
 ```javascript
 const mc = require('./services/mission-controller');
-await mc.requestTool(adapter, ws.id, 'github.createIssue', {
+await mc.executeCapability(adapter, ws.id, 'github.createIssue', {
   owner: 'elmahrosa',
   repo: 'teos-dealmaker',
   title: 'Prospect follow-up'
@@ -71,7 +71,7 @@ sequenceDiagram
     participant G as TEOS Civic Mixer
     participant E as Enterprise System
 
-    M->>W: requestTool("slack.postMessage", payload)
+    M->>W: executeCapability("slack.postMessage", payload)
     W->>C: mcp.call(toolId, payload)
     C->>P: policy.approve({toolId, payload})
     P-->>C: allow
@@ -93,7 +93,7 @@ sequenceDiagram
     participant W as Workforce Runtime
     participant C as MCP Client
 
-    M->>W: requestTool("github.createIssue", payload)
+    M->>W: executeCapability("github.createIssue", payload)
     W->>C: mcp.call(toolId, payload)
     C-->>W: {ok: true, simulated: true, reason: "mcp_disabled"}
     W-->>M: {ok: true, simulated: true}
@@ -123,7 +123,7 @@ agents are never touched and ordinary steps are unchanged.
 
 ```javascript
 const mc = require('./services/mission-controller');
-await mc.requestTool(adapter, ws.id, {
+await mc.executeCapability(adapter, ws.id, {
   step_key: 'notify',
   tool: 'slack.postMessage',
   toolInput: { channel: '#sales', text: 'Mission milestone reached' }
@@ -141,7 +141,7 @@ sequenceDiagram
     alt no tool declared
         M-->>M: { used: false } — unchanged path
     else tool declared
-        M->>W: workforce.requestTool(tool, toolInput)
+        M->>W: workforce.executeCapability(tool, toolInput)
         W->>C: mcp.call(tool, payload, {workspaceId})
         C->>G: gateway call
         G-->>C: result

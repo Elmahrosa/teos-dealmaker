@@ -1,7 +1,7 @@
 const mcp = require('../mcp');
 const audit = require('../../utils/auditLogger');
 
-async function requestTool(adapter, workspaceId, toolId, payload) {
+async function executeCapability(adapter, workspaceId, toolId, payload) {
   const result = await mcp.call(toolId, payload || {}, { requester: 'workforce', workspaceId });
   try {
     audit.writeEntry(
@@ -14,4 +14,4 @@ async function requestTool(adapter, workspaceId, toolId, payload) {
   return result;
 }
 
-module.exports = { requestTool };
+module.exports = { executeCapability };

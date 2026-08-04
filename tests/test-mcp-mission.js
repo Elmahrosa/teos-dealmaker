@@ -36,8 +36,8 @@ global.fetch = async (url, options) => {
 
   ok(mcp.isEnabled() === true, 'MCP enabled from environment');
   ok(typeof workforce.runAgent === 'function' && typeof workforce.REGISTRY === 'object', 'workforce public API unchanged (additive only)');
-  ok(typeof workforce.requestTool === 'function', 'workforce gained optional requestTool');
-  ok(typeof mc.requestTool === 'function', 'mission controller gained requestTool');
+  ok(typeof workforce.executeCapability === 'function', 'workforce gained optional executeCapability');
+  ok(typeof mc.executeCapability === 'function', 'mission controller gained executeCapability');
 
   const adapter = createMemoryAdapter();
   const tg = 777001;
@@ -49,7 +49,7 @@ global.fetch = async (url, options) => {
     plan: 'growth'
   });
 
-  const result = await mc.requestTool(adapter, ws.id, 'slack.postMessage', {
+  const result = await mc.executeCapability(adapter, ws.id, 'slack.postMessage', {
     channel: '#sales',
     text: 'Deal closed'
   });
@@ -69,17 +69,17 @@ global.fetch = async (url, options) => {
   ok(auditLines.some(l => l.action === 'MCP_POLICY_ALLOW'), 'policy decision audited');
   ok(auditLines.some(l => l.action === 'MCP_TOOL_OK'), 'tool outcome audited');
 
-  const unknown = await mc.requestTool(adapter, ws.id, 'nope.notreal', {});
+  const unknown = await mc.executeCapability(adapter, ws.id, 'nope.notreal', {});
   ok(unknown.ok === false && unknown.error === 'unknown_tool', 'mission cannot invoke undeclared tools');
 
   const off = mcp.policy.addRule(req => (req.toolId === 'slack.postMessage' ? { allowed: false, reason: 'comms_hold' } : null));
-  const denied = await mc.requestTool(adapter, ws.id, 'slack.postMessage', {});
+  const denied = await mc.executeCapability(adapter, ws.id, 'slack.postMessage', {});
   ok(denied.ok === false && denied.error === 'denied' && denied.reason === 'comms_hold', 'policy denial enforced before transport');
   ok(sent.length === 1, 'denied request never reached the gateway');
   off();
 
   // ---------------------------------------------- mission step tool support
-  const stepResult = await mc.requestTool(adapter, ws.id, {
+  const stepResult = await mc.executeCapability(adapter, ws.id, {
     step_key: 'post',
     tool: 'slack.postMessage',
     toolInput: { channel: '#general', text: 'Mission step output' }
@@ -89,16 +89,16 @@ global.fetch = async (url, options) => {
   const stepBody = JSON.parse(sent[1].options.body);
   ok(stepBody.params.name === 'slack.postMessage' && stepBody.params.arguments.channel === '#general', 'tool step forwards toolInput as arguments');
 
-  const noTool = await mc.requestTool(adapter, ws.id, { step_key: 'plain', task: 'do a thing' });
+  const noTool = await mc.executeCapability(adapter, ws.id, { step_key: 'plain', task: 'do a thing' });
   ok(noTool.used === false && noTool.reason === 'no_tool_declared', 'step without tool: is unchanged (no-op)');
   ok(noTool.step === 'plain', 'no-op result names the step');
   ok(sent.length === 2, 'plain step made no gateway call');
 
-  const emptyTool = await mc.requestTool(adapter, ws.id, { step_key: 'empty', tool: '  ' });
+  const emptyTool = await mc.executeCapability(adapter, ws.id, { step_key: 'empty', tool: '  ' });
   ok(emptyTool.used === false, 'blank tool declaration is treated as no tool');
 
   console.log(`✓ MCP integration: mission -> workforce -> Civic Mixer (${passed} assertions passed)`);
-  console.log('  requestTool wiring · step tool: · no-tool no-op · policy gate · audit · env config');
+  console.log('  executeCapability wiring · step tool: · no-tool no-op · policy gate · audit · env config');
   process.exit(0);
 })().catch(err => {
   console.error('✗ MCP integration test failed:', err);
