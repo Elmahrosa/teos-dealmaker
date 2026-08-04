@@ -3,5 +3,5 @@
   <rect x="60" y="60" width="1080" height="510" rx="24" fill="none" stroke="#1f2a37" stroke-width="2"/>
   <path d="M580 150l40 18v30c0 26-18 44-40 58-22-14-40-32-40-58v-30z" fill="#131a23" stroke="#d4af37" stroke-width="4"/>
   <text x="600" y="330" font-family="Segoe UI, Arial, sans-serif" font-size="76" font-weight="700" fill="#d4af37" text-anchor="middle" letter-spacing="6">TEOS DEALMAKER</text>
-  <text x="600" y="410" font-family="Segoe UI, Arial, sans-serif" font-size="32" fill="#7c8a99" text-anchor="middle" letter-spacing="4">Governed AI Revenue Operating System</text>
+  <text x="600" y="410" font-family="Segoe UI, Arial, sans-serif" font-size="32" fill="#7c8a99" text-anchor="middle" letter-spacing="4">Policy-Governed AI Revenue Operating System</text>
 </svg>

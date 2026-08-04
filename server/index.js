@@ -5,6 +5,7 @@ const express = require('express');
 const audit = require('../utils/auditLogger');
 const { getMode } = require('../config/mode');
 const PRICING = require('../config/pricing.config');
+const billing = require('../services/billing');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +29,42 @@ app.get('/api/audit', (req, res) => {
   const limit = Math.min(Number.isFinite(requested) && requested > 0 ? requested : 100, 500);
   const entries = audit.readVault();
   res.json(entries.slice(-limit).reverse());
+});
+
+app.post('/webhook/dodo', express.raw({ type: 'application/json' }), async (req, res) => {
+  const rawBody = req.body.toString('utf8');
+  const signature = req.headers['x-dodo-signature'] || req.headers['x-webhook-signature'] || '';
+
+  const verification = billing.verifySignature(rawBody, signature);
+  if (!verification.ok) {
+    console.warn('[webhook] Dodo signature verification failed');
+    return res.status(401).json({ error: 'invalid_signature' });
+  }
+
+  let event;
+  try {
+    event = JSON.parse(rawBody);
+  } catch (_err) {
+    console.warn('[webhook] malformed JSON body');
+    return res.status(400).json({ error: 'invalid_json' });
+  }
+
+  const eventType = event.event_type || event.type || 'unknown';
+  const data = event.data || event.payload || event;
+
+  console.log('[webhook] Dodo event:', eventType);
+
+  let result;
+  try {
+    const { getAdapter } = require('../db');
+    const adapter = getAdapter();
+    result = await billing.handleEvent(adapter, eventType, data);
+  } catch (err) {
+    console.error('[webhook] handler error:', err.message);
+    return res.status(500).json({ error: 'handler_error' });
+  }
+
+  res.json({ ok: true, event: eventType, result });
 });
 
 function renderPricingCards() {

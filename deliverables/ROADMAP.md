@@ -1,7 +1,7 @@
 ﻿# Roadmap for TEOS DealMaker
 
 ## Vision
-To become the leading enterprise AI Revenue Operating System that automates the entire revenue lifecycle through governed, collaborative AI agents.
+To become the leading enterprise AI Revenue Operating System that automates the entire revenue lifecycle through policy-governed, collaborative AI agents.
 
 ## Guiding Principles
 - **Modularity**: Enable easy addition/removal of agents and integrations.
