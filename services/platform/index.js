@@ -12,6 +12,7 @@ const { createMemoryAdapter } = require('../../db/adapter');
 const { createTenants } = require('./tenants');
 const { createEntitlements } = require('./entitlements');
 const { createAuthorization } = require('./authorization');
+const { createPolicyEngine } = require('./policies');
 
 function defaultRepos() {
   let adapter = null;
@@ -35,6 +36,7 @@ function createPlatform(opts) {
   const tenants = o.tenants || createTenants(repos);
   const entitlements = o.entitlements || createEntitlements(repos, o);
   const authorization = o.authorization || createAuthorization(repos, o);
+  const policies = o.policies || createPolicyEngine({ repos, ...o.policyOptions });
   const enterprise = o.enterprise !== undefined
     ? Boolean(o.enterprise)
     : (process.env.TEOS_ENTERPRISE === 'true' || process.env.ENTERPRISE_MODE === 'true');
@@ -59,7 +61,7 @@ function createPlatform(opts) {
     return entitlements.checkUsage(workspaceId);
   }
 
-  async function canUseCapability({ workspaceId, userId, role, capability, requester }) {
+  async function canUseCapability({ workspaceId, userId, role, capability, requester, payload }) {
     if (!enterprise) return { allowed: true, reason: 'platform_inert' };
     if (!capability) return { allowed: false, reason: 'capability_required' };
     const tenant = await tenants.resolve(workspaceId);
@@ -71,7 +73,22 @@ function createPlatform(opts) {
     if (!cap.ok) return { allowed: false, reason: cap.error, workspaceId, capability };
     const auth = await authorization.authorize({ workspaceId, userId, role, capability, requester });
     if (!auth.allowed) return { allowed: false, reason: auth.reason, workspaceId, capability, role: auth.role, required: auth.required };
-    return { allowed: true, workspaceId, capability, plan: lic.license.plan };
+    const policy = await policies.evaluate({
+      capability,
+      workspaceId,
+      userId,
+      role: auth.role || role || null,
+      requester,
+      payload: payload || null
+    });
+    if (!policy.allowed) {
+      return { allowed: false, reason: policy.reason, workspaceId, capability, policy: policy.policy, decision: policy };
+    }
+    return { allowed: true, workspaceId, capability, plan: lic.license.plan, policy: policy.reason };
+  }
+
+  async function evaluatePolicy(request) {
+    return policies.evaluate(request);
   }
 
   return {
@@ -79,14 +96,16 @@ function createPlatform(opts) {
     tenants,
     entitlements,
     authorization,
+    policies,
     resolveWorkspace,
     resolveTenant,
     resolveSubscription,
     resolvePlan,
     canUseCapability,
     checkQuota,
+    evaluatePolicy,
     isEnterprise: () => enterprise
   };
 }
 
-module.exports = { createPlatform, createTenants, createEntitlements, createAuthorization };
+module.exports = { createPlatform, createTenants, createEntitlements, createAuthorization, createPolicyEngine };

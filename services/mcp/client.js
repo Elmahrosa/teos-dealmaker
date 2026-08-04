@@ -36,7 +36,8 @@ function createClient(deps) {
         userId: options.userId || null,
         role: options.role || null,
         capability: toolId,
-        requester
+        requester,
+        payload: payload || {}
       });
       if (!gate.allowed) {
         return { ok: false, toolId, error: 'denied', reason: gate.reason, decision: gate, requester, workspaceId };
