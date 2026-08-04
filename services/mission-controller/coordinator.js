@@ -64,4 +64,14 @@ async function approveAndResume(adapter, workspaceId, requestId, userId) {
   return workforce.runtime.approveAndResume(adapter, workspaceId, requestId, userId);
 }
 
-module.exports = { launch, list, status, pause, resume, approveAndResume };
+async function requestTool(adapter, workspaceId, stepOrTool, payload) {
+  if (stepOrTool && typeof stepOrTool === 'object' && !Array.isArray(stepOrTool)) {
+    if (typeof stepOrTool.tool !== 'string' || !stepOrTool.tool.trim()) {
+      return { used: false, reason: 'no_tool_declared', step: stepOrTool.step_key || null };
+    }
+    return workforce.requestTool(adapter, workspaceId, stepOrTool.tool, stepOrTool.toolInput || {});
+  }
+  return workforce.requestTool(adapter, workspaceId, stepOrTool, payload);
+}
+
+module.exports = { launch, list, status, pause, resume, approveAndResume, requestTool };

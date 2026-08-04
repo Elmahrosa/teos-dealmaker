@@ -18,6 +18,7 @@ const optimizer = require('./optimizer');
 const recovery = require('./recovery');
 const telemetry = require('./telemetry');
 const runtime = require('./runtime');
+const { requestTool } = require('./tools');
 
 module.exports = {
   REGISTRY,
@@ -43,5 +44,6 @@ module.exports = {
   optimizer,
   recovery,
   telemetry,
-  runtime
+  runtime,
+  requestTool
 };

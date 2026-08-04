@@ -16,5 +16,6 @@ module.exports = {
   status: coordinator.status,
   pause: coordinator.pause,
   resume: coordinator.resume,
-  approveAndResume: coordinator.approveAndResume
+  approveAndResume: coordinator.approveAndResume,
+  requestTool: coordinator.requestTool
 };

@@ -28,6 +28,7 @@ TEOS DEALMAKER implements a modular, microservices-inspired architecture optimiz
 4. **Persistence Layer** - Multi-tenant PostgreSQL with workspace isolation and audit trails
 5. **Orchestration Engine** - Workflow management for complex revenue processes
 6. **Governance Framework** - Policy enforcement, access control, and compliance monitoring
+7. **MCP Client Layer** - Single abstraction through which every external enterprise action flows; the platform consumes **TEOS Civic Mixer** as its MCP gateway and never implements enterprise connectors directly
 
 ### Key Architectural Principles
 - **Multi-tenancy**: Complete data isolation via workspace_id scoping
@@ -35,6 +36,9 @@ TEOS DEALMAKER implements a modular, microservices-inspired architecture optimiz
 - **Event-driven Communication**: Loose coupling between services via message queues
 - **Observability-first**: Built-in metrics, tracing, and structured logging
 - **Security by Design**: Defense-in-depth with encryption, authentication, and least-privilege access
+
+### MCP Gateway & Enterprise Integration
+Every external action (GitHub, PostgreSQL, Redis, Docker, Browser, Supabase, Stripe, Slack, Notion, CRM) flows from a mission through the workforce and the MCP client to **TEOS Civic Mixer** — the shared enterprise MCP gateway owned by Elmahrosa International. DealMaker acts only as an MCP client; no agent or mission calls an enterprise SDK directly. MCP is fully optional (`MCP_ENABLED`, `MCP_ENDPOINT`, `MCP_API_KEY`, `MCP_TIMEOUT`); when disabled, every tool request simulates a no-op and the platform behaves exactly as before. See [docs/MCP_ARCHITECTURE.md](docs/MCP_ARCHITECTURE.md) for the call pipeline, sequence diagrams, and security model.
 
 ## The AI Workforce: 12 Specialized Agents
 
