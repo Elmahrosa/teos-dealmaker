@@ -35,12 +35,22 @@ function discover() {
 const suites = discover();
 const results = [];
 
+// Clean test environment: never let a local .env DATABASE_URL reach unit/DRY
+// suites. Live/Supabase suites that intentionally need a real DB must set
+// TEST_DATABASE_URL or re-inject DATABASE_URL themselves.
+const testEnv = {
+  ...process.env,
+  NODE_ENV: 'test',
+  DATABASE_URL: process.env.TEST_DATABASE_URL || '',
+};
+
 for (const file of suites) {
   const rel = path.relative(root, file);
   const res = spawnSync(process.execPath, [file], {
     cwd: root,
     encoding: 'utf8',
     timeout: 120000,
+    env: testEnv,
   });
   const ok = res.status === 0;
   results.push({ rel, ok, status: res.status, signal: res.signal });
