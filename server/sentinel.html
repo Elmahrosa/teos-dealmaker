@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sentinel — TEOS DealMaker</title>
+<title>Sentinel Shield — TEOS DealMaker</title>
 <style>
   :root {
     --bg: #0b0f14;
@@ -52,8 +52,8 @@
 </head>
 <body>
   <header>
-    <h1>🏛️ SENTINEL</h1>
-    <span class="sub">TEOS DealMaker · BVAP Audit Console</span>
+    <h1>🏛️ SENTINEL SHIELD</h1>
+    <span class="sub">TEOS DealMaker · Enterprise AI Governance Console</span>
     <span id="mode" class="dry">…</span>
   </header>
 
@@ -85,7 +85,7 @@
     </tbody>
   </table>
 
-  <footer>DRY-first governance · every agent decision is written to the BVAP vault</footer>
+  <footer>Fail-closed governance · every capability decision is policy-evaluated and written to the audit vault</footer>
 
 <script>
   function esc(s) {
@@ -103,19 +103,26 @@
 
   async function loadPricing() {
     try {
-      const pricing = await fetch('/api/pricing').then(r => r.json());
+      const data = await fetch('/api/pricing').then(r => r.json());
+      const tiers = Array.isArray(data) ? data : (data.tiers || []);
       const cards = document.getElementById('pricing-cards');
-      cards.innerHTML = pricing.map(t => `
-        <div class="stat" style="min-width:240px;">
-          <div class="label">${esc(t.tier)}</div>
-          <div style="margin-top:8px;">
-            <div>Monthly <b>${esc(t.monthly.price)}</b></div>
-            <a href="${esc(t.monthly.url)}" style="color:var(--blue);font-size:12px;">${esc(t.monthly.url)}</a>
-            <div style="margin-top:6px;">Annual <b>${esc(t.annual.price)}</b></div>
-            <a href="${esc(t.annual.url)}" style="color:var(--blue);font-size:12px;">${esc(t.annual.url)}</a>
+      cards.innerHTML = tiers.map(t => {
+        const monthly = t.monthly.url
+          ? `<div style="margin-top:6px;">Monthly <b>${esc(t.monthly.price)}</b> · <a href="${esc(t.monthly.url)}" style="color:var(--blue);font-size:12px;">checkout</a></div>`
+          : `<div style="margin-top:6px;">Monthly <b>${esc(t.monthly.price)}</b></div>`;
+        const annual = t.annual.url
+          ? `<div style="margin-top:6px;">Annual <b>${esc(t.annual.price)}</b> · <a href="${esc(t.annual.url)}" style="color:var(--blue);font-size:12px;">checkout</a></div>`
+          : `<div style="margin-top:6px;">Annual <b>${esc(t.annual.price)}</b></div>`;
+        const features = (t.features || []).map(f => `<li>${esc(f)}</li>`).join('');
+        return `
+          <div class="stat" style="min-width:240px;">
+            <div class="label">${esc(t.tier)}</div>
+            ${monthly}
+            ${annual}
+            <ul style="list-style:none;margin-top:8px;color:var(--muted);font-size:11px;">${features}</ul>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     } catch (_) {
       document.getElementById('pricing-cards').innerHTML =
         '<div style="color:var(--muted);padding:12px;">Pricing unavailable.</div>';

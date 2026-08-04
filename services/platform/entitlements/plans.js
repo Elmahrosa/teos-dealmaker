@@ -17,7 +17,7 @@ const PLANS = {
     customPlugins: false
   },
   solo: {
-    tier: 'Solo Operator',
+    tier: 'Starter',
     seats: 3,
     agents: 13,
     capabilityScopes: ['core', 'plugin'],
@@ -26,7 +26,7 @@ const PLANS = {
     customPlugins: false
   },
   growth: {
-    tier: 'Growth Team',
+    tier: 'Growth',
     seats: 10,
     agents: 13,
     capabilityScopes: ['core', 'plugin'],
@@ -35,7 +35,7 @@ const PLANS = {
     customPlugins: false
   },
   corporate: {
-    tier: 'Corporate',
+    tier: 'Business',
     seats: 25,
     agents: 13,
     capabilityScopes: ['core', 'plugin', 'custom'],

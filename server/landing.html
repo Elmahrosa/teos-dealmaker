@@ -3,7 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TEOS DealMaker — Sovereign Sales Court</title>
+<title>TEOS DEALMAKER — Enterprise AI Revenue Operating System</title>
+<meta name="description" content="TEOS DealMaker is an Enterprise AI Revenue Operating System: a 13-agent workforce orchestrated by a Mission Controller, extended through an enterprise plugin platform, and governed end-to-end by Sentinel.">
+<link rel="canonical" href="https://dealmaker.elmahrosa.org/">
+<meta property="og:title" content="TEOS DEALMAKER — Enterprise AI Revenue Operating System">
+<meta property="og:description" content="A 13-agent AI workforce, a Mission Controller, an enterprise plugin platform, and Sentinel governance — one revenue operating system.">
+<meta property="og:url" content="https://dealmaker.elmahrosa.org/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TEOS DealMaker">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="TEOS DEALMAKER — Enterprise AI Revenue Operating System">
+<meta name="twitter:description" content="Plan, approve, execute, and audit your entire revenue pipeline with an enterprise AI platform.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "TEOS DealMaker",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "url": "https://dealmaker.elmahrosa.org/",
+  "description": "Enterprise AI Revenue Operating System: a 13-agent workforce, Mission Controller, enterprise plugin platform, MCP gateway, and Sentinel governance.",
+  "offers": [
+    { "@type": "Offer", "name": "Starter", "price": "79", "priceCurrency": "USD" },
+    { "@type": "Offer", "name": "Growth", "price": "249", "priceCurrency": "USD" },
+    { "@type": "Offer", "name": "Business", "price": "699", "priceCurrency": "USD" }
+  ]
+}
+</script>
 <style>
   :root {
     --bg: #0b0f14;
@@ -27,23 +53,35 @@
   h1 { font-size: 20px; letter-spacing: 2px; color: var(--gold); }
   header nav a { color: var(--blue); text-decoration: none; margin-left: 16px; font-size: 14px; }
   header nav a:hover { color: var(--gold); }
-  .hero { text-align: center; padding: 40px 0 48px; }
-  .hero h2 { font-size: 34px; letter-spacing: 1px; color: var(--text); margin-bottom: 12px; }
+  .hero { text-align: center; padding: 48px 0 56px; }
+  .hero .eyebrow { color: var(--muted); font-size: 13px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
+  .hero h2 { font-size: 38px; letter-spacing: 1px; color: var(--text); margin-bottom: 12px; }
   .hero .gold { color: var(--gold); }
-  .hero p { color: var(--muted); font-size: 17px; max-width: 640px; margin: 0 auto 24px; }
-  .cta { display: inline-block; background: var(--gold); color: #0b0f14; font-weight: 700; padding: 12px 28px; border-radius: 6px; text-decoration: none; letter-spacing: 1px; }
+  .hero p { color: var(--muted); font-size: 17px; max-width: 680px; margin: 0 auto 28px; }
+  .cta { display: inline-block; background: var(--gold); color: #0b0f14; font-weight: 700; padding: 12px 28px; border-radius: 6px; text-decoration: none; letter-spacing: 1px; margin: 0 6px 8px; }
   .cta:hover { filter: brightness(1.1); }
+  .cta.ghost { background: transparent; color: var(--blue); border: 1px solid var(--blue); }
+  .cta.ghost:hover { background: var(--panel); }
   section { margin-bottom: 48px; }
-  h2.sect { font-size: 16px; letter-spacing: 2px; color: var(--gold); text-transform: uppercase; margin-bottom: 20px; }
+  h2.sect { font-size: 16px; letter-spacing: 2px; color: var(--gold); text-transform: uppercase; margin-bottom: 8px; }
+  .sect-sub { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
   .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
   .card h3 { font-size: 15px; color: var(--gold); margin-bottom: 8px; }
   .card p, .card li { color: var(--muted); font-size: 14px; }
   .card ul { list-style: none; margin-top: 8px; }
   .card ul li::before { content: "◆ "; color: var(--gold); font-size: 10px; }
-  .price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .arch { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+  .arch .layer { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; text-align: center; font-size: 14px; }
+  .arch .layer b { color: var(--gold); }
+  .arch .layer span { color: var(--muted); }
+  .arch .arrow { text-align: center; color: var(--gold); font-size: 13px; line-height: 1; }
+  .badge { display: inline-block; color: var(--green); font-size: 12px; margin-left: 8px; }
+  .badge.soon { color: var(--muted); }
+  .price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 28px; }
   .price-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 22px; display: flex; flex-direction: column; }
-  .price-card h3 { font-size: 17px; color: var(--gold); margin-bottom: 14px; }
+  .price-card h3 { font-size: 17px; color: var(--gold); margin-bottom: 4px; }
+  .price-card .tagline { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
   .price-row { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--border); padding: 10px 0; }
   .price-row .cycle { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
   .price-row .amount { font-size: 20px; font-weight: 700; color: var(--text); }
@@ -52,6 +90,8 @@
   .buy.annual { background: var(--green); }
   .pid { color: var(--muted); font-size: 11px; margin-top: 10px; text-align: center; }
   footer { border-top: 1px solid var(--border); padding-top: 20px; color: var(--muted); font-size: 13px; text-align: center; }
+  footer a { color: var(--blue); text-decoration: none; }
+  footer a:hover { color: var(--gold); }
 </style>
 </head>
 <body>
@@ -59,69 +99,194 @@
   <header>
     <h1>TEOS DEALMAKER</h1>
     <nav>
-      <a href="#features">Agents</a>
+      <a href="#features">Features</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#plugins">Plugins</a>
+      <a href="#mission">Mission</a>
+      <a href="#sentinel">Sentinel</a>
       <a href="#pricing">Pricing</a>
-      <a href="/dashboard">Sentinel</a>
-      <a href="/api/health">API</a>
+      <a href="/dashboard">Console</a>
     </nav>
   </header>
 
   <div class="hero">
-    <h2>The <span class="gold">Sovereign Sales Court</span></h2>
-    <p>A 12-agent autonomous court that qualifies, negotiates, drafts contracts, and closes deals — with a tamper-checked audit trail and payments wired to Dodo.</p>
-    <a class="cta" href="#pricing">Choose a Tier</a>
+    <div class="eyebrow">Enterprise AI Revenue Operating System</div>
+    <h2>Deals Made. <span class="gold">AI-Operated.</span></h2>
+    <p>TEOS DealMaker orchestrates a 13-agent AI workforce under a Mission Controller — plan, approve, execute, monitor, and audit your entire revenue pipeline from one platform, extended through an enterprise plugin ecosystem and governed by Sentinel.</p>
+    <a class="cta" href="https://t.me/TeosEgypt_bot">Launch DealMaker</a>
+    <a class="cta ghost" href="#pricing">Book Enterprise Demo</a>
   </div>
 
   <section id="features">
-    <h2 class="sect">The Court</h2>
+    <h2 class="sect">Platform Capabilities</h2>
+    <div class="sect-sub">One operating system for your revenue engine.</div>
     <div class="grid">
       <div class="card">
-        <h3>Lead Inflow</h3>
+        <h3>Mission Controller</h3>
         <ul>
-          <li>Prospecting — lead scoring and routing</li>
-          <li>Market Intelligence — prospect fit scoring</li>
-          <li>Outreach — draft review and dispatch</li>
-          <li>Qualification — BANT classification</li>
+          <li>Plan, approve, execute, monitor, audit</li>
+          <li>Structured mission lifecycle</li>
+          <li>Founder approval gates</li>
         </ul>
       </div>
       <div class="card">
-        <h3>Deal Execution</h3>
+        <h3>AI Workforce Runtime</h3>
         <ul>
-          <li>Strategist — tactical playbooks</li>
-          <li>Marketer — value positioning</li>
-          <li>Sales — objection handling</li>
-          <li>Negotiator — thresholds and terms</li>
+          <li>13 specialized revenue agents</li>
+          <li>Orchestrated pipeline automation</li>
+          <li>DRY-first with LIVE dispatch</li>
         </ul>
       </div>
       <div class="card">
-        <h3>Close &amp; Audit</h3>
+        <h3>Enterprise Plugin Platform</h3>
         <ul>
-          <li>Treasurer — contracts and checkout</li>
-          <li>Closing — readiness to won/blocked</li>
-          <li>Gatekeeper — safety review</li>
-          <li>Orchestrator — routing and control</li>
+          <li>Plugin registry with capability isolation</li>
+          <li>Signed and audited installs</li>
+          <li>Civic Mixer + Sentinel Shield included</li>
         </ul>
       </div>
       <div class="card">
-        <h3>Foundation</h3>
+        <h3>MCP Integration</h3>
         <ul>
-          <li>BVAP audit logging with dual-write mirror</li>
-          <li>Postgres persistence (deals + audit_trail)</li>
-          <li>Telegram bot with inline pricing menu</li>
-          <li>DRY/LIVE mode toggle</li>
+          <li>Model Context Protocol gateway</li>
+          <li>Tool-calling for the workforce</li>
+          <li>Provider-agnostic adapters</li>
         </ul>
       </div>
+      <div class="card">
+        <h3>Enterprise Knowledge Intelligence</h3>
+        <ul>
+          <li>RAG with source attribution</li>
+          <li>Company knowledge base</li>
+          <li>Intelligence copilot</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Revenue Pipeline Automation</h3>
+        <ul>
+          <li>Lead qualification to contract</li>
+          <li>Negotiation thresholds and terms</li>
+          <li>Checkout wired to Dodo</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Sentinel Governance</h3>
+        <ul>
+          <li>Policy enforcement on every capability</li>
+          <li>Fail-closed deny-wins evaluation</li>
+          <li>Prompt and code security</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Enterprise Analytics</h3>
+        <ul>
+          <li>Immutable audit trail</li>
+          <li>Revenue and mission telemetry</li>
+          <li>Health and usage APIs</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="architecture">
+    <h2 class="sect">Platform Architecture</h2>
+    <div class="sect-sub">Every mission flows through a governed execution chain.</div>
+    <div class="arch">
+      <div class="layer"><b>Mission Controller</b> <span>· Plan → Approve → Execute → Monitor → Audit</span></div>
+      <div class="arrow">▼</div>
+      <div class="layer"><b>AI Workforce Runtime</b> <span>· 13 specialized revenue agents</span></div>
+      <div class="arrow">▼</div>
+      <div class="layer"><b>Plugin Platform</b> <span>· registry · capabilities · signing</span></div>
+      <div class="arrow">▼</div>
+      <div class="layer"><b>Platform Services</b> <span>· tenants · entitlements · authorization · policy</span></div>
+      <div class="arrow">▼</div>
+      <div class="layer"><b>MCP Gateway</b> <span>· Model Context Protocol tool calls</span></div>
+      <div class="arrow">▼</div>
+      <div class="layer"><b>AI Providers</b> <span>· tool and reasoning models</span> &nbsp;·&nbsp; <b>Enterprise Database</b> <span>· deals · missions · audit</span></div>
+    </div>
+  </section>
+
+  <section id="plugins">
+    <h2 class="sect">Enterprise Plugin Marketplace</h2>
+    <div class="sect-sub">Extend the platform through a governed plugin ecosystem.</div>
+    <div class="grid">
+      <div class="card">
+        <h3>Civic Mixer<span class="badge">✓ Installed</span></h3>
+        <p>Open-source MCP gateway that connects the workforce to your tools and providers.</p>
+      </div>
+      <div class="card">
+        <h3>Sentinel Shield<span class="badge">✓ Installed</span></h3>
+        <p>Enterprise AI governance: policy enforcement, prompt security, and continuous audit.</p>
+      </div>
+      <div class="card">
+        <h3>GitHub<span class="badge soon">Coming soon</span></h3>
+        <p>Code review and repository intelligence for engineering-led teams.</p>
+      </div>
+      <div class="card">
+        <h3>Slack<span class="badge soon">Coming soon</span></h3>
+        <p>Mission updates and approvals inside your team channels.</p>
+      </div>
+      <div class="card">
+        <h3>HubSpot<span class="badge soon">Coming soon</span></h3>
+        <p>Pipeline sync, enrichment, and deal routing.</p>
+      </div>
+      <div class="card">
+        <h3>Salesforce<span class="badge soon">Coming soon</span></h3>
+        <p>Opportunity lifecycle automation at enterprise scale.</p>
+      </div>
+      <div class="card">
+        <h3>Microsoft 365<span class="badge soon">Coming soon</span></h3>
+        <p>Calendar, email, and document intelligence.</p>
+      </div>
+      <div class="card">
+        <h3>Google Workspace<span class="badge soon">Coming soon</span></h3>
+        <p>Docs, Drive, and Gmail workflows for the workforce.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="mission">
+    <h2 class="sect">Mission Center</h2>
+    <div class="sect-sub">Every revenue operation runs as a governed mission.</div>
+    <div class="grid">
+      <div class="card"><h3>Plan</h3><p>Define objectives, playbooks, and agent assignments.</p></div>
+      <div class="card"><h3>Approve</h3><p>Founder gates before any execution or spend.</p></div>
+      <div class="card"><h3>Execute</h3><p>The 13-agent workforce runs the pipeline.</p></div>
+      <div class="card"><h3>Monitor</h3><p>Live status, health, and usage telemetry.</p></div>
+      <div class="card"><h3>Audit</h3><p>Every decision written to an immutable audit trail.</p></div>
+    </div>
+  </section>
+
+  <section id="sentinel">
+    <h2 class="sect">Sentinel Shield</h2>
+    <div class="sect-sub">Enterprise AI governance on every capability.</div>
+    <div class="grid">
+      <div class="card"><h3>Policy Enforcement</h3><p>Fail-closed, deny-wins policy evaluation before every tool and plugin call.</p></div>
+      <div class="card"><h3>Prompt Security</h3><p>Block injection and unsafe instructions across the workforce.</p></div>
+      <div class="card"><h3>Code Security</h3><p>Flag vulnerabilities in code reviews and CI/CD contexts.</p></div>
+      <div class="card"><h3>Smart Contract Review</h3><p>Risk scoring for contract and on-chain analysis.</p></div>
+      <div class="card"><h3>Compliance</h3><p>Tenant scoping and entitlement enforcement per plan.</p></div>
+      <div class="card"><h3>Continuous Audit</h3><p>Every allow and deny decision persisted for review.</p></div>
     </div>
   </section>
 
   <section id="pricing">
     <h2 class="sect">Pricing</h2>
+    <div class="sect-sub">Annual plans include built-in savings. Enterprise is custom-priced.</div>
     <div class="price-grid">
       {{PRICING_CARDS}}
     </div>
+    <h2 class="sect" style="margin-top:8px;">Platform Add-ons</h2>
+    <div class="grid">
+      {{ADDONS}}
+    </div>
   </section>
 
-  <footer>MIT — Elmahrosa International 2026</footer>
+  <footer>
+    TEOS DEALMAKER — Enterprise AI Revenue Operating System<br>
+    A product of Elmahrosa International · contact <a href="mailto:info@elmahrosa.com">info@elmahrosa.com</a> · <a href="/api/health">system status</a><br>
+    MIT License — Elmahrosa International 2026
+  </footer>
 </div>
 </body>
 </html>

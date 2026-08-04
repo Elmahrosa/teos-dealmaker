@@ -9,7 +9,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.get('/api/pricing', (req, res) => {
-  res.json(PRICING);
+  res.json({ tiers: PRICING, addons: PRICING.ADDONS });
 });
 
 app.get('/api/health', (req, res) => {
@@ -30,21 +30,52 @@ app.get('/api/audit', (req, res) => {
 });
 
 function renderPricingCards() {
-  return PRICING.map(t => `
+  return PRICING.map(t => {
+    const features = (t.features || []).map(f => `<li>${f}</li>`).join('');
+    const monthly = t.monthly.url
+      ? `<div class="price-row"><span class="cycle">Monthly</span><span class="amount">${t.monthly.price}</span></div>
+      <a class="buy" href="${t.monthly.url}">Start ${t.tier} Monthly</a>`
+      : `<div class="price-row"><span class="cycle">Monthly</span><span class="amount">${t.monthly.price}</span></div>`;
+    const annual = t.annual.url
+      ? `<div class="price-row"><span class="cycle">Annual</span><span class="amount">${t.annual.price}</span></div>
+      <a class="buy annual" href="${t.annual.url}">Start ${t.tier} Annual</a>`
+      : `<div class="price-row"><span class="cycle">Annual</span><span class="amount">${t.annual.price}</span></div>`;
+    const cta = t.custom
+      ? '<a class="buy" href="mailto:info@elmahrosa.com">Contact Sales</a>'
+      : '';
+    const pids = (t.productIds.monthly || t.productIds.annual)
+      ? `<div class="pid">${t.productIds.monthly} / ${t.productIds.annual}</div>`
+      : '';
+    return `
     <div class="price-card">
       <h3>${t.tier}</h3>
-      <div class="price-row"><span class="cycle">Monthly</span><span class="amount">${t.monthly.price}</span></div>
-      <a class="buy" href="${t.monthly.url}">Start ${t.tier} Monthly</a>
-      <div class="price-row"><span class="cycle">Annual</span><span class="amount">${t.annual.price}</span></div>
-      <a class="buy annual" href="${t.annual.url}">Start ${t.tier} Annual</a>
-      <div class="pid">${t.productIds.monthly} / ${t.productIds.annual}</div>
+      ${t.tagline ? `<p class="tagline">${t.tagline}</p>` : ''}
+      ${monthly}
+      ${annual}
+      ${cta}
+      <ul>${features}</ul>
+      ${pids}
+    </div>
+  `;
+  }).join('\n');
+}
+
+function renderAddons() {
+  return (PRICING.ADDONS || []).map(a => `
+    <div class="card">
+      <h3>${a.name}</h3>
+      <p>${a.description}</p>
     </div>
   `).join('\n');
 }
 
 app.get('/', (req, res) => {
   const template = fs.readFileSync(path.join(__dirname, 'landing.html'), 'utf8');
-  res.type('html').send(template.replace('{{PRICING_CARDS}}', renderPricingCards()));
+  res.type('html').send(
+    template
+      .replace('{{PRICING_CARDS}}', renderPricingCards())
+      .replace('{{ADDONS}}', renderAddons())
+  );
 });
 
 app.get('/dashboard', (req, res) => {
