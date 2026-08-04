@@ -12,6 +12,7 @@
     "test:schemas": "node tests/test-schema-order.js",
     "lint": "eslint .",
     "build": "node scripts/check-syntax.js",
+    "build:static": "node scripts/build-static.js",
     "test:outreach": "node agents/outreach/test.js",
     "test:qualify": "node agents/qualification/test.js",
     "test:sales": "node agents/sales/test.js",
