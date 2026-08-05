@@ -293,28 +293,22 @@ For production environments, we recommend:
 
 ## API Reference
 
-TEOS provides RESTful APIs for programmatic access and integration:
+TEOS exposes a small set of public HTTP endpoints (no authentication required — public marketing/ops endpoints):
 
-### Core Endpoints
-- POST /api/agents/{agentType}/run - Execute a specific agent with custom input
-- GET /api/workforce/status - Real-time view of all agent states and performance
-- GET /api/intelligence/query - Query the company knowledge base
-- POST /api/integrations/{connector}/sync - Trigger data synchronization with external systems
-- GET /api/pipeline/deals - Retrieve current sales pipeline with forecasting
-- GET /api/audit/events - Access immutable audit trail for compliance
+### Endpoints
+- GET /api/pricing - Returns live pricing tiers with Dodo checkout URLs
+- GET /api/health - Health check (`{"status":"ok","mode":...}`); used by uptime monitors
+- GET /api/audit - Returns a recent subset of audit-log entries from the file-backed audit store
+- POST /webhook/dodo - Dodo payment webhook (HMAC-signed, validated with `DODO_WEBHOOK_SECRET`)
 
-### Mission & Capability Endpoints
-- POST /api/missions/execute - Execute a mission through the Mission Controller
-- POST /api/capabilities/execute - Execute a capability through the MCP layer
-- GET /api/plugins - List registered plugins and their capabilities
-- POST /api/plugins/install - Install a plugin through the Plugin Platform
+Other routes serve the landing page (`/`), static assets (`/robots.txt`, `/sitemap.xml`, `/favicon.svg`, `/og-image.*`), and the ops dashboard (`/dashboard`, `X-Robots-Tag: noindex`).
 
-### Authentication
-All API endpoints require authentication via:
-- API Key header: X-API-Key: your-secret-key
-- Or JWT bearer token: Authorization: Bearer <token>
+### Security
+- The `/webhook/dodo` endpoint is validated with an HMAC signature (`X-Dodo-Signature`); invalid signatures return `401 invalid_signature`
+- Rate limiting via express-rate-limit: 120 requests/min per IP on `/api/`, 30 requests/min on `/webhook/`
+- Security headers (HSTS, CSP, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy) are set on all responses
 
-Rate limiting: 100 requests per minute per API key
+Internal agent, workforce, and mission execution is driven by the Telegram bot and internal modules, not by public REST endpoints.
 
 ## Enterprise Readiness
 
