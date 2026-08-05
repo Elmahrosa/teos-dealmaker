@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sentinel Shield — TEOS DealMaker</title>
-<script>window.__PRICING__ = [{"tier":"🚀 Solo","tagline":"For founders and solo teams","monthly":{"price":"$79.00","url":""},"annual":{"price":"$790.00","url":""},"productIds":{"monthly":"","annual":""},"features":["1 workspace","Mission Controller with a 13-agent AI workforce","Core agent capabilities","Community support"]},{"tier":"⚡ Growth","tagline":"For growing revenue teams","monthly":{"price":"$249.00","url":""},"annual":{"price":"$2,490.00","url":""},"productIds":{"monthly":"","annual":""},"features":["10 seats","Civic Mixer + Sentinel Shield plugins","Enterprise Knowledge Intelligence","Email support"]},{"tier":"👑 Business","tagline":"For revenue organizations","monthly":{"price":"$699.00","url":""},"annual":{"price":"$6,990.00","url":""},"productIds":{"monthly":"","annual":""},"features":["25 seats","Third-party plugin installs","All platform add-ons","Priority support"]},{"tier":"🏛️ Enterprise","tagline":"For large and sovereign organizations","monthly":{"price":"Custom","url":""},"annual":{"price":"Custom","url":""},"productIds":{"monthly":"","annual":""},"custom":true,"features":["Unlimited workspaces","Unlimited missions","Private deployment","Sentinel governance at scale","Dedicated success engineer"]}];</script>
+<script>window.__PRICING__ = [{"tier":"🚀 Solo","tagline":"For founders and solo teams","monthly":{"price":"$79.00","url":"https://dodo.pe/teos-dealmaker-solo-monthly-13644952"},"annual":{"price":"$790.00","url":"https://dodo.pe/teos-dealmaker-solo-annual-13644952"},"productIds":{"monthly":"pdt_0NkdQVk7ahfyz0VSoTGipD","annual":"pdt_0NkdQW1mGZrFIxz9dm7eZ"},"features":["1 workspace","Mission Controller with a 13-agent AI workforce","Core agent capabilities","Community support"]},{"tier":"⚡ Growth","tagline":"For growing revenue teams","monthly":{"price":"$249.00","url":"https://dodo.pe/teos-dealmaker-growth-monthly-13644952"},"annual":{"price":"$2,490.00","url":"https://dodo.pe/teos-dealmaker-growth-annual-13644952"},"productIds":{"monthly":"pdt_0NkdQWCpT2SbojpuscwVI","annual":"pdt_0NkdQWOkJWfbSa7qtCLZm"},"features":["10 seats","Civic Mixer + Sentinel Shield plugins","Enterprise Knowledge Intelligence","Email support"]},{"tier":"👑 Business","tagline":"For revenue organizations","monthly":{"price":"$699.00","url":"https://dodo.pe/teos-dealmaker-business-monthly-13644952"},"annual":{"price":"$6,990.00","url":"https://dodo.pe/teos-dealmaker-business-annual-13644952"},"productIds":{"monthly":"pdt_0NkdQWZ1Bkv413NqbbVFu","annual":"pdt_0NkdQWgxl0hJcb4skW8IK"},"features":["25 seats","Third-party plugin installs","All platform add-ons","Priority support"]},{"tier":"🏛️ Enterprise","tagline":"For large and sovereign organizations","monthly":{"price":"Custom","url":""},"annual":{"price":"Custom","url":""},"productIds":{"monthly":"","annual":""},"custom":true,"features":["Unlimited workspaces","Unlimited missions","Private deployment","Sentinel governance at scale","Dedicated success engineer"]}];</script>
 <style>
   :root {
     --bg: #0b0f14;
@@ -49,46 +49,112 @@
   .status-in_progress, .status-dry_run { color: var(--gold); }
   #empty { color: var(--muted); padding: 20px; text-align: center; }
   footer { margin-top: 20px; color: var(--muted); font-size: 11px; }
+  #lang-switch { margin-inline-start: auto; color: var(--gold); background: none; border: 1px solid var(--border); padding: 2px 12px; border-radius: 12px; cursor: pointer; font-family: inherit; font-size: 12px; letter-spacing: 1px; }
+  #lang-switch:hover { color: #0b0f14; background: var(--gold); border-color: var(--gold); }
+  html[dir="rtl"] th, html[dir="rtl"] td { text-align: right; }
+  html[dir="rtl"] h1, html[dir="rtl"] h2 { letter-spacing: 0; }
 </style>
 </head>
 <body>
   <header>
-    <h1>🏛️ SENTINEL SHIELD</h1>
-    <span class="sub">TEOS DealMaker · Enterprise AI Governance Console</span>
+    <h1 data-i18n="header">🏛️ SENTINEL SHIELD</h1>
+    <span class="sub" data-i18n="sub">TEOS DealMaker · Enterprise AI Governance Console</span>
     <span id="mode" class="dry">…</span>
+    <button id="lang-switch" type="button" role="button" aria-label="Switch language">العربية</button>
   </header>
 
   <div class="stats">
-    <div class="stat"><div class="label">Mode</div><div class="value" id="stat-mode">—</div></div>
-    <div class="stat"><div class="label">Audit Entries</div><div class="value" id="stat-total">—</div></div>
-    <div class="stat"><div class="label">Last Update</div><div class="value" id="stat-time" style="font-size:14px;">—</div></div>
+    <div class="stat"><div class="label" data-i18n="mode">Mode</div><div class="value" id="stat-mode">—</div></div>
+    <div class="stat"><div class="label" data-i18n="auditEntries">Audit Entries</div><div class="value" id="stat-total">—</div></div>
+    <div class="stat"><div class="label" data-i18n="lastUpdate">Last Update</div><div class="value" id="stat-time" style="font-size:14px;">—</div></div>
   </div>
 
   <section id="pricing">
-    <h2 style="color:var(--gold);font-size:16px;letter-spacing:1px;margin-bottom:12px;">💳 PRICING</h2>
+    <h2 style="color:var(--gold);font-size:16px;letter-spacing:1px;margin-bottom:12px;" data-i18n="pricing">💳 PRICING</h2>
     <div id="pricing-cards" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
-      <div style="color:var(--muted);padding:12px;">Loading pricing…</div>
+      <div data-i18n="loadingPricing" style="color:var(--muted);padding:12px;">Loading pricing…</div>
     </div>
   </section>
 
   <table>
     <thead>
       <tr>
-        <th>Timestamp</th>
-        <th>Action</th>
-        <th>Target</th>
-        <th>Status</th>
-        <th>Details</th>
+        <th data-i18n="colTime">Timestamp</th>
+        <th data-i18n="colAction">Action</th>
+        <th data-i18n="colTarget">Target</th>
+        <th data-i18n="colStatus">Status</th>
+        <th data-i18n="colDetails">Details</th>
       </tr>
     </thead>
     <tbody id="rows">
-      <tr><td id="empty" colspan="5">Loading audit trail…</td></tr>
+      <tr><td data-i18n="loadingAudit" id="empty" colspan="5">Loading audit trail…</td></tr>
     </tbody>
   </table>
 
-  <footer>Fail-closed governance · every capability decision is policy-evaluated and written to the audit vault</footer>
+  <footer data-i18n="footer">Fail-closed governance · every capability decision is policy-evaluated and written to the audit vault</footer>
 
 <script>
+  var I18N = {
+    en: {
+      header: '🏛️ SENTINEL SHIELD',
+      sub: 'TEOS DealMaker · Enterprise AI Governance Console',
+      mode: 'Mode', auditEntries: 'Audit Entries', lastUpdate: 'Last Update',
+      pricing: '💳 PRICING',
+      loadingPricing: 'Loading pricing…', pricingUnavailable: 'Pricing unavailable.',
+      colTime: 'Timestamp', colAction: 'Action', colTarget: 'Target', colStatus: 'Status', colDetails: 'Details',
+      loadingAudit: 'Loading audit trail…', noAudit: 'No audit entries yet.',
+      footer: 'Fail-closed governance · every capability decision is policy-evaluated and written to the audit vault',
+      monthly: 'Monthly', annual: 'Annual', checkout: 'checkout',
+      offline: 'offline', staticPreview: 'STATIC PREVIEW',
+      offlineMsg: 'Live telemetry unavailable. This is a static preview — connect the TEOS backend server (npm run server) to view the live audit trail, mode, and health.',
+      sw_ar: 'العربية', sw_en: 'English'
+    },
+    ar: {
+      header: '🏛️ درع سنتينل',
+      sub: 'صانع الصفقات تيوس · لوحة تحكم الحوكمة المؤسسية للذكاء الاصطناعي',
+      mode: 'الوضع', auditEntries: 'سجلات التدقيق', lastUpdate: 'آخر تحديث',
+      pricing: '💳 الأسعار',
+      loadingPricing: 'جارٍ تحميل الأسعار…', pricingUnavailable: 'الأسعار غير متاحة.',
+      colTime: 'الوقت', colAction: 'الإجراء', colTarget: 'الهدف', colStatus: 'الحالة', colDetails: 'التفاصيل',
+      loadingAudit: 'جارٍ تحميل سجل التدقيق…', noAudit: 'لا توجد سجلات تدقيق بعد.',
+      footer: 'حوكمة تغلق عند الخطأ · كل قرار قدرة يُقيَّم حسب السياسات ويُسجَّل في خزنة التدقيق',
+      monthly: 'شهرياً', annual: 'سنوياً', checkout: 'شراء',
+      offline: 'غير متصل', staticPreview: 'معاينة ثابتة',
+      offlineMsg: 'القياسات الحية غير متاحة. هذه معاينة ثابتة — شغّل خادم TEOS (npm run server) لعرض سجل التدقيق والوضع والصحة مباشرة.',
+      sw_ar: 'العربية', sw_en: 'English'
+    }
+  };
+
+  var PRICING_AR = {
+    '🚀 Solo': { features: ['مساحة عمل واحدة', 'وحدة تحكم المهام مع قوة عاملة من 13 وكيل ذكاء اصطناعي', 'إمكانات الوكلاء الأساسية', 'دعم المجتمع'] },
+    '⚡ Growth': { features: ['10 مقاعد', 'إضافات Civic Mixer و Sentinel Shield', 'ذكاء المعرفة المؤسسية', 'دعم عبر البريد الإلكتروني'] },
+    '👑 Business': { features: ['25 مقعداً', 'تثبيت إضافات الطرف الثالث', 'جميع إضافات المنصة', 'دعم ذو أولوية'] },
+    '🏛️ Enterprise': { features: ['مساحات عمل غير محدودة', 'مهام غير محدودة', 'نشر خاص', 'حوكمة سنتينل على نطاق واسع', 'مهندس نجاح مخصص'] }
+  };
+
+  var MODE_AR = { production: 'إنتاج', live: 'مباشر', dry: 'تجريبي', dry_run: 'تشغيل تجريبي', offline: 'غير متصل' };
+  var STATUS_AR = { success: 'ناجح', blocked: 'محظور', denied: 'مرفوض', failed: 'فشل', error: 'خطأ', in_progress: 'قيد التنفيذ', dry_run: 'تشغيل تجريبي', sent: 'مُرسَل', won: 'مكتمل', allow: 'سماح' };
+
+  var lang = 'en';
+  var currentTiers = [];
+  var currentAudit = [];
+  var offline = false;
+
+  function detectLang() {
+    var m = window.location.search.match(/[?&]lang=(en|ar)/);
+    if (m) return m[1];
+    try {
+      var saved = localStorage.getItem('teos_lang');
+      if (saved === 'en' || saved === 'ar') return saved;
+    } catch (_) { /* ignore */ }
+    return 'en';
+  }
+
+  function t(key) {
+    if (I18N[lang] && I18N[lang][key] !== undefined) return I18N[lang][key];
+    return I18N.en[key] !== undefined ? I18N.en[key] : key;
+  }
+
   function esc(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -102,96 +168,138 @@
     return '';
   }
 
-  async function loadPricing() {
-    try {
-      const res = await fetch('/api/pricing');
-      if (!res.ok) throw new Error('pricing unavailable');
-      const data = await res.json();
-      renderPricing(Array.isArray(data) ? data : (data.tiers || []));
-    } catch (_) {
-      const fallback = window.__PRICING__ || [];
-      if (fallback.length) renderPricing(fallback);
-      else document.getElementById('pricing-cards').innerHTML =
-        '<div style="color:var(--muted);padding:12px;">Pricing unavailable.</div>';
-    }
+  function localStatus(s) {
+    return lang === 'ar' ? (STATUS_AR[s] || s) : s;
+  }
+
+  function localMode(s) {
+    return lang === 'ar' ? (MODE_AR[s] || s) : s;
+  }
+
+  function applyStatic() {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.title = t('header') + ' — ' + t('sub');
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n');
+      if (I18N.en[key] !== undefined) el.textContent = t(key);
+    });
+    var sw = document.getElementById('lang-switch');
+    if (sw) sw.textContent = lang === 'en' ? t('sw_ar') : t('sw_en');
   }
 
   function renderPricing(tiers) {
-      const cards = document.getElementById('pricing-cards');
-      cards.innerHTML = tiers.map(t => {
-        const monthly = t.monthly.url
-          ? `<div style="margin-top:6px;">Monthly <b>${esc(t.monthly.price)}</b> · <a href="${esc(t.monthly.url)}" style="color:var(--blue);font-size:12px;">checkout</a></div>`
-          : `<div style="margin-top:6px;">Monthly <b>${esc(t.monthly.price)}</b></div>`;
-        const annual = t.annual.url
-          ? `<div style="margin-top:6px;">Annual <b>${esc(t.annual.price)}</b> · <a href="${esc(t.annual.url)}" style="color:var(--blue);font-size:12px;">checkout</a></div>`
-          : `<div style="margin-top:6px;">Annual <b>${esc(t.annual.price)}</b></div>`;
-        const features = (t.features || []).map(f => `<li>${esc(f)}</li>`).join('');
-        return `
-          <div class="stat" style="min-width:240px;">
-            <div class="label">${esc(t.tier)}</div>
-            ${monthly}
-            ${annual}
-            <ul style="list-style:none;margin-top:8px;color:var(--muted);font-size:11px;">${features}</ul>
-          </div>
-        `;
-      }).join('');
-  }
-
-  async function refresh() {
-    const [healthRes, auditRes] = await Promise.all([
-      fetch('/api/health').then(r => ({ ok: r.ok, body: r.json().catch(() => null) })),
-      fetch('/api/audit?limit=100').then(r => ({ ok: r.ok, body: r.json().catch(() => null) }))
-    ]);
-
-    if (!healthRes.ok || !auditRes.ok) {
-      document.getElementById('stat-mode').textContent = 'offline';
-      document.getElementById('stat-total').textContent = '—';
-      document.getElementById('stat-time').textContent = '—';
-      const modeEl = document.getElementById('mode');
-      modeEl.textContent = 'STATIC PREVIEW';
-      modeEl.className = 'dry';
-      const rows = document.getElementById('rows');
-      rows.innerHTML = '<tr><td id="empty" colspan="5">Live telemetry unavailable. This is a static preview — connect the TEOS backend server (npm run server) to view the live audit trail, mode, and health.</td></tr>';
+    currentTiers = tiers;
+    var cards = document.getElementById('pricing-cards');
+    if (!tiers.length) {
+      cards.innerHTML = '<div style="color:var(--muted);padding:12px;">' + esc(t('pricingUnavailable')) + '</div>';
       return;
     }
-
-    const health = await healthRes.body;
-    const audit = await auditRes.body;
-
-    document.getElementById('stat-mode').textContent = health.mode;
-    document.getElementById('stat-total').textContent = health.totalEntries;
-    document.getElementById('stat-time').textContent = new Date(health.timestamp).toLocaleTimeString();
-
-    const modeEl = document.getElementById('mode');
-    modeEl.textContent = health.mode;
-    modeEl.className = health.mode.toLowerCase();
-
-    const rows = document.getElementById('rows');
-    if (!audit.length) {
-      rows.innerHTML = '<tr><td id="empty" colspan="5">No audit entries yet.</td></tr>';
-      return;
-    }
-    rows.innerHTML = audit.map(e => {
-      const t = (e.timestamp || '').replace('T', ' ').slice(0, 19);
-      const details = e.details ? JSON.stringify(e.details) : '';
-      return `<tr>
-        <td class="mono">${esc(t)}</td>
-        <td>${esc(e.action)}</td>
-        <td>${esc(e.target)}</td>
-        <td class="${statusClass(e.status)}">${esc(e.status)}</td>
-        <td class="mono">${esc(details.length > 120 ? details.slice(0, 120) + '…' : details)}</td>
-      </tr>`;
+    cards.innerHTML = tiers.map(function (tier) {
+      var ar = lang === 'ar' ? PRICING_AR[tier.tier] : null;
+      var features = ar ? ar.features : (tier.features || []);
+      var monthly = tier.monthly.url
+        ? '<div style="margin-top:6px;">' + esc(t('monthly')) + ' <b>' + esc(tier.monthly.price) + '</b> · <a href="' + esc(tier.monthly.url) + '" style="color:var(--blue);font-size:12px;">' + esc(t('checkout')) + '</a></div>'
+        : '<div style="margin-top:6px;">' + esc(t('monthly')) + ' <b>' + esc(tier.monthly.price) + '</b></div>';
+      var annual = tier.annual.url
+        ? '<div style="margin-top:6px;">' + esc(t('annual')) + ' <b>' + esc(tier.annual.price) + '</b> · <a href="' + esc(tier.annual.url) + '" style="color:var(--blue);font-size:12px;">' + esc(t('checkout')) + '</a></div>'
+        : '<div style="margin-top:6px;">' + esc(t('annual')) + ' <b>' + esc(tier.annual.price) + '</b></div>';
+      var lis = features.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('');
+      return '<div class="stat" style="min-width:240px;">' +
+        '<div class="label">' + esc(tier.tier) + '</div>' + monthly + annual +
+        '<ul style="list-style:none;margin-top:8px;color:var(--muted);font-size:11px;">' + lis + '</ul></div>';
     }).join('');
   }
 
-  function startRefresh() {
-    refresh();
-    setInterval(refresh, 5000);
+  function renderRows(audit) {
+    currentAudit = audit;
+    var rows = document.getElementById('rows');
+    if (offline) {
+      rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('offlineMsg')) + '</td></tr>';
+      return;
+    }
+    if (!audit.length) {
+      rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('noAudit')) + '</td></tr>';
+      return;
+    }
+    rows.innerHTML = audit.map(function (e) {
+      var ts = (e.timestamp || '').replace('T', ' ').slice(0, 19);
+      var details = e.details ? JSON.stringify(e.details) : '';
+      return '<tr>' +
+        '<td class="mono">' + esc(ts) + '</td>' +
+        '<td>' + esc(e.action) + '</td>' +
+        '<td>' + esc(e.target) + '</td>' +
+        '<td class="' + statusClass(e.status) + '">' + esc(localStatus(e.status)) + '</td>' +
+        '<td class="mono">' + esc(details.length > 120 ? details.slice(0, 120) + '…' : details) + '</td></tr>';
+    }).join('');
+  }
+
+  async function loadPricing() {
+    try {
+      var res = await fetch('/api/pricing');
+      if (!res.ok) throw new Error('pricing unavailable');
+      var data = await res.json();
+      renderPricing(Array.isArray(data) ? data : (data.tiers || []));
+    } catch (_) {
+      var fallback = window.__PRICING__ || [];
+      if (fallback.length) renderPricing(fallback);
+      else renderPricing([]);
+    }
+  }
+
+  async function refresh() {
+    var healthRes = await fetch('/api/health').then(function (r) { return { ok: r.ok, body: r.json().catch(function () { return null; }) }; });
+    var auditRes = await fetch('/api/audit?limit=100').then(function (r) { return { ok: r.ok, body: r.json().catch(function () { return null; }) }; });
+
+    if (!healthRes.ok || !auditRes.ok) {
+      offline = true;
+      document.getElementById('stat-mode').textContent = t('offline');
+      document.getElementById('stat-total').textContent = '—';
+      document.getElementById('stat-time').textContent = '—';
+      var modeEl = document.getElementById('mode');
+      modeEl.textContent = t('staticPreview');
+      modeEl.className = 'dry';
+      renderRows([]);
+      return;
+    }
+
+    offline = false;
+    var health = await healthRes.body;
+    var audit = await auditRes.body;
+
+    document.getElementById('stat-mode').textContent = localMode(health.mode);
+    document.getElementById('stat-total').textContent = health.totalEntries;
+    document.getElementById('stat-time').textContent = new Date(health.timestamp).toLocaleString(lang === 'ar' ? 'ar-EG' : undefined);
+
+    var modeEl = document.getElementById('mode');
+    modeEl.textContent = localMode(health.mode);
+    modeEl.className = health.mode.toLowerCase();
+
+    renderRows(audit || []);
+  }
+
+  function setLang(l) {
+    lang = l;
+    applyStatic();
+    renderPricing(currentTiers);
+    renderRows(currentAudit);
+    try { localStorage.setItem('teos_lang', l); } catch (_) { /* ignore */ }
+  }
+
+  lang = detectLang();
+  applyStatic();
+
+  var sw = document.getElementById('lang-switch');
+  if (sw) {
+    sw.addEventListener('click', function (e) {
+      e.preventDefault();
+      setLang(lang === 'en' ? 'ar' : 'en');
+    });
   }
 
   refresh();
   loadPricing();
-  startRefresh();
+  setInterval(refresh, 5000);
 </script>
 </body>
 </html>
