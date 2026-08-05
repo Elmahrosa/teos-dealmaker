@@ -4,6 +4,7 @@ const { getStoreAdapter } = require('../store');
 const learning = require('../../services/learning');
 const runtime = require('../../services/workforce/runtime');
 const botLearning = require('../learning');
+const { isFounder } = require('../access');
 const { getCtx } = require('./lib');
 
 async function buildMissions(userId) {
@@ -30,7 +31,7 @@ async function buildMissions(userId) {
     })
     : [design.it('No missions yet — start Mission 1 below.')];
   const rows = [];
-  if (progress.complete) {
+  if (progress.complete || isFounder(userId)) {
     rows.push([design.textButton('Mission 1 · Sell TEOS Dealmaker', 'cc_mission1'), design.textButton('Mission 2 · Revenue Pipeline', 'cc_mission2')]);
     rows.push([design.textButton('New Custom Mission', 'cc_mission_goal')]);
   } else {
@@ -187,7 +188,7 @@ async function launchMission1(userId) {
   if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
   const adapter = getStoreAdapter();
   const progress = await learning.progress(adapter, ctx.workspace.id);
-  if (!progress.complete) {
+  if (!progress.complete && !isFounder(userId)) {
     botLearning.begin(userId);
     const res = await botLearning.buildPrompt(userId, adapter, ctx.workspace.id);
     return {
@@ -215,7 +216,7 @@ async function launchMission2(userId) {
   if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
   const adapter = getStoreAdapter();
   const progress = await learning.progress(adapter, ctx.workspace.id);
-  if (!progress.complete) {
+  if (!progress.complete && !isFounder(userId)) {
     return {
       text: design.compose([
         `${design.EMOJI.warning} ${design.b('Mission 2 is locked')}`,

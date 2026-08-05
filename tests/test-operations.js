@@ -47,7 +47,7 @@ const queue = require('../services/queue');
   assert.strictEqual(cost.estimated_monthly_cents, 540, 'estimated monthly = 18 × 30');
   assert.strictEqual(cost.by_deal.length, 0, 'no deals yet');
 
-  const pipeline = await workforce.runPipelineDemo(adapter, ws.id);
+  const pipeline = await workforce.runPipeline(adapter, ws.id);
   const costAfter = await costIntelligence(adapter, ws.id);
   assert.strictEqual(costAfter.tasks_today, 7, 'seven tasks after pipeline');
   const dealCost = costAfter.by_deal.find(d => d.deal_id === pipeline.deal.id);
@@ -108,7 +108,7 @@ const queue = require('../services/queue');
   await identity.ensureUser(adapter, tgB);
   const wsB = await identity.onboardWorkspace(adapter, {
     ownerUserId: (await identity.getUserByTelegram(adapter, tgB)).id,
-    companyName: 'Beta Ops',
+    companyName: 'Zeta Ops',
     lang: 'en',
     plan: 'solo'
   });

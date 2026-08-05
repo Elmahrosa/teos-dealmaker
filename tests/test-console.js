@@ -37,9 +37,9 @@ const queue = require('../services/queue');
   assert.strictEqual(orchestrator.display, 'Ready', 'orchestrator idle → Ready');
   assert.strictEqual(consoleView.estimated_pipeline_cents, 0, 'no deals yet');
 
-  const pipeline = await workforce.runPipelineDemo(adapter, ws.id);
+  const pipeline = await workforce.runPipeline(adapter, ws.id);
   const consoleAfter = await workforce.workforceConsole(adapter, ws.id);
-  assert.strictEqual(pipeline.won, true, 'pipeline demo closes a win');
+  assert.strictEqual(pipeline.won, true, 'pipeline run closes a win');
   assert.strictEqual(consoleAfter.open_deals, 0, 'won deal no longer open');
   assert.strictEqual(consoleAfter.estimated_pipeline_cents, 0, 'no open pipeline after win');
   assert.ok(consoleAfter.today_cost_cents > 18, 'pipeline adds cost');
@@ -93,7 +93,7 @@ const queue = require('../services/queue');
   await identity.ensureUser(adapter, tgB);
   const wsB = await identity.onboardWorkspace(adapter, {
     ownerUserId: (await identity.getUserByTelegram(adapter, tgB)).id,
-    companyName: 'Beta Console',
+    companyName: 'Zeta Console',
     lang: 'en',
     plan: 'solo'
   });

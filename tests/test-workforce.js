@@ -76,7 +76,7 @@ const workforce = require('../services/workforce');
   assert.strictEqual(actOutreach.runs, 1, 'activity counts outreach runs');
   assert.strictEqual(actProspector.last_output, 'Found 12 more', 'activity latest output');
 
-  const pipeline = await workforce.runPipelineDemo(adapter, ws.id);
+  const pipeline = await workforce.runPipeline(adapter, ws.id);
   assert.ok(pipeline.deal.id, 'pipeline persisted a deal');
   assert.strictEqual(pipeline.runs.length, 5, 'five agents ran');
   assert.ok(pipeline.closing.status === 'won' || pipeline.closing.status === 'blocked', 'closing outcome');
@@ -97,7 +97,7 @@ const workforce = require('../services/workforce');
   await identity.ensureUser(adapter, tgB);
   const wsB = await identity.onboardWorkspace(adapter, {
     ownerUserId: (await identity.getUserByTelegram(adapter, tgB)).id,
-    companyName: 'Beta Workforce',
+    companyName: 'Zeta Workforce',
     lang: 'en',
     plan: 'solo'
   });
@@ -111,7 +111,30 @@ const workforce = require('../services/workforce');
   assert.ok(dealCountA >= 1, 'workspace A has the pipeline deal');
   assert.strictEqual(dealCountB, 0, 'workspace B deals isolated');
 
-  console.log(`\n✓ ai workforce (${38} assertions passed)`);
+  // -------------------------- production safety rails
+  const emergency = require('../config/emergency');
+  const flags = require('../config/flags');
+  try {
+    emergency.setEmergencyStop(true);
+    const halted = await workforce.runPipeline(adapter, ws.id);
+    assert.strictEqual(halted.ok, false, 'pipeline halts while emergency stop engaged');
+    assert.strictEqual(halted.reason, 'emergency_stop', 'halt reason is emergency_stop');
+  } finally {
+    emergency.setEmergencyStop(false);
+  }
+  const flagsBefore = flags.list();
+  try {
+    flags.setFlag('pipeline', false);
+    const blocked = await workforce.runPipeline(adapter, ws.id);
+    assert.strictEqual(blocked.ok, false, 'pipeline blocked when pipeline flag is off');
+    assert.strictEqual(blocked.reason, 'feature_disabled:pipeline', 'block reason is the pipeline flag');
+  } finally {
+    flags.setFlag('pipeline', flagsBefore.pipeline !== false);
+  }
+  const after = await workforce.runPipeline(adapter, ws.id);
+  assert.strictEqual(after.ok, true, 'pipeline runs again once rails are released');
+
+  console.log(`\n✓ ai workforce (${42} assertions passed)`);
   console.log(`  ${view.agents.length} agents · prospector runs ${actProspector.runs} · cost $${(agentAgain.total_cost_cents / 100).toFixed(2)} · pipeline deal #${pipeline.deal.id}`);
   process.exit(0);
 })().catch(err => {

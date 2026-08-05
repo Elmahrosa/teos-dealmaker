@@ -54,7 +54,7 @@ function evaluateMission(goal, knowledge) {
     successCriteria.push('A written strategy with a decision the founder can approve or reject.');
   }
 
-  const makesSense = Boolean(company.company_name || company.products || /test|demo/i.test(goal));
+  const makesSense = Boolean(company.company_name || company.products || /test|sample/i.test(goal));
   return {
     makesSense,
     reasoning,

@@ -1,6 +1,5 @@
 const design = require('../design');
 const audit = require('../../utils/auditLogger');
-const { getMode } = require('../../config/mode');
 const { BOT_CONFIG } = require('../config');
 const { isFounder, isAdmin } = require('../access');
 const { getStoreAdapter } = require('../store');
@@ -16,6 +15,9 @@ const {
 const { buildLearn } = require('./learning');
 
 async function buildHome(userId) {
+  if (isFounder(userId)) {
+    return require('./founder').buildFounderHome(userId);
+  }
   const ctx = await getCtx(userId);
   const isAdminOrFounder = isAdmin(userId) || isFounder(userId);
   if (!ctx) {
@@ -24,7 +26,7 @@ async function buildHome(userId) {
       `${design.EMOJI.ai} ${design.b('TEOS DEALMAKER')}`,
       design.it('Mission Control — AI Revenue Workforce'),
       design.divider(),
-      `${design.row('Status', design.modeBadge(getMode()))}`,
+      `${design.row('Platform', 'Production · live')}`,
       `${design.row('Revenue Team', '13 specialists available')}`,
       `${design.row('Audit', `${entries.length} entries`)}\n${design.divider()}`,
       `${design.it('Select a module to manage the workforce.')}`
@@ -123,7 +125,6 @@ async function buildDashboard(userId) {
     design.it('Operational overview'),
     design.divider(),
     ctx ? design.row('Workspace', ctx.workspace.name) : null,
-    design.row('Mode', design.modeBadge(getMode())),
     design.row('Bot', `@${BOT_CONFIG.botName}`),
     ctx ? design.row('Plan', titleCase(ctx.workspace.plan)) : null,
     ctx ? design.row('Members', String(ctx.membersCount)) : null,
@@ -139,7 +140,7 @@ async function buildDashboard(userId) {
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('Run Sales Demo', 'cc_sales_run'), design.textButton('Run Pipeline', 'cc_pipeline_run')],
+      [design.textButton('Run Sales Flow', 'cc_sales_run'), design.textButton('Run Pipeline', 'cc_pipeline_run')],
       [design.textButton('Audit Log', 'cc_audit'), design.textButton('Back to Home', 'cc_home')]
     ])
   };

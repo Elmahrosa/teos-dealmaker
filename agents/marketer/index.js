@@ -19,7 +19,7 @@ function craftPositioning(lead, playbook) {
 
   const valueProps = [
     'Multi-agent orchestration across the full deal lifecycle.',
-    'Audit-trailed, DRY-first safety for every action.',
+    'Policy-governed safety for every action.',
     'Rule-based, deterministic behavior - no surprise spend.'
   ];
 

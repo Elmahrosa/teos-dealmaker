@@ -91,7 +91,7 @@ const path = require('path');
   ok(mcp.adapters.get('civic-mixer').config().endpoint === '', 'plugin adapter resolves for its server');
   ok(mcp.adapters.get('github') === singleton.registry.get('civic-mixer').adapter, 'plugin adapter is the transport fallback');
 
-  const issueExec = await mcp.execute('civic.issue.create', { title: 'Demo issue' });
+  const issueExec = await mcp.execute('civic.issue.create', { title: 'Test issue' });
   ok(issueExec.ok === true && issueExec.simulated === true && issueExec.reason === 'mcp_not_configured',
     'no endpoint -> client stays simulated (mcp_not_configured)');
   const denied = await mcp.execute('civic.issue.create', {});

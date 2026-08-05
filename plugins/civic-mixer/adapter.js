@@ -60,7 +60,7 @@ function simulated(toolId, payload) {
   const body = payload || {};
   switch (toolId) {
     case 'civic.lookup':
-      return { ok: true, data: { entity: { civicId: body.civicId || 'CIVIC-0001', name: 'Demo Entity' }, status: 'found' }, simulated: true };
+      return { ok: true, data: { entity: { civicId: body.civicId || 'CIVIC-0001', name: 'Test Entity' }, status: 'found' }, simulated: true };
     case 'civic.identity.verify':
       return { ok: true, data: { identityId: body.identityId || 'IDENT-0001', verified: true, confidence: 0.98 }, simulated: true };
     case 'civic.vote.create':

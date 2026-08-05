@@ -6,6 +6,7 @@ const knowledgeState = require('./knowledgeState');
 const memoryEdit = require('./memoryEdit');
 const { getStoreAdapter } = require('./store');
 const { isFounder, isAdmin } = require('./access');
+const { setApprovalMode } = require('../config/approval');
 const i18n = require('./i18n');
 const { setWorkspaceLang } = require('../services/workspace');
 const providers = require('../services/providers');
@@ -170,22 +171,74 @@ async function handleCallback(query, bot) {
       if (!isAdmin(userId)) return send(denied('audit feed'));
       return send(screens.buildAudit(0));
     }
+    case 'cc_fd_mode':
+      if (!isFounder(userId)) return send(denied('founder actions'));
+      return send(screens.buildFounderSystemMode(userId));
+    case 'cc_fd_approval':
+      if (!isFounder(userId)) return send(denied('founder actions'));
+      return send(screens.buildFounderApproval(userId));
+    case 'cc_fd_billing':
+      if (!isFounder(userId)) return send(denied('founder actions'));
+      return send(screens.buildFounderBilling(userId));
+    case 'cc_fd_workspaces':
+      if (!isFounder(userId)) return send(denied('founder actions'));
+      return send(await screens.buildFounderWorkspaces(userId));
+    case 'cc_fd_customers':
+      if (!isFounder(userId)) return send(denied('founder actions'));
+      return send(await screens.buildFounderCustomers(userId));
+    case 'cc_fd_revenue':
+      if (!isFounder(userId)) return send(denied('founder actions'));
+      return send(await screens.buildFounderRevenue(userId));
+    case 'cc_fd_debug':
+      if (!isFounder(userId)) return send(denied('founder actions'));
+      return send(await screens.buildFounderDebug(userId));
+    case 'cc_fd_ops':
+      if (!isFounder(userId)) return send(denied('founder actions'));
+      return send(await screens.buildFounderOps(userId));
+    case 'cc_fd_sentinel':
+      if (!isFounder(userId)) return send(denied('founder actions'));
+      return send(screens.buildFounderSentinel(userId));
+    case 'cc_fd_policy':
+      if (!isFounder(userId)) return send(denied('founder actions'));
+      return send(screens.buildFounderPolicy(userId));
+    case 'cc_fd_analytics':
+      if (!isFounder(userId)) return send(denied('founder actions'));
+      return send(await screens.buildFounderAnalytics(userId));
+    case 'cc_fd_flags':
+      if (!isFounder(userId)) return send(denied('founder actions'));
+      return send(screens.buildFounderFlags(userId));
+    case 'cc_fd_emergency':
+      if (!isFounder(userId)) return send(denied('founder actions'));
+      return send(screens.buildFounderEmergency(userId));
+    case 'cc_fd_emergency_stop':
+      if (!isFounder(userId)) return send(denied('founder actions'));
+      require('../config/emergency').setEmergencyStop(true);
+      audit.writeEntry('BOT_EMERGENCY_STOP', String(userId), 'success', { engaged: true });
+      return send(screens.buildFounderEmergency(userId));
+    case 'cc_fd_emergency_resume':
+      if (!isFounder(userId)) return send(denied('founder actions'));
+      require('../config/emergency').setEmergencyStop(false);
+      audit.writeEntry('BOT_EMERGENCY_STOP', String(userId), 'success', { engaged: false });
+      return send(screens.buildFounderEmergency(userId));
     default: {
       if (action.startsWith('cc_audit:')) {
         if (!isAdmin(userId)) return send(denied('audit feed'));
         return send(screens.buildAudit(Number(action.split(':')[1]) || 0));
       }
-      if (action === 'cc_admin') return send(screens.buildAdmin(userId));
+      if (action === 'cc_admin') {
+        if (!isAdmin(userId)) return send(denied('admin console'));
+        return send(screens.buildAdmin(userId));
+      }
       if (action === 'cc_sales_run') {
         try { await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
-        return send(screens.buildSalesDemo());
+        return send(screens.buildSalesFlow());
       }
       if (action === 'cc_pipeline_run') {
         try { await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
         const ctx = await getCtx(userId);
         if (!ctx) return send({ text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null });
         try {
-          const result = await workforce.runPipelineDemo(getStoreAdapter(), ctx.workspace.id);
+          const result = await workforce.runPipeline(getStoreAdapter(), ctx.workspace.id);
           return send(screens.buildPipelineResult(userId, result));
         } catch (err) {
           audit.writeEntry('BOT_PIPELINE_ERROR', String(userId), 'error', { error: err.message });
@@ -295,11 +348,11 @@ async function handleCallback(query, bot) {
       }
       if (action === 'cc_live_cancel') return send(screens.buildAdmin(userId));
       if (action === 'cc_dry') {
-        if (!isAdmin(userId)) return send(denied('admin actions'));
+        if (!isFounder(userId)) return send(denied('founder actions'));
         return send(screens.modeConfirm('DRY'));
       }
       if (action === 'cc_dry_confirm') {
-        if (!isAdmin(userId)) return send(denied('admin actions'));
+        if (!isFounder(userId)) return send(denied('founder actions'));
         return screens.applyMode(query, bot, 'DRY');
       }
       if (action === 'cc_dry_cancel') return send(screens.buildAdmin(userId));
@@ -315,6 +368,30 @@ async function handleCallback(query, bot) {
             console.error('[menu] setWorkspaceLang failed:', err.message));
         }
         return send(await screens.buildSettings(userId));
+      }
+      if (action.startsWith('cc_fd_approval_set:')) {
+        if (!isFounder(userId)) return send(denied('founder actions'));
+        const mode = action.split(':')[1];
+        try {
+          setApprovalMode(mode);
+          audit.writeEntry('BOT_APPROVAL_MODE', String(userId), 'success', { mode });
+          return send(screens.buildFounderApproval(userId));
+        } catch (err) {
+          return send({ text: design.errorPanel('Approval mode', String(err.message)).text, keyboard: null });
+        }
+      }
+      if (action.startsWith('cc_fd_flags_set:')) {
+        if (!isFounder(userId)) return send(denied('founder actions'));
+        const flagKey = action.split(':')[1];
+        const flags = require('../config/flags');
+        const current = flags.list();
+        try {
+          const updated = flags.setFlag(flagKey, current[flagKey] === false);
+          audit.writeEntry('BOT_FEATURE_FLAG', String(userId), 'success', { flag: flagKey, enabled: updated[flagKey] !== false });
+          return send(screens.buildFounderFlags(userId));
+        } catch (err) {
+          return send({ text: design.errorPanel('Feature flag', String(err.message)).text, keyboard: null });
+        }
       }
       if (action === 'cc_connect_crm') {
         return send(await screens.buildIntegrations(userId));

@@ -64,6 +64,15 @@ function createPlatform(opts) {
   async function canUseCapability({ workspaceId, userId, role, capability, requester, payload }) {
     if (!enterprise) return { allowed: true, reason: 'platform_inert' };
     if (!capability) return { allowed: false, reason: 'capability_required' };
+    // Founder bypass: the platform owner is never limited by subscription,
+    // plan, seats, agents, quotas or RBAC — determined only by
+    // TEOS_FOUNDER_TELEGRAM_ID, never by billing state.
+    const founderId = process.env.TEOS_FOUNDER_TELEGRAM_ID;
+    const founderActing = [userId, requester && requester.user_id, requester && requester.telegram_id]
+      .some(v => founderId && v != null && Number(v) === Number(founderId));
+    if (founderActing) {
+      return { allowed: true, workspaceId, capability, reason: 'founder_bypass', founder: true };
+    }
     const tenant = await tenants.resolve(workspaceId);
     if (!tenant.ok) return { allowed: false, reason: tenant.error, workspaceId };
     if (!tenant.active) return { allowed: false, reason: 'tenant_inactive', workspaceId };

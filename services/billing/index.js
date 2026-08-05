@@ -60,6 +60,22 @@ async function sendTelegramNotification(message) {
   }
 }
 
+// The founder workspace is never modified by billing webhooks. Identity is
+// determined by TEOS_FOUNDER_TELEGRAM_ID (or the internal 'founder' plan) —
+// never by subscription state.
+async function founderProtected(repos, workspaceId) {
+  if (!workspaceId) return true;
+  const workspace = await repos.workspaces.get(workspaceId);
+  if (!workspace) return true;
+  if (workspace.plan === 'founder') return true;
+  const founderId = process.env.TEOS_FOUNDER_TELEGRAM_ID;
+  if (founderId && workspace.owner_user_id) {
+    const owner = await repos.users.getById(workspace.owner_user_id);
+    if (owner && Number(owner.telegram_id) === Number(founderId)) return true;
+  }
+  return false;
+}
+
 async function handleSubscriptionCreated(adapter, data) {
   const repos = createRepos(adapter);
   const productId = data.product_id || data.plan_id || null;
@@ -85,6 +101,11 @@ async function handleSubscriptionCreated(adapter, data) {
   if (!workspaceId) {
     console.warn('[billing] subscription.created: no workspace found for customer', customerId);
     return { ok: false, reason: 'workspace_not_found' };
+  }
+
+  if (await founderProtected(repos, workspaceId)) {
+    console.warn('[billing] subscription.created: founder workspace protected');
+    return { ok: true, workspaceId, founderProtected: true };
   }
 
   const existing = await repos.subscriptions.get(workspaceId);
@@ -146,6 +167,11 @@ async function handleSubscriptionRenewed(adapter, data) {
     return { ok: false, reason: 'workspace_not_found' };
   }
 
+  if (await founderProtected(repos, workspaceId)) {
+    console.warn('[billing] subscription.renewed: founder workspace protected');
+    return { ok: true, workspaceId, founderProtected: true };
+  }
+
   const sub = await repos.subscriptions.get(workspaceId);
   if (sub) {
     await repos.subscriptions.update(sub.id, { status: 'active', renewal_date: renewalDate });
@@ -180,12 +206,15 @@ async function handleSubscriptionCancelled(adapter, data) {
     return { ok: false, reason: 'workspace_not_found' };
   }
 
+  if (await founderProtected(repos, workspaceId)) {
+    console.warn('[billing] subscription.cancelled: founder workspace protected');
+    return { ok: true, workspaceId, founderProtected: true };
+  }
+
   const sub = await repos.subscriptions.get(workspaceId);
   if (sub) {
     await repos.subscriptions.update(sub.id, { status: 'cancelled' });
   }
-
-  await repos.workspaces.update(workspaceId, { plan: 'free', status: 'active' });
 
   await repos.audit.add({
     workspace_id: workspaceId,
@@ -195,7 +224,7 @@ async function handleSubscriptionCancelled(adapter, data) {
     version: 'v1.0.0'
   });
 
-  await sendTelegramNotification(`❌ <b>Subscription Cancelled</b>\nWorkspace: ${workspaceId}\nDowngraded to Free`);
+  await sendTelegramNotification(`❌ <b>Subscription Cancelled</b>\nWorkspace: ${workspaceId}\nPlan retained; subscription inactive`);
 
   return { ok: true, workspaceId };
 }
@@ -249,6 +278,11 @@ async function handlePaymentFailed(adapter, data) {
   if (!workspaceId) {
     console.warn('[billing] payment.failed: no workspace for customer', customerId);
     return { ok: false, reason: 'workspace_not_found' };
+  }
+
+  if (await founderProtected(repos, workspaceId)) {
+    console.warn('[billing] payment.failed: founder workspace protected');
+    return { ok: true, workspaceId, founderProtected: true };
   }
 
   const sub = await repos.subscriptions.get(workspaceId);
@@ -316,6 +350,11 @@ async function handlePlanChange(adapter, data, direction) {
   if (!workspaceId) {
     console.warn(`[billing] subscription.${direction}: no workspace for customer`, customerId);
     return { ok: false, reason: 'workspace_not_found' };
+  }
+
+  if (await founderProtected(repos, workspaceId)) {
+    console.warn(`[billing] subscription.${direction}: founder workspace protected`);
+    return { ok: true, workspaceId, founderProtected: true };
   }
 
   if (newPlan) {

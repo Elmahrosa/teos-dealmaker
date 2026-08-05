@@ -7,7 +7,7 @@
 // or run through npm:   npm test -- (only when DATABASE_URL is exported)
 //
 // When DATABASE_URL is not set this suite skips cleanly (exit 0) so the
-// default test suite stays infrastructure-free. Every run uses random telegram
+// default test suite stays infrastructure-independent. Every run uses random telegram
 // ids so the test is re-runnable against the same database.
 
 const fs = require('fs');

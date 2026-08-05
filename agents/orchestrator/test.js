@@ -4,7 +4,7 @@ const testResponses = [
   {
     id: 'orch_001',
     from: 'fawry@fawry.com',
-    body: 'Sounds great! Let us schedule a demo to explore integration possibilities.',
+    body: 'Sounds great! Let us schedule a call to explore integration possibilities.',
     industry: 'fintech'
   },
   {

@@ -214,7 +214,7 @@ TEOS Sentinel Shield is delivered as an enterprise governance plugin. It provide
 - Policy enforcement
 - Audit logging
 
-Mission Controller invokes Sentinel through the Plugin Platform rather than direct integration. Sentinel remains Elmahrosa International's flagship demo offering — its code-audit, smart-contract review, and CI/CD security capabilities are pitched to prospects, with a public landing page served alongside the Dealmaker dashboard.
+Mission Controller invokes Sentinel through the Plugin Platform rather than direct integration. Sentinel is a production governance capability — code audit, smart-contract review, and CI/CD security are enforced live, with a public landing page and governance console served alongside the Dealmaker dashboard.
 
 ### Deployment Flexibility
 - Multi-tenant architecture for SaaS or private instance deployment
@@ -357,6 +357,14 @@ Internal agent, workforce, and mission execution is driven by the Telegram bot a
 
 ## Major Milestones
 
+**v1.0.2 — Production SaaS Release**
+- Commercial plans only: `free`/`trial` migrated to `solo`, `trial`/`trialing` statuses to `pending` (`scripts/migrate-production.js`)
+- Founder permanent bypass: billing, seats, agents, workspace and quota gates never apply to `TEOS_FOUNDER_TELEGRAM_ID`
+- Founder Control Center consoles: Policy Engine, Analytics, Feature Flags, Emergency Stop, plus existing Mode/Approval/Billing/Workspaces/Customers/Revenue/Debug/Ops/Sentinel
+- Emergency Stop halts all agent execution; Feature Flags gate capability families at the executor
+- Enterprise readiness: CSP, rate limits, HMAC webhook verification
+- Live-product messaging: internal execution modes never exposed publicly
+
 **v1.0.0 — Public Launch**
 - TEOS DEALMAKER rebrand: Enterprise AI Revenue Operating System
 - Env-driven Dodo production catalog (Solo, Growth, Business, Enterprise + add-ons)
@@ -378,7 +386,7 @@ Internal agent, workforce, and mission execution is driven by the Telegram bot a
 - Enterprise Platform (tenants, entitlements, RBAC authorization)
 
 **Current Status**
-v1.0.0 Public Launch — production catalog configured, release tagged
+v1.0.2 Production SaaS Release — commercial plans live, founder controls active, release tagged
 
 ## License
 

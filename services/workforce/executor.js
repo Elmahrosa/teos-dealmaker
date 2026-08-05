@@ -6,11 +6,55 @@ const confidence = require('./confidence');
 const approvals = require('./approvals');
 const recovery = require('./recovery');
 const telemetry = require('./telemetry');
+const approvalMode = require('../../config/approval');
+const emergency = require('../../config/emergency');
+const flags = require('../../config/flags');
 const { emit, EVENT_NAMES } = require('./events');
+
+const FLAG_BY_AGENT = {
+  orchestrator: 'missions',
+  planner: 'missions',
+  revenue_strategist: 'missions',
+  market_intelligence: 'missions',
+  intelligence: 'missions',
+  research: 'missions',
+  prospecting: 'sales',
+  qualification: 'sales',
+  outreach: 'sales',
+  strategist: 'sales',
+  marketer: 'sales',
+  sales: 'sales',
+  negotiator: 'sales',
+  treasurer: 'sales',
+  gatekeeper: 'sales',
+  closing: 'sales'
+};
 
 async function executeStep(adapter, workspaceId, step, opts) {
   const o = opts || {};
   const repos = forWorkspace(adapter, workspaceId);
+
+  if (emergency.isEngaged()) {
+    await repos.planSteps.update(step.id, {
+      status: 'failed',
+      error: 'emergency_stop',
+      completed_at: new Date().toISOString()
+    });
+    emit(EVENT_NAMES.TASK_FAILED, { stepId: step.id, planId: step.plan_id, agentType: step.agent_type, error: 'emergency_stop' });
+    return { stepId: step.id, status: 'failed', error: 'emergency_stop' };
+  }
+
+  const flag = FLAG_BY_AGENT[step.agent_type];
+  if (flag && !flags.isEnabled(flag)) {
+    await repos.planSteps.update(step.id, {
+      status: 'skipped',
+      error: 'feature_disabled:' + flag,
+      completed_at: new Date().toISOString()
+    });
+    emit(EVENT_NAMES.TASK_FAILED, { stepId: step.id, planId: step.plan_id, agentType: step.agent_type, error: 'feature_disabled:' + flag });
+    return { stepId: step.id, status: 'skipped', error: 'feature_disabled', flag };
+  }
+
   const route = dispatcher.dispatch({ agentType: step.agent_type, priority: step.priority, opts: o });
 
   await repos.planSteps.update(step.id, {
@@ -94,8 +138,9 @@ async function executeStep(adapter, workspaceId, step, opts) {
   const gates = approvals.gatesFor(step);
   const lowConfidence = confidence.needsApproval(conf.confidence);
   const needsHuman = gates.length > 0 || lowConfidence;
+  const autoApprove = approvalMode.autoApproves();
 
-  if (needsHuman) {
+  if (needsHuman && !autoApprove) {
     const reason = gates.length
       ? `High-risk action requiring founder approval: ${gates.join(', ')}.`
       : `Confidence ${Math.round(conf.confidence * 100)}% (${conf.label}) is below the auto-approval threshold.`;
@@ -118,6 +163,24 @@ async function executeStep(adapter, workspaceId, step, opts) {
     });
     emit(EVENT_NAMES.CONFIDENCE_LOW, { stepId: step.id, confidence: conf.confidence, label: conf.label, reason });
     return { stepId: step.id, status: 'awaiting_approval', output, review, confidence: conf, approvalId: approvalRow.id, gates };
+  }
+
+  if (needsHuman) {
+    // Approval Mode is Automatic or Simulation: record the gate and run through.
+    const reason = gates.length
+      ? `High-risk action auto-approved (${approvalMode.getApprovalMode()}): ${gates.join(', ')}.`
+      : `Low confidence auto-approved (${approvalMode.getApprovalMode()}): ${Math.round(conf.confidence * 100)}% (${conf.label}).`;
+    await repos.planSteps.update(step.id, {
+      status: 'completed',
+      output,
+      review: { ...review, revised: revisions, autoApproved: true, approvalMode: approvalMode.getApprovalMode() },
+      confidence: conf.confidence,
+      retries,
+      attempt: attempts,
+      completed_at: new Date().toISOString()
+    });
+    emit(EVENT_NAMES.TASK_COMPLETED, { stepId: step.id, planId: step.plan_id, agentType: step.agent_type, status: 'completed', autoApproved: true, reason });
+    return { stepId: step.id, status: 'completed', output, review, confidence: conf, attempts, retries, autoApproved: true, reason };
   }
 
   await repos.planSteps.update(step.id, {

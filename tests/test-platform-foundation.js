@@ -16,7 +16,7 @@ const assert = require('assert');
   const repos = createRepos(adapter);
 
   // ------------------------------------------------------------- fixtures
-  const freeWs = repos.workspaces.create({ name: 'Free Co', slug: 'free-co', plan: 'free', status: 'active' });
+  const soloWs = repos.workspaces.create({ name: 'Solo Co', slug: 'solo-co', plan: 'solo', status: 'active' });
   const growthWs = repos.workspaces.create({ name: 'Growth Co', slug: 'growth-co', plan: 'growth', status: 'active' });
   const corpWs = repos.workspaces.create({ name: 'Corp Co', slug: 'corp-co', plan: 'corporate', status: 'active' });
   const entWs = repos.workspaces.create({ name: 'Ent Co', slug: 'ent-co', plan: 'enterprise', status: 'active' });
@@ -44,7 +44,7 @@ const assert = require('assert');
 
   const sub = await platform.resolveSubscription(growthWs.id);
   ok(sub && sub.plan === 'growth' && sub.status === 'active', 'resolveSubscription returns subscription');
-  ok(await platform.resolveSubscription(freeWs.id) === null, 'resolveSubscription null when none exists');
+  ok(await platform.resolveSubscription(soloWs.id) === null, 'resolveSubscription null when none exists');
 
   const plan = await platform.resolvePlan(growthWs.id);
   ok(plan.ok && plan.plan === 'growth' && plan.limits.seats === 10, 'resolvePlan returns catalog limits');
@@ -60,36 +60,40 @@ const assert = require('assert');
   // seats
   const seats = await platform.entitlements.checkSeats(growthWs.id);
   ok(seats.ok === true && seats.remaining === 9, 'growth seats: 1 of 10 used, 9 remaining');
-  const freeSeats = await platform.entitlements.checkSeats(freeWs.id);
-  ok(freeSeats.ok === true && freeSeats.limit === 1, 'free plan caps at one seat');
-  repos.members.add({ workspace_id: freeWs.id, user_id: userB.id, role: 'operator' });
-  ok((await platform.entitlements.checkSeats(freeWs.id)).ok === false, 'free plan seat limit enforced');
+  const soloSeats = await platform.entitlements.checkSeats(soloWs.id);
+  ok(soloSeats.ok === true && soloSeats.limit === 3, 'solo plan allows three seats');
+  repos.members.add({ workspace_id: soloWs.id, user_id: userB.id, role: 'operator' });
+  ok((await platform.entitlements.checkSeats(soloWs.id)).ok === true, 'solo allows member up to limit');
+  const extra1 = repos.users.create({ email: 'c@acme.com' });
+  const extra2 = repos.users.create({ email: 'd@acme.com' });
+  repos.members.add({ workspace_id: soloWs.id, user_id: extra1.id, role: 'operator' });
+  repos.members.add({ workspace_id: soloWs.id, user_id: extra2.id, role: 'operator' });
+  ok((await platform.entitlements.checkSeats(soloWs.id)).ok === false, 'solo seat limit enforced at 3');
   const entSeats = await platform.entitlements.checkSeats(entWs.id);
   ok(entSeats.ok === true && entSeats.remaining === null, 'enterprise seats unlimited');
 
   // agents
-  for (const name of ['prospecting', 'qualification', 'outreach']) {
-    repos.agents.create({ workspace_id: freeWs.id, agent_type: name, status: 'active' });
-  }
-  const freeAgents = await platform.entitlements.checkAgents(freeWs.id);
-  ok(freeAgents.ok === false && freeAgents.limit === 3, 'free plan agent limit enforced at 3');
+  const soloAgents = await platform.entitlements.checkAgents(soloWs.id);
+  ok(soloAgents.ok === true && soloAgents.limit === 13, 'solo plan allows 13 agents');
+  for (let i = 0; i < 13; i++) repos.agents.create({ workspace_id: soloWs.id, agent_type: 'agent_' + i, status: 'active' });
+  ok((await platform.entitlements.checkAgents(soloWs.id)).ok === false, 'solo agent limit enforced at 13');
   ok((await platform.entitlements.checkAgents(entWs.id)).ok === true, 'enterprise agents unlimited');
 
   // capability scope
-  ok((await platform.entitlements.checkCapability(freeWs.id, 'sentinel.scan')).error === 'capability_not_entitled',
-    'free plan has no plugin scope');
-  ok((await platform.entitlements.checkCapability(growthWs.id, 'sentinel.scan')).allowed === true,
-    'growth plan grants plugin scope');
-  ok((await platform.entitlements.checkCapability(growthWs.id, 'custom.myplugin.run')).error === 'capability_not_entitled',
-    'growth plan has no custom scope');
+  ok((await platform.entitlements.checkCapability(soloWs.id, 'sentinel.scan')).allowed === true,
+    'solo plan grants plugin scope');
+  ok((await platform.entitlements.checkCapability(soloWs.id, 'custom.myplugin.run')).error === 'capability_not_entitled',
+    'solo plan has no custom scope');
   ok((await platform.entitlements.checkCapability(corpWs.id, 'custom.myplugin.run')).allowed === true,
     'corporate plan grants custom scope');
   ok((await platform.entitlements.checkCapability(entWs.id, 'custom.myplugin.run')).allowed === true,
     'enterprise grants everything');
 
   // plugin install
-  ok((await platform.entitlements.checkPluginInstall(freeWs.id, 'civic-mixer')).error === 'plugin_not_entitled',
-    'free plan cannot install first-party plugins');
+  ok((await platform.entitlements.checkPluginInstall(soloWs.id, 'civic-mixer')).allowed === true,
+    'solo plan installs civic-mixer');
+  ok((await platform.entitlements.checkPluginInstall(soloWs.id, 'github')).error === 'plugin_not_entitled',
+    'solo plan denies unlisted plugin');
   ok((await platform.entitlements.checkPluginInstall(growthWs.id, 'civic-mixer')).allowed === true,
     'growth plan installs civic-mixer');
   ok((await platform.entitlements.checkPluginInstall(growthWs.id, 'github')).error === 'plugin_not_entitled',
@@ -98,9 +102,11 @@ const assert = require('assert');
     'enterprise installs any plugin');
 
   // usage quota
-  repos.usage.record({ workspace_id: freeWs.id, provider: 'anthropic', model: 'claude', input_tokens: 1000, output_tokens: 500, cost_cents: 600 });
-  const freeUsage = await platform.checkQuota(freeWs.id);
-  ok(freeUsage.ok === false && freeUsage.error === 'usage_quota_exceeded', 'free plan cost quota enforced');
+  repos.usage.record({ workspace_id: soloWs.id, provider: 'anthropic', model: 'claude', input_tokens: 1000, output_tokens: 500, cost_cents: 600 });
+  const soloUsage = await platform.checkQuota(soloWs.id);
+  ok(soloUsage.ok === true && soloUsage.limit.cost_cents_month === 5000, 'solo usage within quota');
+  repos.usage.record({ workspace_id: soloWs.id, provider: 'anthropic', model: 'claude', input_tokens: 1000, output_tokens: 500, cost_cents: 4500 });
+  ok((await platform.checkQuota(soloWs.id)).ok === false && (await platform.checkQuota(soloWs.id)).error === 'usage_quota_exceeded', 'solo plan cost quota enforced');
   repos.usage.record({ workspace_id: growthWs.id, provider: 'anthropic', model: 'claude', input_tokens: 1000, output_tokens: 500, cost_cents: 100 });
   const growthUsage = await platform.checkQuota(growthWs.id);
   ok(growthUsage.ok === true && growthUsage.limit.cost_cents_month === 15000, 'growth usage within quota');
@@ -142,7 +148,7 @@ const assert = require('assert');
   ok(gate.allowed === true && gate.plan === 'growth', 'full gate allows entitled owner capability');
   const gateDenied = await platform.canUseCapability({ workspaceId: growthWs.id, role: 'viewer', capability: 'sentinel.audit' });
   ok(gateDenied.allowed === false && gateDenied.reason === 'insufficient_role', 'full gate enforces RBAC');
-  const gatePlan = await platform.canUseCapability({ workspaceId: freeWs.id, capability: 'sentinel.scan' });
+  const gatePlan = await platform.canUseCapability({ workspaceId: soloWs.id, capability: 'custom.myplugin.run' });
   ok(gatePlan.allowed === false && gatePlan.reason === 'capability_not_entitled', 'full gate enforces plan scope');
   const gateLicense = await platform.canUseCapability({ workspaceId: corpWs.id, capability: 'sentinel.scan' });
   ok(gateLicense.allowed === false && gateLicense.reason === 'subscription_inactive', 'full gate enforces license');

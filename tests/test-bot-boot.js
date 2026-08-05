@@ -70,7 +70,7 @@ const menu = require('../bot/menu');
   // An existing founder lands on the home dashboard.
   const home = await handleMessage(msg(FOUNDER, '/start'));
   equal(home.chatId, FOUNDER, 'founder /start is addressed to their chat');
-  check(/MISSION CONTROL/i.test(home.text), 'founder home shows the MISSION CONTROL hero');
+  check(/CONTROL CENTER/i.test(home.text), 'founder home shows the Control Center hero');
   check(home.replyMarkup && home.replyMarkup.inline_keyboard, 'founder home renders a keyboard');
 
   // Command sweep: every registered command answers with a screen.
@@ -86,9 +86,9 @@ const menu = require('../bot/menu');
       `command ${cmd} answers with a screen`);
   }
 
-  // Free text in DRY mode is acknowledged without crashing.
+  // Plain-text text is acknowledged without crashing.
   const dryText = await handleMessage(msg(FOUNDER, 'follow up with Acme about the proposal'));
-  check(Boolean(dryText && dryText.text), 'free text is acknowledged');
+  check(Boolean(dryText && dryText.text), 'plain-text text is acknowledged');
 
   // Unknown commands are rejected with a hint.
   const unknown = await handleMessage(msg(FOUNDER, '/totally_unknown_cmd'));
@@ -115,7 +115,7 @@ const menu = require('../bot/menu');
     };
   }
   const CALLBACK_MARKERS = [
-    ['cc_home', 'MISSION CONTROL'],
+    ['cc_home', 'Control Center'],
     ['cc_workforce', 'Revenue Team'],
     ['cc_pipeline', 'Pipeline'],
     ['cc_deals', 'Deals'],
@@ -131,7 +131,7 @@ const menu = require('../bot/menu');
   }
 
   console.log(`\n\u2713 bot boot smoke (${n} assertions passed)`);
-  console.log('  message chain: /start · onboarding · 21 commands · free text · unknown');
+  console.log('  message chain: /start · onboarding · 21 commands · plain-text text · unknown');
   console.log('  callback chain: 5 router screens render + answer');
   process.exit(0);
 })().catch(err => {

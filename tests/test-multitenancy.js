@@ -12,11 +12,11 @@ function check(label, cond) {
   const repos = createRepos(adapter);
 
   const wsA = repos.workspaces.create({ name: 'Acme Ltd', slug: 'acme', plan: 'growth' });
-  const wsB = repos.workspaces.create({ name: 'Beta Corp', slug: 'beta', plan: 'corporate' });
+  const wsB = repos.workspaces.create({ name: 'Zeta Corp', slug: 'zeta', plan: 'corporate' });
   check('workspaces created', wsA.id && wsB.id && wsA.slug === 'acme');
 
   const userA = repos.users.create({ email: 'owner@acme.com', display_name: 'Ayman' });
-  const userB = repos.users.create({ email: 'lead@beta.com', display_name: 'Layla' });
+  const userB = repos.users.create({ email: 'lead@zeta.com', display_name: 'Layla' });
 
   repos.members.add({ workspace_id: wsA.id, user_id: userA.id, role: 'owner' });
   repos.members.add({ workspace_id: wsB.id, user_id: userB.id, role: 'admin' });
@@ -25,12 +25,12 @@ function check(label, cond) {
   check('user A not a member of workspace B', repos.members.get(wsB.id, userA.id) === null);
 
   const dealA = repos.deals.create({ workspace_id: wsA.id, company_name: 'Acme Client', stage: 'lead', deal_value: 5000 });
-  const dealB = repos.deals.create({ workspace_id: wsB.id, company_name: 'Beta Client', stage: 'qualified', deal_value: 90000 });
+  const dealB = repos.deals.create({ workspace_id: wsB.id, company_name: 'Zeta Client', stage: 'qualified', deal_value: 90000 });
 
   const listA = repos.deals.list(wsA.id);
   const listB = repos.deals.list(wsB.id);
   check('workspace A sees only its deal', listA.length === 1 && listA[0].company_name === 'Acme Client');
-  check('workspace B sees only its deal', listB.length === 1 && listB[0].company_name === 'Beta Client');
+  check('workspace B sees only its deal', listB.length === 1 && listB[0].company_name === 'Zeta Client');
   check('cross-tenant get returns null', repos.deals.get(wsB.id, dealA.id) === null);
   check('cross-tenant update returns null', repos.deals.update(wsB.id, dealA.id, { stage: 'won' }) === null);
 

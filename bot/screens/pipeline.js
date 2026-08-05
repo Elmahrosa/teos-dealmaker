@@ -9,12 +9,12 @@ function buildPipeline() {
     design.divider(),
     design.progressBar(PIPELINE_STAGES, -1).join('\n'),
     design.divider(),
-    design.it('Run the demo to execute all five agents and record the result to the audit vault.')
+    design.it('Run the full pipeline to execute all five agents and record the result to the audit vault.')
   ]);
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('Run Pipeline Demo', 'cc_pipeline_run')],
+      [design.textButton('Run Pipeline', 'cc_pipeline_run')],
       [design.textButton('Back to Home', 'cc_home')]
     ])
   };
@@ -25,7 +25,7 @@ function buildPipelineResult(userId, result) {
     `${design.code(n.agent_name)} ${n.note}`
   );
   const lines = [
-    `${design.EMOJI.ai} ${design.b('Pipeline Demo')}`,
+    `${design.EMOJI.ai} ${design.b('Pipeline Run')}`,
     design.it('Strategist → Marketer → Negotiator → Treasurer → Closing'),
     design.divider(),
     design.row('Strategy', result.strategy.style),
@@ -51,11 +51,11 @@ function buildPipelineResult(userId, result) {
   };
 }
 
-function buildSalesDemo() {
+function buildSalesFlow() {
   const { runSalesFlow } = require('../../agents/orchestrator');
-  const result = runSalesFlow('The price is too high for our budget.', 'bot_demo');
+  const result = runSalesFlow('The price is too high for our budget.', 'bot_sales');
   const lines = [
-    `${design.EMOJI.ai} ${design.b('Sales Demo')}`,
+    `${design.EMOJI.ai} ${design.b('Sales Flow')}`,
     design.it('Orchestrator → Sales → Gatekeeper'),
     design.divider(),
     design.row('Objection', result.draft.objectionType),
@@ -73,4 +73,4 @@ function buildSalesDemo() {
   };
 }
 
-module.exports = { buildPipeline, buildPipelineResult, buildSalesDemo };
+module.exports = { buildPipeline, buildPipelineResult, buildSalesFlow };

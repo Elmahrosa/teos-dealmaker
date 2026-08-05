@@ -4,7 +4,7 @@ const { runAgent } = require('./runner');
 const { getWorkforceView, workforceConsole, todayActivity } = require('./views');
 const { costSummary } = require('./analytics');
 const { agentHealth, healthCheck } = require('./health');
-const { runPipelineDemo, dealTimeline } = require('./pipeline');
+const { runPipeline, dealTimeline } = require('./pipeline');
 
 const events = require('./events');
 const scheduler = require('./scheduler');
@@ -24,7 +24,7 @@ module.exports = {
   REGISTRY,
   getWorkforceView,
   runAgent,
-  runPipelineDemo,
+  runPipeline,
   todayActivity,
   shortTime,
   workforceConsole,

@@ -15,7 +15,7 @@ function generateResponse(objection) {
   return {
     objection_type: type,
     response: responses[type],
-    suggested_action: type === 'price' ? 'compare_tiers' : type === 'timing' ? 'pilot_offer' : 'escalate_to_demo'
+    suggested_action: type === 'price' ? 'compare_tiers' : type === 'timing' ? 'pilot_offer' : 'escalate_to_meeting'
   };
 }
 

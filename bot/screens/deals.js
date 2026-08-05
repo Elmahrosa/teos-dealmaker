@@ -19,7 +19,7 @@ async function buildDeals(userId) {
     design.row('Closed', `${closed}`),
     design.row('Persistence', dbConfigured ? design.badge('success') : design.badge('warning') + ' ' + design.it('Postgres not configured')),
     design.section('NOTES'),
-    design.it('Run the pipeline demo to record a deal through Strategist → Closing.'),
+    design.it('Run the pipeline to record a deal through Strategist → Closing.'),
     design.it(dbConfigured
       ? 'Postgres persistence active via DATABASE_URL.'
       : 'Set DATABASE_URL and run `npm run db:migrate` to persist deals.')
@@ -27,7 +27,7 @@ async function buildDeals(userId) {
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('Run Pipeline Demo', 'cc_pipeline_run')],
+      [design.textButton('Run Pipeline', 'cc_pipeline_run')],
       [design.textButton('Back to Home', 'cc_home')]
     ])
   };
@@ -90,7 +90,7 @@ async function buildTimeline(userId, dealId) {
       `${design.b(`#${d.id} · ${d.company_name} · ${d.stage}`)}`,
       ...(notes.length ? notes.map(n => `${design.code('  ·')} ${design.b(titleCase(n.agent_name))} ${n.note}`) : [design.it('  no notes yet')])
     ];
-  }))).flat() : [design.it('No deals yet — run the pipeline demo.')];
+  }))).flat() : [design.it('No deals yet — run the pipeline.')];
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b('Deal Timeline')}`,
     design.it('How the team collaborated on each deal.'),

@@ -105,8 +105,8 @@
       loadingAudit: 'Loading audit trail…', noAudit: 'No audit entries yet.',
       footer: 'Fail-closed governance · every capability decision is policy-evaluated and written to the audit vault',
       monthly: 'Monthly', annual: 'Annual', checkout: 'checkout',
-      offline: 'offline', staticPreview: 'STATIC PREVIEW',
-      offlineMsg: 'Live telemetry unavailable. This is a static preview — connect the TEOS backend server (npm run server) to view the live audit trail, mode, and health.',
+      offline: 'offline', staticPreview: 'OFFLINE',
+      offlineMsg: 'Live telemetry unavailable — connecting to the TEOS backend. The audit trail, mode, and health will stream in once connected.',
       sw_ar: 'العربية', sw_en: 'English'
     },
     ar: {
@@ -119,8 +119,8 @@
       loadingAudit: 'جارٍ تحميل سجل التدقيق…', noAudit: 'لا توجد سجلات تدقيق بعد.',
       footer: 'حوكمة تغلق عند الخطأ · كل قرار قدرة يُقيَّم حسب السياسات ويُسجَّل في خزنة التدقيق',
       monthly: 'شهرياً', annual: 'سنوياً', checkout: 'شراء',
-      offline: 'غير متصل', staticPreview: 'معاينة ثابتة',
-      offlineMsg: 'القياسات الحية غير متاحة. هذه معاينة ثابتة — شغّل خادم TEOS (npm run server) لعرض سجل التدقيق والوضع والصحة مباشرة.',
+      offline: 'غير متصل', staticPreview: 'غير متصل',
+      offlineMsg: 'القياسات الحية غير متاحة — جارٍ الاتصال بخادم TEOS. سيتدفق سجل التدقيق والوضع والصحة فور الاتصال.',
       sw_ar: 'العربية', sw_en: 'English'
     }
   };
@@ -174,6 +174,13 @@
 
   function localMode(s) {
     return lang === 'ar' ? (MODE_AR[s] || s) : s;
+  }
+
+  // Public consoles never expose execution modes to non-founders. The
+  // dashboard surfaces only a neutral operational status.
+  function publicMode(s) {
+    if (String(s).toUpperCase() === 'LIVE') return lang === 'ar' ? 'مباشر' : 'Live';
+    return lang === 'ar' ? 'تشغيلي' : 'Operational';
   }
 
   function applyStatic() {
@@ -267,13 +274,13 @@
     var health = await healthRes.body;
     var audit = await auditRes.body;
 
-    document.getElementById('stat-mode').textContent = localMode(health.mode);
+    document.getElementById('stat-mode').textContent = publicMode(health.mode);
     document.getElementById('stat-total').textContent = health.totalEntries;
     document.getElementById('stat-time').textContent = new Date(health.timestamp).toLocaleString(lang === 'ar' ? 'ar-EG' : undefined);
 
     var modeEl = document.getElementById('mode');
-    modeEl.textContent = localMode(health.mode);
-    modeEl.className = health.mode.toLowerCase();
+    modeEl.textContent = publicMode(health.mode);
+    modeEl.className = String(health.mode).toUpperCase() === 'LIVE' ? 'live' : 'dry';
 
     renderRows(audit || []);
   }

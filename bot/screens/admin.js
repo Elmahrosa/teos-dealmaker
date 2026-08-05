@@ -11,12 +11,11 @@ function buildAdmin(userId) {
     `${design.EMOJI.ai} ${design.b('Admin')}`,
     design.it('Operational control'),
     design.divider(),
-    design.row('Mode', design.modeBadge(mode)),
+    ...(isFounder(userId) ? [design.row('Mode', design.modeBadge(mode))] : []),
     design.row('Role', isFounder(userId) ? design.badge('success') + ' Founder' : isAdmin(userId) ? design.badge('info') + ' Admin' : design.badge('warning') + ' Operator'),
     design.divider()
   ];
-  if (isFounder(userId)) rows.push([design.textButton('Switch to LIVE', 'cc_live')]);
-  if (isAdmin(userId)) rows.push([design.textButton('Switch to DRY', 'cc_dry')]);
+  if (isFounder(userId)) rows.push([design.textButton('Execution Mode', 'cc_fd_mode')]);
   if (isAdmin(userId)) rows.push([design.textButton('Audit Log', 'cc_audit')]);
   rows.push([design.textButton('Back to Home', 'cc_home')]);
   return { text: design.compose(body), keyboard: design.keyboard(rows) };

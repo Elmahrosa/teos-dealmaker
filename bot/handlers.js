@@ -1,5 +1,6 @@
 const { COMMANDS } = require('./commands');
 const onboarding = require('./onboarding');
+const i18n = require('./i18n');
 const identity = require('../services/identity');
 const memory = require('../services/memory');
 const intelligence = require('../services/intelligence');
@@ -11,12 +12,35 @@ const { getStoreAdapter } = require('./store');
 const { buildHome, buildMemory, buildAskResult, buildMissionRunResult } = require('./menu');
 const audit = require('../utils/auditLogger');
 const { getMode } = require('../config/mode');
+const { isFounder } = require('./access');
 
 function screenResult(chatId, screen) {
   return { chatId, text: screen.text, replyMarkup: screen.keyboard };
 }
 
 async function handleStart(chatId, userId, displayName) {
+  // Founder Mode: skip onboarding, subscription and payment gates entirely.
+  if (isFounder(userId)) {
+    const adapter = getStoreAdapter();
+    try {
+      const user = await identity.ensureUser(adapter, userId, {
+        display_name: displayName || null
+      });
+      if (user && !(await identity.getWorkspaceForUser(adapter, user.id))) {
+        await identity.onboardWorkspace(adapter, {
+          ownerUserId: user.id,
+          companyName: (displayName || 'Founder') + ' Workspace',
+          lang: i18n.getLang(userId),
+          plan: 'founder'
+        });
+      }
+    } catch (err) {
+      console.error('[handlers] founder workspace failed:', err.message);
+    }
+    audit.writeEntry('BOT_START_FOUNDER', String(userId), 'success', { mode: getMode() });
+    return screenResult(chatId, await buildHome(userId));
+  }
+
   if (onboarding.isActive(userId)) {
     const sc = onboarding.prompt(userId);
     return { chatId, text: sc.text, replyMarkup: sc.keyboard };
@@ -198,7 +222,7 @@ async function handleMessage(msg) {
   audit.writeEntry('BOT_TEXT', String(userId), 'info', { text, mode: getMode() });
   return {
     chatId,
-    text: `Received (${getMode()} mode). In this build, free text routes through the agents in DRY mode.\n\nUse /start for commands.`
+    text: 'Received. Use /start to open Mission Control, or /help for available commands.'
   };
 }
 

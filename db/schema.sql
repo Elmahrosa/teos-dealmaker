@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS workspaces (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(80) NOT NULL UNIQUE,
-    plan VARCHAR(50) NOT NULL DEFAULT 'free',
+    plan VARCHAR(50) NOT NULL DEFAULT 'solo',
     status VARCHAR(50) NOT NULL DEFAULT 'active',
     owner_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     subscription_id INTEGER,

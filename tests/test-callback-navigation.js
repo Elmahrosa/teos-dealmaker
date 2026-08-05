@@ -72,7 +72,7 @@ const menu = require('../bot/menu');
 
   // Seed a recorded deal + queue movement so the Deals and Timeline screens
   // render deal buttons before the dispatch contract walks them.
-  await workforce.runPipelineDemo(adapter, wsId);
+  await workforce.runPipeline(adapter, wsId);
 
   // ------------------------------------------------------------------ mocks
   let qid = 0;
@@ -115,14 +115,18 @@ const menu = require('../bot/menu');
     'cc_kg_docs', 'cc_kg_cancel', 'cc_kg_ask', 'cc_kg_add', 'cc_audit', 'cc_admin',
     'cc_sales_run', 'cc_pipeline_run', 'cc_live', 'cc_live_confirm', 'cc_live_cancel',
     'cc_dry', 'cc_dry_confirm', 'cc_dry_cancel', 'cc_connect_crm', 'cc_upload_catalog',
-    'cc_launch_campaign'
+    'cc_launch_campaign', 'cc_fd_mode', 'cc_fd_approval', 'cc_fd_billing',
+    'cc_fd_workspaces', 'cc_fd_customers', 'cc_fd_revenue', 'cc_fd_debug', 'cc_fd_ops',
+    'cc_fd_sentinel', 'cc_fd_policy', 'cc_fd_analytics', 'cc_fd_flags', 'cc_fd_emergency',
+    'cc_fd_emergency_stop', 'cc_fd_emergency_resume'
   ]);
   // Every prefix-namespace the router dispatches (startsWith branches).
   const PREFIX = [
     'cc_mem_edit:', 'cc_audit:', 'cc_agent:', 'cc_timeline_deal:', 'cc_pol:', 'cc_pol_set:',
     'cc_kg_source:', 'cc_kg_del:', 'cc_int_conn:', 'cc_int_enable:', 'cc_int_disable:',
     'cc_int_test:', 'cc_int_auth:', 'cc_set_lang:', 'cc_learn_persona:', 'cc_mission:',
-    'cc_mission_pause:', 'cc_mission_resume:', 'cc_appr:'
+    'cc_mission_pause:', 'cc_mission_resume:', 'cc_appr:', 'cc_fd_approval_set:',
+    'cc_fd_flags_set:'
   ];
   const isKnown = (cd) => EXACT.has(cd) || PREFIX.some(p => cd.startsWith(p));
 
@@ -168,8 +172,8 @@ const menu = require('../bot/menu');
 
   // ------------------------------------------------------ 1. dispatch contract
   const contract = [
-    ['cc_home', FOUNDER, 'MISSION CONTROL'],
-    ['btn_back', FOUNDER, 'MISSION CONTROL'],
+    ['cc_home', FOUNDER, 'Control Center'],
+    ['btn_back', FOUNDER, 'Control Center'],
     ['cc_dashboard', FOUNDER, 'Dashboard'],
     ['cc_workforce', FOUNDER, 'My Revenue Team'],
     ['cc_pipeline', FOUNDER, 'Sales Pipeline'],
@@ -195,22 +199,40 @@ const menu = require('../bot/menu');
     ['cc_kg_ask', FOUNDER, 'Ask Company Intelligence'],
     ['cc_audit', FOUNDER, 'Audit Log'],
     ['cc_admin', FOUNDER, 'Admin'],
-    ['cc_sales_run', FOUNDER, 'Sales Demo'],
-    ['cc_pipeline_run', FOUNDER, 'Pipeline Demo'],
+    ['cc_sales_run', FOUNDER, 'Sales Flow'],
+    ['cc_pipeline_run', FOUNDER, 'Pipeline Run'],
     ['cc_live', FOUNDER, 'Switch to LIVE mode?'],
     ['cc_live_cancel', FOUNDER, 'Admin'],
     ['cc_dry', FOUNDER, 'Switch to DRY mode?'],
     ['cc_dry_confirm', FOUNDER, 'Admin'],
-    ['cc_dry_cancel', FOUNDER, 'Admin']
+    ['cc_dry_cancel', FOUNDER, 'Admin'],
+    ['cc_fd_mode', FOUNDER, 'System Mode']
   ];
   for (const [action, userId, marker] of contract) {
     await driveAndExpect(action, userId, marker);
   }
 
+  // ---------------------------------------------- 1b. founder consoles
+  await driveAndExpect('cc_fd_policy', FOUNDER, 'Policy Engine', 'policy engine console renders');
+  await driveAndExpect('cc_fd_analytics', FOUNDER, 'Analytics', 'analytics console renders');
+  await driveAndExpect('cc_fd_flags', FOUNDER, 'Feature Flags', 'feature flags console renders');
+  // Toggle a flag OFF then back ON so the on-disk state is restored.
+  await driveAndExpect('cc_fd_flags_set:missions', FOUNDER, 'Feature Flags', 'flag toggle re-renders flags');
+  await driveAndExpect('cc_fd_flags_set:missions', FOUNDER, 'Feature Flags', 'flag toggle restores the default');
+  const flagsAfter = require('../config/flags');
+  equal(flagsAfter.isEnabled('missions'), true, 'missions flag restored to enabled after toggle');
+  await driveAndExpect('cc_fd_emergency', FOUNDER, 'Emergency Stop', 'emergency stop console renders');
+  await driveAndExpect('cc_fd_emergency_stop', FOUNDER, 'ENGAGED', 'engaging the stop marks it engaged');
+  const emergencyAfter = require('../config/emergency');
+  equal(emergencyAfter.isEngaged(), true, 'emergency stop engaged while driven');
+  await driveAndExpect('cc_fd_emergency_resume', FOUNDER, 'disengaged', 'resume marks the stop disengaged');
+  equal(emergencyAfter.isEngaged(), false, 'emergency stop disengaged after resume');
+  await driveAndExpect('cc_fd_sentinel', FOUNDER, 'Sentinel Shield', 'sentinel console renders');
+
   // ------------------------------------------------------------ 2. learn flow
   await driveAndExpect('cc_learn', FOUNDER, 'Question 1', 'learning interview starts on first question');
   await driveAndExpect('cc_learn_persona:CFO', FOUNDER, 'Question 1', 'persona picker keeps the interview in scope');
-  await driveAndExpect('cc_learn_quit', FOUNDER, 'MISSION CONTROL', 'quitting learning returns home');
+  await driveAndExpect('cc_learn_quit', FOUNDER, 'Control Center', 'quitting learning returns home');
 
   // ---------------------------------------------------- 3. live mission flows
   await driveAndExpect('cc_mission1', FOUNDER, 'Mission Launched', 'mission 1 launches a strategy plan');
@@ -349,7 +371,7 @@ const menu = require('../bot/menu');
     'cc_mem_cancel', 'cc_activity', 'cc_timeline', 'cc_costs', 'cc_health', 'cc_providers',
     'cc_queue', 'cc_briefing', 'cc_integrations', 'cc_int_all', 'cc_sync_now',
     'cc_intelligence', 'cc_kg_docs', 'cc_kg_cancel', 'cc_kg_ask', 'cc_kg_add',
-    'cc_audit', 'cc_admin', 'cc_sales_run', 'cc_pipeline_run',
+    'cc_audit', 'cc_sales_run', 'cc_pipeline_run',
     'cc_live', 'cc_live_confirm', 'cc_live_cancel', 'cc_dry', 'cc_dry_confirm', 'cc_dry_cancel'
   ];
   const RENDERED_REQUIRED_PREFIX = [
@@ -367,6 +389,8 @@ const menu = require('../bot/menu');
   // without a rendering button (cc_ai_guide, cc_learn_skip, cc_learn_more,
   // cc_learn_done, cc_learn_persona:, cc_agent:, cc_audit:, cc_connect_crm,
   // cc_upload_catalog, cc_launch_campaign, btn_back, cc_mem_edit:).
+  // cc_admin is reachable via the /admin command; the founder consoles
+  // (cc_fd_*) are driven in the dispatch contract and section 1b; neither renders itself.
 
   const { getMode } = require('../config/mode');
   equal(getMode(), 'DRY', 'test never flips global mode to LIVE');

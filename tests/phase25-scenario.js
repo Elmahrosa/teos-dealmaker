@@ -189,9 +189,9 @@ async function runWorkflow({ mode, founderId = FOUNDER, newcomerId = NEWCOMER } 
   const pipeline = await cb('cc_pipeline', founderId);
   check(pipeline.last && /Sales Pipeline/i.test(pipeline.last.text), 'Pipeline screen renders');
   const pipeRun = await cb('cc_pipeline_run', founderId);
-  check(pipeRun.last && pipeRun.last.text.length > 0 && !/Pipeline failed/i.test(pipeRun.last.text), 'pipeline demo runs');
+  check(pipeRun.last && pipeRun.last.text.length > 0 && !/Pipeline failed/i.test(pipeRun.last.text), 'pipeline run executes');
   const dealCount = (await require('../db/repos').createRepos(adapter).deals.list(ws.id)).length;
-  check(dealCount > 0, 'pipeline demo created deals');
+  check(dealCount > 0, 'pipeline run created deals');
 
   // ----------------------------------------------------------------- queue
   const qDeal = await queue.enqueueDeal(adapter, ws.id, 'Queue Inc');

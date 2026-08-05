@@ -13,11 +13,12 @@ const pricing = require('./pricing');
 const intelligence = require('./intelligence');
 const integrations = require('./integrations');
 const ops = require('./ops');
+const founder = require('./founder');
 
 module.exports = {
   onboarding,
   buildPipelineResult: pipeline.buildPipelineResult,
-  buildSalesDemo: pipeline.buildSalesDemo,
+  buildSalesFlow: pipeline.buildSalesFlow,
   buildProviderPicker: providers.buildProviderPicker,
   buildMemoryEdit: settings.buildMemoryEdit,
   buildKnowledgeAdd: intelligence.buildKnowledgeAdd,
@@ -59,5 +60,19 @@ module.exports = {
   launchMission1: missions.launchMission1,
   launchMission2: missions.launchMission2,
   launchGoalMission: missions.launchGoalMission,
-  launchMarketMission: missions.launchMarketMission
+  launchMarketMission: missions.launchMarketMission,
+  buildFounderHome: founder.buildFounderHome,
+  buildFounderSystemMode: founder.buildFounderSystemMode,
+  buildFounderApproval: founder.buildFounderApproval,
+  buildFounderBilling: founder.buildFounderBilling,
+  buildFounderWorkspaces: founder.buildFounderWorkspaces,
+  buildFounderCustomers: founder.buildFounderCustomers,
+  buildFounderRevenue: founder.buildFounderRevenue,
+  buildFounderDebug: founder.buildFounderDebug,
+  buildFounderOps: founder.buildFounderOps,
+  buildFounderSentinel: founder.buildFounderSentinel,
+  buildFounderPolicy: founder.buildFounderPolicy,
+  buildFounderAnalytics: founder.buildFounderAnalytics,
+  buildFounderFlags: founder.buildFounderFlags,
+  buildFounderEmergency: founder.buildFounderEmergency
 };

@@ -1,12 +1,18 @@
 const { createRepos } = require('../db/repos');
 const identity = require('./identity');
 
+// Client 0: the founder operates the platform on a lifetime 'founder' plan —
+// no billing. Displayed as "Control" instead of a paid subscription.
+function isFounder(userId) {
+  const fid = process.env.TEOS_FOUNDER_TELEGRAM_ID;
+  if (!fid) return false;
+  return Number(userId) === Number(fid);
+}
+
 function subscriptionLabel(status) {
   if (!status) return '—';
-  if (status === 'pending') return 'Trialing';
-  if (status === 'trial') return 'Trialing';
   if (status === 'active') return 'Active';
-  return status.charAt(0).toUpperCase() + status.slice(1);
+  return 'Pending';
 }
 
 async function getWorkspaceContext(adapter, userId) {
@@ -23,9 +29,12 @@ async function getWorkspaceContext(adapter, userId) {
     repos.settings.getByWorkspace(workspace.id)
   ]);
   const membership = members.find(m => m.user_id === user.id);
+  const founder = isFounder(userId);
+  const displayWorkspace = founder ? { ...workspace, plan: 'founder' } : workspace;
   return {
     user,
-    workspace,
+    workspace: displayWorkspace,
+    isFounder: founder,
     role: membership ? membership.role : 'operator',
     membersCount: members.length,
     agents: {
@@ -38,7 +47,7 @@ async function getWorkspaceContext(adapter, userId) {
       closed: deals.filter(d => d.status === 'closed' || d.status === 'won').length
     },
     subscription,
-    subscriptionLabel: subscriptionLabel(subscription ? subscription.status : null),
+    subscriptionLabel: founder ? 'Control' : subscriptionLabel(subscription ? subscription.status : null),
     settings
   };
 }
@@ -48,4 +57,4 @@ async function setWorkspaceLang(adapter, workspaceId, lang) {
   return repos.settings.update(workspaceId, { lang });
 }
 
-module.exports = { getWorkspaceContext, setWorkspaceLang, subscriptionLabel };
+module.exports = { getWorkspaceContext, setWorkspaceLang, subscriptionLabel, isFounder };

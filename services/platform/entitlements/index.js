@@ -19,14 +19,14 @@ function createEntitlements(repos, opts) {
   const o = opts || {};
   const catalog = o.plans || PLANS;
   const isUnlimited = (value) => value === LIMIT_UNLIMITED;
-  const VALID_SUBSCRIPTION_STATUSES = ['active', 'pending', 'trialing'];
+  const VALID_SUBSCRIPTION_STATUSES = ['active', 'pending'];
 
   async function planFor(workspaceId) {
     const workspace = await repos.workspaces.get(workspaceId);
     if (!workspace) return null;
     const subscription = await repos.subscriptions.get(workspaceId);
-    const planId = workspace.plan || (subscription && subscription.plan) || 'free';
-    return { workspace, subscription, planId, plan: catalog[planId] || catalog.free };
+    const planId = workspace.plan || (subscription && subscription.plan) || 'solo';
+    return { workspace, subscription, planId, plan: catalog[planId] || catalog.solo };
   }
 
   async function license(workspaceId) {

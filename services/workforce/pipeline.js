@@ -1,9 +1,19 @@
 const { createRepos } = require('../../db/repos');
 const queue = require('../queue');
 const { runAgent } = require('./runner');
+const emergency = require('../../config/emergency');
+const flags = require('../../config/flags');
 
-async function runPipelineDemo(adapter, workspaceId) {
+async function runPipeline(adapter, workspaceId) {
   const repos = createRepos(adapter);
+
+  if (emergency.isEngaged()) {
+    return { ok: false, reason: 'emergency_stop' };
+  }
+  if (!flags.isEnabled('pipeline')) {
+    return { ok: false, reason: 'feature_disabled:pipeline' };
+  }
+
   const memorySvc = require('../memory');
   const { buildPlaybook } = require('../../agents/strategist');
   const { craftPositioning } = require('../../agents/marketer');
@@ -15,7 +25,7 @@ async function runPipelineDemo(adapter, workspaceId) {
 
   const lead = {
     id: 'deal_ws_' + Date.now(),
-    company: mem.company_name || 'Control Center Demo',
+    company: mem.company_name || 'Control Center Run',
     contactName: 'Enterprise Operator',
     product: mem.products && mem.products.length ? mem.products[0] : 'TEOS DealMaker Sovereign License',
     classification: 'Hot',
@@ -89,6 +99,7 @@ async function runPipelineDemo(adapter, workspaceId) {
   const finalDeal = await repos.deals.get(workspaceId, d.id);
 
   return {
+    ok: true,
     strategy: strategy.result.data,
     marketing: marketing.result.data,
     negotiation: negotiation.result.data,
@@ -124,4 +135,4 @@ async function dealTimeline(adapter, workspaceId, dealId) {
   return { deal, notes: noteRows, events: eventRows };
 }
 
-module.exports = { runPipelineDemo, dealTimeline };
+module.exports = { runPipeline, dealTimeline };

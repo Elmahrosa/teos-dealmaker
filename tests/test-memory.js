@@ -68,7 +68,7 @@ const memory = require('../services/memory');
   await identity.ensureUser(adapter, tgB);
   const wsB = await identity.onboardWorkspace(adapter, {
     ownerUserId: (await identity.getUserByTelegram(adapter, tgB)).id,
-    companyName: 'Beta Memory',
+    companyName: 'Zeta Memory',
     lang: 'en',
     plan: 'solo'
   });

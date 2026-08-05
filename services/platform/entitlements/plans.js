@@ -1,20 +1,21 @@
 // services/platform/entitlements/plans.js
-// Entitlement plan catalog. Plans key on the plan id stored on workspaces /
-// subscriptions (VARCHAR(50), default 'free'). A limit of 0 means unlimited.
-// capabilityScopes gate what a tenant may exercise: 'core' (builtin gateway
-// tools), 'plugin' (first-party plugins), 'custom' (third-party plugin
-// installs), '*' (everything).
+// Entitlement plan catalog. The only commercial plans are Solo, Growth,
+// Business, and Enterprise. 'founder' is an internal lifetime plan for the
+// platform owner and is never offered to customers. A limit of 0 means
+// unlimited. capabilityScopes gate what a tenant may exercise: 'core'
+// (builtin gateway tools), 'plugin' (first-party plugins), 'custom'
+// (third-party plugin installs), '*' (everything).
 'use strict';
 
 const PLANS = {
-  free: {
-    tier: 'Free',
-    seats: 1,
-    agents: 3,
-    capabilityScopes: ['core'],
-    plugins: [],
-    usage: { cost_cents_month: 500, token_month: 50000 },
-    customPlugins: false
+  founder: {
+    tier: 'Founder',
+    seats: 0,
+    agents: 0,
+    capabilityScopes: ['*'],
+    plugins: ['*'],
+    usage: { cost_cents_month: 0, token_month: 0 },
+    customPlugins: true
   },
   solo: {
     tier: 'Solo',
@@ -57,7 +58,7 @@ const PLANS = {
 const LIMIT_UNLIMITED = 0;
 
 function get(plan) {
-  return PLANS[plan] || PLANS.free;
+  return PLANS[plan] || PLANS.solo;
 }
 
 function list() {

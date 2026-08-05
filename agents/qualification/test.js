@@ -5,7 +5,7 @@ const mockResponses = [
     id: 'resp_001',
     from: 'fawry@fawry.com',
     subject: 'Re: Partnership: TEOS Sentinel Shield',
-    body: 'Sounds great! Let\'s schedule a demo to explore integration possibilities.',
+    body: 'Sounds great! Let\'s schedule a call to explore integration possibilities.',
     industry: 'fintech'
   },
   {

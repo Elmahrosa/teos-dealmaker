@@ -1,14 +1,17 @@
 const assert = require('assert');
+
+process.env.TEOS_FOUNDER_TELEGRAM_ID = '9999';
+
 const { createMemoryAdapter } = require('../db/adapter');
 const { createRepos } = require('../db/repos');
 const identity = require('../services/identity');
-const { getWorkspaceContext, setWorkspaceLang, subscriptionLabel } = require('../services/workspace');
+const { getWorkspaceContext, setWorkspaceLang, subscriptionLabel, isFounder } = require('../services/workspace');
 
 (async () => {
   const adapter = createMemoryAdapter();
   const repos = createRepos(adapter);
 
-  assert.strictEqual(subscriptionLabel('pending'), 'Trialing');
+  assert.strictEqual(subscriptionLabel('pending'), 'Pending');
   assert.strictEqual(subscriptionLabel('active'), 'Active');
 
   const tgA = 2001;
@@ -31,7 +34,7 @@ const { getWorkspaceContext, setWorkspaceLang, subscriptionLabel } = require('..
   assert.strictEqual(ctx.deals.total, 0, 'empty revenue pipeline');
   assert.strictEqual(ctx.deals.open, 0, 'zero open');
   assert.strictEqual(ctx.deals.closed, 0, 'zero closed');
-  assert.strictEqual(ctx.subscriptionLabel, 'Trialing', 'pending subscription shows Trialing');
+  assert.strictEqual(ctx.subscriptionLabel, 'Pending', 'pending subscription shows Pending');
   assert.strictEqual(ctx.settings.lang, 'en', 'workspace settings lang');
   assert.strictEqual(ctx.workspace.subscription_id, ctx.subscription.id, 'subscription linked');
 
@@ -59,7 +62,7 @@ const { getWorkspaceContext, setWorkspaceLang, subscriptionLabel } = require('..
 
   await identity.onboardWorkspace(adapter, {
     ownerUserId: (await identity.ensureUser(adapter, 2004)).id,
-    companyName: 'Beta Ltd',
+    companyName: 'Zeta Ltd',
     lang: 'en',
     plan: 'solo'
   });
@@ -70,7 +73,19 @@ const { getWorkspaceContext, setWorkspaceLang, subscriptionLabel } = require('..
   const roleCtx = await getWorkspaceContext(adapter, tgB);
   assert.strictEqual(roleCtx.workspace.id, ws.id, 'member scoped to correct workspace');
 
-  console.log(`\n✓ workspace dashboard (${24} assertions passed)`);
+  const founder = await identity.ensureUser(adapter, 9999, { display_name: 'Founder' });
+  await identity.onboardWorkspace(adapter, {
+    ownerUserId: founder.id,
+    companyName: 'Teosegypt',
+    lang: 'en',
+    plan: 'founder'
+  });
+  const fctx = await getWorkspaceContext(adapter, 9999);
+  assert.strictEqual(isFounder(9999), true, 'telegram id registered as founder');
+  assert.strictEqual(fctx.workspace.plan, 'founder', 'founder plan persisted');
+  assert.strictEqual(fctx.subscriptionLabel, 'Control', 'founder subscription control');
+
+  console.log(`\n✓ workspace dashboard (${28} assertions passed)`);
   console.log(`  ${ctx.workspace.name}: ${ctx.membersCount} members · ${ctx.agents.active} agents active · ${ctx.deals.open} open / ${ctx.deals.closed} closed · ${ctx.subscriptionLabel}`);
   process.exit(0);
 })().catch(err => {

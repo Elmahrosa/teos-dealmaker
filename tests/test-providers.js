@@ -71,7 +71,7 @@ const providers = require('../services/providers');
   await identity.ensureUser(adapter, tgB);
   const wsB = await identity.onboardWorkspace(adapter, {
     ownerUserId: (await identity.getUserByTelegram(adapter, tgB)).id,
-    companyName: 'Beta Provider',
+    companyName: 'Zeta Provider',
     lang: 'en',
     plan: 'solo'
   });

@@ -106,7 +106,7 @@ const CATEGORY_COUNTS = { crm: 4, email: 4, calendar: 2, storage: 3, website: 1,
   equal(ping.status, 'sent', 'sendMessage routed to Slack');
   equal(ping.source, 'Slack', 'sendMessage source label');
 
-  const noCal = await integ.client.createMeeting('Demo', new Date().toISOString(), null);
+  const noCal = await integ.client.createMeeting('Kickoff', new Date().toISOString(), null);
   check(noCal.items.length === 0, 'no calendar connector → empty');
   await integrations.manager.enable(adapter, ws.id, 'google_calendar');
   const meeting = await integ.client.createMeeting('Discovery', new Date(Date.now() + 86400000).toISOString(), null);
@@ -147,7 +147,7 @@ const CATEGORY_COUNTS = { crm: 4, email: 4, calendar: 2, storage: 3, website: 1,
 
   const disabled = await integrations.manager.disable(adapter, ws.id, 'google_calendar');
   equal(disabled.status, 'disabled', 'disable flips status');
-  const blockedCal = await integ.client.createMeeting('Demo', new Date().toISOString(), null, 'google_calendar');
+  const blockedCal = await integ.client.createMeeting('Kickoff', new Date().toISOString(), null, 'google_calendar');
   check(blockedCal.items.length === 0, 'disabled connector not routed');
   const disabledAudit = (await repos.audit.list(ws.id)).find(e => e.action_type === 'INTEGRATION_DISABLED');
   check(Boolean(disabledAudit), 'disable writes audit entry');

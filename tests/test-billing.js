@@ -22,8 +22,8 @@ const crypto = require('crypto');
   const repos = createRepos(adapter);
 
   // ---------------------------------------------------- seed workspace + sub
-  const ws = repos.workspaces.create({ name: 'Acme', slug: 'acme-bill', plan: 'free', status: 'active' });
-  const sub = repos.subscriptions.create({ workspace_id: ws.id, plan: 'free', status: 'pending', cycle: 'monthly', provider: 'dodo', provider_customer_id: null });
+  const ws = repos.workspaces.create({ name: 'Acme', slug: 'acme-bill', plan: 'solo', status: 'active' });
+  const sub = repos.subscriptions.create({ workspace_id: ws.id, plan: 'solo', status: 'pending', cycle: 'monthly', provider: 'dodo', provider_customer_id: null });
 
   // ------------------------------------------ 1. signature verification
   const secret = 'test_webhook_secret_123';
@@ -135,7 +135,7 @@ const crypto = require('crypto');
   ok(subCancelled && subCancelled.status === 'cancelled', 'cancelled subscription status is cancelled');
 
   const wsCancelled = repos.workspaces.get(ws.id);
-  eq(wsCancelled.plan, 'free', 'workspace downgraded to free on cancel');
+  eq(wsCancelled.plan, 'solo', 'workspace plan retained on cancel');
 
   // ------------------------------------------ 11. refund.success
   const refund = await billing.handleEvent(adapter, 'refund.success', {
@@ -151,7 +151,7 @@ const crypto = require('crypto');
   ok(unhandled.ok && unhandled.skipped, 'unhandled event type returns skipped');
 
   // ------------------------------------------ 13. subscription.created via metadata fallback
-  const ws2 = repos.workspaces.create({ name: 'Bob Co', slug: 'bob-bill', plan: 'free', status: 'active' });
+  const ws2 = repos.workspaces.create({ name: 'Bob Co', slug: 'bob-bill', plan: 'solo', status: 'active' });
   const created2 = await billing.handleEvent(adapter, 'subscription.created', {
     customer_id: 'cust_new',
     product_id: 'pid_growth_m',

@@ -1,7 +1,7 @@
 function createRepos(adapter) {
   return {
     workspaces: {
-      create({ name, slug, plan = 'free', status = 'active', owner_user_id = null, subscription_id = null }) {
+      create({ name, slug, plan = 'solo', status = 'active', owner_user_id = null, subscription_id = null }) {
         return adapter.insert('workspaces', { name, slug, plan, status, owner_user_id, subscription_id });
       },
       get(id) {

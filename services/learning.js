@@ -26,7 +26,7 @@ const PRODUCT_QUESTIONS = [
   { key: 'target_customer', text: 'Who is the target customer for this product?' },
   { key: 'benefits', text: 'What are the main benefits?' },
   { key: 'objections', text: 'What objections do customers raise?' },
-  { key: 'demo_url', text: 'Demo URL?' },
+  { key: 'demo_url', text: 'Product URL?' },
   { key: 'documentation', text: 'Documentation link?' },
   { key: 'case_studies', text: 'Case studies or success stories?' }
 ];

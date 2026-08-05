@@ -10,7 +10,7 @@ function createTenants(repos) {
     const workspace = await repos.workspaces.get(workspaceId);
     if (!workspace) return { ok: false, error: 'tenant_not_found', workspaceId };
     const subscription = await repos.subscriptions.get(workspaceId);
-    const plan = workspace.plan || (subscription && subscription.plan) || 'free';
+    const plan = workspace.plan || (subscription && subscription.plan) || 'solo';
     const status = workspace.status || 'active';
     return {
       ok: true,

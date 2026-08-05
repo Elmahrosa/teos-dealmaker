@@ -18,7 +18,10 @@ async function cmdStart(chatId, userId) {
   return screenResult(chatId, await buildHome(userId));
 }
 
-function cmdMode(chatId) {
+function cmdMode(chatId, userId) {
+  if (!isFounder(userId)) {
+    return { chatId, text: design.errorPanel('Access denied', 'Founder only.').text };
+  }
   const text = design.compose([
     design.row('Current mode', design.modeBadge(getMode()))
   ]);
@@ -36,8 +39,8 @@ function cmdLive(chatId, userId) {
 }
 
 function cmdDry(chatId, userId) {
-  if (!isAdmin(userId)) {
-    return { chatId, text: design.errorPanel('Access denied', 'Admin only.').text };
+  if (!isFounder(userId)) {
+    return { chatId, text: design.errorPanel('Access denied', 'Founder only.').text };
   }
   setMode('DRY');
   audit.writeEntry('BOT_MODE', 'system', 'success', { mode: 'DRY', by: userId });
@@ -74,7 +77,7 @@ function cmdQualify(chatId) {
   const result = processResponse({
     id: 'tg_' + Date.now(),
     from: 'telegram@test.com',
-    body: 'Sounds great! Let us schedule a demo.',
+    body: 'Sounds great! Let us schedule a call.',
     industry: 'ai'
   });
   const text = design.compose([

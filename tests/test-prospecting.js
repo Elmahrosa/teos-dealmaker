@@ -23,7 +23,7 @@ if (hot) {
   processResponse({
     id: 'resp_' + hot.leadId,
     from: 'prospect@' + hot.company.toLowerCase().replace(/[^a-z]/g, '') + '.com',
-    body: 'Sounds great! Let us schedule a demo to explore integration possibilities.',
+    body: 'Sounds great! Let us schedule a call to explore integration possibilities.',
     industry: 'fintech'
   });
 }

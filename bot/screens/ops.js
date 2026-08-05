@@ -74,13 +74,13 @@ async function buildQueue(userId) {
     design.divider(),
     ...stageLines,
     design.section('RECENT MOVEMENT'),
-    ...(movementLines.length ? movementLines : [design.it('No movement yet — run the pipeline demo.')]),
+    ...(movementLines.length ? movementLines : [design.it('No movement yet — run the pipeline.')]),
     design.divider()
   ]);
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('Run Pipeline Demo', 'cc_pipeline_run'), design.textButton('Daily Summary', 'cc_briefing')],
+      [design.textButton('Run Pipeline', 'cc_pipeline_run'), design.textButton('Daily Summary', 'cc_briefing')],
       [design.textButton('Back to Home', 'cc_home')]
     ])
   };

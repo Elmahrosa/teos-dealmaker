@@ -98,10 +98,13 @@ async function provisionWorkspace(adapter, workspaceId, lang) {
 async function onboardWorkspace(adapter, { ownerUserId, companyName, lang, plan }) {
   const repos = createRepos(adapter);
   const slug = await uniqueSlug(adapter, companyName);
+  const fid = process.env.TEOS_FOUNDER_TELEGRAM_ID;
+  const isFounder = fid && Number(ownerUserId) === Number(fid);
+  const effectivePlan = isFounder ? 'founder' : (plan || 'growth');
   const workspace = await repos.workspaces.create({
     name: companyName,
     slug,
-    plan: plan || 'growth',
+    plan: effectivePlan,
     status: 'active',
     owner_user_id: ownerUserId
   });
@@ -112,8 +115,8 @@ async function onboardWorkspace(adapter, { ownerUserId, companyName, lang, plan 
   const renewalDate = addMonths(startDate, 1);
   const subscription = await repos.subscriptions.create({
     workspace_id: workspace.id,
-    plan: plan || 'growth',
-    status: 'pending',
+    plan: effectivePlan,
+    status: isFounder ? 'active' : 'pending',
     cycle: 'monthly',
     start_date: startDate,
     renewal_date: renewalDate,

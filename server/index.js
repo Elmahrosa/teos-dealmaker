@@ -82,9 +82,12 @@ app.get('/api/pricing', (req, res) => {
 
 app.get('/api/health', (req, res) => {
   const entries = audit.readVault();
+  // Execution modes are founder-only. Public consoles see a neutral
+  // operational status, never the DRY/LIVE mode.
+  const mode = getMode() === 'LIVE' ? 'live' : 'operational';
   res.json({
     status: 'ok',
-    mode: getMode(),
+    mode,
     totalEntries: entries.length,
     timestamp: new Date().toISOString()
   });
