@@ -20,16 +20,19 @@ const path = require('path');
     process.exit(0);
   }
 
-  process.env.TELEGRAM_ADMIN_IDS = '7700001';
-  process.env.TEOS_FOUNDER_TELEGRAM_ID = '7700001';
-
-  const db = require('../db');
   const founderId = 7700000 + Math.floor(Math.random() * 900000);
   const newcomerId = founderId + 1;
+
+  process.env.TELEGRAM_ADMIN_IDS = String(founderId);
+  process.env.TEOS_FOUNDER_TELEGRAM_ID = String(founderId);
+
+  const db = require('../db');
 
   await db.createTables();
   const migration = fs.readFileSync(path.join(__dirname, '../db/migrations/001_fix_fk_ordering.sql'), 'utf8');
   await db.getPool().query(migration);
+  const migration2 = fs.readFileSync(path.join(__dirname, '../db/migrations/002_add_plan_steps_modtime.sql'), 'utf8');
+  await db.getPool().query(migration2);
 
   const { runWorkflow } = require('./phase25-scenario');
   const result = await runWorkflow({ mode: 'DRY', founderId, newcomerId });
