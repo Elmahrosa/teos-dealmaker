@@ -1,7 +1,6 @@
 {
   "name": "teos-dealmaker",
   "version": "1.0.0",
-  "main": "index.js",
   "author": "Ayman Seif",
   "license": "MIT",
   "engines": {
@@ -38,8 +37,10 @@
     "db:migrate": "node -e \"require('./db').createTables().then(()=>console.log('[db] schema applied')).catch(e=>{console.error('[db] '+e.message);process.exit(1)})\""
   },
   "dependencies": {
+    "compression": "^1.8.1",
     "dotenv": "^16.4.5",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.6.2",
     "globals": "^17.8.0",
     "node-telegram-bot-api": "^1.2.0",
     "pg": "^8.22.0"

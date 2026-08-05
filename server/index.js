@@ -2,6 +2,8 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 const express = require('express');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 const audit = require('../utils/auditLogger');
 const { getMode } = require('../config/mode');
 const billing = require('../services/billing');
@@ -9,6 +11,22 @@ const render = require('./render');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+app.use(compression());
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 120,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false
+});
+
+const webhookLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 30,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false
+});
 
 function contentSecurityPolicy() {
   const scriptSrc = ['\'self\'', '\'unsafe-inline\''];
@@ -31,7 +49,14 @@ function contentSecurityPolicy() {
 
 app.set('trust proxy', 1);
 
+app.use('/api/', apiLimiter);
+app.use('/webhook/', webhookLimiter);
+
 const publicDashboard = path.join(__dirname, '..', 'public', 'dashboard');
+app.use('/dashboard', (req, res, next) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
 app.use('/dashboard', express.static(publicDashboard));
 
 app.use((req, res, next) => {
@@ -45,6 +70,11 @@ app.use((req, res, next) => {
   });
   next();
 });
+
+function cacheImmutable(req, res, next) {
+  res.set('Cache-Control', 'public, max-age=604800, immutable');
+  next();
+}
 
 app.get('/api/pricing', (req, res) => {
   res.json({ tiers: render.PRICING, addons: render.PRICING.ADDONS });
@@ -121,15 +151,15 @@ app.get('/sitemap.xml', (req, res) => {
   res.type('application/xml').send(render.sitemapXml());
 });
 
-app.get('/favicon.svg', (req, res) => {
+app.get('/favicon.svg', cacheImmutable, (req, res) => {
   res.type('image/svg+xml').sendFile(path.join(__dirname, 'favicon.svg'));
 });
 
-app.get('/og-image.svg', (req, res) => {
+app.get('/og-image.svg', cacheImmutable, (req, res) => {
   res.type('image/svg+xml').sendFile(path.join(__dirname, 'og-image.svg'));
 });
 
-app.get('/og-image.png', (req, res) => {
+app.get('/og-image.png', cacheImmutable, (req, res) => {
   res.type('image/png').sendFile(path.join(__dirname, 'og-image.png'));
 });
 
@@ -146,6 +176,30 @@ app.get('/dashboard', (req, res) => {
   );
 });
 
-app.listen(PORT, () => {
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'not_found' });
+});
+
+app.use((req, res) => {
+  res.status(404).type('text').send('Not Found');
+});
+
+app.use((err, req, res, _next) => {
+  console.error('[Sentinel] unhandled error:', err.message);
+  res.status(err.status || 500).json({ error: 'internal_error' });
+});
+
+const server = app.listen(PORT, () => {
   console.log(`[Sentinel] TEOS DealMaker server on http://localhost:${PORT} (landing) and http://localhost:${PORT}/dashboard`);
 });
+
+function shutdown(signal) {
+  console.log(`[Sentinel] ${signal} received — closing HTTP server`);
+  server.close(() => {
+    process.exitCode = 0;
+  });
+  setTimeout(() => process.exit(1), 10000).unref();
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

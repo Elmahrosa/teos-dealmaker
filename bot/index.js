@@ -75,3 +75,11 @@ bootstrap().catch((err) => {
   console.error('[bot] failed to start:', err.message);
   process.exit(1);
 });
+
+function shutdown(signal) {
+  console.log(`[bot] ${signal} received — stopping polling`);
+  bot.stopPolling().catch(() => {});
+  setTimeout(() => process.exit(0), 1000).unref();
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
