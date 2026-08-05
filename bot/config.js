@@ -1,5 +1,5 @@
 const path = require('path');
-require('dotenv').config();
+if (process.env.NODE_ENV !== 'test') require('dotenv').config();
 
 const BOT_CONFIG = {
   token: process.env.TELEGRAM_BOT_TOKEN || '',

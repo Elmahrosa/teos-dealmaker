@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { createPgAdapter, createMemoryAdapter } = require('./adapter');
 const { createRepos, forWorkspace } = require('./repos');
+const { buildPoolConfig } = require('./pool-config');
 
 let pool = null;
 let adapter = null;
@@ -12,7 +13,7 @@ function getPool() {
       throw new Error('DATABASE_URL environment variable is not set. Cannot connect to PostgreSQL.');
     }
     const { Pool } = require('pg');
-    pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    pool = new Pool(buildPoolConfig());
     pool.on('error', (err) => {
       console.error('Unexpected error on idle PostgreSQL client', err);
     });

@@ -35,10 +35,13 @@ function discover() {
 const suites = discover();
 const results = [];
 
+const testEnv = { ...process.env, NODE_ENV: process.env.NODE_ENV || 'test' };
+
 for (const file of suites) {
   const rel = path.relative(root, file);
   const res = spawnSync(process.execPath, [file], {
     cwd: root,
+    env: testEnv,
     encoding: 'utf8',
     timeout: 120000,
   });

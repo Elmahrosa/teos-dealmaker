@@ -1,4 +1,19 @@
 const { TABLES } = require('./tables');
+const { buildPoolConfig } = require('./pool-config');
+
+const JSONB_COLUMNS = new Set([
+  'subscriptions.refund_eligibility',
+  'audit_trail.details',
+  'agent_runs.input',
+  'agent_runs.output',
+  'plan_steps.depends_on',
+  'plan_steps.review',
+  'plan_steps.approval',
+  'workspace_memory.value',
+  'knowledge_documents.metadata',
+  'integration_connections.config',
+  'plans.metrics'
+]);
 
 function sanitize(table, row) {
   const allowed = new Set(TABLES[table].columns);
@@ -13,12 +28,23 @@ function hasTimestamps(table) {
   return Boolean(TABLES[table].timestamps);
 }
 
-function serialize(value) {
-  return value !== null && typeof value === 'object' ? JSON.stringify(value) : value;
+function serialize(value, table, column) {
+  if (value === null || value === undefined) return value;
+  if (JSONB_COLUMNS.has(`${table}.${column}`)) return JSON.stringify(value);
+  return typeof value === 'object' ? JSON.stringify(value) : value;
 }
 
 function matches(row, where) {
   return Object.entries(where).every(([key, value]) => row[key] === value);
+}
+
+function normalizeRow(row) {
+  if (!row) return row;
+  const out = {};
+  for (const [key, value] of Object.entries(row)) {
+    out[key] = value instanceof Date ? value.toISOString() : value;
+  }
+  return out;
 }
 
 function createPgAdapter() {
@@ -26,7 +52,7 @@ function createPgAdapter() {
     throw new Error('DATABASE_URL environment variable is not set. Cannot connect to PostgreSQL.');
   }
   const { Pool } = require('pg');
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const pool = new Pool(buildPoolConfig());
   pool.on('error', (err) => {
     console.error('Unexpected error on idle PostgreSQL client', err);
   });
@@ -34,55 +60,55 @@ function createPgAdapter() {
   async function insert(table, row) {
     const clean = sanitize(table, row);
     const cols = Object.keys(clean);
-    const values = cols.map(c => serialize(clean[c]));
+    const values = cols.map(c => serialize(clean[c], table, c));
     const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
     const res = await pool.query(
       `INSERT INTO ${table} (${cols.join(', ')}) VALUES (${placeholders}) RETURNING *`,
       values
     );
-    return res.rows[0] || null;
+    return normalizeRow(res.rows[0] || null);
   }
 
   function buildWhere(table, where) {
-    const clean = sanitize(table, where);
-    const keys = Object.keys(clean);
+    const keys = Object.keys(where || {});
     const clause = keys.length
       ? ` WHERE ${keys.map((k, i) => `${k} = $${i + 1}`).join(' AND ')}`
       : '';
-    return { clause, params: keys.map(k => serialize(clean[k])) };
+    return { clause, params: keys.map(k => serialize(where[k], table, k)) };
   }
 
   async function find(table, where, opts) {
     const o = opts || {};
     const { clause, params } = buildWhere(table, where);
-    const orderCol = ['id', 'created_at', 'updated_at', 'timestamp', 'started_at', 'stage'].includes(o.orderBy) ? o.orderBy : 'id';
+    const orderCol = ['id', 'created_at', 'updated_at', 'timestamp', 'started_at', 'stage'].includes(o.orderBy)
+      ? o.orderBy
+      : (table === 'workspace_members' ? 'workspace_id' : 'id');
     const order = o.order === 'desc' ? 'DESC' : 'ASC';
     let sql = `SELECT * FROM ${table}${clause} ORDER BY ${orderCol} ${order}`;
     if (Number.isInteger(o.limit) && o.limit > 0) sql += ` LIMIT ${o.limit}`;
     if (Number.isInteger(o.offset) && o.offset > 0) sql += ` OFFSET ${o.offset}`;
     const res = await pool.query(sql, params);
-    return res.rows;
+    return res.rows.map(normalizeRow);
   }
 
   async function findOne(table, where) {
     const { clause, params } = buildWhere(table, where);
     const res = await pool.query(`SELECT * FROM ${table}${clause} LIMIT 1`, params);
-    return res.rows[0] || null;
+    return normalizeRow(res.rows[0] || null);
   }
 
   async function update(table, where, changes) {
-    const cleanWhere = sanitize(table, where);
     const clean = sanitize(table, changes);
     const keys = Object.keys(clean);
-    const whereKeys = Object.keys(cleanWhere);
+    const whereKeys = Object.keys(where || {});
     const setClause = keys.map((k, i) => `${k} = $${i + 1}`).join(', ');
     const whereClause = whereKeys.map((k, i) => `${k} = $${keys.length + i + 1}`).join(' AND ');
-    const params = [...keys.map(k => serialize(clean[k])), ...whereKeys.map(k => serialize(cleanWhere[k]))];
+    const params = [...keys.map(k => serialize(clean[k], table, k)), ...whereKeys.map(k => serialize(where[k], table, k))];
     const res = await pool.query(
       `UPDATE ${table} SET ${setClause} WHERE ${whereClause} RETURNING *`,
       params
     );
-    return res.rows[0] || null;
+    return normalizeRow(res.rows[0] || null);
   }
 
   async function count(table, where) {

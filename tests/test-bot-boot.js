@@ -8,6 +8,7 @@
 // rewrite regressed the design from the v0.8.1 (last-night) build, this test
 // fails before anything ships.
 
+process.env.NODE_ENV = process.env.NODE_ENV || 'test';
 process.env.TELEGRAM_ADMIN_IDS = '7700001';
 process.env.TEOS_FOUNDER_TELEGRAM_ID = '7700001';
 

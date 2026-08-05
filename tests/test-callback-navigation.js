@@ -16,6 +16,7 @@
 //      pickers are driven end-to-end.
 //   5. Guards — non-admins are denied audit/admin/mode actions.
 
+process.env.NODE_ENV = process.env.NODE_ENV || 'test';
 process.env.TELEGRAM_ADMIN_IDS = '7700001';
 process.env.TEOS_FOUNDER_TELEGRAM_ID = '7700001';
 

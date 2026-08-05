@@ -4,6 +4,7 @@
 // zero regressions through the refactored services/workforce and
 // services/mission-controller layers.
 
+process.env.NODE_ENV = process.env.NODE_ENV || 'test';
 process.env.TELEGRAM_ADMIN_IDS = '7700001';
 process.env.TEOS_FOUNDER_TELEGRAM_ID = '7700001';
 

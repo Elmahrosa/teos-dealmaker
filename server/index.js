@@ -17,15 +17,15 @@ function contentSecurityPolicy() {
   if (process.env.ANALYTICS_LINKEDIN) scriptSrc.push('https://snap.licdn.com');
   if (process.env.ANALYTICS_META_PIXEL) scriptSrc.push('https://connect.facebook.net');
   return [
-    `default-src 'self'`,
+    "default-src 'self'",
     `script-src ${scriptSrc.join(' ')}`,
-    `style-src 'self' 'unsafe-inline'`,
-    `img-src 'self' data: https:`,
-    `font-src 'self' data:`,
-    `connect-src 'self' https:`,
-    `frame-ancestors 'self'`,
-    `base-uri 'self'`,
-    `form-action 'self' https:`
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https:",
+    "font-src 'self' data:",
+    "connect-src 'self' https:",
+    "frame-ancestors 'self'",
+    "base-uri 'self'",
+    "form-action 'self' https:"
   ].join('; ');
 }
 
