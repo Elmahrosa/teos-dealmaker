@@ -31,6 +31,9 @@ function contentSecurityPolicy() {
 
 app.set('trust proxy', 1);
 
+const publicDashboard = path.join(__dirname, '..', 'public', 'dashboard');
+app.use('/dashboard', express.static(publicDashboard));
+
 app.use((req, res, next) => {
   res.set({
     'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
@@ -131,6 +134,11 @@ app.get('/og-image.png', (req, res) => {
 });
 
 app.get('/dashboard', (req, res) => {
+  const dashboardPath = path.join(__dirname, '..', 'public', 'dashboard', 'index.html');
+  if (fs.existsSync(dashboardPath)) {
+    return res.sendFile(dashboardPath);
+  }
+
   res.type('html').send(
     render.renderDashboard(
       fs.readFileSync(path.join(__dirname, 'sentinel.html'), 'utf8')
