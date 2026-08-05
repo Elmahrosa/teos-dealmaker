@@ -11,8 +11,8 @@ const PRICING = [
   {
     tier: '🚀 Solo',
     tagline: 'For founders and solo teams',
-    monthly: { price: '$79.00', url: env.DODO_STARTER_MONTHLY_URL || '' },
-    annual: { price: '$790.00', url: env.DODO_STARTER_ANNUAL_URL || '' },
+    monthly: { price: '$99.00', url: env.DODO_STARTER_MONTHLY_URL || '' },
+    annual: { price: '$950.00', url: env.DODO_STARTER_ANNUAL_URL || '' },
     productIds: {
       monthly: env.DODO_STARTER_MONTHLY_PID || '',
       annual: env.DODO_STARTER_ANNUAL_PID || ''
@@ -27,8 +27,8 @@ const PRICING = [
   {
     tier: '⚡ Growth',
     tagline: 'For growing revenue teams',
-    monthly: { price: '$249.00', url: env.DODO_GROWTH_MONTHLY_URL || '' },
-    annual: { price: '$2,490.00', url: env.DODO_GROWTH_ANNUAL_URL || '' },
+    monthly: { price: '$299.00', url: env.DODO_GROWTH_MONTHLY_URL || '' },
+    annual: { price: '$2,990.00', url: env.DODO_GROWTH_ANNUAL_URL || '' },
     productIds: {
       monthly: env.DODO_GROWTH_MONTHLY_PID || '',
       annual: env.DODO_GROWTH_ANNUAL_PID || ''
@@ -43,8 +43,8 @@ const PRICING = [
   {
     tier: '👑 Business',
     tagline: 'For revenue organizations',
-    monthly: { price: '$699.00', url: env.DODO_BUSINESS_MONTHLY_URL || '' },
-    annual: { price: '$6,990.00', url: env.DODO_BUSINESS_ANNUAL_URL || '' },
+    monthly: { price: '$999.00', url: env.DODO_BUSINESS_MONTHLY_URL || '' },
+    annual: { price: '$9,990.00', url: env.DODO_BUSINESS_ANNUAL_URL || '' },
     productIds: {
       monthly: env.DODO_BUSINESS_MONTHLY_PID || '',
       annual: env.DODO_BUSINESS_ANNUAL_PID || ''
@@ -81,27 +81,35 @@ const ADDONS = [
   { id: 'support', name: 'Dedicated Support', description: 'Named engineer with priority SLAs.' }
 ];
 
-function formatPricingText() {
+function pricingWords(lang) {
+  return lang === 'ar'
+    ? { monthly: 'شهرياً', annual: 'سنوياً', pricing: 'الأسعار', addons: 'إضافات المنصة' }
+    : { monthly: 'Monthly', annual: 'Annual', pricing: 'Pricing', addons: 'Add-ons' };
+}
+
+function formatPricingText(lang) {
+  const w = pricingWords(lang);
   return [
-    '💳 <b>Pricing</b>',
+    `💳 <b>${w.pricing}</b>`,
     '',
     ...PRICING.flatMap(t => [
       t.tier,
-      `  Monthly ${t.monthly.price}` + (t.monthly.url ? ` — ${t.monthly.url}` : ''),
-      `  Annual ${t.annual.price}` + (t.annual.url ? ` — ${t.annual.url}` : ''),
+      `  ${w.monthly} ${t.monthly.price}` + (t.monthly.url ? ` — ${t.monthly.url}` : ''),
+      `  ${w.annual} ${t.annual.price}` + (t.annual.url ? ` — ${t.annual.url}` : ''),
       ''
     ]),
-    '🧩 <b>Add-ons</b>',
+    `🧩 <b>${w.addons}</b>`,
     ...ADDONS.map(a => `  ${a.name} — ${a.description}`)
   ].join('\n');
 }
 
-function pricingButtons() {
+function pricingButtons(lang) {
+  const w = pricingWords(lang);
   return {
     inline_keyboard: PRICING.flatMap(t => {
       const row = [];
-      if (t.monthly.url) row.push({ text: `${t.tier} Monthly ${t.monthly.price}`, url: t.monthly.url });
-      if (t.annual.url) row.push({ text: `${t.tier} Annual ${t.annual.price}`, url: t.annual.url });
+      if (t.monthly.url) row.push({ text: `${t.tier} ${w.monthly} ${t.monthly.price}`, url: t.monthly.url });
+      if (t.annual.url) row.push({ text: `${t.tier} ${w.annual} ${t.annual.price}`, url: t.annual.url });
       return row.length ? [row] : [];
     })
   };

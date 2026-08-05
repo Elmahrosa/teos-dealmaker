@@ -3,6 +3,7 @@ const audit = require('../utils/auditLogger');
 const { isFounder, isAdmin } = require('./access');
 const { buildHome, buildWorkforce, buildPipeline, buildDeals, buildAudit, buildAdmin, buildMemory, buildCosts, buildHealth, buildProviders, buildQueue, buildBriefing, buildIntelligence, buildKnowledgeDocs, buildAskResult, buildIntegrations, buildLearn, buildMissions, buildApprovals, buildMissionGoalPrompt, launchGoalMission } = require('./menu');
 const { formatPricingText, pricingButtons } = require('../config/pricing.config');
+const i18n = require('./i18n');
 const design = require('./design');
 const identity = require('../services/identity');
 const intelligence = require('../services/intelligence');
@@ -142,8 +143,9 @@ function cmdSales(chatId, userId, prompt) {
   }
 }
 
-function cmdPricing(chatId) {
-  return { chatId, text: formatPricingText(), replyMarkup: pricingButtons() };
+function cmdPricing(chatId, userId) {
+  const lang = i18n.getLang(userId);
+  return { chatId, text: formatPricingText(lang), replyMarkup: pricingButtons(lang) };
 }
 
 async function cmdWorkforce(chatId, userId) {
