@@ -382,7 +382,7 @@ v1.0.0 Public Launch — production catalog configured, release tagged
 
 ## License
 
-MIT License - Copyright (c) 2026 Elmahrosa International
+Proprietary. © 2026 Elmahrosa International. All rights reserved.
 
 See [LICENSE](LICENSE) for full details.
 

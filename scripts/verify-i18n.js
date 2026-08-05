@@ -110,7 +110,7 @@ console.log('5) persisted lang:', global.window.localStorage._v);
 
 const pass =
   docEl.lang === 'ar' && docEl.dir === 'rtl' &&
-  /بإشراف/.test(translated[0].textContent || '') &&
+  /الذكاء الاصطناعي/.test(translated[0].textContent || '') &&
   tag.textContent !== 'For founders and solo teams' &&
   /شهرياً/.test(c1.textContent) &&
   /شهرياً/.test(buy.textContent) &&

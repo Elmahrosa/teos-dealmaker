@@ -2,7 +2,7 @@
   "name": "teos-dealmaker",
   "version": "1.0.0",
   "author": "Ayman Seif",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "engines": {
     "node": ">=18"
   },

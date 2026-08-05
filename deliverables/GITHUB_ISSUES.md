@@ -130,7 +130,7 @@ pm run lint (if linting exists).
 
 ### Add License Header to Source Files
 **Description**: While a LICENSE file is present, individual source files lack copyright headers.
-**Desired Behavior**: Add a standard header to each source file (e.g., // Copyright (c) 2026 Elmahrosa International. Licensed under the MIT License.).
+**Desired Behavior**: Add a standard header to each source file (e.g., // Copyright (c) 2026 Elmahrosa International. All rights reserved.).
 **Acceptance Criteria**:
 - All .js files in the repository contain the appropriate license header.
 **Labels**: task, low-priority
