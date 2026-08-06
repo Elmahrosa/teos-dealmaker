@@ -1,0 +1,8 @@
+# Railway deploy excludes (mirrors .gitignore + large/volatile artifacts)
+node_modules
+.git
+.env
+data
+*.log
+hostinger.zip
+supabase/.temp
