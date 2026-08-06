@@ -298,13 +298,14 @@ TEOS exposes a small set of public HTTP endpoints (no authentication required â€
 ### Endpoints
 - GET /api/pricing - Returns live pricing tiers with Dodo checkout URLs
 - GET /api/health - Health check (`{"status":"ok","mode":...}`); used by uptime monitors
-- GET /api/audit - Returns a recent subset of audit-log entries from the file-backed audit store
-- POST /webhook/dodo - Dodo payment webhook (HMAC-signed, validated with `DODO_WEBHOOK_SECRET`)
+- GET /api/audit - Audit-log entries from the file-backed audit store. Protected: requires the `AUDIT_API_KEY` in the `X-API-Key` header; returns `503` until that key is configured and `401` for missing/invalid keys
+- POST /webhook/dodo - Dodo payment webhook (HMAC-signed, validated with `DODO_WEBHOOK_SECRET`; rejects all requests when the secret is unset)
 
 Other routes serve the landing page (`/`), static assets (`/robots.txt`, `/sitemap.xml`, `/favicon.svg`, `/og-image.*`), and the ops dashboard (`/dashboard`, `X-Robots-Tag: noindex`).
 
 ### Security
-- The `/webhook/dodo` endpoint is validated with an HMAC signature (`X-Dodo-Signature`); invalid signatures return `401 invalid_signature`
+- The `/webhook/dodo` endpoint is validated with an HMAC signature (`X-Dodo-Signature`); invalid signatures return `401 invalid_signature`, and all requests are rejected when `DODO_WEBHOOK_SECRET` is unset (fail-closed)
+- The `/api/audit` endpoint requires `AUDIT_API_KEY` in the `X-API-Key` header
 - Rate limiting via express-rate-limit: 120 requests/min per IP on `/api/`, 30 requests/min on `/webhook/`
 - Security headers (HSTS, CSP, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy) are set on all responses
 

@@ -1,61 +1,51 @@
 ﻿# Technical Debt Report
 
-## Overview
-This document outlines the technical debt items identified during the repository audit.
+Current as of v1.0.2-production (commit eb6a518). Earlier debt items (missing agents directory, no CI/CD, no rate limiting, dependency vulnerabilities) are **resolved**; this report reflects the remaining and newly identified items.
 
-## Items
+## Remaining Items
 
-### 1. Missing Agents Directory
-- **Description**: The bot/commands.js file references agent modules (e.g., ../agents/outreach, ../agents/qualification) that do not exist in the repository. This likely causes runtime errors when those commands are invoked.
-- **Impact**: High – leads to broken functionality.
-- **Suggested Fix**: Either implement the missing agent modules or update the references to point to the correct locations (possibly within services/workforce or elsewhere).
+### 1. Plugin signing (Medium)
+- Plugins are loaded from the local filesystem via `require()` with full Node privileges (`services/plugin-manager/loader.js`). Any plugin passing manifest validation runs arbitrary code.
+- Impact: a compromised or untrusted plugin directory is equivalent to remote code execution.
+- Suggested fix: Implement plugin signing/verification (public-key signature over the plugin manifest + entries) and load plugins only from a trusted root. This is already on the platform roadmap.
 
-### 2. Lack of CI/CD Pipeline
-- **Description**: No GitHub Actions or other CI/CD workflows are present. The README mentions GitHub Actions under CI/CD, but the directory is empty.
-- **Impact**: Medium – manual testing and deployment increase risk of errors.
-- **Suggested Fix**: Set up GitHub Actions to run tests on pull requests and automate deployment to staging/production.
+### 2. Live-DB test coverage in CI (Medium)
+- `tests/phase25-supabase.js` and `tests/phase25-live.js` require `DATABASE_URL` and are skipped when it is unset; CI does not provide one.
+- Impact: database-backed behaviors are not continuously verified.
+- Suggested fix: Add a Postgres service container to CI and run the live suites against it (with a throwaway schema), or run them manually against staging before every release.
 
-### 3. No Containerization
-- **Description**: No Dockerfile or docker-compose.yml found. This complicates consistent deployment across environments.
-- **Impact**: Medium – environment inconsistencies can lead to "works on my machine" issues.
-- **Suggested Fix**: Add Dockerfile for the application and optionally a docker-compose.yml for local development with dependencies (PostgreSQL).
+### 3. OpenAPI/Swagger documentation (Low)
+- The HTTP API (`/api/pricing`, `/api/health`, `/api/audit`, `/webhook/dodo`) has no OpenAPI spec.
+- Impact: hampers client integration and automated contract testing.
+- Suggested fix: Generate an OpenAPI 3 spec from the Express routes or write one manually.
 
-### 4. Express Server Security Middleware Missing
-- **Description**: The Express server (server/index.js) does not use common security middleware like helmet, cors, or rate limiting.
-- **Impact**: Low to Medium – exposes the API to common web vulnerabilities.
-- **Suggested Fix**: Add helmet for security headers, configure CORS appropriately, and implement rate limiting on API endpoints.
+### 4. Containerization (Low)
+- No Dockerfile / docker-compose present.
+- Impact: environment drift between local and production.
+- Suggested fix: Add a Dockerfile (non-root user, read-only root fs) and a compose file with Postgres for local development.
 
-### 5. Dependency Vulnerabilities
-- **Description**: The README notes 
-pm audit: 9 vulnerabilities (node-telegram-bot-api deprecated deps).
-- **Impact**: Medium – outdated dependencies may have known security issues.
-- **Suggested Fix**: Run 
-pm audit and update dependencies where possible. Consider forking or patching if updates are not available.
+### 5. Centralized logging (Low)
+- Logging mixes `console.*` and the file-based audit logger; no structured logging library.
+- Impact: harder log aggregation and correlation at scale.
+- Suggested fix: Adopt a structured logger (pino/winston) with levels and sinks; keep the audit vault separate.
 
-### 6. Logging Infrastructure
-- **Description**: Logging uses a mix of console.log and a custom file-based audit logger. No structured logging library is used.
-- **Impact**: Low – makes log aggregation and analysis harder in production.
-- **Suggested Fix**: Adopt a structured logging library (e.g., winston, pino) with configurable log levels and outputs (console, file, external services).
+### 6. Observability/metrics (Low)
+- Telemetry exists for agent runs and there is a health endpoint, but no Prometheus/Grafana export or distributed tracing.
+- Suggested fix: Export key metrics (request latency, error rates, agent performance) via OpenTelemetry; this is on the platform roadmap.
 
-### 7. Monitoring and Metrics
-- **Description**: While telemetry exists for agent runs and there is a health check endpoint, there is no centralized metrics collection (e.g., Prometheus) or distributed tracing.
-- **Impact**: Low – limits observability in production.
-- **Suggested Fix**: Integrate with a monitoring stack (Prometheus + Grafana) and export key metrics (request latency, error rates, agent performance).
+### 7. Memory adapter transaction semantics (Low)
+- `transaction(fn)` in the in-memory adapter simply calls `fn(null)` (`db/adapter.js`) — rollback is not simulated.
+- Impact: code relying on rollback semantics could behave differently under the memory adapter (tests only).
+- Suggested fix: Document the limitation or implement snapshot/rollback in the memory adapter.
 
-### 8. API Documentation
-- **Description**: No OpenAPI/Swagger specification is present for the HTTP API.
-- **Impact**: Low – hinders client development and integration.
-- **Suggested Fix**: Generate an OpenAPI spec from the Express routes or write one manually.
+### 8. Audit vault is not physically immutable (Low)
+- The file-backed vault detects tampering via hash chain but can be deleted or truncated by a process with write access.
+- Suggested fix: Enforce filesystem write protection on `data/vault`, rely on the Postgres mirror as the durable store, and/or ship the vault to immutable object storage.
 
-### 9. Error Handling
-- **Description**: Error handling appears basic in some areas (e.g., try/catch that logs and rethrows). No centralized error handling for Express routes.
-- **Impact**: Low – could lead to unhandled exceptions crashing the process.
-- **Suggested Fix**: Implement centralized error handling middleware for Express and ensure all async functions properly handle or propagate errors.
-
-### 10. Configuration Management
-- **Description**: Configuration is split across environment variables, .env files, and a JSON file (data/mode.json) for the bot mode.
-- **Impact**: Low – potential for inconsistency.
-- **Suggested Fix**: Consider using a configuration library (e.g., convect, nconf) or consolidate into a single config module that loads from environment and defaults.
+### 9. Default customer email placeholder (Low)
+- `utils/dodoPayments.js` uses `buyer@example.com` when no email is supplied to a checkout link.
+- Impact: checkout links can be created with a placeholder address.
+- Suggested fix: Require an email at the call site or omit the customer field.
 
 ## Summary
-Addressing these items will improve the system's reliability, security, maintainability, and operational readiness.
+No high-severity technical debt remains. Priorities: plugin signing, live-DB CI coverage, and containerization. The remaining items are operational hardening and are largely covered by the existing roadmap.

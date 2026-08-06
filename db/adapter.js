@@ -24,6 +24,19 @@ function sanitize(table, row) {
   return clean;
 }
 
+// Where-clause keys are interpolated into SQL verbatim, so they must be
+// validated against the schema. Fail loud on an unknown column rather than
+// silently dropping (or worse, injecting) a filter. `id` and the timestamp
+// columns are implicit in every physical table, so they are always allowed.
+function assertWhere(table, where) {
+  const allowed = new Set([...TABLES[table].columns, 'id', 'created_at', 'updated_at']);
+  for (const key of Object.keys(where || {})) {
+    if (!allowed.has(key)) {
+      throw new Error(`Unknown column "${key}" in where clause for table "${table}"`);
+    }
+  }
+}
+
 function hasTimestamps(table) {
   return Boolean(TABLES[table].timestamps);
 }
@@ -70,6 +83,7 @@ function createPgAdapter() {
   }
 
   function buildWhere(table, where) {
+    assertWhere(table, where);
     const keys = Object.keys(where || {});
     const clause = keys.length
       ? ` WHERE ${keys.map((k, i) => `${k} = $${i + 1}`).join(' AND ')}`
@@ -160,6 +174,7 @@ function createMemoryAdapter() {
 
   function find(table, where, opts) {
     const o = opts || {};
+    assertWhere(table, where);
     let rows = tables[table].filter(r => matches(r, where || {}));
     const orderCol = o.orderBy || 'id';
     const direction = o.order === 'desc' ? -1 : 1;
@@ -175,11 +190,13 @@ function createMemoryAdapter() {
   }
 
   function findOne(table, where) {
+    assertWhere(table, where);
     const row = tables[table].find(r => matches(r, where || {}));
     return row ? { ...row } : null;
   }
 
   function update(table, where, changes) {
+    assertWhere(table, where);
     const clean = sanitize(table, changes);
     const row = tables[table].find(r => matches(r, where || {}));
     if (!row) return null;
@@ -189,10 +206,12 @@ function createMemoryAdapter() {
   }
 
   function count(table, where) {
+    assertWhere(table, where);
     return tables[table].filter(r => matches(r, where || {})).length;
   }
 
   function del(table, where) {
+    assertWhere(table, where);
     const before = tables[table].length;
     tables[table] = tables[table].filter(r => !matches(r, where || {}));
     return before - tables[table].length;

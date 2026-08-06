@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 require('dotenv').config();
 const express = require('express');
 const compression = require('compression');
@@ -28,6 +29,19 @@ const webhookLimiter = rateLimit({
   legacyHeaders: false
 });
 
+// Audit access is fail-closed: the endpoint returns 503 until AUDIT_API_KEY is
+// configured, and every request must present a matching X-API-Key header.
+// This keeps the sensitive audit trail out of the public marketing surface.
+function requireAuditAuth(req, res, next) {
+  const key = process.env.AUDIT_API_KEY;
+  if (!key) return res.status(503).json({ error: 'audit_endpoint_not_configured' });
+  const provided = req.get('x-api-key') || '';
+  if (provided.length !== key.length) return res.status(401).json({ error: 'unauthorized' });
+  const ok = crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(key));
+  if (!ok) return res.status(401).json({ error: 'unauthorized' });
+  next();
+}
+
 function contentSecurityPolicy() {
   const scriptSrc = ['\'self\'', '\'unsafe-inline\''];
   if (process.env.ANALYTICS_GA4) scriptSrc.push('https://www.googletagmanager.com');
@@ -47,7 +61,11 @@ function contentSecurityPolicy() {
   ].join('; ');
 }
 
-app.set('trust proxy', 1);
+// Trust exactly one reverse proxy by default (rate limiters rely on it).
+// Set TRUST_PROXY to the number of hops in front of the app (e.g. "0" if the
+// server is directly exposed, "2" behind two proxies).
+const trustProxy = process.env.TRUST_PROXY !== undefined ? Number(process.env.TRUST_PROXY) : 1;
+app.set('trust proxy', Number.isFinite(trustProxy) ? trustProxy : 1);
 
 app.use('/api/', apiLimiter);
 app.use('/webhook/', webhookLimiter);
@@ -81,19 +99,19 @@ app.get('/api/pricing', (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
-  const entries = audit.readVault();
+  const totalEntries = audit.countEntries();
   // Execution modes are founder-only. Public consoles see a neutral
   // operational status, never the DRY/LIVE mode.
   const mode = getMode() === 'LIVE' ? 'live' : 'operational';
   res.json({
     status: 'ok',
     mode,
-    totalEntries: entries.length,
+    totalEntries,
     timestamp: new Date().toISOString()
   });
 });
 
-app.get('/api/audit', (req, res) => {
+app.get('/api/audit', requireAuditAuth, (req, res) => {
   const requested = parseInt(req.query.limit, 10);
   const limit = Math.min(Number.isFinite(requested) && requested > 0 ? requested : 100, 500);
   const entries = audit.readVault();

@@ -40,10 +40,13 @@ const crypto = require('crypto');
   const missing = billing.verifySignature(body, '');
   ok(!missing.ok, 'verifySignature rejects missing signature');
 
-  // ------------------------------------------ 2. simulated when no secret
+  // ------------------------------------------ 2. fail closed when no secret
   delete process.env.DODO_WEBHOOK_SECRET;
-  const sim = billing.verifySignature(body, '');
-  ok(sim.ok && sim.simulated, 'verifySignature simulated when DODO_WEBHOOK_SECRET unset');
+  const noSecret = billing.verifySignature(body, sig);
+  ok(!noSecret.ok && noSecret.reason === 'webhook_secret_not_configured',
+    'verifySignature fails closed when DODO_WEBHOOK_SECRET unset');
+  const noSecretMissing = billing.verifySignature(body, '');
+  ok(!noSecretMissing.ok, 'verifySignature rejects even unsigned requests without a secret');
 
   // ------------------------------------------ 3. product → plan mapping
   process.env.DODO_STARTER_MONTHLY_PID = 'pid_starter_m';

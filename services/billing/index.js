@@ -27,7 +27,9 @@ function getPlanForProduct(productId) {
 
 function verifySignature(rawBody, signature) {
   const secret = process.env.DODO_WEBHOOK_SECRET;
-  if (!secret) return { ok: true, simulated: true };
+  // Fail closed: without a configured secret no webhook is accepted. A
+  // signatureless request must never be treated as valid.
+  if (!secret) return { ok: false, reason: 'webhook_secret_not_configured' };
   if (!signature) return { ok: false, reason: 'missing_signature' };
   const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
   if (signature.length !== expected.length) return { ok: false, expected };

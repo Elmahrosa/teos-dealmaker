@@ -20,7 +20,7 @@ async function buildHealth(userId) {
       ])
     };
   }
-  const checks = await workforce.healthCheck(getStoreAdapter(), ctx.workspace.id, audit.readVault().length);
+  const checks = await workforce.healthCheck(getStoreAdapter(), ctx.workspace.id, audit.countEntries());
   const health = await workforce.agentHealth(getStoreAdapter(), ctx.workspace.id);
   const agentLines = health.map(h => {
     const tone = h.display === 'Ready' ? 'success' : h.display === 'Busy' ? 'warning' : h.display === 'Failed' ? 'critical' : 'info';
