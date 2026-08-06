@@ -14,14 +14,23 @@ module.exports = {
   },
   'civic.vote.create': {
     type: 'object',
-    properties: { ballotId: { type: 'string' }, choice: { type: 'string' } },
-    required: ['ballotId'],
+    properties: {
+      ballotId: { type: 'string' },
+      choice: { type: 'string' },
+      authorizationStamp: { type: 'object' }
+    },
+    required: ['ballotId', 'authorizationStamp'],
     additionalProperties: true
   },
   'civic.issue.create': {
     type: 'object',
-    properties: { title: { type: 'string' }, body: { type: 'string' }, category: { type: 'string' } },
-    required: ['title'],
+    properties: {
+      title: { type: 'string' },
+      body: { type: 'string' },
+      category: { type: 'string' },
+      authorizationStamp: { type: 'object' }
+    },
+    required: ['title', 'authorizationStamp'],
     additionalProperties: true
   },
   'civic.issue.list': {

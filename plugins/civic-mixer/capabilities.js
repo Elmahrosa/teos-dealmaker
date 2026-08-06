@@ -2,7 +2,7 @@
 // Optional capability catalog helper for the civic-mixer plugin.
 'use strict';
 
-const CAPABILITIES = ['civic', 'civic.identity', 'civic.vote', 'civic.issue', 'gateway'];
+const CAPABILITIES = ['civic', 'civic.identity', 'civic.vote', 'civic.issue', 'governance', 'authorization', 'gateway'];
 const TOOLS = ['civic.lookup', 'civic.identity.verify', 'civic.vote.create', 'civic.issue.create', 'civic.issue.list'];
 
 function catalog() {

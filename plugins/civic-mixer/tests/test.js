@@ -17,12 +17,13 @@ const path = require('path');
 
   const manifest = require(path.join(pluginDir, 'manifest.json'));
 
-  // -------------------------------------------------------- platform contract
+  // ------------------------------------------------ platform contract
   ok(pm.validateManifest(manifest).valid === true, 'manifest validates against the platform contract');
   ok(manifest.apiVersion === 1 && /^\d+\.\d+\.\d+$/.test(manifest.version), 'manifest pins apiVersion + semver version');
   ok(manifest.engine === '^1.0.0', 'manifest pins an engine range');
+  ok(manifest.entries.audit === './audit.js', 'manifest declares the plugin-side audit writer');
 
-  // ----------------------------------------------------------------- register
+  // ------------------------------------------------ register
   const loadRes = pm.loadPlugins();
   ok(loadRes.loaded.includes('civic-mixer'), 'plugin loads through the platform loader');
   const rec = pm.registry.get('civic-mixer');
@@ -34,30 +35,81 @@ const path = require('path');
   ok(rec.permissions.network === true && rec.permissions.workspace === true, 'manifest grants merged over defaults');
   ok(rec.schema && Object.keys(rec.schema).length === 5, 'schema entry loaded for every tool');
   ok(typeof rec.adapter.call === 'function' && typeof rec.adapter.health === 'function', 'adapter satisfies the entry contract');
+  ok(rec.audit && typeof rec.audit.write === 'function', 'plugin-side audit writer wired onto the record');
 
-  // ---------------------------------------------------------------- policy
-  ok(pm.permissions.check('civic.issue.create', { payload: { title: 'Fix the fountain' } }).allowed === true,
-    'issue.create with a title is allowed');
-  const noTitle = pm.permissions.check('civic.issue.create', { payload: {} });
+  // ------------------------------------------------ Authorization Stamp
+  const { verifyStamp } = require(path.join(pluginDir, 'authority.js'));
+  function validStamp(actionType) {
+    return {
+      stamp_version: 'AUTH-1.0',
+      action_id: `ACT-${Date.now()}-${Math.floor(Math.random() * 1e9)}`,
+      action_type: actionType,
+      request_hash: 'a'.repeat(64),
+      authority_chain_hash: 'b'.repeat(64),
+      initiator_pubkey: 'PUBKEY-test-01',
+      governance_signature: 'g'.repeat(64),
+      safety_signature: 's'.repeat(64),
+      execution_scope: [actionType],
+      issued_at_utc: new Date().toISOString(),
+      expiry_utc: new Date(Date.now() + 3600 * 1000).toISOString()
+    };
+  }
+  ok(verifyStamp(validStamp('CIVIC_BALLOT_CREATE'), { actionType: 'CIVIC_BALLOT_CREATE' }).ok === true,
+    'authority.js accepts a structurally valid Authorization Stamp');
+  ok(verifyStamp(null, {}).ok === false && verifyStamp(null, {}).reason === 'authorization_stamp_required',
+    'authority.js rejects a missing stamp');
+  const noSig = validStamp('CIVIC_BALLOT_CREATE');
+  delete noSig.safety_signature;
+  ok(verifyStamp(noSig, { actionType: 'CIVIC_BALLOT_CREATE' }).ok === false
+    && verifyStamp(noSig, { actionType: 'CIVIC_BALLOT_CREATE' }).reason === 'invalid_authorization_stamp',
+    'authority.js rejects a stamp missing the safety signature');
+  const selfAuth = validStamp('CIVIC_BALLOT_CREATE');
+  selfAuth.safety_signature = selfAuth.governance_signature;
+  ok(verifyStamp(selfAuth, { actionType: 'CIVIC_BALLOT_CREATE' }).ok === false,
+    'authority.js rejects a self-authorizing stamp (identical signatures)');
+  const wrongScope = validStamp('CIVIC_BALLOT_CREATE');
+  ok(verifyStamp(wrongScope, { actionType: 'CIVIC_ISSUE_CREATE' }).ok === false
+    && verifyStamp(wrongScope, { actionType: 'CIVIC_ISSUE_CREATE' }).reason === 'authorization_scope_exceeded',
+    'authority.js enforces bounded execution scope');
+  const expired = validStamp('CIVIC_BALLOT_CREATE');
+  expired.expiry_utc = new Date(Date.now() - 1000).toISOString();
+  ok(verifyStamp(expired, { actionType: 'CIVIC_BALLOT_CREATE' }).reason === 'authorization_stamp_expired',
+    'authority.js rejects an expired stamp');
+
+  // ------------------------------------------------ policy (law gate)
+  ok(pm.permissions.check('civic.issue.create', { payload: { title: 'Fix the fountain', authorizationStamp: validStamp('CIVIC_ISSUE_CREATE') } }).allowed === true,
+    'issue.create with title + Authorization Stamp is allowed');
+  const noTitle = pm.permissions.check('civic.issue.create', { payload: { authorizationStamp: validStamp('CIVIC_ISSUE_CREATE') } });
   ok(noTitle.allowed === false && noTitle.reason === 'civic_title_required', 'issue.create without a title is denied');
-  ok(pm.permissions.check('civic.vote.create', { payload: { ballotId: 'B-1' } }).allowed === true,
-    'vote.create with a ballot is allowed');
-  const noBallot = pm.permissions.check('civic.vote.create', { payload: {} });
+  const unstampedIssue = pm.permissions.check('civic.issue.create', { payload: { title: 'Fix the fountain' } });
+  ok(unstampedIssue.allowed === false && unstampedIssue.reason === 'authorization_stamp_required',
+    'issue.create without an Authorization Stamp is denied');
+  ok(pm.permissions.check('civic.vote.create', { payload: { ballotId: 'B-1', authorizationStamp: validStamp('CIVIC_BALLOT_CREATE') } }).allowed === true,
+    'vote.create with ballot + Authorization Stamp is allowed');
+  const noBallot = pm.permissions.check('civic.vote.create', { payload: { authorizationStamp: validStamp('CIVIC_BALLOT_CREATE') } });
   ok(noBallot.allowed === false && noBallot.reason === 'civic_ballot_required', 'vote.create without a ballot is denied');
+  const unstampedVote = pm.permissions.check('civic.vote.create', { payload: { ballotId: 'B-1' } });
+  ok(unstampedVote.allowed === false && unstampedVote.reason === 'authorization_stamp_required',
+    'vote.create without an Authorization Stamp is denied');
+  const scopeDenied = pm.permissions.check('civic.vote.create', { payload: { ballotId: 'B-1', authorizationStamp: validStamp('CIVIC_ISSUE_CREATE') } });
+  ok(scopeDenied.allowed === false && scopeDenied.reason === 'authorization_scope_exceeded',
+    'vote.create with a stamp scoped to another action is denied');
   ok(pm.permissions.check('civic.lookup', { payload: { civicId: 'C-1' } }).allowed === true,
     'read-only capability has no policy gate');
 
-  // ---------------------------------------------------- adapter (simulated)
+  // ------------------------------------------------ adapter (simulated)
   const createAdapter = require(path.join(pluginDir, 'adapter.js'));
   const sim = createAdapter();
-  const simCall = await sim.call({ toolId: 'civic.issue.create', payload: { title: 'x' } });
+  const simCall = await sim.call({ toolId: 'civic.issue.create', payload: { title: 'x', authorizationStamp: validStamp('CIVIC_ISSUE_CREATE') } });
   ok(simCall.ok === true && simCall.simulated === true && simCall.data.issueId === 'ISSUE-0001', 'no endpoint -> simulated issue');
   ok((await sim.call({ toolId: 'civic.identity.verify', payload: { identityId: 'I-1' } })).data.verified === true,
     'simulated identity verification');
   ok((await sim.health()).status === 'not_configured', 'health reports not_configured without an endpoint');
   ok((await sim.discover()).tools.length === 5, 'discover lists the civic tool surface');
+  const auditEntries = require(path.join(pluginDir, 'audit.js')).list();
+  ok(auditEntries.some((e) => e.event === 'CIVIC_WRITE_SIMULATED'), 'write attempts are recorded in the plugin audit trail');
 
-  // ------------------------------------------------------ adapter (gateway)
+  // ------------------------------------------------ adapter (gateway)
   const sent = [];
   const okTransport = async (url, options) => {
     sent.push({ url, options });
@@ -72,13 +124,15 @@ const path = require('path');
     };
   };
   const live = createAdapter({ endpoint: 'https://civic-mixer.test/mcp', apiKey: 'cm-key', transport: okTransport });
-  const liveRes = await live.call({ toolId: 'civic.issue.create', payload: { title: 't' } });
+  const liveRes = await live.call({ toolId: 'civic.issue.create', payload: { title: 't', authorizationStamp: validStamp('CIVIC_ISSUE_CREATE') } });
   ok(liveRes.ok === true && liveRes.data === 'issue opened' && liveRes.simulated === false, 'endpoint -> real gateway call');
   const body = JSON.parse(sent[0].options.body);
   ok(body.method === 'tools/call' && body.params.name === 'civic.issue.create', 'JSON-RPC tools/call envelope');
   ok(body.params.arguments.title === 't', 'payload forwarded as tool arguments');
   ok(sent[0].options.headers['Authorization'] === 'Bearer cm-key', 'API key attached from config');
   ok(sent[0].url === 'https://civic-mixer.test/mcp', 'endpoint came from config, not hardcoded');
+  const liveCfg = live.config();
+  ok(liveCfg.hasApiKey === true && liveCfg.apiKey === '***redacted***', 'config() redacts the API key (no secret exposure)');
 
   // ------------------------------------------------ integration (auto-load)
   const mcp = require(path.join(root, 'services', 'mcp'));
@@ -91,9 +145,15 @@ const path = require('path');
   ok(mcp.adapters.get('civic-mixer').config().endpoint === '', 'plugin adapter resolves for its server');
   ok(mcp.adapters.get('github') === singleton.registry.get('civic-mixer').adapter, 'plugin adapter is the transport fallback');
 
-  const issueExec = await mcp.execute('civic.issue.create', { title: 'Test issue' });
-  ok(issueExec.ok === true && issueExec.simulated === true && issueExec.reason === 'mcp_not_configured',
-    'no endpoint -> client stays simulated (mcp_not_configured)');
+  const unstampedExec = await mcp.execute('civic.issue.create', { title: 'Test issue' });
+  ok(unstampedExec.ok === false && unstampedExec.error === 'denied' && unstampedExec.reason === 'authorization_stamp_required',
+    'MCP facade denies a write without an Authorization Stamp');
+  const stampedExec = await mcp.execute('civic.issue.create', { title: 'Test issue', authorizationStamp: validStamp('CIVIC_ISSUE_CREATE') });
+  ok(stampedExec.ok === true && stampedExec.simulated === true && stampedExec.reason === 'mcp_not_configured',
+    'stamped write stays simulated (mcp_not_configured) without an endpoint');
+  const readExec = await mcp.execute('civic.issue.list', {});
+  ok(readExec.ok === true && readExec.simulated === true && readExec.reason === 'mcp_not_configured',
+    'read-only capability needs no stamp and stays simulated');
   const denied = await mcp.execute('civic.issue.create', {});
   ok(denied.ok === false && denied.error === 'denied' && denied.reason === 'civic_title_required',
     'policy denial enforced through the MCP facade');
@@ -103,7 +163,7 @@ const path = require('path');
   mcp.grantPluginPermission('civic-mixer', 'network');
 
   console.log(`✓ civic-mixer plugin (${passed} assertions passed)`);
-  console.log('  manifest contract · register · governance policy · simulated adapter · JSON-RPC gateway · auto-load as fallback transport');
+  console.log('  manifest contract · register · ICBC Authorization Stamp gate · pre-execution audit · governance policy · simulated adapter · JSON-RPC gateway · auto-load as fallback transport');
   process.exit(0);
 })().catch(err => {
   console.error('✗ civic-mixer plugin test failed:', err);

@@ -9,16 +9,33 @@
 // plugin is fully exercisable in dry mode.
 'use strict';
 
+const audit = require('./audit');
+
 const DEFAULT_TIMEOUT_MS = 15000;
 
 const TOOL_IDS = ['civic.lookup', 'civic.identity.verify', 'civic.vote.create', 'civic.issue.create', 'civic.issue.list'];
 
+const WRITE_ACTIONS = {
+  'civic.vote.create': 'CIVIC_BALLOT_CREATE',
+  'civic.issue.create': 'CIVIC_ISSUE_CREATE'
+};
+
 function resolveConfig(overrides) {
   const o = overrides || {};
+  const apiKey = o.apiKey !== undefined ? o.apiKey : (process.env.CIVIC_MIXER_API_KEY || process.env.MCP_API_KEY || '');
   return {
     endpoint: o.endpoint || process.env.CIVIC_MIXER_ENDPOINT || process.env.MCP_ENDPOINT || '',
-    apiKey: o.apiKey !== undefined ? o.apiKey : (process.env.CIVIC_MIXER_API_KEY || process.env.MCP_API_KEY || ''),
+    apiKey,
     timeoutMs: o.timeoutMs || parseInt(process.env.CIVIC_MIXER_TIMEOUT || process.env.MCP_TIMEOUT || String(DEFAULT_TIMEOUT_MS), 10) || DEFAULT_TIMEOUT_MS
+  };
+}
+
+function redactedConfig(cfg) {
+  return {
+    endpoint: cfg.endpoint,
+    apiKey: cfg.apiKey ? '***redacted***' : '',
+    timeoutMs: cfg.timeoutMs,
+    hasApiKey: Boolean(cfg.apiKey)
   };
 }
 
@@ -123,17 +140,33 @@ function createAdapter(opts) {
   }
 
   async function call(request) {
+    const payload = request.payload || {};
+    const writeAction = WRITE_ACTIONS[request.toolId];
+    const actor = String(request.requester || 'system');
+    const auditMeta = { toolId: request.toolId };
+    if (writeAction) {
+      audit.write('CIVIC_WRITE_ATTEMPT', actor, 'attempt', Object.assign({ actionType: writeAction }, auditMeta));
+    }
     const cfg = resolveConfig(opts);
-    if (!cfg.endpoint) return simulated(request.toolId, request.payload);
+    if (!cfg.endpoint) {
+      const result = simulated(request.toolId, payload);
+      if (writeAction) audit.write('CIVIC_WRITE_SIMULATED', actor, 'success', auditMeta);
+      return result;
+    }
     const res = await send('tools/call', {
       name: request.toolId,
-      arguments: request.payload || {}
+      arguments: payload
     });
-    if (!res.ok) return res;
+    if (!res.ok) {
+      if (writeAction) audit.write('CIVIC_WRITE_REJECTED', actor, 'failed', Object.assign({ error: res.error }, auditMeta));
+      return res;
+    }
     const extracted = extractResult(res.result);
     if (extracted.isError) {
+      if (writeAction) audit.write('CIVIC_WRITE_REJECTED', actor, 'failed', Object.assign({ error: 'tool' }, auditMeta));
       return { ok: false, error: 'tool', message: extracted.text || 'tool_error', raw: res.raw, latency_ms: res.latency_ms };
     }
+    if (writeAction) audit.write('CIVIC_WRITE_APPROVED', actor, 'success', auditMeta);
     return {
       ok: true,
       data: extracted.structured !== null && extracted.structured !== undefined ? extracted.structured : extracted.text,
@@ -173,7 +206,7 @@ function createAdapter(opts) {
     return { ok: true };
   }
 
-  return { config: () => resolveConfig(opts), call, health, discover, initialize, shutdown };
+  return { config: () => redactedConfig(resolveConfig(opts)), call, health, discover, initialize, shutdown };
 }
 
 module.exports = createAdapter;

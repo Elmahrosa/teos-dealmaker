@@ -1,14 +1,14 @@
 {
   "id": "civic-mixer",
   "name": "TEOS Civic Mixer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "apiVersion": 1,
   "engine": "^1.0.0",
-  "description": "First official plugin: MCP JSON-RPC gateway transport (fallback) plus civic capabilities for lookup, identity, voting, and public issues.",
+  "description": "MCP JSON-RPC gateway transport (fallback) plus civic capabilities for lookup, identity, voting, and public issues. Write capabilities enforce the ICBC Authorization Stamp (Elmahrosa Law over Code) and pre-execution audit.",
   "server": "civic-mixer",
   "fallback": true,
   "enabledByDefault": true,
-  "capabilities": ["civic", "civic.identity", "civic.vote", "civic.issue", "gateway"],
+  "capabilities": ["civic", "civic.identity", "civic.vote", "civic.issue", "governance", "authorization", "gateway"],
   "permissions": {
     "network": true,
     "outboundHttp": true
@@ -30,7 +30,7 @@
       "category": "civic",
       "description": "Verify a civic identity.",
       "version": "1.0.0",
-      "capabilities": ["civic", "identity", "verify"],
+      "capabilities": ["civic", "identity", "verify", "read"],
       "operations": ["verify"],
       "permissions": ["network"]
     },
@@ -38,9 +38,9 @@
       "toolId": "civic.vote.create",
       "server": "civic-mixer",
       "category": "civic",
-      "description": "Create a ballot for a civic vote.",
-      "version": "1.0.0",
-      "capabilities": ["civic", "vote", "write"],
+      "description": "Create a ballot for a civic vote. Requires a valid ICBC Authorization Stamp in payload.authorizationStamp.",
+      "version": "1.1.0",
+      "capabilities": ["civic", "vote", "write", "authorization", "audit"],
       "operations": ["create"],
       "permissions": ["network"]
     },
@@ -48,9 +48,9 @@
       "toolId": "civic.issue.create",
       "server": "civic-mixer",
       "category": "civic",
-      "description": "Open a public issue in the civic arena.",
-      "version": "1.0.0",
-      "capabilities": ["civic", "issue", "write"],
+      "description": "Open a public issue in the civic arena. Requires a valid ICBC Authorization Stamp in payload.authorizationStamp.",
+      "version": "1.1.0",
+      "capabilities": ["civic", "issue", "write", "authorization", "audit"],
       "operations": ["create"],
       "permissions": ["network"]
     },
@@ -68,6 +68,7 @@
   "entries": {
     "adapter": "./adapter.js",
     "policy": "./policy.js",
+    "audit": "./audit.js",
     "schema": "./schema.js"
   }
 }
