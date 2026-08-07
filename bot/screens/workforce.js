@@ -23,9 +23,9 @@ async function buildWorkforce(userId) {
     `${design.EMOJI.ai} ${design.b('My Revenue Team')}`,
     design.it(`${view.workers_total} Specialists · ${view.busy} Busy · ${view.ready} Ready`),
     design.divider(),
-    design.row('⚡ Today\'s Cost', `$${(view.today_cost_cents / 100).toFixed(2)}`),
-    design.row('✓ Completed Tasks', String(view.completed_tasks)),
-    design.row('💰 Estimated Pipeline', `$${(view.estimated_pipeline_cents / 100).toFixed(2)}`),
+    design.row('��⚡ Today\'s Cost', `$${(view.today_cost_cents / 100).toFixed(2)}`),
+    design.row('��✓ Completed Tasks', String(view.completed_tasks)),
+    ...(view.estimated_pipeline_cents != null && view.estimated_pipeline_cents !== 0 ? [design.row('���💰 Estimated Pipeline', `$${(view.estimated_pipeline_cents / 100).toFixed(2)}`)] : []),
     design.section('WORKFORCE'),
     ...view.agents.map(a => statusLine(a)),
     design.divider()

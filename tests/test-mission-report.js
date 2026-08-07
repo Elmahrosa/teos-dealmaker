@@ -71,6 +71,23 @@ const founderSeed = require('../services/founderSeed');
   check(czHtml.includes('CUSTOMER #0'), 'customer-0 page renders header');
   check(czHtml.includes('ELMAHROSA INTERNATIONAL'), 'customer-0 page names the reference customer');
   check(czHtml.includes('/report/' + cz.plan.id), 'customer-0 page links to the executive report');
+  check(!czHtml.includes('Pipeline value'), 'customer-0 page hides empty pipeline value stat');
+
+  // Revenue identified stat is hidden when no real figure exists.
+  check(!html.includes('Revenue identified') || report.kpis.revenue_cents !== null, 'report hides empty revenue stat');
+
+  // Stale [simulated X] prefixes in stored step outputs are stripped on render.
+  const { forWorkspace } = require('../db/repos');
+  const fw = forWorkspace(adapter, outcome.plan.workspace_id || ws.id);
+  const staleStep = report.timeline[0];
+  await fw.planSteps.update(staleStep.id, {
+    output: '[simulated Claude · claude-sonnet-4-5] | Analysis: A research report about Acme Corp with market context.'
+  });
+  const sanitized = await missionReport(adapter, ws.id, outcome.plan.id);
+  const row = sanitized.timeline.find(s => s.id === staleStep.id);
+  check(!String(row.output).includes('[simulated'), 'simulated prefix stripped from timeline output');
+  check(String(row.output).includes('Analysis: A research report'), 'sanitized output retains real content');
+  check(!render.renderMissionReport(sanitized).includes('simulated Claude'), 'web report shows no simulated branding');
 
   console.log(`\n✓ mission report service + executive web render (${n} assertions passed)`);
   process.exit(0);

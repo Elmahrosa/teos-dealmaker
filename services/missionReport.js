@@ -12,8 +12,13 @@ function durationOf(startedAt, completedAt) {
   return ms;
 }
 
+function stripSimulatedPrefix(text) {
+  return String(text)
+    .replace(/^\[\s*simulated\s+[^\]]*\]\s*\|?\s*/gi, '');
+}
+
 function summarize(output, max) {
-  const text = String(output || '').split('\n').filter(Boolean).join(' ');
+  const text = stripSimulatedPrefix(output || '').split('\n').filter(Boolean).join(' ');
   const limit = max || 140;
   return text.length > limit ? text.slice(0, limit) + '…' : text;
 }

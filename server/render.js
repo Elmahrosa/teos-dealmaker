@@ -201,7 +201,7 @@ function renderMissionReport(report) {
     <div class="stat"><div class="label">Cost</div><div class="value">${fmtMoney(kpis.total_cost_cents)}</div></div>
     <div class="stat"><div class="label">Budget</div><div class="value">${kpis.budget_cents === null ? '—' : fmtMoney(kpis.budget_cents)}</div></div>
     <div class="stat"><div class="label">Duration</div><div class="value">${fmtMs(kpis.duration_ms)}</div></div>
-    <div class="stat"><div class="label">Revenue identified</div><div class="value">${kpis.revenue_cents === null ? '—' : fmtMoney(kpis.revenue_cents)}</div></div>
+    ${kpis.revenue_cents === null ? '' : `<div class="stat"><div class="label">Revenue identified</div><div class="value">${fmtMoney(kpis.revenue_cents)}</div></div>`}
   </div>
 
   <h2>EXECUTIVE MISSION TIMELINE</h2>
@@ -244,7 +244,6 @@ function renderCustomerZero(report) {
   <div class="stats">
     <div class="stat"><div class="label">Mission progress</div><div class="value">${kpis.completed_steps}/${kpis.total_steps}</div></div>
     <div class="stat"><div class="label">Completion</div><div class="value">${kpis.completion_rate}%</div></div>
-    <div class="stat"><div class="label">Pipeline value</div><div class="value">${fmtMoney(kpis.revenue_cents)}</div></div>
     <div class="stat"><div class="label">Total cost</div><div class="value">${fmtMoney(kpis.total_cost_cents)}</div></div>
   </div>
   <h2>PROOF POINT</h2>

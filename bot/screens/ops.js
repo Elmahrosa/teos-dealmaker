@@ -113,7 +113,8 @@ async function buildBriefing(userId) {
     design.section('TODAY'),
     design.row('Opportunities', String(b.today_opportunities)),
     design.row('Open deals', String(b.open_deals)),
-    design.row('Pipeline value', `$${(b.pipeline_value_cents / 100).toFixed(2)}`),
+    // Only show pipeline value if present and non-zero
+    b.pipeline_value_cents != null && b.pipeline_value_cents !== 0 && design.row('Pipeline value', `$${(b.pipeline_value_cents / 100).toFixed(2)}`),
     design.row('Meetings needed', String(b.meetings_needed)),
     design.section('FORECAST'),
     design.row('Revenue forecast', `$${(b.revenue_forecast_cents / 100).toFixed(2)}`),
