@@ -21,7 +21,7 @@ function record(name, ok, detail) {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}: ${detail}`);
 }
 
-function scanForbidden(text, label) {
+function scanForbidden(text) {
   const hits = FORBIDDEN.filter(re => re.test(text));
   return { hits, ok: hits.length === 0 };
 }
@@ -31,9 +31,9 @@ async function main() {
   const adapter = getAdapter();
   memory.reset();
 
-  const send = async (text, label) => {
+  const send = async (text) => {
     const r = await router.handleText(adapter, FOUNDER, text);
-    const fb = scanForbidden(r.text, label);
+    const fb = scanForbidden(r.text);
     const path = (r.trace && r.trace.path) || (r.trace && r.trace.latencyMs != null ? '?' : 'n/a');
     const lat = r.trace && r.trace.latencyMs != null ? r.trace.latencyMs : null;
     if (path === 'fast') latencies.fast.push(lat);

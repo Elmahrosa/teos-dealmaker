@@ -111,6 +111,39 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+app.get('/api/diagnostics', async (req, res) => {
+  const out = { dbPingMs: null, dbWarmMs: null, helloMs: null, statusMs: null, error: null };
+  try {
+    const { getPool } = require('../db');
+    const pool = getPool();
+    const ping = Date.now();
+    await pool.query('select 1');
+    out.dbPingMs = Date.now() - ping;
+    const warm = Date.now();
+    await pool.query('select 1');
+    out.dbWarmMs = Date.now() - warm;
+  } catch (err) {
+    out.error = 'db: ' + err.message;
+    return res.json(out);
+  }
+  const founder = Number(process.env.TEOS_FOUNDER_TELEGRAM_ID || 0);
+  if (founder) {
+    try {
+      const router = require('../services/router');
+      const adapter = require('../db').getAdapter();
+      const t1 = Date.now();
+      await router.handleText(adapter, founder, 'hello');
+      out.helloMs = Date.now() - t1;
+      const t2 = Date.now();
+      await router.handleText(adapter, founder, 'status');
+      out.statusMs = Date.now() - t2;
+    } catch (err) {
+      out.error = (out.error ? out.error + '; ' : '') + 'router: ' + err.message;
+    }
+  }
+  res.json(out);
+});
+
 app.get('/api/audit', requireAuditAuth, (req, res) => {
   const requested = parseInt(req.query.limit, 10);
   const limit = Math.min(Number.isFinite(requested) && requested > 0 ? requested : 100, 500);
