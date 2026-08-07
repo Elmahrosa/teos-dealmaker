@@ -46,6 +46,12 @@ const { createRepos } = require('../db/repos');
   equal(notStarted.started, false, 'auto-start skips an already-executed mission');
   await repos.plans.update(wsId, missionPlan.id, { status: 'running' });
 
+  // ----- P1: founder approval gate — Customer #0 mission pauses at 'present'
+  const missionRun = await founderMission.autoStartFounderMission(adapter, wsId);
+  equal(missionRun.started, true, 'auto-start runs the running Customer #0 mission');
+  equal(missionRun.status, 'waiting_approval', 'mission halts at the founder approval gate');
+  equal(missionRun.pendingApprovals, 1, 'exactly one approval request is pending');
+
   // ------------------------------------------ Intent detection EN + AR
   const cases = {
     'hi': 'greeting',

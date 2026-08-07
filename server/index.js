@@ -222,6 +222,8 @@ const server = app.listen(PORT, () => {
     .catch(err => console.error('[Sentinel] founder seed failed:', err && err.stack ? err.stack : err));
   const notify = require('../services/notify');
   notify.install();
+  const learningHook = require('../services/learningHook');
+  learningHook.install(() => require('../bot/store').getStoreAdapter());
 });
 
 function shutdown(signal) {

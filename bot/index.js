@@ -9,6 +9,7 @@ const { getStoreAdapter } = require('./store');
 const { bootstrapFounder } = require('../services/founderSeed');
 const { autoStartFounderMission } = require('../services/founderMission');
 const notify = require('../services/notify');
+const learningHook = require('../services/learningHook');
 
 function escapeHtml(text) {
   return String(text).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
@@ -90,6 +91,7 @@ async function bootstrap() {
     console.error('[bot] founder seed failed:', err && err.stack ? err.stack : err);
   }
   notify.install();
+  learningHook.install(getStoreAdapter);
   await bot.startPolling();
   console.log(`[TEOS DealMaker Bot] @${BOT_CONFIG.botName} polling (mode: ${getMode()})`);
 }

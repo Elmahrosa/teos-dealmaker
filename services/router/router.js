@@ -12,9 +12,11 @@ const memory = require('./memory');
 const context = require('./context');
 const executor = require('./executor');
 const reply = require('./reply');
+const fastpath = require('./fastpath');
 const { EVENT_NAMES } = require('../workforce/events');
 
 async function handleText(adapter, userId, rawText) {
+  const startedAt = Date.now();
   const text = String(rawText || '').trim();
   const session = memory.get(userId);
   const detection = intent.detect(text);
@@ -23,6 +25,7 @@ async function handleText(adapter, userId, rawText) {
   memory.pushMessage(userId, 'user', text);
   memory.update(userId, { currentIntent: detection.intent, language });
 
+  const route = fastpath.classify(detection.intent);
   const ctx = await context.resolve(adapter, userId, session);
   if (!ctx) {
     return {
@@ -34,6 +37,24 @@ async function handleText(adapter, userId, rawText) {
     };
   }
   memory.update(userId, { workspace: ctx.workspaceId, founderMode: ctx.isFounder });
+
+  if (route.path === 'fast' && route.static) {
+    const result = fastpath.staticResult(detection.intent, detection, ctx);
+    await ctx.audit('ROUTER_FASTPATH', { intent: detection.intent, path: 'fast', action: result.action });
+    const built = reply.build(result, ctx, session);
+    memory.pushMessage(userId, 'assistant', built.text);
+    return {
+      text: built.text,
+      suggestions: built.suggestions,
+      session,
+      trace: {
+        intent: detection.intent,
+        action: result.action,
+        path: 'fast',
+        latencyMs: Date.now() - startedAt
+      }
+    };
+  }
 
   let decision = null;
   if (detection.capability) {
@@ -77,7 +98,7 @@ async function handleText(adapter, userId, rawText) {
     text: built.text,
     suggestions: built.suggestions,
     session,
-    trace: { intent: detection.intent, action: result.action, decision: decision ? decision.decision : null }
+    trace: { intent: detection.intent, action: result.action, decision: decision ? decision.decision : null, path: route.path, latencyMs: Date.now() - startedAt }
   };
 }
 

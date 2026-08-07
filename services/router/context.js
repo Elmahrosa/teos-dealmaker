@@ -9,6 +9,7 @@ const { getWorkspaceContext } = require('../workspace');
 const { createRepos } = require('../../db/repos');
 const { createPolicyEngine } = require('../platform/policies');
 const { REGISTRY } = require('../workforce/registry');
+const universalAgents = require('../agents/registry');
 
 const TTL_MS = 30000;
 const ctxCache = new Map();
@@ -79,6 +80,7 @@ async function resolve(adapter, userId, session) {
     settings: wc.settings,
     language,
     agentRegistry: REGISTRY,
+    universalAgents,
     policy: policyEngineFor(adapter),
     repos,
     audit: async (actionType, details) => {

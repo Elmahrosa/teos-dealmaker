@@ -116,8 +116,15 @@ async function dispatch(adapter, step, ctx, session) {
     }
 
     case 'talk_to_agent': {
-      const agent = step.params.agent;
-      const entry = agent && ctx.agentRegistry[agent] ? ctx.agentRegistry[agent] : null;
+      let agent = step.params.agent;
+      let entry = agent && ctx.agentRegistry[agent] ? ctx.agentRegistry[agent] : null;
+      if (!entry && ctx.universalAgents) {
+        const picked = ctx.universalAgents.orchestrator(step.text || (agent || ''));
+        if (picked && picked.primary) {
+          agent = picked.primary.id;
+          entry = picked.primary;
+        }
+      }
       if (entry) {
         session.currentAgent = agent;
         session.lastAgent = agent;
