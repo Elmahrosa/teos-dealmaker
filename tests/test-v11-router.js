@@ -86,7 +86,11 @@ const { createRepos } = require('../db/repos');
     'أضف عميل': 'new_customer',
     'مهمة جديدة': 'create_mission',
     'الحالة': 'status',
-    'حملة': 'campaign'
+    'حملة': 'campaign',
+    'search the knowledge base for pricing': 'knowledge',
+    'what do we know about Elmahrosa': 'knowledge',
+    'ابحث في قاعدة المعرفة عن الأسعار': 'knowledge',
+    'knowledge base': 'knowledge'
   };
   for (const [text, expected] of Object.entries(cases)) {
     const d = intent.detect(text);
@@ -95,6 +99,7 @@ const { createRepos } = require('../db/repos');
   equal(intent.detect('السلام عليكم').language, 'ar', 'Arabic detected as ar');
   equal(intent.detect('hello').language, 'en', 'English detected as en');
   equal(intent.detect('sell Sentinel').params.goal, 'sell Sentinel', 'goal captured from "sell X"');
+  equal(intent.detect('search the knowledge base for pricing').params.query, 'pricing', 'knowledge query captured');
 
   // --------------------------------------------- Router pipeline (Phase 2)
   const r1 = await router.handleText(adapter, FOUNDER, 'hello');
@@ -132,6 +137,14 @@ const { createRepos } = require('../db/repos');
   equal(r7.trace.action, 'new_customer', 'customer created by natural language');
   const deals = await repos.deals.list(wsId, { status: 'open' });
   check(deals.some(d => d.company_name === 'Acme Holdings'), 'Acme Holdings persisted in pipeline');
+
+  // ----------------------------- Knowledge search through the router
+  await repos.intelligence.add({ workspace_id: wsId, title: 'TEOS pricing playbook', source_type: 'playbook', content: 'TEOS DealMaker annual pricing tiers for enterprise customers.', metadata: null });
+  const r7b = await router.handleText(adapter, FOUNDER, 'search the knowledge base for TEOS pricing');
+  equal(r7b.trace.action, 'knowledge', 'knowledge search executed through router');
+  check(r7b.text.includes('pricing playbook'), 'knowledge reply surfaces the top hit');
+  const r7c = await router.handleText(adapter, FOUNDER, 'search the knowledge base for zzzzqqqqwwww');
+  check(r7c.text.includes('Nothing found'), 'empty knowledge result handled gracefully');
 
   // ----------------------------- Smart error recovery (Phase 11)
   const repaired = executor.selfRepair({ intent: 'run_sales', language: 'en' }, { isFounder: true, language: 'en' }, new Error('400 Bad Request'));

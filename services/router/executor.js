@@ -9,6 +9,7 @@ const runtime = require('../workforce/runtime');
 const approvals = require('../workforce/approvals');
 const planner = require('../workforce/planner');
 const { forWorkspace } = require('../../db/repos');
+const { createKnowledgeBase } = require('../knowledge');
 
 async function latestPlan(adapter, workspaceId) {
   const plans = await forWorkspace(adapter, workspaceId).plans.list();
@@ -106,6 +107,16 @@ async function dispatch(adapter, step, ctx, session) {
     case 'deals': {
       const deals = await wf.deals.list({ status: 'open' });
       return { action: 'deals', data: { deals: deals || [], language: lang } };
+    }
+
+    case 'knowledge': {
+      const query = step.params.query;
+      if (!query) return { action: 'need_knowledge_query', data: { language: lang } };
+      const kb = createKnowledgeBase(adapter);
+      const hits = (await kb.search(wsId, query, { topK: 6 }))
+        .filter(h => h.sharedTokens >= 1 && (h.rawScore == null ? h.score : h.rawScore) >= 0.05)
+        .slice(0, 3);
+      return { action: 'knowledge', data: { query, hits, language: lang } };
     }
 
     case 'revenue': {

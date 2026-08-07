@@ -32,6 +32,12 @@ const PATTERNS = [
     ar: [/(ابحث|بحث|إيجاد|استهدف|اكتشف).{0,12}(عن\s)?(عملاء|زبائن|شركات|leads)/, /^العملاء/]
   },
   {
+    intent: 'knowledge',
+    capability: 'knowledge.search',
+    en: [/^(search|look up|query|check)\b.{0,20}\b(knowledge|base|docs|documents|brain|intel|lessons)\b/i, /\b(what do we know about|what do i know about|tell me what you know about)\b/i, /^knowledge\b/i, /\bknowledge base\b/i],
+    ar: [/(ابحث|بحث|استعلم).{0,12}(قاعدة المعرفة|المعرفة|المستندات|الوثائق)/, /^قاعدة المعرفة/, /ما\s(تعر?ف|تعرفين).{0,8}(عن|في)/]
+  },
+  {
     intent: 'run_sales',
     capability: 'mission.run',
     en: [/^(run|start|go|launch|execute|begin|activate)\b.{0,15}\b(sales|the\s+sales)\b/i, /^run sales/i],
@@ -155,6 +161,17 @@ function extractParams(intent, text) {
     if (/\b(english|arabic)\b/i.test(t)) params.language = /\barabic\b/i.test(t) ? 'ar' : 'en';
     if (/(عربي)/.test(t)) params.language = 'ar';
     if (/(انجليزي|إنجليزي|english)/i.test(t)) params.language = 'en';
+  }
+  if (intent === 'knowledge') {
+    const en = t.match(/(?:about|for)\s+([\w\s-]{2,})/i);
+    if (en && en[1]) params.query = en[1].trim().replace(/[.?!]+$/, '');
+    const ar = t.match(/(?:عن|في)\s+([\u0600-\u06FF\w\s-]{2,})/);
+    if (ar && ar[1]) params.query = ar[1].trim().replace(/[.?!]+$/, '');
+    if (!params.query) {
+      const q = t.match(/^(?:search|look up|query|check)\s+(.+)/i);
+      if (q && q[1]) params.query = q[1].trim().replace(/[.?!]+$/, '');
+    }
+    if (!params.query) params.query = t;
   }
   return params;
 }

@@ -1,5 +1,7 @@
 'use strict';
 
+const { tokenize } = require('./embedder');
+
 function cosine(a, b) {
   let dot = 0;
   let na = 0;
@@ -16,13 +18,15 @@ function cosine(a, b) {
 function similar(query, doc, embed) {
   const qv = embed(query);
   const dv = doc.embedding || embed((doc.content || '') + ' ' + (doc.title || ''));
-  return cosine(qv, dv);
+  const shared = tokenize(query).filter(t => tokenize((doc.content || '') + ' ' + (doc.title || '')).includes(t)).length;
+  return { score: cosine(qv, dv), shared };
 }
 
 async function search(docs, query, { embed, topK = 5, minScore = 0 } = {}) {
   const scored = [];
   for (const doc of docs) {
-    scored.push({ doc, score: similar(query, doc, embed) });
+    const { score, shared } = similar(query, doc, embed);
+    scored.push({ doc, score, sharedTokens: shared });
   }
   return scored
     .filter(s => s.score >= minScore)

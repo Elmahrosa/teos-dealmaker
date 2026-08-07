@@ -21,11 +21,12 @@ function recency(doc) {
 function rerank(hits, { recencyWeight = 0.1, sourceWeight = 0.1, minScore = 0 } = {}) {
   return hits
     .map(hit => {
+      const raw = hit.score;
       const score = Math.min(
         1,
-        hit.score + recency(hit.doc) * recencyWeight + (SOURCE_BOOST[hit.doc.source_type] || 0) * sourceWeight
+        raw + recency(hit.doc) * recencyWeight + (SOURCE_BOOST[hit.doc.source_type] || 0) * sourceWeight
       );
-      return { ...hit, score };
+      return { ...hit, rawScore: raw, score };
     })
     .filter(hit => hit.score >= minScore)
     .sort((a, b) => b.score - a.score);

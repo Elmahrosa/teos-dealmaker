@@ -119,6 +119,24 @@ function textFor(result, ctx, session) {
       return `Revenue: ${open} customers in pipeline, ${pipeline} missions. Latest mission "${latest ? latest.title : '—'}" at ${completed}/${total} steps${conf !== null ? ` (confidence ${Math.round(conf * 100)}%)` : ''}.`;
     }
 
+    case 'knowledge': {
+      const hits = d.hits || [];
+      if (!hits.length) {
+        return ar
+          ? `لم أجد شيئاً عن «${d.query}» في قاعدة المعرفة.`
+          : `Nothing found about "${d.query}" in the knowledge base.`;
+      }
+      const lines = hits.map((h, i) => `${i + 1}. ${h.doc.title} (${h.doc.source_type})`).join('\n');
+      return ar
+        ? `من قاعدة المعرفة عن «${d.query}»:\n${lines}`
+        : `From the knowledge base about "${d.query}":\n${lines}`;
+    }
+
+    case 'need_knowledge_query':
+      return ar
+        ? 'ماذا تريد أن أبحث عنه في قاعدة المعرفة؟'
+        : 'What should I search the knowledge base for?';
+
     case 'talk_to_agent': {
       const entry = d.entry;
       if (!entry) {
