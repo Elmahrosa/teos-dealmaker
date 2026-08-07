@@ -58,9 +58,20 @@ async function getUserByTelegram(adapter, telegramId) {
 }
 
 async function getWorkspaceForUser(adapter, userId) {
-  const member = await adapter.findOne('workspace_members', { user_id: userId });
-  if (!member) return null;
-  return adapter.findOne('workspaces', { id: member.workspace_id });
+  const members = await adapter.find('workspace_members', { user_id: userId });
+  if (!members || !members.length) return null;
+  // Prefer the founder's seeded workspace ("Elmahrosa International") when the
+  // user is a member of several workspaces, so the Customer #0 mission surface
+  // and founder context are deterministic.
+  let preferred = members[0];
+  for (const m of members) {
+    const w = await adapter.findOne('workspaces', { id: m.workspace_id });
+    if (w && w.slug === 'workspace_founder') {
+      preferred = m;
+      break;
+    }
+  }
+  return adapter.findOne('workspaces', { id: preferred.workspace_id });
 }
 
 async function uniqueSlug(adapter, name) {

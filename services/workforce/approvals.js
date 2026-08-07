@@ -9,7 +9,7 @@ const APPROVAL_GATES = [
   { action: 'delete_workspace', label: 'Delete Workspace', match: /^\s*delete[^.!?\n]*workspace/i },
   { action: 'change_subscription', label: 'Change Subscription', match: /^\s*change[^.!?\n]*subscription/i },
   { action: 'enable_live', label: 'Enable LIVE Mode', match: /^\s*(enable live|turn on live)/i },
-  { action: 'present_strategy', label: 'Present Strategy', match: /^\s*(present|deliver|approve)[^.!?\n]*(strategy|plan)/i }
+  { action: 'present_strategy', label: 'Present Strategy', match: /^\s*(present|deliver|approve)[^.!?\n]*(strategy|plan|workflow|forecast)/i }
 ];
 
 function gatesFor(step) {

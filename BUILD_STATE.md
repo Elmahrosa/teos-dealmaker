@@ -1,15 +1,18 @@
 # BUILD STATE
 
 ## Current Version
-- Release: v1.0.2-production
-- Latest commit: eb6a518 (feat(release): v1.0.2-production — founder controls, commercial plans, enterprise hardening)
-- Current branch: main
-- Working tree: clean
+- Release: v1.1.0-rc1 (AI Revenue OS)
+- Latest commit: ced8dd3 (fix(rc1): BOT_POLLING=0 guard for passive/staging instances; live convo-check data-aware assertions)
+- Current branch: feat/v1.1-ai-revenue-os
+- Working tree: clean (after RC1 commit)
 
 ## Verification Status
 - Lint (`npm run lint`): PASS (0 errors)
-- Test suite (`npm test`): PASS — 41 suites, 41 passed, 0 failed
+- Test suite (`npm test`): PASS — 45 suites, 45 passed, 0 failed
+- RC1 live prod check (`scripts/rc1-prod-check.js`): 16/16 PASS
+- RC1 live conversation check (`scripts/rc1-convo-check.js`): 22/22 PASS
 - Dependency audit (`npm audit`): 0 vulnerabilities
+- Syntax gate (`npm run build`): 233 JS files pass
 - CI: `.github/workflows/ci.yml` — install → build → lint → test (Node 20/22) on push/PR
 
 ## Security Hardening Applied

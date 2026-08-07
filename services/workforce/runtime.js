@@ -153,6 +153,7 @@ async function runPlan(adapter, workspaceId, opts) {
   }
   emit(failed ? EVENT_NAMES.PLAN_FAILED : halted ? EVENT_NAMES.PLAN_STARTED : EVENT_NAMES.PLAN_COMPLETED, {
     planId: plan.id,
+    workspaceId,
     status,
     failReason
   });

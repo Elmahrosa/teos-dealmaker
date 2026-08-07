@@ -7,6 +7,9 @@ const audit = require('../utils/auditLogger');
 const { getMode } = require('../config/mode');
 const { getStoreAdapter } = require('./store');
 const { bootstrapFounder } = require('../services/founderSeed');
+const { autoStartFounderMission } = require('../services/founderMission');
+const notify = require('../services/notify');
+const learningHook = require('../services/learningHook');
 
 function escapeHtml(text) {
   return String(text).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
@@ -73,9 +76,26 @@ async function bootstrap() {
     const seeded = await bootstrapFounder(getStoreAdapter());
     if (seeded && seeded.seeded && seeded.workspace) {
       console.log(`[bot] founder workspace seeded (workspace #${seeded.workspace.id}, mission #${seeded.mission && seeded.mission.plan ? seeded.mission.plan.id : '—'})`);
+      try {
+        const auto = await autoStartFounderMission(getStoreAdapter(), seeded.workspace.id);
+        if (auto.started) {
+          console.log(`[bot] Customer #0 mission auto-started: ${auto.status} (${auto.steps} steps, ${auto.pendingApprovals} pending approvals)`);
+        } else {
+          console.log(`[bot] Customer #0 mission not auto-started: ${auto.reason}`);
+        }
+      } catch (autoErr) {
+        console.error('[bot] Customer #0 auto-start failed:', autoErr && autoErr.stack ? autoErr.stack : autoErr);
+      }
     }
   } catch (err) {
-    console.error('[bot] founder seed skipped:', err.message);
+    console.error('[bot] founder seed failed:', err && err.stack ? err.stack : err);
+  }
+  notify.install();
+  learningHook.install(getStoreAdapter);
+  if (String(process.env.BOT_POLLING) === '0') {
+    console.log('[TEOS DealMaker Bot] polling disabled (BOT_POLLING=0) — running in passive mode');
+    setInterval(() => {}, 1 << 30);
+    return;
   }
   await bot.startPolling();
   console.log(`[TEOS DealMaker Bot] @${BOT_CONFIG.botName} polling (mode: ${getMode()})`);

@@ -2,6 +2,18 @@
 
 All notable changes to TEOS DealMaker are documented here.
 
+## [1.1.0-rc1] — 2026-08-07
+
+### AI Revenue OS (Release Candidate 1)
+
+- **Conversation router with fast/slow path**: intent detection resolves common requests (`greeting`, `help`, `status`, `analytics`, `revenue`, `deals`, `knowledge`, `talk_to_agent`) on a fast path; slow path covers richer orchestration. Unknown requests never fall back to placeholder text.
+- **Universal agent registry**: 15 agent types provisioned and ready; agent runs tracked (36 live).
+- **Knowledge RAG**: knowledge-document search intent with shared-token relevance guard; live KB search surfaces ranked hits.
+- **Channel adapters + learning hook**: extension surface for channel integrations and post-mission lessons.
+- **RC1 production validation tooling**: `scripts/rc1-prod-check.js` (16 live data assertions) and `scripts/rc1-convo-check.js` (22 live conversation assertions).
+- **Passive-mode keep-alive**: `BOT_POLLING=0` instances stay alive for staging/prod probes.
+- **`/api/diagnostics`**: latency probe endpoint (db ping, hello/status path timing).
+
 ## [1.0.2] — 2026-08-05
 
 ### Production SaaS Release
