@@ -92,6 +92,10 @@ async function bootstrap() {
   }
   notify.install();
   learningHook.install(getStoreAdapter);
+  if (String(process.env.BOT_POLLING) === '0') {
+    console.log('[TEOS DealMaker Bot] polling disabled (BOT_POLLING=0) — running in passive mode');
+    return;
+  }
   await bot.startPolling();
   console.log(`[TEOS DealMaker Bot] @${BOT_CONFIG.botName} polling (mode: ${getMode()})`);
 }
