@@ -315,8 +315,100 @@ async function buildMissionDetail(userId, planId) {
       design.textButton(plan.status === 'paused' ? 'Resume' : 'Pause', `cc_mission_${plan.status === 'paused' ? 'resume' : 'pause'}:${plan.id}`)
     ]);
   }
+  rows.push([
+    design.textButton('Executive Report', `cc_mission_report:${plan.id}`),
+    design.textButton('Mission KPIs', `cc_mission_kpis:${plan.id}`)
+  ]);
   rows.push([design.textButton('Missions', 'cc_missions'), design.textButton('Back to Home', 'cc_home')]);
   return { text, keyboard: design.keyboard(rows) };
+}
+
+async function buildMissionReport(userId, planId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  const adapter = getStoreAdapter();
+  const missionReportSvc = require('../../services/missionReport');
+  const report = await missionReportSvc.missionReport(adapter, ctx.workspace.id, Number(planId));
+  if (!report) return { text: design.errorPanel('Mission not found', String(planId)).text, keyboard: null };
+  const { plan, timeline, kpis, agents } = report;
+  const money = cents => `$${(((cents || 0)) / 100).toFixed(2)}`;
+  const timelineLines = timeline.length
+    ? timeline.slice(0, 14).map(s => {
+      const tone = s.status === 'completed' ? '🟢' : s.status === 'failed' ? '🔴' : s.status === 'awaiting_approval' ? '🟡' : '▽';
+      const when = (s.completed_at || s.started_at || '').slice(11, 16) || '';
+      return `${tone} ${design.code(when || '—')} ${design.b(s.agent_type)} · ${s.step_key}${s.output ? '\n' + design.it(s.output.slice(0, 90)) : ''}`;
+    })
+    : [design.it('No steps executed yet.')];
+  const agentLines = agents.map(a => `· ${a.agent_type}: ${a.completed}/${a.total} steps (${a.utilization}%)`);
+  const text = design.compose([
+    `${design.EMOJI.target} ${design.b('Executive Mission Report')}`,
+    design.it(`Mission #${plan.id} · ${plan.title}`),
+    design.divider(),
+    design.section('OBJECTIVE'),
+    design.it(plan.goal),
+    design.section('STATUS'),
+    design.row('State', design.badge(plan.status === 'completed' ? 'success' : plan.status === 'waiting_approval' ? 'warning' : 'info')),
+    design.row('Completion', `${kpis.completed_steps}/${kpis.total_steps} (${kpis.completion_rate}%)`),
+    design.row('Success rate', kpis.success_rate + '%'),
+    design.row('Cost', money(kpis.total_cost_cents)),
+    design.row('Duration', kpis.duration_ms === null ? '—' : (kpis.duration_ms / 1000).toFixed(1) + 's'),
+    design.row('Revenue identified', kpis.revenue_cents === null ? '—' : money(kpis.revenue_cents)),
+    design.section('EXECUTIVE MISSION TIMELINE'),
+    ...timelineLines,
+    design.section('WORKFORCE'),
+    ...(agentLines.length ? agentLines : [design.it('No agent activity yet.')]),
+    design.divider()
+  ]);
+  return {
+    text,
+    keyboard: design.keyboard([
+      [design.textButton('Mission KPIs', `cc_mission_kpis:${plan.id}`), design.textButton('Mission Detail', `cc_mission:${plan.id}`)],
+      [design.textButton('Missions', 'cc_missions'), design.textButton('Back to Home', 'cc_home')]
+    ])
+  };
+}
+
+async function buildMissionKPIs(userId, planId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  const adapter = getStoreAdapter();
+  const missionReportSvc = require('../../services/missionReport');
+  const report = await missionReportSvc.missionReport(adapter, ctx.workspace.id, Number(planId));
+  if (!report) return { text: design.errorPanel('Mission not found', String(planId)).text, keyboard: null };
+  const { plan, kpis } = report;
+  const money = cents => `$${(((cents || 0)) / 100).toFixed(2)}`;
+  const text = design.compose([
+    `${design.EMOJI.target} ${design.b('Mission KPIs')}`,
+    design.it(`Mission #${plan.id} · ${plan.title}`),
+    design.divider(),
+    design.section('OUTPUT'),
+    design.row('Completed', String(kpis.completed_steps)),
+    design.row('Failed', String(kpis.failed_steps)),
+    design.row('Skipped', String(kpis.skipped_steps)),
+    design.row('Awaiting approval', String(kpis.awaiting_approval)),
+    design.row('Completion rate', kpis.completion_rate + '%'),
+    design.row('Success rate', kpis.success_rate + '%'),
+    design.section('QUALITY'),
+    design.row('Avg confidence', kpis.avg_confidence === null ? '—' : kpis.avg_confidence.toFixed(2) + ' / 1.0'),
+    design.section('ECONOMICS'),
+    design.row('Total cost', money(kpis.total_cost_cents)),
+    design.row('Budget', kpis.budget_cents === null ? '—' : money(kpis.budget_cents)),
+    design.row('Budget exceeded', kpis.budget_exceeded ? '⚠ yes' : 'no'),
+    design.row('Revenue identified', kpis.revenue_cents === null ? '—' : money(kpis.revenue_cents)),
+    design.row('Expected revenue', kpis.expected_revenue_cents === null ? '—' : money(kpis.expected_revenue_cents)),
+    design.row('Agents used', String(kpis.agents_used)),
+    design.section('APPROVALS'),
+    design.row('Requested', String(kpis.approvals_requested)),
+    design.row('Pending', String(kpis.approvals_pending)),
+    design.divider()
+  ]);
+  return {
+    text,
+    keyboard: design.keyboard([
+      [design.textButton('Executive Report', `cc_mission_report:${plan.id}`), design.textButton('Mission Detail', `cc_mission:${plan.id}`)],
+      [design.textButton('Missions', 'cc_missions'), design.textButton('Back to Home', 'cc_home')]
+    ])
+  };
 }
 
 async function buildApprovals(userId) {
@@ -490,6 +582,8 @@ async function launchGoalMission(userId, goal) {
 module.exports = {
   buildMissions,
   buildMissionDetail,
+  buildMissionReport,
+  buildMissionKPIs,
   buildApprovals,
   buildMissionGoalPrompt,
   buildMissionRunResult,

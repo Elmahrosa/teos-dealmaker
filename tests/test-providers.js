@@ -43,7 +43,8 @@ const providers = require('../services/providers');
   assert.strictEqual(gen1.provider, 'gemini', 'generation routed to gemini');
   assert.strictEqual(gen1.model, 'gemini-2.0-flash', 'gemini flash model');
   assert.strictEqual(gen1.simulated, true, 'simulated without key');
-  assert.ok(gen1.text.startsWith('[simulated Gemini'), 'simulated output marked');
+  assert.ok(gen1.text.startsWith('Recommended action:'), 'simulated output is a clean executive summary');
+  assert.ok(!/\[simulated|Confidence \d|Estimated impact/.test(gen1.text), 'no provider branding or fabricated metrics in customer output');
   assert.ok(gen1.input_tokens > 0 && gen1.output_tokens > 0, 'token estimates present');
 
   const gen2 = await providers.generate(adapter, ws.id, 'prospecting', 'Find SaaS companies in Cairo with >50 employees');

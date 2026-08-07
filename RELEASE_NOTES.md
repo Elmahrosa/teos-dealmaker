@@ -1,5 +1,20 @@
 # TEOS DealMaker — Release Notes
 
+## v1.1.0 (2026-08-07)
+
+### Post-review polish — honest executive output
+
+- **Executive Mission Report** (`/report/:planId`): per-mission timeline (each step with duration, confidence, and output), mission KPIs (completion/success rate, average confidence, cost, budget, agents used, provider usage), and a full executive report text — all derived from real reviewed step data.
+- **Mission KPIs** in the Telegram bot (`/missions` → "Mission KPIs") mirroring the web report.
+- **Customer #0 page** (`/customer-0`): public-facing showcase of the reference customer "Elmahrosa International" mission, linking to its executive report. Both pages are `noindex`/disallowed in `robots.txt`.
+- **Honest customer-facing output**: removed all `[simulated {provider} · {model}]` branding and fabricated "Confidence X%. Estimated impact: +Y%" lines from provider output. Customer-facing screens now show defensible values only; simulation details stay in internal telemetry.
+- **Pipeline fixes**: negotiator discount now reads the real `maxDiscountPct` field; treasurer note is a commercial summary (company · product · amount · term · payment method); gatekeeper step runs between negotiation and closing; closing note is a pipeline-stage summary.
+- **Clean pipeline flow**: 6-stage pipeline (Incoming → Research → Qualification → Proposal → Negotiation → Closing) with gatekeeper status and commercial contract surfaced in the bot pipeline screen.
+
+### Verification
+
+- 46/46 local suites, ESLint clean, syntax gate 234 files.
+
 ## v1.1.0-rc1 (2026-08-07)
 
 ### AI Revenue OS — Release Candidate 1

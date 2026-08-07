@@ -43,11 +43,11 @@ const queue = require('../services/queue');
   assert.strictEqual(consoleAfter.open_deals, 0, 'won deal no longer open');
   assert.strictEqual(consoleAfter.estimated_pipeline_cents, 0, 'no open pipeline after win');
   assert.ok(consoleAfter.today_cost_cents > 18, 'pipeline adds cost');
-  assert.strictEqual(consoleAfter.completed_tasks, 7, 'five more runs → 7 total tasks');
+  assert.strictEqual(consoleAfter.completed_tasks, 8, 'six more runs → 8 total tasks');
 
   const tl = await workforce.dealTimeline(adapter, ws.id, pipeline.deal.id);
   assert.ok(tl, 'timeline found');
-  assert.strictEqual(tl.notes.length, 5, 'five collaboration notes');
+  assert.strictEqual(tl.notes.length, 6, 'six collaboration notes');
   assert.strictEqual(tl.events.length, 6, 'six queue transitions');
   assert.strictEqual(tl.events[0].text, 'incoming → research', 'queue starts at research');
   assert.strictEqual(tl.events[5].text, 'closing → won', 'queue ends at won');
@@ -65,7 +65,7 @@ const queue = require('../services/queue');
   assert.ok(movements.every(m => m.company), 'movements carry deal names');
 
   const costs = await workforce.costSummary(adapter, ws.id);
-  assert.strictEqual(costs.tasks, 7, 'seven tasks today');
+  assert.strictEqual(costs.tasks, 8, 'eight tasks today');
   const byProvider = Object.fromEntries(costs.by_provider.map(p => [p.provider, p]));
   assert.ok(byProvider.claude, 'claude in cost breakdown');
   assert.ok(byProvider.gemini, 'gemini in cost breakdown');

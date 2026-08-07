@@ -49,7 +49,7 @@ const queue = require('../services/queue');
 
   const pipeline = await workforce.runPipeline(adapter, ws.id);
   const costAfter = await costIntelligence(adapter, ws.id);
-  assert.strictEqual(costAfter.tasks_today, 7, 'seven tasks after pipeline');
+  assert.strictEqual(costAfter.tasks_today, 8, 'eight tasks after pipeline');
   const dealCost = costAfter.by_deal.find(d => d.deal_id === pipeline.deal.id);
   assert.ok(dealCost, 'cost per deal present');
   assert.ok(dealCost.cost_cents > 0, 'deal has cost');

@@ -78,15 +78,15 @@ const workforce = require('../services/workforce');
 
   const pipeline = await workforce.runPipeline(adapter, ws.id);
   assert.ok(pipeline.deal.id, 'pipeline persisted a deal');
-  assert.strictEqual(pipeline.runs.length, 5, 'five agents ran');
+  assert.strictEqual(pipeline.runs.length, 6, 'six agents ran');
   assert.ok(pipeline.closing.status === 'won' || pipeline.closing.status === 'blocked', 'closing outcome');
   const dealStages = await repos.pipeline.list(ws.id, pipeline.deal.id);
   assert.ok(dealStages.length >= 1, 'pipeline events recorded');
   const notes = await repos.dealNotes.list(ws.id, pipeline.deal.id);
-  assert.strictEqual(notes.length, 5, 'five collaboration notes');
+  assert.strictEqual(notes.length, 6, 'six collaboration notes');
   assert.deepStrictEqual(
     notes.map(n => n.agent_name),
-    ['strategist', 'marketer', 'negotiator', 'treasurer', 'closing'],
+    ['strategist', 'marketer', 'negotiator', 'treasurer', 'gatekeeper', 'closing'],
     'collaboration chain in order'
   );
   assert.ok(notes.every(n => typeof n.note === 'string' && n.note.length > 0), 'notes have content');

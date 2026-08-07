@@ -26,14 +26,15 @@ function buildPipelineResult(userId, result) {
   );
   const lines = [
     `${design.EMOJI.ai} ${design.b('Pipeline Run')}`,
-    design.it('Strategist → Marketer → Negotiator → Treasurer → Closing'),
+    design.it('Strategist → Marketer → Negotiator → Treasurer → Gatekeeper → Closing'),
     design.divider(),
     design.row('Strategy', result.strategy.style),
     design.row('Positioning', result.marketing.headline),
     design.row('Landing price', `$${result.negotiation.landingPrice}`),
     design.row('Terms', result.negotiation.suggestedTerms),
-    design.row('Contract', result.treasurer.contract.contractId),
+    design.row('Contract', `${result.treasurer.contract.company} · $${result.treasurer.contract.amount} ${result.treasurer.contract.currency} · ${result.treasurer.contract.termMonths}mo`),
     design.row('Checkout', result.treasurer.checkout ? result.treasurer.checkout.url : 'blocked'),
+    design.row('Gatekeeper', design.badge(result.gatekeeper.decision === 'APPROVE' ? 'success' : 'warning')),
     design.row('Outcome', design.badge(result.closing.status === 'won' ? 'success' : 'critical')),
     design.row('Deal saved', design.badge('success')),
     design.row('Cost', `$${(result.runs.reduce((acc, r) => acc + r.cost_cents, 0) / 100).toFixed(2)}`),

@@ -54,6 +54,8 @@ module.exports = {
   buildLearn: learning.buildLearn,
   buildMissions: missions.buildMissions,
   buildMissionDetail: missions.buildMissionDetail,
+  buildMissionReport: missions.buildMissionReport,
+  buildMissionKPIs: missions.buildMissionKPIs,
   buildApprovals: missions.buildApprovals,
   buildMissionGoalPrompt: missions.buildMissionGoalPrompt,
   buildMissionRunResult: missions.buildMissionRunResult,

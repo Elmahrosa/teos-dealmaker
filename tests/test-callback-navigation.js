@@ -125,7 +125,8 @@ const menu = require('../bot/menu');
     'cc_mem_edit:', 'cc_audit:', 'cc_agent:', 'cc_timeline_deal:', 'cc_pol:', 'cc_pol_set:',
     'cc_kg_source:', 'cc_kg_del:', 'cc_int_conn:', 'cc_int_enable:', 'cc_int_disable:',
     'cc_int_test:', 'cc_int_auth:', 'cc_set_lang:', 'cc_learn_persona:', 'cc_mission:',
-    'cc_mission_pause:', 'cc_mission_resume:', 'cc_mission_run:', 'cc_appr:', 'cc_fd_approval_set:',
+    'cc_mission_pause:', 'cc_mission_resume:', 'cc_mission_run:', 'cc_mission_report:', 'cc_mission_kpis:',
+    'cc_appr:', 'cc_fd_approval_set:',
     'cc_fd_flags_set:'
   ];
   const isKnown = (cd) => EXACT.has(cd) || PREFIX.some(p => cd.startsWith(p));
@@ -278,6 +279,15 @@ const menu = require('../bot/menu');
   await driveAndExpect('cc_mission:' + runStub.id, FOUNDER, 'Mission #', 'running stub plan detail renders a Start Mission button');
   const runCd = [...seen].find(cd => cd.startsWith('cc_mission_run:'));
   check(Boolean(runCd), 'running plan detail offers a cc_mission_run button');
+
+  // Executive mission report + mission KPIs render from the mission detail.
+  await driveAndExpect('cc_mission:' + runStub.id, FOUNDER, 'Mission #', 'mission detail renders report + KPI buttons');
+  const reportCd = [...seen].find(cd => cd.startsWith('cc_mission_report:'));
+  const kpisCd = [...seen].find(cd => cd.startsWith('cc_mission_kpis:'));
+  check(Boolean(reportCd), 'mission detail offers an Executive Report button');
+  check(Boolean(kpisCd), 'mission detail offers a Mission KPIs button');
+  await driveAndExpect(reportCd, FOUNDER, 'Executive Mission Report', 'executive mission report renders');
+  await driveAndExpect(kpisCd, FOUNDER, 'Mission KPIs', 'mission KPIs render');
 
   // ------------------------------------------------- 4. approval loop + gates
   const proposal = await runtime.runGoal(adapter, wsId,

@@ -62,7 +62,9 @@ async function runPipeline(adapter, workspaceId) {
   await queue.advanceQueue(adapter, workspaceId, d.id, 'proposal');
   const negotiation = await runAgent(adapter, workspaceId, 'negotiator', async () => {
     const r = buildTerms(lead, targetPrice, lead.budget);
-    const note = `Landing $${r.landingPrice} (max discount ${r.maxDiscount}%)`;
+    const note = r.feasible
+      ? `Landing $${r.landingPrice} (max discount ${r.maxDiscountPct}%)`
+      : `Target $${targetPrice} exceeds budget $${lead.budget} — negotiating at $${r.landingPrice}`;
     await collaborate('negotiator', note);
     return { output: note, cost_cents: 1, data: r };
   }, { deal_id: d.id });
@@ -73,11 +75,21 @@ async function runPipeline(adapter, workspaceId) {
     const contract = draftContract(deal);
     const checkout = await createCheckout(deal, contract);
     closeDeal(deal, contract, checkout);
-    const note = `Contract ${contract.contractId}${checkout ? ' · ' + checkout.url : ''}`;
+    const note = `Commercial summary: ${contract.company} · ${contract.product} · $${contract.amount} ${contract.currency} over ${contract.termMonths} months ($${contract.monthlyPayment}/mo) · ${contract.paymentMethod}${checkout ? ' · ' + checkout.url : ''}`;
     await collaborate('treasurer', note);
     return { output: note, cost_cents: 2, data: { contract, checkout } };
   }, { deal_id: d.id });
   await queue.advanceQueue(adapter, workspaceId, d.id, 'closing');
+  const gatekeeper = await runAgent(adapter, workspaceId, 'gatekeeper', async () => {
+    const { reviewDraft } = require('../../agents/gatekeeper');
+    const commercialDraft = `Proposal for ${lead.company}: ${marketing.result.data.headline}. Negotiated landing ${deal.amount} ${lead.currency} over ${lead.termMonths} months (${negotiation.result.data.suggestedTerms}).`;
+    const r = reviewDraft(commercialDraft, `deal:${d.id}`);
+    const note = r.decision === 'APPROVE'
+      ? `Proposal approved for release — ${deal.company} · $${deal.amount} ${deal.currency} · ${negotiation.result.data.suggestedTerms}`
+      : `Proposal held for founder review — reasons: ${r.reasons.join(', ')}`;
+    await collaborate('gatekeeper', note);
+    return { output: note, cost_cents: 1, data: r };
+  }, { deal_id: d.id });
   const closing = await runAgent(adapter, workspaceId, 'closing', async () => {
     const r = closingAgent({
       id: lead.id,
@@ -88,7 +100,9 @@ async function runPipeline(adapter, workspaceId) {
       approved: true,
       paymentMethod: 'invoice'
     });
-    const note = `Outcome: ${r.status}`;
+    const note = r.status === 'won'
+      ? `Deal closed — ${deal.company} won at $${deal.amount} USD · contract ${treasurer.result.data.contract.contractId} · ${new Date().toISOString().slice(0, 10)}`
+      : `Deal blocked at closing — missing: ${(r.missing || []).join(', ')}`;
     await collaborate('closing', note);
     return { output: note, cost_cents: 0, data: r };
   }, { deal_id: d.id });
@@ -104,11 +118,12 @@ async function runPipeline(adapter, workspaceId) {
     marketing: marketing.result.data,
     negotiation: negotiation.result.data,
     treasurer: treasurer.result.data,
+    gatekeeper: gatekeeper.result.data,
     closing: closing.result.data,
     deal: finalDeal || d,
     notes,
     won,
-    runs: [strategy, marketing, negotiation, treasurer, closing]
+    runs: [strategy, marketing, negotiation, treasurer, gatekeeper, closing]
   };
 }
 

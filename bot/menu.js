@@ -428,6 +428,14 @@ async function handleCallback(query, bot) {
         const planId = action.split(':')[1];
         return send(await screens.buildMissionDetail(userId, planId));
       }
+      if (action.startsWith('cc_mission_report:')) {
+        const planId = action.split(':')[1];
+        return send(await screens.buildMissionReport(userId, planId));
+      }
+      if (action.startsWith('cc_mission_kpis:')) {
+        const planId = action.split(':')[1];
+        return send(await screens.buildMissionKPIs(userId, planId));
+      }
       if (action.startsWith('cc_mission_pause:')) {
         const ctx = await getCtx(userId);
         if (!ctx) return send(denied('missions'));

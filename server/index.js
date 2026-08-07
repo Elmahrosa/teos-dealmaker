@@ -230,6 +230,51 @@ app.get('/dashboard', (req, res) => {
   );
 });
 
+async function getFounderWorkspace(adapter) {
+  const { createRepos } = require('../db/repos');
+  const repos = createRepos(adapter);
+  const ws = await adapter.findOne('workspaces', { slug: 'workspace_founder' });
+  if (!ws) return null;
+  const plan = (await repos.plans.list(ws.id))[0] || null;
+  return { ws, plan };
+}
+
+app.get('/report/:planId', async (req, res) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow');
+  const planId = Number(req.params.planId);
+  if (!Number.isFinite(planId)) return res.status(400).type('html').send('Bad request');
+  try {
+    const { getAdapter } = require('../db');
+    const adapter = getAdapter();
+    const report = await require('../services/missionReport').missionReport(adapter, null, planId);
+    if (!report) return res.status(404).type('html').send('Mission report not found');
+    const html = render.renderMissionReport(report);
+    res.type('html').send(html);
+  } catch (err) {
+    console.error('[Sentinel] report render error:', err.message);
+    res.status(500).type('html').send('Report unavailable');
+  }
+});
+
+app.get('/customer-0', async (_req, res) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow');
+  try {
+    const { getAdapter } = require('../db');
+    const adapter = getAdapter();
+    const found = await getFounderWorkspace(adapter);
+    if (!found || !found.plan) {
+      return res.status(404).type('html').send('Customer #0 reference not provisioned on this instance');
+    }
+    const report = await require('../services/missionReport').missionReport(adapter, found.ws.id, found.plan.id);
+    if (!report) return res.status(404).type('html').send('Customer #0 mission report not found');
+    const html = render.renderCustomerZero(report);
+    res.type('html').send(html);
+  } catch (err) {
+    console.error('[Sentinel] customer-0 render error:', err.message);
+    res.status(500).type('html').send('Customer #0 dashboard unavailable');
+  }
+});
+
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'not_found' });
 });

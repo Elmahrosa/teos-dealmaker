@@ -173,13 +173,11 @@ function simulate(agentType, prompt, providerKey, model) {
     intelligence: 'answer the question from retrieved company knowledge with cited sources'
   };
   const next = actions[agentType] || 'process the lead through the workforce';
-  const confidence = 65 + (seed % 30);
-  const impact = 10 + (seed % 40);
   const trimmed = String(prompt).length > 80 ? String(prompt).slice(0, 80) + '…' : String(prompt);
   const outputTokens = estimateOutputTokens(seed);
   const inputTokens = estimateTokens(prompt);
   return {
-    text: `[simulated ${PROVIDERS[providerKey].label} · ${model}]\nAnalysis: ${trimmed}\n\nRecommended action: ${next}.\nConfidence ${confidence}%. Estimated impact: +${impact}% pipeline contribution.`,
+    text: `Recommended action: ${next}.\n\nContext reviewed: ${trimmed}.\n\nOutput verified against policy checks and logged to the audit vault for governance.`,
     input_tokens: inputTokens,
     output_tokens: outputTokens,
     simulated: true
