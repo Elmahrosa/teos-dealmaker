@@ -74,6 +74,18 @@ async function handleCallback(query, bot) {
     case 'cc_mission_goal':
       missionState.begin(userId, {});
       return send(await screens.buildMissionGoalPrompt(userId));
+    case 'cc_mission_create': {
+      if (!isFounder(userId)) return send(denied('founder missions'));
+      missionState.begin(userId, { mode: 'mission_create', step: 'name', mission: {} });
+      return send(await screens.buildMissionCreatePrompt(userId));
+    }
+    case 'cc_mission_form_cancel':
+      missionState.clear(userId);
+      return send(await screens.buildMissions(userId));
+    case 'cc_mission_dashboard': {
+      if (!isFounder(userId)) return send(denied('founder dashboard'));
+      return send(await screens.buildMissionDashboard(userId));
+    }
     case 'cc_mission1': {
       try { await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
       try {
@@ -396,11 +408,15 @@ async function handleCallback(query, bot) {
       if (action === 'cc_connect_crm') {
         return send(await screens.buildIntegrations(userId));
       }
-      if (action === 'cc_upload_catalog') {
-        return bot.answerCallbackQuery(query.id, { text: 'Coming soon — Company Knowledge is on the roadmap' }).catch(() => {});
-      }
-      if (action === 'cc_launch_campaign') {
-        return bot.answerCallbackQuery(query.id, { text: 'Coming soon — Campaigns arrive with the revenue pipeline' }).catch(() => {});
+      if (action.startsWith('cc_mission_run:')) {
+        const ctx = await getCtx(userId);
+        if (!ctx) return send(denied('missions'));
+        const planId = action.split(':')[1];
+        try {
+          await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
+        const result = await runtime.resume(getStoreAdapter(), ctx.workspace.id, Number(planId));
+        audit.writeEntry('BOT_MISSION_RUN', String(userId), 'success', { planId });
+        return send(await screens.buildMissionRunResult(userId, Number(planId), result));
       }
       if (action.startsWith('cc_learn_persona:')) {
         const name = action.split(':').slice(1).join(':');

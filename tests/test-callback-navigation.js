@@ -114,8 +114,8 @@ const menu = require('../bot/menu');
     'cc_briefing', 'cc_integrations', 'cc_int_all', 'cc_sync_now', 'cc_intelligence',
     'cc_kg_docs', 'cc_kg_cancel', 'cc_kg_ask', 'cc_kg_add', 'cc_audit', 'cc_admin',
     'cc_sales_run', 'cc_pipeline_run', 'cc_live', 'cc_live_confirm', 'cc_live_cancel',
-    'cc_dry', 'cc_dry_confirm', 'cc_dry_cancel', 'cc_connect_crm', 'cc_upload_catalog',
-    'cc_launch_campaign', 'cc_fd_mode', 'cc_fd_approval', 'cc_fd_billing',
+    'cc_dry', 'cc_dry_confirm', 'cc_dry_cancel', 'cc_connect_crm', 'cc_mission_create',
+    'cc_mission_form_cancel', 'cc_mission_dashboard', 'cc_fd_mode', 'cc_fd_approval', 'cc_fd_billing',
     'cc_fd_workspaces', 'cc_fd_customers', 'cc_fd_revenue', 'cc_fd_debug', 'cc_fd_ops',
     'cc_fd_sentinel', 'cc_fd_policy', 'cc_fd_analytics', 'cc_fd_flags', 'cc_fd_emergency',
     'cc_fd_emergency_stop', 'cc_fd_emergency_resume'
@@ -125,7 +125,7 @@ const menu = require('../bot/menu');
     'cc_mem_edit:', 'cc_audit:', 'cc_agent:', 'cc_timeline_deal:', 'cc_pol:', 'cc_pol_set:',
     'cc_kg_source:', 'cc_kg_del:', 'cc_int_conn:', 'cc_int_enable:', 'cc_int_disable:',
     'cc_int_test:', 'cc_int_auth:', 'cc_set_lang:', 'cc_learn_persona:', 'cc_mission:',
-    'cc_mission_pause:', 'cc_mission_resume:', 'cc_appr:', 'cc_fd_approval_set:',
+    'cc_mission_pause:', 'cc_mission_resume:', 'cc_mission_run:', 'cc_appr:', 'cc_fd_approval_set:',
     'cc_fd_flags_set:'
   ];
   const isKnown = (cd) => EXACT.has(cd) || PREFIX.some(p => cd.startsWith(p));
@@ -183,6 +183,8 @@ const menu = require('../bot/menu');
     ['cc_settings', FOUNDER, 'Settings'],
     ['cc_missions', FOUNDER, 'Mission Center'],
     ['cc_mission_goal', FOUNDER, 'New Mission'],
+    ['cc_mission_create', FOUNDER, 'Create Mission'],
+    ['cc_mission_dashboard', FOUNDER, 'Mission Dashboard'],
     ['cc_approvals', FOUNDER, 'Approvals'],
     ['cc_memory', FOUNDER, 'Business Knowledge'],
     ['cc_activity', FOUNDER, "Today's Activity"],
@@ -263,6 +265,20 @@ const menu = require('../bot/menu');
   await driveAndExpect('cc_mission_pause:' + stub.id, FOUNDER, 'Mission #', 'paused plan detail renders a Resume button');
   await driveAndExpect('cc_mission_resume:' + stub.id, FOUNDER, 'Mission Launched', 'resumed stub completes');
 
+  // A fresh 'running' plan with zero completed steps renders the Start Mission
+  // button (cc_mission_run:) used by the seeded founder mission.
+  const runStub = await repos.plans.create({
+    workspace_id: wsId, title: 'Running stub', goal: 'noop',
+    status: 'running', priority: 'normal', metrics: {}, version: 'test'
+  });
+  await repos.planSteps.create({
+    workspace_id: wsId, plan_id: runStub.id, step_key: 'assess',
+    agent_type: 'revenue_strategist', task: 'assess'
+  });
+  await driveAndExpect('cc_mission:' + runStub.id, FOUNDER, 'Mission #', 'running stub plan detail renders a Start Mission button');
+  const runCd = [...seen].find(cd => cd.startsWith('cc_mission_run:'));
+  check(Boolean(runCd), 'running plan detail offers a cc_mission_run button');
+
   // ------------------------------------------------- 4. approval loop + gates
   const proposal = await runtime.runGoal(adapter, wsId,
     'Prepare and send a proposal to Acme Corp', { title: 'Acme proposal' });
@@ -338,8 +354,11 @@ const menu = require('../bot/menu');
   }
 
   // --------------------------------------------------- 7. no-edit / legacy
-  await driveNoEdit('cc_upload_catalog', FOUNDER, 'Coming soon');
-  await driveNoEdit('cc_launch_campaign', FOUNDER, 'Coming soon');
+  // The cc_upload_catalog / cc_launch_campaign "Coming soon" stubs were removed
+  // with the legacy dashboard; they now fall through to the unknown-action
+  // handler (and are no longer dispatched namespaces).
+  await driveNoEdit('cc_upload_catalog', FOUNDER, 'Unknown action');
+  await driveNoEdit('cc_launch_campaign', FOUNDER, 'Unknown action');
   await driveNoEdit('cc_set_lang:fr', FOUNDER, 'Unknown language');
   await driveNoEdit('cc_totally_unknown_xyz', FOUNDER, 'Unknown action');
 
@@ -367,7 +386,7 @@ const menu = require('../bot/menu');
   const RENDERED_REQUIRED_EXACT = [
     'cc_home', 'cc_dashboard', 'cc_workforce', 'cc_pipeline', 'cc_deals', 'cc_pricing',
     'cc_settings', 'cc_learn', 'cc_learn_quit', 'cc_missions', 'cc_mission_goal',
-    'cc_mission1', 'cc_mission2', 'cc_mission_market', 'cc_approvals', 'cc_memory',
+    'cc_mission_create', 'cc_mission_dashboard', 'cc_mission1', 'cc_mission2', 'cc_mission_market', 'cc_approvals', 'cc_memory',
     'cc_mem_cancel', 'cc_activity', 'cc_timeline', 'cc_costs', 'cc_health', 'cc_providers',
     'cc_queue', 'cc_briefing', 'cc_integrations', 'cc_int_all', 'cc_sync_now',
     'cc_intelligence', 'cc_kg_docs', 'cc_kg_cancel', 'cc_kg_ask', 'cc_kg_add',
@@ -377,7 +396,7 @@ const menu = require('../bot/menu');
   const RENDERED_REQUIRED_PREFIX = [
     'cc_set_lang:', 'cc_mem_edit:', 'cc_kg_source:', 'cc_kg_del:', 'cc_int_conn:',
     'cc_int_enable:', 'cc_int_disable:', 'cc_int_test:', 'cc_int_auth:', 'cc_pol:',
-    'cc_pol_set:', 'cc_timeline_deal:', 'cc_mission:', 'cc_appr:',
+    'cc_pol_set:', 'cc_timeline_deal:', 'cc_mission:', 'cc_mission_run:', 'cc_appr:',
     'cc_mission_pause:', 'cc_mission_resume:'
   ];
   const missing = RENDERED_REQUIRED_EXACT.filter(cd => !seen.has(cd));
@@ -388,7 +407,7 @@ const menu = require('../bot/menu');
   // Documented router-only / legacy namespaces: dispatched above or by design
   // without a rendering button (cc_ai_guide, cc_learn_skip, cc_learn_more,
   // cc_learn_done, cc_learn_persona:, cc_agent:, cc_audit:, cc_connect_crm,
-  // cc_upload_catalog, cc_launch_campaign, btn_back, cc_mem_edit:).
+  // cc_mission_form_cancel, btn_back, cc_mem_edit:).
   // cc_admin is reachable via the /admin command; the founder consoles
   // (cc_fd_*) are driven in the dispatch contract and section 1b; neither renders itself.
 

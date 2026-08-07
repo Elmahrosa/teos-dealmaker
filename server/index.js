@@ -212,6 +212,14 @@ app.use((err, req, res, _next) => {
 
 const server = app.listen(PORT, () => {
   console.log(`[Sentinel] TEOS DealMaker server on http://localhost:${PORT} (landing) and http://localhost:${PORT}/dashboard`);
+  const { bootstrapFounder } = require('../services/founderSeed');
+  bootstrapFounder()
+    .then(result => {
+      if (result && result.seeded && result.workspace) {
+        console.log(`[Sentinel] founder workspace seeded (workspace #${result.workspace.id})`);
+      }
+    })
+    .catch(err => console.error('[Sentinel] founder seed skipped:', err.message));
 });
 
 function shutdown(signal) {

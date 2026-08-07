@@ -25,13 +25,24 @@ function denied(resource) {
   };
 }
 
+function isNotModified(err) {
+  const msg = String((err && err.message) || err || '');
+  return /message is not modified/i.test(msg);
+}
+
 async function editPanel(bot, query, screen) {
-  await bot.editMessageText(screen.text, {
-    chat_id: query.message.chat.id,
-    message_id: query.message.message_id,
-    parse_mode: 'HTML',
-    reply_markup: screen.keyboard
-  });
+  try {
+    await bot.editMessageText(screen.text, {
+      chat_id: query.message.chat.id,
+      message_id: query.message.message_id,
+      parse_mode: 'HTML',
+      reply_markup: screen.keyboard
+    });
+  } catch (err) {
+    // Telegram 400 "message is not modified" is a harmless race (double tap /
+    // repeat callback). Swallow it; rethrow everything else.
+    if (!isNotModified(err)) throw err;
+  }
 }
 
 function learnScreen(res) {
@@ -102,6 +113,7 @@ module.exports = {
   getCtx,
   denied,
   editPanel,
+  isNotModified,
   learnScreen,
   lastEntry,
   titleCase,

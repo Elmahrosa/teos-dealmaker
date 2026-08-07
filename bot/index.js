@@ -5,6 +5,8 @@ const { handleCallback } = require('./menu');
 const onboarding = require('./onboarding');
 const audit = require('../utils/auditLogger');
 const { getMode } = require('../config/mode');
+const { getStoreAdapter } = require('./store');
+const { bootstrapFounder } = require('../services/founderSeed');
 
 function escapeHtml(text) {
   return String(text).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
@@ -66,6 +68,14 @@ async function bootstrap() {
     console.error(`[bot] TELEGRAM_BOT_TOKEN was rejected by Telegram (${err.message}).`);
     console.error('[bot] Generate a new token via @BotFather and update TELEGRAM_BOT_TOKEN, then restart.');
     process.exit(1);
+  }
+  try {
+    const seeded = await bootstrapFounder(getStoreAdapter());
+    if (seeded && seeded.seeded && seeded.workspace) {
+      console.log(`[bot] founder workspace seeded (workspace #${seeded.workspace.id}, mission #${seeded.mission && seeded.mission.plan ? seeded.mission.plan.id : '—'})`);
+    }
+  } catch (err) {
+    console.error('[bot] founder seed skipped:', err.message);
   }
   await bot.startPolling();
   console.log(`[TEOS DealMaker Bot] @${BOT_CONFIG.botName} polling (mode: ${getMode()})`);

@@ -4,10 +4,24 @@ const audit = require('../utils/auditLogger');
 const { getStoreAdapter, isPersistent } = require('./store');
 const identity = require('../services/identity');
 const { buildHome } = require('./menu');
+const { isNotModified } = require('./screens/lib');
 
 const state = new Map();
 
 const PLANS = ['solo', 'growth', 'corporate'];
+
+async function safeEditMessageText(bot, query, text, extra) {
+  try {
+    await bot.editMessageText(text, {
+      chat_id: query.message.chat.id,
+      message_id: query.message.message_id,
+      parse_mode: 'HTML',
+      ...(extra || {})
+    });
+  } catch (err) {
+    if (!isNotModified(err)) throw err;
+  }
+}
 
 function isActive(userId) {
   return state.has(userId);
@@ -130,12 +144,7 @@ async function complete(query, bot) {
       [design.textButton('Skip for now', 'cc_home')]
     ]));
     await bot.answerCallbackQuery(query.id, { text: i18n.t(userId, 'onb_done') }).catch(() => {});
-    await bot.editMessageText(sc.text, {
-      chat_id: query.message.chat.id,
-      message_id: query.message.message_id,
-      parse_mode: 'HTML',
-      reply_markup: sc.keyboard
-    });
+    await safeEditMessageText(bot, query, sc.text, { reply_markup: sc.keyboard });
     return true;
   } catch (err) {
     audit.writeEntry('BOT_ONBOARDING_ERROR', String(userId), 'error', { error: err.message });
@@ -157,12 +166,7 @@ async function handleCallback(query, bot) {
     reset(userId);
     const sc = await buildHome(userId);
     await bot.answerCallbackQuery(query.id, { text: 'Setup cancelled' }).catch(() => {});
-    await bot.editMessageText(sc.text, {
-      chat_id: query.message.chat.id,
-      message_id: query.message.message_id,
-      parse_mode: 'HTML',
-      reply_markup: sc.keyboard
-    });
+    await safeEditMessageText(bot, query, sc.text, { reply_markup: sc.keyboard });
     return true;
   }
 
@@ -173,12 +177,7 @@ async function handleCallback(query, bot) {
     s.step = 'plan';
     const sc = planScreen(userId);
     await bot.answerCallbackQuery(query.id, { text: 'OK' }).catch(() => {});
-    await bot.editMessageText(sc.text, {
-      chat_id: query.message.chat.id,
-      message_id: query.message.message_id,
-      parse_mode: 'HTML',
-      reply_markup: sc.keyboard
-    });
+    await safeEditMessageText(bot, query, sc.text, { reply_markup: sc.keyboard });
     return true;
   }
 

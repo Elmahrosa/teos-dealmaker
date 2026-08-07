@@ -4,8 +4,230 @@ const { getStoreAdapter } = require('../store');
 const learning = require('../../services/learning');
 const runtime = require('../../services/workforce/runtime');
 const botLearning = require('../learning');
+const identity = require('../../services/identity');
+const missionState = require('../missionState');
 const { isFounder } = require('../access');
 const { getCtx } = require('./lib');
+
+const MISSION_FORM_STEPS = [
+  { key: 'name', label: 'Mission Name', hint: 'Give the mission a short name, e.g. Sell TEOS DealMaker' },
+  { key: 'goal', label: 'Mission Goal', hint: 'What should the revenue team achieve? Be specific.' },
+  { key: 'customer', label: 'Target Customer', hint: 'Who is the target customer? e.g. Elmahrosa International' },
+  { key: 'market', label: 'Target Market', hint: 'Which market? e.g. AI Security' },
+  { key: 'priority', label: 'Priority', hint: 'normal, high or urgent' },
+  { key: 'revenue', label: 'Expected Revenue', hint: 'Expected revenue, e.g. $50,000' },
+  { key: 'deadline', label: 'Deadline', hint: 'Deadline, e.g. 24 hours or 2026-08-15' },
+  { key: 'notes', label: 'Notes', hint: 'Any extra notes for the revenue team' }
+];
+
+function cancelKeyboard() {
+  return design.keyboard([[design.textButton('Cancel', 'cc_mission_form_cancel')]]);
+}
+
+async function buildMissionCreatePrompt(userId) {
+  const payload = missionState.payload(userId) || {};
+  const mission = payload.mission || {};
+  const stepIndex = payload.step ? MISSION_FORM_STEPS.findIndex(s => s.key === payload.step) : 0;
+  const step = stepIndex >= 0 ? MISSION_FORM_STEPS[stepIndex] : null;
+  if (!step) return buildMissions(userId);
+  const summary = MISSION_FORM_STEPS
+    .filter(s => mission[s.key])
+    .map(s => design.it(`${s.label}: ${mission[s.key]}`));
+  return {
+    text: design.compose([
+      `${design.EMOJI.ai} ${design.b('Create Mission')}`,
+      design.it('Answer the prompts — the Revenue Strategist runs the full governed workflow and halts for your approval before anything ships.'),
+      design.divider(),
+      design.section(`${stepIndex + 1} of ${MISSION_FORM_STEPS.length} · ${step.label}`),
+      design.it(step.hint),
+      ...(summary.length ? [design.section('SO FAR'), ...summary] : []),
+      design.divider()
+    ]),
+    keyboard: cancelKeyboard()
+  };
+}
+
+async function handleMissionCreateText(chatId, userId, text) {
+  const payload = missionState.payload(userId) || {};
+  const mission = payload.mission || {};
+  const stepIndex = payload.step ? MISSION_FORM_STEPS.findIndex(s => s.key === payload.step) : 0;
+  const step = stepIndex >= 0 ? MISSION_FORM_STEPS[stepIndex] : null;
+  if (!step) {
+    missionState.clear(userId);
+    return { chatId, text: design.it('Mission form is out of sync — start over.'), replyMarkup: cancelKeyboard() };
+  }
+
+  const value = String(text || '').trim();
+  if (step.key === 'priority') {
+    const normalized = value.toLowerCase();
+    if (!['normal', 'high', 'urgent'].includes(normalized)) {
+      return {
+        chatId,
+        text: design.compose([
+          design.it('Priority must be <b>normal</b>, <b>high</b> or <b>urgent</b>. Try again.')
+        ]),
+        replyMarkup: cancelKeyboard()
+      };
+    }
+    mission[step.key] = normalized;
+  } else {
+    mission[step.key] = value;
+  }
+
+  const nextIndex = stepIndex + 1;
+  if (nextIndex >= MISSION_FORM_STEPS.length) {
+    missionState.clear(userId);
+    const adapter = getStoreAdapter();
+    const user = await identity.getUserByTelegram(adapter, userId);
+    const workspace = user ? await identity.getWorkspaceForUser(adapter, user.id) : null;
+    if (!workspace) {
+      return { chatId, text: 'No workspace found. Run /start to provision one.' };
+    }
+    const goalText = [
+      `Mission: ${mission.name}`,
+      mission.goal,
+      `Target customer: ${mission.customer}`,
+      `Target market: ${mission.market}`,
+      `Expected revenue: ${mission.revenue}`,
+      `Deadline: ${mission.deadline}`,
+      mission.notes ? `Notes: ${mission.notes}` : null
+    ].filter(Boolean).join('\n');
+    const result = await runtime.runGoal(adapter, workspace.id, goalText, {
+      title: mission.name || 'New Mission',
+      priority: mission.priority || 'high',
+      intent: 'deal'
+    });
+    const repos = require('../../db/repos').createRepos(adapter);
+    await repos.plans.update(workspace.id, result.plan.id, {
+      metrics: {
+        ...(result.plan.metrics || {}),
+        mission: {
+          name: mission.name,
+          goal: mission.goal,
+          target_customer: mission.customer,
+          target_market: mission.market,
+          priority: mission.priority,
+          expected_revenue: mission.revenue,
+          deadline: mission.deadline,
+          notes: mission.notes
+        }
+      }
+    });
+    audit.writeEntry('BOT_MISSION_CREATE', String(userId), 'success', {
+      planId: result.plan.id,
+      status: result.status,
+      mission: mission.name
+    });
+    const sc = await buildMissionRunResult(userId, result.plan.id, result);
+    return { chatId, text: sc.text, replyMarkup: sc.keyboard };
+  }
+
+  missionState.begin(userId, { mode: 'mission_create', step: MISSION_FORM_STEPS[nextIndex].key, mission });
+  const sc = await buildMissionCreatePrompt(userId);
+  return { chatId, text: sc.text, replyMarkup: sc.keyboard };
+}
+
+function extractRevenue(output) {
+  const amounts = String(output || '').match(/\$\s?[\d,.]+[kKmM]?/g);
+  return amounts ? amounts[0] : '—';
+}
+
+async function buildMissionDashboard(userId) {
+  const ctx = await getCtx(userId);
+  if (!ctx) {
+    return {
+      text: design.compose([
+        `${design.EMOJI.target} ${design.b('Mission Dashboard')}`,
+        design.it('Provision a workspace to view the dashboard.'),
+        design.divider()
+      ]),
+      keyboard: design.keyboard([
+        [design.textButton('Back to Home', 'cc_home')]
+      ])
+    };
+  }
+  const adapter = getStoreAdapter();
+  const repos = require('../../db/repos').createRepos(adapter);
+  const missions = await runtime.listMissions(adapter, ctx.workspace.id);
+  const plans = await repos.plans.list(ctx.workspace.id);
+  let steps = [];
+  for (const plan of plans) {
+    const planSteps = await repos.planSteps.list(ctx.workspace.id, plan.id);
+    steps = steps.concat(planSteps.map(s => ({ ...s, plan_title: plan.title })));
+  }
+  const completed = steps.filter(s => s.status === 'completed');
+  const failed = steps.filter(s => s.status === 'failed');
+  const leads = completed.filter(s => ['prospects', 'accounts'].includes(s.step_key)).length;
+  const qualified = completed.filter(s => s.step_key === 'qualify').length;
+  const emails = completed.filter(s => s.step_key === 'outreach_email').length;
+  const messages = completed.filter(s => s.step_key === 'outreach_linkedin').length;
+  const proposals = completed.filter(s => s.step_key === 'proposal').length;
+  const meetings = completed.filter(s => s.step_key === 'meetings').length;
+  const followups = completed.filter(s => s.step_key === 'followups').length;
+  const conversion = leads ? Math.round((qualified / leads) * 100) : 0;
+  const forecastStep = completed.find(s => s.step_key === 'forecast');
+  const revenueForecast = forecastStep ? extractRevenue(forecastStep.output) : '—';
+
+  const byAgent = {};
+  for (const s of steps) {
+    if (!byAgent[s.agent_type]) byAgent[s.agent_type] = { total: 0, done: 0 };
+    byAgent[s.agent_type].total += 1;
+    if (s.status === 'completed') byAgent[s.agent_type].done += 1;
+  }
+  const agentUtil = Object.entries(byAgent)
+    .map(([agent, v]) => `${agent} ${v.total ? Math.round((v.done / v.total) * 100) : 0}%`);
+
+  const active = missions.filter(m => ['planned', 'running', 'waiting_approval'].includes(m.status));
+  const avgProgress = missions.length ? Math.round(missions.reduce((a, m) => a + m.progress, 0) / missions.length) : 0;
+  let auditCount = 0;
+  try { auditCount = await repos.audit.count(ctx.workspace.id); } catch (_) { /* best-effort */ }
+  const awaiting = missions.find(m => m.status === 'waiting_approval');
+  const nextMission = missions.find(m => !['completed', 'failed', 'cancelled'].includes(m.status));
+  const recommendation = awaiting
+    ? `Approve "${awaiting.title}" — it is paused waiting for you.`
+    : nextMission && nextMission.next_action
+      ? `${nextMission.title} · next: ${nextMission.next_agent} — ${String(nextMission.next_action).slice(0, 100)}`
+      : missions.length
+        ? 'All missions settled — create a new mission to keep the pipeline moving.'
+        : 'Create your first mission to start the revenue workflow.';
+
+  const text = design.compose([
+    `${design.EMOJI.target} ${design.b('Mission Dashboard')}`,
+    design.it('Founder view — every mission, pipeline and approval in one place.'),
+    design.divider(),
+    design.section('MISSIONS'),
+    design.row('Total', String(missions.length)),
+    design.row('In flight', String(active.length)),
+    design.row('Completed', String(missions.filter(m => m.status === 'completed').length)),
+    design.row('Awaiting approval', String(missions.filter(m => m.status === 'waiting_approval').length)),
+    design.row('Avg progress', avgProgress + '%'),
+    design.section('REVENUE WORKFLOW'),
+    design.row('Leads found', String(leads)),
+    design.row('Qualified', String(qualified)),
+    design.row('Conversion rate', conversion + '%'),
+    design.row('Emails drafted', String(emails)),
+    design.row('LinkedIn messages', String(messages)),
+    design.row('Proposals drafted', String(proposals)),
+    design.row('Meetings planned', String(meetings)),
+    design.row('Follow-ups designed', String(followups)),
+    design.row('Revenue forecast', String(revenueForecast)),
+    design.section('WORKFORCE'),
+    agentUtil.length ? design.list(agentUtil.slice(0, 8)) : design.it('No agent activity yet.'),
+    design.section('HEALTH'),
+    design.row('Failed steps', String(failed.length)),
+    design.row('Audit entries', String(auditCount)),
+    design.section('RECOMMENDATION'),
+    design.it(recommendation),
+    design.divider()
+  ]);
+  return {
+    text,
+    keyboard: design.keyboard([
+      [design.textButton('Create Mission', 'cc_mission_create'), design.textButton('Approvals', 'cc_approvals')],
+      [design.textButton('Missions', 'cc_missions'), design.textButton('Back to Home', 'cc_home')]
+    ])
+  };
+}
 
 async function buildMissions(userId) {
   const ctx = await getCtx(userId);
@@ -40,6 +262,9 @@ async function buildMissions(userId) {
   if (missions.length) {
     const missionRows = missions.slice(0, 8).map(m => [design.textButton(`#${m.id} ${m.title.slice(0, 22)}`, `cc_mission:${m.id}`)]);
     rows.push(...missionRows);
+  }
+  if (isFounder(userId)) {
+    rows.push([design.textButton('📊 Mission Dashboard', 'cc_mission_dashboard'), design.textButton('➕ Create Mission', 'cc_mission_create')]);
   }
   rows.push([design.textButton('Approvals', 'cc_approvals'), design.textButton('Back to Home', 'cc_home')]);
   const text = design.compose([
@@ -79,6 +304,12 @@ async function buildMissionDetail(userId, planId) {
   ]);
   const rows = [];
   if (plan.status === 'waiting_approval') rows.push([design.textButton('Review Approval', 'cc_approvals')]);
+  if (plan.status === 'running' || plan.status === 'planned') {
+    const completedSteps = steps.filter(s => s.status === 'completed').length;
+    if (completedSteps === 0) {
+      rows.push([design.textButton('▶ Start Mission', `cc_mission_run:${plan.id}`)]);
+    }
+  }
   if (plan.status === 'running' || plan.status === 'planned' || plan.status === 'paused') {
     rows.push([
       design.textButton(plan.status === 'paused' ? 'Resume' : 'Pause', `cc_mission_${plan.status === 'paused' ? 'resume' : 'pause'}:${plan.id}`)
@@ -262,6 +493,9 @@ module.exports = {
   buildApprovals,
   buildMissionGoalPrompt,
   buildMissionRunResult,
+  buildMissionCreatePrompt,
+  buildMissionDashboard,
+  handleMissionCreateText,
   launchMission1,
   launchMission2,
   launchMarketMission,

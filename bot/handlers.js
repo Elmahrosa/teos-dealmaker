@@ -173,6 +173,15 @@ async function handleMessage(msg) {
   }
 
   if (missionState.pending(userId) && !text.startsWith('/')) {
+    const payload = missionState.payload(userId) || {};
+    if (payload.mode === 'mission_create') {
+      try {
+        return await require('./screens/missions').handleMissionCreateText(chatId, userId, text);
+      } catch (err) {
+        audit.writeEntry('BOT_MISSION_CREATE', String(userId), 'error', { error: err.message });
+        return { chatId, text: `Mission failed: ${err.message}` };
+      }
+    }
     missionState.clear(userId);
     const adapter = getStoreAdapter();
     try {

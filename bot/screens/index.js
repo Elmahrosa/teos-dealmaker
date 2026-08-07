@@ -57,6 +57,8 @@ module.exports = {
   buildApprovals: missions.buildApprovals,
   buildMissionGoalPrompt: missions.buildMissionGoalPrompt,
   buildMissionRunResult: missions.buildMissionRunResult,
+  buildMissionCreatePrompt: missions.buildMissionCreatePrompt,
+  buildMissionDashboard: missions.buildMissionDashboard,
   launchMission1: missions.launchMission1,
   launchMission2: missions.launchMission2,
   launchGoalMission: missions.launchGoalMission,

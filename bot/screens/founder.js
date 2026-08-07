@@ -56,7 +56,8 @@ async function buildFounderHome(userId) {
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton(`🎯 ${t('fd_mission_center')}`, 'cc_missions'), design.textButton('🤖 ' + t('fd_workforce'), 'cc_workforce'), design.textButton('✅ ' + t('fd_approvals'), 'cc_approvals')],
+      [design.textButton('🎯 ' + t('fd_mission_center'), 'cc_missions'), design.textButton('🤖 ' + t('fd_workforce'), 'cc_workforce'), design.textButton('✅ ' + t('fd_approvals'), 'cc_approvals')],
+      [design.textButton('📊 Mission Dashboard', 'cc_mission_dashboard'), design.textButton('➕ Create Mission', 'cc_mission_create')],
       [design.textButton('📈 ' + t('fd_revenue_title'), 'cc_fd_revenue'), design.textButton('👥 ' + t('fd_customers_title'), 'cc_fd_customers'), design.textButton('🧾 ' + t('fd_audit_center'), 'cc_audit')],
       [design.textButton('⚡ ' + t('fd_mode'), 'cc_fd_mode'), design.textButton('🛡 ' + t('fd_approval_title'), 'cc_fd_approval'), design.textButton('💳 ' + t('fd_billing_mgmt'), 'cc_fd_billing')],
       [design.textButton('🗂 ' + t('fd_workspaces_title'), 'cc_fd_workspaces'), design.textButton('🐞 ' + t('fd_debug'), 'cc_fd_debug'), design.textButton('🛡 ' + t('fd_sentinel_title'), 'cc_fd_sentinel')],
@@ -121,7 +122,6 @@ function buildFounderBilling(userId) {
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('💰 Plans & Checkout', 'cc_pricing')],
       [design.textButton(t('fd_btn_back'), 'cc_home')]
     ])
   };
@@ -270,7 +270,7 @@ async function buildFounderOps(userId) {
     text,
     keyboard: design.keyboard([
       [design.textButton('🧾 ' + t('fd_audit_center'), 'cc_audit'), design.textButton('🩺 ' + t('health_title'), 'cc_health')],
-      [design.textButton('💰 Plans & Checkout', 'cc_pricing'), design.textButton('🔐 Policies', 'cc_providers')],
+      [design.textButton('🔐 Policies', 'cc_providers')],
       [design.textButton(t('fd_btn_back'), 'cc_home')]
     ])
   };
