@@ -219,7 +219,9 @@ const server = app.listen(PORT, () => {
         console.log(`[Sentinel] founder workspace seeded (workspace #${result.workspace.id})`);
       }
     })
-    .catch(err => console.error('[Sentinel] founder seed skipped:', err.message));
+    .catch(err => console.error('[Sentinel] founder seed failed:', err && err.stack ? err.stack : err));
+  const notify = require('../services/notify');
+  notify.install();
 });
 
 function shutdown(signal) {

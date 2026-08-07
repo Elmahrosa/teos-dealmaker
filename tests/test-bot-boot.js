@@ -90,9 +90,13 @@ const menu = require('../bot/menu');
   const dryText = await handleMessage(msg(FOUNDER, 'follow up with Acme about the proposal'));
   check(Boolean(dryText && dryText.text), 'plain-text text is acknowledged');
 
-  // Unknown commands are rejected with a hint.
+  // Unknown commands are handled by the v1.1 conversation router — a natural
+  // reply with next-step options, never the legacy "Use /start" fallback.
   const unknown = await handleMessage(msg(FOUNDER, '/totally_unknown_cmd'));
-  check(/Unknown command/i.test(unknown.text), 'unknown command is rejected');
+  check(Boolean(unknown && unknown.text), 'unknown command is answered by the conversation router');
+  check(!/Use \/start/i.test(unknown.text), 'unknown command never falls back to "Use /start"');
+  check(/did not get that|run sales|find customers|status|help/i.test(unknown.text),
+    'unknown command reply offers natural-language options');
 
   // -------------------------------------------------------- callback chain
   let qid = 0;

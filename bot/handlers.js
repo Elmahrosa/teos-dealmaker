@@ -13,9 +13,31 @@ const { buildHome, buildMemory, buildAskResult, buildMissionRunResult } = requir
 const audit = require('../utils/auditLogger');
 const { getMode } = require('../config/mode');
 const { isFounder } = require('./access');
+const router = require('../services/router');
 
 function screenResult(chatId, screen) {
   return { chatId, text: screen.text, replyMarkup: screen.keyboard };
+}
+
+async function routerResult(chatId, userId, rawText) {
+  const text = String(rawText || '').trim().replace(/^\/+/, '');
+  if (!text) return null;
+  const adapter = getStoreAdapter();
+  const reply = await router.handleText(adapter, userId, text);
+  const trace = reply.trace || {};
+  audit.writeEntry('BOT_ROUTER', String(userId), 'success', {
+    intent: trace.intent,
+    action: trace.action,
+    decision: trace.decision
+  });
+  let replyMarkup = null;
+  if (reply.suggestions && reply.suggestions.length) {
+    replyMarkup = {
+      keyboard: reply.suggestions.map(s => [{ text: s }]),
+      resize_keyboard: true
+    };
+  }
+  return { chatId, text: reply.text, replyMarkup };
 }
 
 async function handleStart(chatId, userId, displayName) {
@@ -212,7 +234,8 @@ async function handleMessage(msg) {
 
     if (!handler) {
       audit.writeEntry('BOT_COMMAND_UNKNOWN', String(userId), 'denied', { command, mode: getMode() });
-      return { chatId, text: `Unknown command: <code>${command}</code>. Use /start for help.` };
+      const routed = await routerResult(chatId, userId, parts.slice(1).join(' ') || command.slice(1));
+      return routed || { chatId, text: `Unknown command: <code>${command}</code>. Send a natural message like "run sales" instead.` };
     }
 
     const actionType = 'BOT_COMMAND_' + command.slice(1).toUpperCase();
@@ -229,9 +252,11 @@ async function handleMessage(msg) {
   }
 
   audit.writeEntry('BOT_TEXT', String(userId), 'info', { text, mode: getMode() });
+  const routed = await routerResult(chatId, userId, text);
+  if (routed) return routed;
   return {
     chatId,
-    text: 'Received. Use /start to open Mission Control, or /help for available commands.'
+    text: 'How can I help? Try "run sales", "find customers", "create mission", or "status".'
   };
 }
 
