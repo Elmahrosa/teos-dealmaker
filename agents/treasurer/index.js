@@ -83,10 +83,14 @@ function closeDeal(deal, contract, checkout) {
     checkoutId: checkout ? checkout.checkoutId : null,
     amount: contract.amount,
     currency: contract.currency,
-    status: 'closed'
+    status: checkout ? 'closed' : 'checkout_failed'
   };
-
-  audit.writeEntry('TREASURER_AGENT_DEAL_CLOSED', deal.id, 'success', summary);
+  audit.writeEntry(
+    'TREASURER_AGENT_DEAL_CLOSED',
+    deal.id,
+    checkout ? 'success' : 'blocked',
+    summary
+  );
   return summary;
 }
 
