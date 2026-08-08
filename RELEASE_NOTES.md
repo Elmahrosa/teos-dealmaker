@@ -1,6 +1,14 @@
 # TEOS DealMaker — Release Notes
 
-## v1.1.0 (2026-08-07)
+## v1.1.0 (2026-08-08)
+
+### Trust & Security integration
+
+- **Trust Center entry point**: landing page "Trust & Security" navigation and a compact trust section (EN/AR) that links to the official Elmahrosa Trust Center (`https://elmahrosa.org/trust`) without duplicating its content.
+- **Verified Credly credential**: landing page displays the verified **Claude Partner Badge — Claude Code** credential and links directly to the official Credly badge page.
+- **Conversation router trust intents (EN + AR)**: trust/security/compliance/credentials/certification requests (including «الأمان», «الثقة», «الاعتمادات», «الشهادات», «هل النظام آمن؟») are answered directly with the Trust Center link, plus the verified Credly badge when credentials are requested. No `/start` fallback.
+- **Mission reports**: executive mission reports and the Customer #0 page carry a compact "Security & Trust →" link to the Trust Center.
+- **Honest claims**: customer-facing output never claims guaranteed revenue/accuracy, autonomous financial/legal/clinical authority, or certifications that do not exist — consistent with the Elmahrosa Trust Center.
 
 ### Post-review polish — honest executive output
 
@@ -13,7 +21,11 @@
 
 ### Verification
 
-- 46/46 local suites, ESLint clean, syntax gate 234 files.
+- 46/46 local suites, ESLint clean, syntax gate 234 files, `npm audit --omit=dev` 0 vulnerabilities.
+- Landing HTTP 200, Trust Center link HTTP 200, Credly badge HTTP 200.
+- EN/AR trust intents verified with no `/start` fallback.
+- Pricing, mission flow, Customer #0, Sentinel/Policy/Audit, and Dodo billing unchanged.
+- Production freeze active; proactive Telegram notifications are v1.2.0 scope (preserved on `v1.2.0-notifications`).
 
 ## v1.1.0-rc1 (2026-08-07)
 
