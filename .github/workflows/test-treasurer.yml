@@ -1,0 +1,49 @@
+name: Test Suite - Treasurer LIVE Gate
+on:
+  push:
+    branches:
+      - feature/next-update
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Run Treasurer Tests
+        run: node tests/test-treasurer.js
+
+      - name: Run Billing Tests
+        run: node tests/test-billing.js
+
+      - name: Run Pricing Tests
+        run: node tests/test-pricing.js
+
+      - name: Run Workforce Tests
+        run: node tests/test-workforce.js
+
+      - name: Run Mission Controller Tests
+        run: node tests/test-mission-controller.js
+
+      - name: Git Status
+        if: always()
+        run: |
+          git status
+          git diff --check
+          git log -1 --oneline
