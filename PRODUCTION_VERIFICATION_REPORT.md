@@ -4,12 +4,12 @@
 
 **Release Baseline Restored and Verified:**
 
-- **Git Status**: Branch `main`, head commit `f1e5475` (docs: v1.1.0 release notes, launch checklist, production verification report), preceded by `d9a1e55` (fix(lint): trailing newline) and `a66c053` (chore: add trust center and verified credly credential); working tree clean. Branch ahead of `origin/main` by 4 commits.
+- **Git Status**: Branch `main`, head commit `d4d739a` (fix(v1.1): approval `decided_by` must store internal users.id — production callback bug fix), = `origin/main`, preceded by `f1e5475` (docs: v1.1.0 release notes), `d9a1e55` (fix(lint): trailing newline) and `a66c053` (chore: trust center + credly). Working tree clean (only the untracked `RAILWAY_RESTORATION_REPORT.md` closeout report). Tag `v1.1.0-production` intact.
 - **Version Consistency**:
   - package.json: `"version": "1.1.0"`
   - BUILD_STATE.md: Release **v1.1.0** (AI Revenue OS + honest executive output)
   - Tag `v1.1.0-production` intact (unchanged).
-- **Test Suite**: 46/46 suites passing (0 failed).
+- **Test Suite**: 47/47 suites passing (0 failed), including the new `tests/test-approval-decider.js` regression (Telegram ID → internal `users.id`, no INT4 overflow).
 - **Code Quality**:
   - Lint: ESLint — no issues found.
   - Build: `npm run build` — 234 JS files pass `node --check`.
@@ -45,14 +45,17 @@ Non-blocking items requiring attention during deployment verification:
 
 Verified against the live deployment with the Railway CLI (authenticated as the owner):
 
-- **Service**: `web` ONLINE at `https://dealmaker.elmahrosa.org`, region EU West, project `Teos-Dealmaker` (df370b33), environment `production`.
-- **Health**: `/api/health` → HTTP 200, `{"status":"ok","mode":"live",...}`.
-- **Bot polling restored**: `BOT_POLLING` was `0` (passive no-op keep-alive — the cause of "bot not respond"). Set to `1` and redeployed. Live logs confirm `@TeosEgypt_bot verified (id 8148505959)` and `polling (mode: LIVE)`.
-- **Database connectivity fixed**: live logs showed `Postgres mirror failed: self-signed certificate in certificate chain` against the Supabase pooler. Set `PG_REJECT_UNAUTHORIZED=false` (supported by `db/pool-config.js:12`); redeploy confirmed `founder workspace seeded (workspace #35, mission #26)` with no further Postgres errors.
-- **Founder / Customer #0**: founder seed idempotent (workspace #35, mission #26, status completed; not re-run).
-- **Polling conflict observation**: two transient `409 Conflict` lines, each ~45s after a fresh deploy — deploy-overlap long-poll races. None for ~20 minutes since; `getWebhookInfo` clean (pending_update_count 0). Bot holds the poll. No other Railway service uses token `8148505959` (checked all services in Teos-Dealmaker, The Teos Bot, and UnityCare Production projects).
-- **Companion services**: `teos-civic-mixer` (Next.js) ONLINE; `teos-superintelligence`, `teoslinker-bot`, `activation-service` in "The Teos Bot" project use different credentials (webhook-based, not the DealMaker token).
-- **Post-deploy gate (local, unchanged tree)**: 46/46 suites, lint clean, build 234 files, `npm audit --omit=dev` 0 vulns, working tree clean.
+- **Service**: `web` ONLINE at `https://dealmaker.elmahrosa.org`, region EU West, project `Teos-Dealmaker` (df370b33), environment `production`. Deployment `a1fedf40` (SUCCESS) = commit `d4d739a` via GitHub auto-deploy from `main`.
+- **Single authoritative poller**: duplicate service `teos-dealmaker` (48c899fe) was confirmed redundant (same repo/env, passive `BOT_POLLING=0`, **no domains**) and **DELETED**. Custom domain `dealmaker.elmahrosa.org` is bound exclusively to `web` (port 8080, ACTIVE). One service → one polling runtime.
+- **No recurring 409**: only the single deploy-overlap transition 409 remains in `web` logs; zero on the (now removed) duplicate; zero recurring over a 2.5-minute monitored window and the sessions after. `getWebhookInfo` clean (`url:""`, `pending:0`).
+- **Bot polling restored**: `BOT_POLLING=1`; live logs confirm `@TeosEgypt_bot verified (id 8148505959)` and `polling (mode: LIVE)`.
+- **Callback bug fixed live**: deployment `a1fedf40` (d4d739a) logs show **zero** `[bot] callback error` / `out of range for type integer`, versus the prior deployment (f1e5475) which exhibited it. Regression suite added and passing.
+- **Database connectivity fixed**: `PG_REJECT_UNAUTHORIZED=false` (supported by `db/pool-config.js:12`); redeploy confirmed `founder workspace seeded (workspace #35, mission #26)` with no Postgres errors.
+- **Founder / Customer #0**: founder seed idempotent (workspace #35, mission #26, status completed; not re-run). DB read-only check: 3 users (founder id 23, telegram 7815071893), 2 workspaces, 8 plans, 3 deals (1 active/2 closed), 2 subscriptions, 2 memberships, 545 audit entries, 78 agent runs, 2 pending approvals (`decided_by` null — no INT4 corruption).
+- **Live E2E evidence (audit trail)**: real production interactions recorded — `BOT_START_FOUNDER` (22), `BOT_START_EXISTING` (7), `BOT_TEXT` (45), `BOT_SEND` (109), `BOT_CALLBACK` (195, all success), `BOT_ROUTER` (41), `BOT_MISSION1_RUN` (3), `BOT_MISSION_CREATE` (2), `BOT_APPROVAL_MODE` (2), `BOT_ONBOARDING_COMPLETED` (1). Recent activity at 10:42–10:43 UTC (sends + callbacks) with zero errors.
+- **Smoke**: `/` 200, `/api/health` 200 `{"status":"ok","mode":"live","dbPingMs":67,...}`, `/api/diagnostics` 200 (`error:null`), `/api/pricing` 200 (Solo/Growth/Business dodo.pe checkout links), `/customer-0` 200 ("ELMAHROSA INTERNATIONAL"). Trust `https://elmahrosa.org/trust/` 200; Credly badge 200; `/api/audit` 401 without key.
+- **Companion services**: `teos-civic-mixer` (Next.js) ONLINE — different repo/token, not a DealMaker poller.
+- **Post-deploy gate (local, unchanged tree)**: 47/47 suites, lint clean, build 235 files, `npm audit --omit=dev` 0 vulns, working tree clean.
 
 ## 4. ARCHITECTURE RE-VERIFICATION (authoritative description)
 
@@ -98,20 +101,23 @@ READY FOR PUBLIC LAUNCH
 ```
 
 **Justification**:
-1. Production freeze enforced: working tree restored to the approved v1.1.0 baseline; no code changes in this re-verification.
+1. Production freeze enforced: working tree restored to the approved v1.1.0 baseline; only the two verified production fixes shipped (`d4d739a`).
 2. Trust integration approved and verified (landing, bot EN/AR intents, report links, no overclaims).
-3. 46/46 test suites pass, lint clean, 0 dependency vulnerabilities, syntax gate 234 files.
+3. 47/47 test suites pass (incl. approval-decider regression), lint clean, 0 dependency vulnerabilities, syntax gate 235 files.
 4. Pricing, mission flow, Customer #0, Sentinel/Policy/Audit, and Dodo billing unchanged.
-5. No placeholder, demo, or simulated-branding content in production surfaces.
+5. No placeholder, demo, or simulated-branding content in production surfaces ("demo" appears only in legitimate copy: "Real revenue work, not a demo").
 6. No launch-blocking issues identified in autonomous or live-production verification.
-7. Live production confirmed: bot polling (LIVE), Supabase connectivity, health 200, founder seed intact.
+7. Live production confirmed: single polling runtime (`web`), bot polling (LIVE), Supabase connectivity, health 200, founder seed intact, zero callback errors, zero recurring 409.
+8. Duplicate polling service removed; one Railway service → one Telegram polling runtime.
+9. Dodo webhook HMAC path verified fail-closed and covered by tests; real end-to-end Dodo event NOT externally exercised — documented as WARNING (no fabricated evidence).
+10. Security headers verified live: CSP, HSTS (31536000; includeSubDomains), nosniff, X-Frame-Options, referrer-policy; `/api/audit` fail-closed 401 without key.
 
 **v1.2.0 preservation**: Proactive Telegram notifications (controlled notification service, settings toggle, billing notifications, and tests) were removed from `main` and preserved intact on branch `v1.2.0-notifications` (commit `ddd9805`). They are not part of v1.1.0 and will not be committed to the release branch. Working tree is clean; no notification work is present in the release.
 
 ---
-*Report Generated: 2026-08-08 (re-verified afternoon session)*
-*Verification Scope: Local build/test/lint/audit, architecture re-verification, live Railway production (polling, DB, health, seed), trust integration, landing, bot routing, and code inspection*
-*Commit: f1e5475 (baseline) + d9a1e55 + a66c053; working tree clean*
+*Report Generated: 2026-08-08 (final closeout session)*
+*Verification Scope: Local build/test/lint/audit, live Railway production (single poller, DB, health, seed, smoke, audit-trail E2E, security headers), trust integration, landing, pricing, Dodo webhook assessment, code inspection*
+*Commit: d4d739a (= origin/main); working tree clean*
 *Branch: main*
 *Version: v1.1.0*
 *Production freeze: ACTIVE*
