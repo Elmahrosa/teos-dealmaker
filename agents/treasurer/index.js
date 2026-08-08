@@ -44,9 +44,9 @@ function draftContract(deal) {
 }
 
 async function createCheckout(deal, contract) {
-  if (!mode.isDRY()) {
+  if (mode.isLIVE() && !process.env.DODO_API_KEY) {
     audit.writeEntry('TREASURER_AGENT_CHECKOUT_BLOCKED', contract.contractId, 'blocked', {
-      reason: 'Dodo Payments is DRY-only until LIVE payments are enabled',
+      reason: 'LIVE mode requires DODO_API_KEY; none configured (fail-closed)',
       mode: mode.getMode()
     });
     return null;
@@ -66,7 +66,12 @@ async function createCheckout(deal, contract) {
     dryRun: link.dryRun
   };
 
-  audit.writeEntry('TREASURER_AGENT_CHECKOUT_CREATED', checkout.checkoutId, 'dry_run', checkout);
+  audit.writeEntry(
+    'TREASURER_AGENT_CHECKOUT_CREATED',
+    checkout.checkoutId,
+    checkout.dryRun ? 'dry_run' : 'live',
+    checkout
+  );
   return checkout;
 }
 
@@ -78,10 +83,14 @@ function closeDeal(deal, contract, checkout) {
     checkoutId: checkout ? checkout.checkoutId : null,
     amount: contract.amount,
     currency: contract.currency,
-    status: 'closed'
+    status: checkout ? 'closed' : 'checkout_failed'
   };
-
-  audit.writeEntry('TREASURER_AGENT_DEAL_CLOSED', deal.id, 'success', summary);
+  audit.writeEntry(
+    'TREASURER_AGENT_DEAL_CLOSED',
+    deal.id,
+    checkout ? 'success' : 'blocked',
+    summary
+  );
   return summary;
 }
 
