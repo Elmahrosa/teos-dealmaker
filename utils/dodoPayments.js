@@ -1,5 +1,3 @@
-const DODO_API_KEY = process.env.DODO_API_KEY;
-
 function buildPayload(dealId, amount, opts) {
   return {
     amount,
@@ -11,6 +9,8 @@ function buildPayload(dealId, amount, opts) {
 }
 
 async function createCheckoutLink(dealId, amount, opts = {}) {
+  const DODO_API_KEY = process.env.DODO_API_KEY;
+
   if (!DODO_API_KEY) {
     return {
       checkoutId: `CHK-${dealId}`,
