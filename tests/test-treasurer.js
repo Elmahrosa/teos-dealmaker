@@ -1,4 +1,4 @@
-const { draftContract, createCheckout, runTreasuryFlow } = require('../agents/treasurer');
+const { draftContract, createCheckout, closeDeal, runTreasuryFlow } = require('../agents/treasurer');
 const mode = require('../config/mode');
 
 async function main() {
@@ -21,33 +21,28 @@ async function main() {
   console.log(`   Clauses: ${contract.clauses.length} | payment method: ${contract.paymentMethod}`);
 
   console.log('\n2) Creating DRY checkout...');
-  mode.setMode('DRY');
-  const dryCheckout = await createCheckout(deal, contract);
-  console.log(`   Checkout: ${dryCheckout.checkoutId} | ${dryCheckout.url} | dryRun: ${dryCheckout.dryRun}`);
-  if (!dryCheckout || dryCheckout.dryRun !== true) {
-    console.error('   FAIL: DRY checkout should have dryRun=true');
-    process.exit(1);
-  }
-  console.log('   PASS: DRY checkout created successfully');
+  const checkout = await createCheckout(deal, contract);
+  console.log(`   Checkout: ${checkout.checkoutId} | ${checkout.url} | dryRun: ${checkout.dryRun}`);
 
-  console.log('\n3) Attempting LIVE checkout (no DODO_API_KEY set)...');
+  console.log('\n3) Attempting LIVE checkout (no key)...');
   mode.setMode('LIVE');
-  delete process.env.DODO_API_KEY; // Ensure key is unset
-  const blocked = await createCheckout(deal, contract);
-  if (blocked !== null) {
-    console.error(`   FAIL: Expected null (blocked), got:`, blocked);
+  delete process.env.DODO_API_KEY; // ensure no key
+  const liveCheckoutNoKey = await createCheckout(deal, contract);
+  if (liveCheckoutNoKey !== null) {
+    console.error('   FAIL: LIVE checkout with no key should be blocked (null)');
     process.exit(1);
   }
-  console.log('   PASS: LIVE checkout blocked when DODO_API_KEY not configured (fail-closed)');
+  console.log('   PASS: LIVE checkout blocked as expected (null returned)');
+  mode.setMode('DRY'); // reset to DRY for next steps
 
   console.log('\n4) Attempting LIVE checkout (with DODO_API_KEY set)...');
   mode.setMode('LIVE');
   process.env.DODO_API_KEY = 'test-key-12345';
   try {
-    const liveCheckout = await createCheckout(deal, contract);
+    const liveCheckoutWithKey = await createCheckout(deal, contract);
     // Network error offline is acceptable; silent block or fake response is a fail
     console.log('   Note: Attempted real Dodo call (may fail offline, which is OK)');
-    if (liveCheckout && liveCheckout.dryRun === true) {
+    if (liveCheckoutWithKey && liveCheckoutWithKey.dryRun === true) {
       console.error('   FAIL: LIVE checkout should not return dryRun=true');
       process.exit(1);
     }
@@ -65,12 +60,34 @@ async function main() {
     }
   } finally {
     delete process.env.DODO_API_KEY;
+    mode.setMode('DRY'); // reset to DRY
   }
+
+  console.log('\n5) Closing deal in DRY...');
+  mode.setMode('DRY');
   const summary = await runTreasuryFlow(deal);
   console.log(`   Closed: ${summary.status} | ${summary.company} | ${summary.contractId} | checkout ${summary.checkoutId}`);
 
-  console.log('\n✓ All treasurer tests passed.');
-  console.log('Inspect data/vault/audit.log for TREASURER_AGENT_* entries.');
+  // Assertions for DRY closing
+  if (summary.checkoutId == null) {
+    console.error('   FAIL: DRY closing should produce a checkoutId');
+    process.exit(1);
+  }
+  if (summary.status !== 'closed') {
+    console.error(`   FAIL: Expected status 'closed', got '${summary.status}'`);
+    process.exit(1);
+  }
+  console.log('   PASS: DRY closing produced a real checkoutId and status=closed');
+
+  console.log('\n6) Testing blocked-audit path (direct closeDeal with null checkout)...');
+  const blockedSummary = closeDeal(deal, contract, null);
+  if (blockedSummary.status !== 'checkout_failed') {
+    console.error(`   FAIL: Expected status 'checkout_failed', got '${blockedSummary.status}'`);
+    process.exit(1);
+  }
+  console.log('   PASS: blocked checkout produces status=checkout_failed');
+
+  console.log('\nVerification complete. Inspect data/vault/audit.log for TREASURER_AGENT_* entries.');
 }
 
 main().catch(err => {
