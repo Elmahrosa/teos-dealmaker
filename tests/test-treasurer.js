@@ -63,7 +63,7 @@ async function main() {
     } else {
       throw err;
     }
-  console.log('\n5) Closing deal in DRY...');
+  }
   mode.setMode('DRY');
   const summary = await runTreasuryFlow(deal);
   console.log(`   Closed: ${summary.status} | ${summary.company} | ${summary.contractId} | checkout ${summary.checkoutId}`);
