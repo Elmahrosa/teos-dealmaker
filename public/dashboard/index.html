@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sentinel Shield — TEOS DealMaker</title>
-<script>window.__PRICING__ = [{"tier":"🚀 Solo","tagline":"For founders and solo teams","monthly":{"price":"$99.00","url":"https://dodo.pe/teos-dealmaker-solo-monthly-13644952"},"annual":{"price":"$950.00","url":"https://dodo.pe/teos-dealmaker-solo-annual-13644952"},"productIds":{"monthly":"pdt_0NkdQVk7ahfyz0VSoTGipD","annual":"pdt_0NkdQW1mGZrFIxz9dm7eZ"},"features":["1 workspace","Mission Controller with a 13-agent AI workforce","Core agent capabilities","Community support"]},{"tier":"⚡ Growth","tagline":"For growing revenue teams","monthly":{"price":"$299.00","url":"https://dodo.pe/teos-dealmaker-growth-monthly-13644952"},"annual":{"price":"$2,990.00","url":"https://dodo.pe/teos-dealmaker-growth-annual-13644952"},"productIds":{"monthly":"pdt_0NkdQWCpT2SbojpuscwVI","annual":"pdt_0NkdQWOkJWfbSa7qtCLZm"},"features":["10 seats","Civic Mixer + Sentinel Shield plugins","Enterprise Knowledge Intelligence","Email support"]},{"tier":"👑 Business","tagline":"For revenue organizations","monthly":{"price":"$999.00","url":"https://dodo.pe/teos-dealmaker-business-monthly-13644952"},"annual":{"price":"$9,990.00","url":"https://dodo.pe/teos-dealmaker-business-annual-13644952"},"productIds":{"monthly":"pdt_0NkdQWZ1Bkv413NqbbVFu","annual":"pdt_0NkdQWgxl0hJcb4skW8IK"},"features":["25 seats","Third-party plugin installs","All platform add-ons","Priority support"]},{"tier":"🏛️ Enterprise","tagline":"For large and sovereign organizations","monthly":{"price":"Custom","url":""},"annual":{"price":"Custom","url":""},"productIds":{"monthly":"","annual":""},"custom":true,"features":["Unlimited workspaces","Unlimited missions","Private deployment","Sentinel governance at scale","Dedicated success engineer"]}];</script>
+<script>window.__PRICING__ = [{"tier":"🚀 Solo","tagline":"For founders and solo teams","monthly":{"price":"$99.00","url":"https://dodo.pe/teos-dealmaker-solo-monthly-13644952"},"annual":{"price":"$950.00","url":"https://dodo.pe/teos-dealmaker-solo-annual-13644952"},"features":["1 workspace","Mission Controller with a 13-agent AI workforce","Core agent capabilities","Community support"]},{"tier":"⚡ Growth","tagline":"For growing revenue teams","monthly":{"price":"$299.00","url":"https://dodo.pe/teos-dealmaker-growth-monthly-13644952"},"annual":{"price":"$2,990.00","url":"https://dodo.pe/teos-dealmaker-growth-annual-13644952"},"features":["10 seats","Civic Mixer + Sentinel Shield plugins","Enterprise Knowledge Intelligence","Email support"]},{"tier":"👑 Business","tagline":"For revenue organizations","monthly":{"price":"$999.00","url":"https://dodo.pe/teos-dealmaker-business-monthly-13644952"},"annual":{"price":"$9,990.00","url":"https://dodo.pe/teos-dealmaker-business-annual-13644952"},"features":["25 seats","Third-party plugin installs","All platform add-ons","Priority support"]},{"tier":"🏛️ Enterprise","tagline":"For large and sovereign organizations","monthly":{"price":"Custom","url":""},"annual":{"price":"Custom","url":""},"custom":true,"features":["Unlimited workspaces","Unlimited missions","Private deployment","Sentinel governance at scale","Dedicated success engineer"]}];</script>
 <style>
   :root {
     --bg: #0b0f14;
@@ -49,7 +49,7 @@
   .status-in_progress, .status-dry_run { color: var(--gold); }
   #empty { color: var(--muted); padding: 20px; text-align: center; }
   footer { margin-top: 20px; color: var(--muted); font-size: 11px; }
-  #lang-switch { margin-inline-start: auto; color: var(--gold); background: none; border: 1px solid var(--border); padding: 2px 12px; border-radius: 12px; cursor: pointer; font-family: inherit; font-size: 12px; letter-spacing: 1px; }
+  #lang-switch { margin-inline-start: auto; color: var(--gold); background: none; border: 1px solid var(--border); padding: 2px 12px; border-radius: 12px; cursor: pointer; font-family: inherit; fo[...]
   #lang-switch:hover { color: #0b0f14; background: var(--gold); border-color: var(--gold); }
   html[dir="rtl"] th, html[dir="rtl"] td { text-align: right; }
   html[dir="rtl"] h1, html[dir="rtl"] h2 { letter-spacing: 0; }
@@ -127,14 +127,14 @@
   };
 
   var PRICING_AR = {
-    '🚀 Solo': { features: ['مساحة عمل واحدة', 'وحدة تحكم المهام مع قوة عاملة من 13 وكيل ذكاء اصطناعي', 'إمكانات الوكلاء الأساسية', 'دعم المجتمع'] },
+    '🚀 Solo': { features: ['مساحة عمل واحدة', 'وحدة تحكم المهام مع قوة عاملة من 13 وكيل ذكاء اصطناعي', 'إمكانات الوكلاء ال[...]'] ,
     '⚡ Growth': { features: ['10 مقاعد', 'إضافات Civic Mixer و Sentinel Shield', 'ذكاء المعرفة المؤسسية', 'دعم عبر البريد الإلكتروني'] },
     '👑 Business': { features: ['25 مقعداً', 'تثبيت إضافات الطرف الثالث', 'جميع إضافات المنصة', 'دعم ذو أولوية'] },
-    '🏛️ Enterprise': { features: ['مساحات عمل غير محدودة', 'مهام غير محدودة', 'نشر خاص', 'حوكمة سنتينل على نطاق واسع', 'مهندس نجاح مخصص'] }
+    '🏛️ Enterprise': { features: ['مساحات عمل غير محدودة', 'مهام غير محدودة', 'نشر خاص', 'حوكمة سنتينل على نطاق واسع', 'مهندس [...]']
   };
 
   var MODE_AR = { production: 'إنتاج', live: 'مباشر', dry: 'تجريبي', dry_run: 'تشغيل تجريبي', offline: 'غير متصل' };
-  var STATUS_AR = { success: 'ناجح', blocked: 'محظور', denied: 'مرفوض', failed: 'فشل', error: 'خطأ', in_progress: 'قيد التنفيذ', dry_run: 'تشغيل تجريبي', sent: 'مُرسَل', won: 'مكتمل', allow: 'سماح' };
+  var STATUS_AR = { success: 'ناجح', blocked: 'محظور', denied: 'مرفوض', failed: 'فشل', error: 'خطأ', in_progress: 'قيد التنفيذ', dry_run: 'تشغيل تجريبي', [...] }
 
   var lang = 'en';
   var currentTiers = [];
@@ -207,10 +207,10 @@
       var ar = lang === 'ar' ? PRICING_AR[tier.tier] : null;
       var features = ar ? ar.features : (tier.features || []);
       var monthly = tier.monthly.url
-        ? '<div style="margin-top:6px;">' + esc(t('monthly')) + ' <b>' + esc(tier.monthly.price) + '</b> · <a href="' + esc(tier.monthly.url) + '" style="color:var(--blue);font-size:12px;">' + esc(t('checkout')) + '</a></div>'
+        ? '<div style="margin-top:6px;">' + esc(t('monthly')) + ' <b>' + esc(tier.monthly.price) + '</b> · <a href="' + esc(tier.monthly.url) + '" style="color:var(--blue);font-size:12px;">' + e[...]
         : '<div style="margin-top:6px;">' + esc(t('monthly')) + ' <b>' + esc(tier.monthly.price) + '</b></div>';
       var annual = tier.annual.url
-        ? '<div style="margin-top:6px;">' + esc(t('annual')) + ' <b>' + esc(tier.annual.price) + '</b> · <a href="' + esc(tier.annual.url) + '" style="color:var(--blue);font-size:12px;">' + esc(t('checkout')) + '</a></div>'
+        ? '<div style="margin-top:6px;">' + esc(t('annual')) + ' <b>' + esc(tier.annual.price) + '</b> · <a href="' + esc(tier.annual.url) + '" style="color:var(--blue);font-size:12px;">' + esc([...]
         : '<div style="margin-top:6px;">' + esc(t('annual')) + ' <b>' + esc(tier.annual.price) + '</b></div>';
       var lis = features.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('');
       return '<div class="stat" style="min-width:240px;">' +
