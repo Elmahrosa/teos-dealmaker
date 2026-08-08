@@ -464,7 +464,7 @@ async function handleCallback(query, bot) {
         if (!ctx) return send(denied('approvals'));
         try {
           await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
-        await runtime.approveAndResume(getStoreAdapter(), ctx.workspace.id, Number(requestId), userId);
+        await runtime.approveAndResume(getStoreAdapter(), ctx.workspace.id, Number(requestId), ctx.user.id);
         audit.writeEntry('BOT_APPROVAL_DECIDE', String(userId), 'success', { requestId, decision });
         return send(await screens.buildApprovals(userId));
       }

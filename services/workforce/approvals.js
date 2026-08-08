@@ -1,4 +1,5 @@
 const { forWorkspace } = require('../../db/repos');
+const identity = require('../identity');
 const { emit, EVENT_NAMES } = require('./events');
 
 const APPROVAL_GATES = [
@@ -35,10 +36,15 @@ async function decide(adapter, workspaceId, requestId, decision, userId) {
   if (!existing) throw new Error(`Approval request ${requestId} not found`);
   if (existing.status !== 'pending') throw new Error(`Approval request ${requestId} already ${existing.status}`);
   const status = decision === 'approve' ? 'approved' : 'rejected';
+  let decidedBy = userId || null;
+  if (decidedBy != null) {
+    const user = await identity.getUserByTelegram(adapter, Number(decidedBy));
+    if (user) decidedBy = user.id;
+  }
   await repos.approvals.update(requestId, {
     status,
     decided_at: new Date().toISOString(),
-    decided_by: userId || null
+    decided_by: decidedBy
   });
   const updated = await repos.approvals.get(requestId);
   emit(EVENT_NAMES.APPROVAL_DECIDED, { approvalId: requestId, status, stepId: updated.step_id });

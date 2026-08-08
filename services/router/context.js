@@ -87,7 +87,7 @@ async function resolve(adapter, userId, session) {
       try {
         await repos.audit.add({
           workspace_id: ctx.workspaceId,
-          user_id: userId,
+          user_id: (ctx.user && ctx.user.id) || null,
           agent_name: 'router',
           action_type: actionType,
           details
