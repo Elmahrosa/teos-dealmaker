@@ -53,15 +53,16 @@ async function main() {
     }
     console.log('   PASS: LIVE checkout attempted real API call');
   } catch (err) {
-    if (err.message.includes('Dodo Payments error')) {
-      console.log(`   PASS: Network attempt made (error expected offline): ${err.message}`);
-    } else if (err.message.includes('fetch')) {
-      console.log(`   PASS: Network attempt made (fetch error expected offline): ${err.message}`);
+    const isNetworkFailure =
+      err.message.includes('Dodo Payments error') ||
+      err.message.includes('fetch') ||
+      (err.cause && err.cause.code) || // getaddrinfo ENOTFOUND, ECONNREFUSED, etc.
+      err.code === 'ENOTFOUND';
+    if (isNetworkFailure) {
+      console.log(`   PASS: attempted real Dodo call, network-level failure expected offline: ${err.message}`);
     } else {
       throw err;
     }
-  }
-
   console.log('\n5) Closing deal in DRY...');
   mode.setMode('DRY');
   const summary = await runTreasuryFlow(deal);
