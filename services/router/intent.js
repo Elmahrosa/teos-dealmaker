@@ -91,6 +91,12 @@ const PATTERNS = [
     ar: [/(لماذا|ليش).{0,15}(لا يعمل|لا تشتغل|معطل)/, /(إصلاح|خطأ|عطل|مشكلة|لا يعمل)/]
   },
   {
+    intent: 'trust',
+    capability: null,
+    en: [/\b(trust|security|compliance|credentials?|certifications?|trust center|security center)\b/i, /^(is the (system|platform|bot) secure|are (we|you) secure|how secure)\b/i],
+    ar: [/(الأمان|الثقة|الاعتمادات|الشهادات|الامتثال|مركز الثقة|مركز الأمان)/, /^(هل\s+)?النظام\s+آمن/]
+  },
+  {
     intent: 'approve',
     capability: 'approval.decide',
     en: [/^(approve|accept|confirm|yes|ok|okay|go ahead)\b/i],
@@ -172,6 +178,10 @@ function extractParams(intent, text) {
       if (q && q[1]) params.query = q[1].trim().replace(/[.?!]+$/, '');
     }
     if (!params.query) params.query = t;
+  }
+  if (intent === 'trust') {
+    params.credentials = /(credential|certification|certified|badge|verify|verified|credly)/i.test(t)
+      || /(الاعتمادات|الشهادات|شهادة|اعتماد|موثق|توثيق)/.test(t);
   }
   return params;
 }

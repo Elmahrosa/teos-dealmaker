@@ -1,6 +1,6 @@
 'use strict';
 
-const STATIC_INTENTS = new Set(['greeting', 'help', 'unknown']);
+const STATIC_INTENTS = new Set(['greeting', 'help', 'trust', 'unknown']);
 const CACHED_INTENTS = new Set(['status', 'analytics', 'revenue', 'deals', 'missions', 'approvals']);
 
 function classify(intent) {
@@ -19,6 +19,8 @@ function staticResult(intent, detection, ctx) {
       return { action: 'greeting', data: { language: detection.language } };
     case 'help':
       return { action: 'help', data: { language: detection.language, isFounder: !!ctx.isFounder } };
+    case 'trust':
+      return { action: 'trust', data: { language: detection.language, credentials: !!detection.params.credentials } };
     default:
       return { action: 'unknown', data: { language: detection.language, isFounder: !!ctx.isFounder } };
   }

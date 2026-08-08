@@ -152,7 +152,7 @@ function renderReportPage(header, body) {
 <style>${REPORT_CSS}</style></head>
 <body><div class="wrap">
 ${body}
-<footer>TEOS DealMaker · Executive Governance Console · data is read-only from the audit vault</footer>
+<footer>TEOS DealMaker · Executive Governance Console · data is read-only from the audit vault · <a href="https://elmahrosa.org/trust" target="_blank" rel="noopener">Security &amp; Trust →</a></footer>
 </div></body></html>`;
 }
 

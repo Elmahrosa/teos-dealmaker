@@ -39,6 +39,20 @@ function textFor(result, ctx, session) {
     case 'help':
       return buildHelp(d.language, d.isFounder);
 
+    case 'trust': {
+      const trustUrl = 'https://elmahrosa.org/trust';
+      const credlyUrl = 'https://www.credly.com/badges/f14c9ae0-c594-4cf8-af37-398545f5b75f';
+      const base = ar
+        ? `مركز الثقة:\n${trustUrl}`
+        : `Trust Center:\n${trustUrl}`;
+      if (d.credentials) {
+        return ar
+          ? `${base}\n\nالاعتماد الموثق (Credly):\n${credlyUrl}`
+          : `${base}\n\nVerified Credential (Credly):\n${credlyUrl}`;
+      }
+      return base;
+    }
+
     case 'status': {
       const s = summaryOf(d.plan, d.steps);
       if (!s) {

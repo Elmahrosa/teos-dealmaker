@@ -90,7 +90,19 @@ const { createRepos } = require('../db/repos');
     'search the knowledge base for pricing': 'knowledge',
     'what do we know about Elmahrosa': 'knowledge',
     'ابحث في قاعدة المعرفة عن الأسعار': 'knowledge',
-    'knowledge base': 'knowledge'
+    'knowledge base': 'knowledge',
+    'trust': 'trust',
+    'security': 'trust',
+    'security center': 'trust',
+    'compliance': 'trust',
+    'credentials': 'trust',
+    'certification': 'trust',
+    'how secure is the platform': 'trust',
+    'الأمان': 'trust',
+    'الثقة': 'trust',
+    'الاعتمادات': 'trust',
+    'الشهادات': 'trust',
+    'هل النظام آمن؟': 'trust'
   };
   for (const [text, expected] of Object.entries(cases)) {
     const d = intent.detect(text);
@@ -117,6 +129,21 @@ const { createRepos } = require('../db/repos');
   const r3 = await router.handleText(adapter, FOUNDER, 'مرحبا');
   check(/[\u0600-\u06FF]/.test(r3.text), 'Arabic greeting answered with native Arabic');
   check(!/\/start/.test(r3.text), 'Arabic reply has no /start');
+
+  // ----------------------------------------- Trust & Security (Final order)
+  equal(intent.detect('credentials').params.credentials, true, 'credentials param set for credential request');
+  equal(intent.detect('security').params.credentials, false, 'credentials param not set for generic security');
+  const t1 = await router.handleText(adapter, FOUNDER, 'security');
+  equal(t1.trace.intent, 'trust', 'security intent routed as trust');
+  check(t1.text.includes('elmahrosa.org/trust'), 'trust reply links the Trust Center');
+  check(!t1.text.includes('/start'), 'trust reply has no /start fallback');
+  const t2 = await router.handleText(adapter, FOUNDER, 'show me your credentials');
+  check(t2.text.includes('credly.com'), 'credential request reply includes the verified Credly badge');
+  const t3 = await router.handleText(adapter, FOUNDER, 'الأمان');
+  check(/[\u0600-\u06FF]/.test(t3.text) && t3.text.includes('elmahrosa.org/trust'), 'Arabic security intent answered with Trust Center link');
+  check(!t3.text.includes('/start'), 'Arabic trust reply has no /start fallback');
+  const t4 = await router.handleText(adapter, FOUNDER, 'الاعتمادات');
+  check(t4.text.includes('credly.com'), 'Arabic credential request reply includes the verified Credly badge');
 
   // ----------------------------------------- Memory continuity (Phase 5)
   const r4 = await router.handleText(adapter, FOUNDER, 'create mission');
@@ -156,6 +183,12 @@ const { createRepos } = require('../db/repos');
   await identity.onboardWorkspace(adapter, { ownerUserId: (await identity.getUserByTelegram(adapter, CUSTOMER)).id, companyName: 'Customer One Ltd', lang: 'en' });
   const r8 = await router.handleText(adapter, CUSTOMER, 'fix error');
   equal(r8.trace.decision, 'deny', 'diagnostics (founder-only) denied for a customer at the policy gate');
+
+  // ----------------------------- Trust intent for customers (Final order)
+  const r8b = await router.handleText(adapter, CUSTOMER, 'trust center');
+  equal(r8b.trace.intent, 'trust', 'customer trust request routed as trust');
+  check(r8b.text.includes('elmahrosa.org/trust'), 'customer trust reply links the Trust Center');
+  check(!r8b.text.includes('/start'), 'customer trust reply has no /start fallback');
 
   console.log(`\nPASS ${n} assertions (test-v11-router)`);
   process.exit(0);
