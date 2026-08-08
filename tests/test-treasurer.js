@@ -63,8 +63,9 @@ async function main() {
     } else {
       throw err;
     }
+  } finally {
+    delete process.env.DODO_API_KEY;
   }
-  mode.setMode('DRY');
   const summary = await runTreasuryFlow(deal);
   console.log(`   Closed: ${summary.status} | ${summary.company} | ${summary.contractId} | checkout ${summary.checkoutId}`);
 
