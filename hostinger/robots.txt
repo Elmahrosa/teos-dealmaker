@@ -1,4 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /dashboard
+Disallow: /report
+Disallow: /reports
+Disallow: /customer-0
 Sitemap: https://dealmaker.elmahrosa.org/sitemap.xml

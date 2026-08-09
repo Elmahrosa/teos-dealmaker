@@ -19,7 +19,9 @@ function createNotifier(opts) {
   }
   function emailConfig() {
     return {
+      channel: process.env.EMAIL_CHANNEL || o.emailChannel || 'webhook',
       webhook: process.env.EMAIL_WEBHOOK_URL || o.emailWebhookUrl || null,
+      apiKey: process.env.RESEND_API_KEY || o.resendApiKey || null,
       from: process.env.EMAIL_FROM || o.emailFrom || 'DealMaker <no-reply@elmahrosa.org>',
       to: process.env.EMAIL_TO || o.emailTo || null
     };
@@ -44,14 +46,29 @@ function createNotifier(opts) {
 
   async function postEmail(subject, text) {
     const cfg = emailConfig();
-    if (!cfg.webhook || !cfg.to) return { skipped: true, channel: 'email' };
+    if (!cfg.to) return { skipped: true, channel: 'email' };
+    if (cfg.channel === 'resend' && cfg.apiKey) {
+      if (!fetchImpl) return { skipped: true, reason: 'no_fetch', channel: 'email' };
+      const res = await fetchImpl('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'authorization': 'Bearer ' + cfg.apiKey,
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({ from: cfg.from, to: [cfg.to], subject, text })
+      });
+      const payload = { channel: 'email', driver: 'resend', subject, ok: res.ok, status: res.status, skipped: false };
+      sent.push(payload);
+      return payload;
+    }
+    if (!cfg.webhook) return { skipped: true, channel: 'email' };
     if (!fetchImpl) return { skipped: true, reason: 'no_fetch', channel: 'email' };
     const res = await fetchImpl(cfg.webhook, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ from: cfg.from, to: cfg.to, subject, text })
     });
-    const payload = { channel: 'email', subject, ok: res.ok, status: res.status, skipped: false };
+    const payload = { channel: 'email', driver: 'webhook', subject, ok: res.ok, status: res.status, skipped: false };
     sent.push(payload);
     return payload;
   }

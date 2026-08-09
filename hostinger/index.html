@@ -78,6 +78,8 @@
   .card p, .card li { color: var(--muted); font-size: 14px; }
   .card ul { list-style: none; margin-top: 8px; }
   .card ul li::before { content: "◆ "; color: var(--gold); font-size: 10px; }
+  .card ul.trust-list li::before { content: ""; }
+  .trust-list li { padding: 3px 0; }
   .arch { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
   .arch .layer { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; text-align: center; font-size: 14px; }
   .arch .layer b { color: var(--gold); }
@@ -85,6 +87,19 @@
   .arch .arrow { text-align: center; color: var(--gold); font-size: 13px; line-height: 1; }
   .badge { display: inline-block; color: var(--green); font-size: 12px; margin-left: 8px; }
   .badge.soon { color: var(--muted); }
+  .hero-bullets { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; max-width: 760px; margin: 0 auto 28px; padding: 0; }
+  .hero-bullets li { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 6px 16px; color: var(--muted); font-size: 13px; }
+  .billing-toggle { display: flex; justify-content: center; margin: 0 0 24px; }
+  .billing-toggle button { background: var(--panel); color: var(--muted); border: 1px solid var(--border); padding: 8px 24px; font: inherit; letter-spacing: 1px; text-transform: uppercase; font-size: 13px; cursor: pointer; }
+  .billing-toggle button:first-child { border-radius: 6px 0 0 6px; }
+  .billing-toggle button:last-child { border-radius: 0 6px 6px 0; }
+  .billing-toggle button.active { background: var(--gold); color: #0b0f14; border-color: var(--gold); font-weight: 700; }
+  .price-grid.view-monthly .price-row[data-period="annual"] { display: none; }
+  .price-grid.view-annual .price-row[data-period="monthly"] { display: none; }
+  .price-row { flex-wrap: wrap; gap: 4px 10px; }
+  .price-row .buy { flex: 1 1 100%; }
+  .save { display: inline-block; color: var(--green); font-size: 12px; font-weight: 700; margin-inline-start: 8px; }
+  .equiv { color: var(--muted); font-size: 12px; margin-inline-start: 8px; }
   .price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 28px; }
   .price-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 22px; display: flex; flex-direction: column; }
   .price-card h3 { font-size: 17px; color: var(--gold); margin-bottom: 4px; }
@@ -96,6 +111,15 @@
   .buy:hover { filter: brightness(1.15); }
   .buy.annual { background: var(--green); }
   .pid { color: var(--muted); font-size: 11px; margin-top: 10px; text-align: center; }
+  .sentinel-sell { background: linear-gradient(180deg, #10161f 0%, #0b0f14 100%); border: 1px solid var(--border); border-radius: 12px; padding: 32px; }
+  .sentinel-inner { display: flex; gap: 24px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .sentinel-copy { flex: 1 1 420px; }
+  .sentinel-name { font-size: 22px; letter-spacing: 2px; color: var(--gold); margin: 4px 0; }
+  .sentinel-copy ul { list-style: none; margin-top: 10px; }
+  .sentinel-copy ul li::before { content: "🛡 "; font-size: 11px; }
+  .sentinel-copy ul li { color: var(--muted); font-size: 14px; padding: 2px 0; }
+  .sentinel-card { flex: 0 0 280px; text-align: center; }
+  .sentinel-hint { color: var(--muted); font-size: 12px; margin-top: 10px; }
   footer { border-top: 1px solid var(--border); padding-top: 20px; color: var(--muted); font-size: 13px; text-align: center; }
   footer a { color: var(--blue); text-decoration: none; }
   footer a:hover { color: var(--gold); }
@@ -116,17 +140,33 @@
       <a href="#mission" data-i18n="nav_mission">Mission</a>
       <a href="#sentinel" data-i18n="nav_sentinel">Sentinel</a>
       <a href="#pricing" data-i18n="nav_pricing">Pricing</a>
+      <a href="https://elmahrosa.org/trust" target="_blank" rel="noopener" data-i18n="nav_trust">Trust &amp; Security</a>
       <a href="/dashboard" data-i18n="nav_console">Console</a>
+      <a href="/customer-0" data-i18n="nav_customer0">Customer #0</a>
       <a href="#" class="lang-switch" id="lang-switch" role="button" aria-label="Switch language">العربية</a>
     </nav>
   </header>
 
   <div class="hero">
-    <div class="eyebrow" data-i18n="hero_eyebrow">Policy-Governed AI Revenue Operating System</div>
-    <h2><span data-i18n="hero_t1">Deals Made. </span><span class="gold" data-i18n="hero_t2">AI-Governed.</span></h2>
-    <p data-i18n="hero_text">TEOS DealMaker is live — and it runs on its own AI workforce. The same 13 policy-governed agents that generate leads, qualify prospects, draft proposals, and drive revenue for the platform are ready to do it for your business, under a Mission Controller with Sentinel governance enforced before any agent acts.</p>
-    <a class="cta" href="https://t.me/TeosEgypt_bot" data-i18n="cta_launch">Launch Mission Control</a>
-    <a class="cta ghost" href="https://t.me/TeosEgypt_bot" data-i18n="cta_demo">Activate Your AI Workforce</a>
+    <div class="eyebrow" data-i18n="hero_eyebrow">Mission-as-a-Trial · Real revenue work, not a demo</div>
+    <h2><span data-i18n="hero_t1">Hire an AI Revenue Team. </span><span class="gold" data-i18n="hero_t2">Not a Chatbot.</span></h2>
+    <p data-i18n="hero_text">Complete one real business mission in just a few hours. TEOS DealMaker assigns a dedicated AI Revenue Team that does the actual work — research, outreach, qualification, pipeline — and delivers a real mission report with the tools and scripts to act on it. Every mission runs under Sentinel governance.</p>
+    <ul class="hero-bullets">
+      <li data-i18n="hero_b1">✅ Real work, not a demo</li>
+      <li data-i18n="hero_b2">⏱ One mission, a few hours</li>
+      <li data-i18n="hero_b3">🧠 Dedicated AI Revenue Team</li>
+      <li data-i18n="hero_b4">📋 A mission report you can act on</li>
+      <li data-i18n="hero_b5">🔒 Sentinel-governed execution</li>
+    </ul>
+    <div style="margin-bottom:14px;">
+      <a class="cta" href="https://t.me/TeosEgypt_bot" data-i18n="cta_launch">🚀 Launch My First Mission</a>
+      <a class="cta ghost" href="https://dealmaker.elmahrosa.org/customer-0" target="_blank" rel="noopener" data-i18n="cta_reports">📄 Read the Latest Mission Report</a>
+      <a class="cta ghost" href="#mission" data-i18n="cta_demo">How the Mission-as-a-Trial works</a>
+    </div>
+    <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+      <span class="badge" data-i18n="hero_p1">🤝 Claude Partner Network — built on Anthropic</span>
+      <span class="badge" data-i18n="hero_p2">✓ Verified Credly Credential</span>
+    </div>
   </div>
 
   <section id="features">
@@ -258,14 +298,20 @@
   </section>
 
   <section id="mission">
-    <h2 class="sect" data-i18n="sect_mission">Mission Center</h2>
-    <div class="sect-sub" data-i18n="sub_mission">Every revenue operation runs as a governed mission.</div>
-    <div class="grid">
-      <div class="card"><h3 data-i18n="m_plan_t">Plan</h3><p data-i18n="m_plan_d">Define objectives, playbooks, and agent assignments.</p></div>
-      <div class="card"><h3 data-i18n="m_approve_t">Approve</h3><p data-i18n="m_approve_d">Founder gates before any execution or spend.</p></div>
-      <div class="card"><h3 data-i18n="m_execute_t">Execute</h3><p data-i18n="m_execute_d">The 13-agent workforce runs the pipeline.</p></div>
-      <div class="card"><h3 data-i18n="m_monitor_t">Monitor</h3><p data-i18n="m_monitor_d">Live status, health, and usage telemetry.</p></div>
-      <div class="card"><h3 data-i18n="m_audit_t">Audit</h3><p data-i18n="m_audit_d">Every decision written to an immutable audit trail.</p></div>
+    <h2 class="sect" data-i18n="sect_mission">Mission-as-a-Trial</h2>
+    <div class="sect-sub" data-i18n="sub_mission">Don't test features. Complete one real revenue mission.</div>
+    <div class="arch">
+      <div class="layer"><b data-i18n="m_company_t">Company</b> <span data-i18n="m_company_d">· Tell us about your business in a few lines</span></div>
+      <div class="arrow">▼</div>
+      <div class="layer"><b data-i18n="m_mission_t">Choose ONE Mission</b> <span data-i18n="m_mission_d">· one goal, one AI Revenue Team, one report</span></div>
+      <div class="arrow">▼</div>
+      <div class="layer"><b data-i18n="m_workforce_t">AI Workforce</b> <span data-i18n="m_workforce_d">· a dedicated team executes the mission</span></div>
+      <div class="arrow">▼</div>
+      <div class="layer"><b data-i18n="m_execute_t">Real Execution</b> <span data-i18n="m_execute_d">· real research, real outreach, real pipeline work</span></div>
+      <div class="arrow">▼</div>
+      <div class="layer"><b data-i18n="m_report_t">Mission Report</b> <span data-i18n="m_report_d">· a real report you can act on</span></div>
+      <div class="arrow">▼</div>
+      <div class="layer"><b data-i18n="m_upgrade_t">Upgrade</b> <span data-i18n="m_upgrade_d">· decide whether to continue after the mission</span></div>
     </div>
   </section>
 
@@ -282,52 +328,108 @@
     </div>
   </section>
 
+  <section id="security">
+    <h2 class="sect" data-i18n="sec_t">Built for Security. Designed for Control.</h2>
+    <div class="sect-sub" data-i18n="sec_s">TEOS DealMaker operates within the Elmahrosa security and governance philosophy.</div>
+    <div class="card">
+      <ul class="trust-list">
+        <li data-i18n="sec_1">🛡 Sentinel Shield</li>
+        <li data-i18n="sec_2">⚖ Policy &amp; Human Oversight</li>
+        <li data-i18n="sec_3">📋 Auditable AI Operations</li>
+        <li data-i18n="sec_4">🔐 Sovereignty Standards</li>
+        <li data-i18n="sec_5">🤝 Claude Partner Network</li>
+        <li data-i18n="sec_6">✓ Verified Credly Credential</li>
+      </ul>
+      <div style="margin-top:16px;">
+        <a class="cta" href="https://elmahrosa.org/trust" target="_blank" rel="noopener" data-i18n="sec_cta1">View Trust Center →</a>
+        <a class="cta ghost" href="https://www.credly.com/badges/f14c9ae0-c594-4cf8-af37-398545f5b75f" target="_blank" rel="noopener" data-i18n="sec_cta2">View Verified Credential →</a>
+      </div>
+    </div>
+  </section>
+
   <section id="pricing">
     <h2 class="sect" data-i18n="sect_pricing">Pricing</h2>
     <div class="sect-sub" data-i18n="sub_pricing">Annual plans include built-in savings. Enterprise is custom-priced.</div>
+    <div class="billing-toggle" role="group" aria-label="Billing cycle">
+      <button type="button" data-period="monthly" class="active" data-i18n="period_monthly">Monthly</button>
+      <button type="button" data-period="annual" data-i18n="period_annual">Annual</button>
+    </div>
     <div class="price-grid" data-i18n-pricing>
       
     <div class="price-card">
       <h3>🚀 Solo</h3>
       <p class="tagline">For founders and solo teams</p>
-      <div class="price-row"><span class="cycle">Monthly</span><span class="amount">$99.00</span></div>
-      <div class="price-row"><span class="cycle">Annual</span><span class="amount">$950.00</span></div>
       
+    <div class="price-row" data-period="monthly">
+      <span class="cycle">Monthly</span>
+      <span class="amount">$99.00</span>
+      <a class="buy" href="https://checkout.dodopayments.com/buy/pdt_0NkdQVk7ahfyz0VSoTGip" data-period="monthly">Start 🚀 Solo Monthly</a>
+    </div>
+    <div class="price-row annual-row" data-period="annual">
+      <span class="cycle">Annual</span>
+      <span class="amount">$950.00</span>
+      <span class="equiv">$79.17/mo</span>
+      <span class="save">SAVE $238.00 (20%)</span>
+      <a class="buy annual" href="https://checkout.dodopayments.com/buy/pdt_0NkdQW1mGZrFIxz9dm7eZ" data-period="annual">Choose 🚀 Solo Annual</a>
+    </div>
       <ul><li>1 workspace</li><li>Mission Controller with a 13-agent AI workforce</li><li>Core agent capabilities</li><li>Community support</li></ul>
-      
     </div>
   
 
     <div class="price-card">
       <h3>⚡ Growth</h3>
       <p class="tagline">For growing revenue teams</p>
-      <div class="price-row"><span class="cycle">Monthly</span><span class="amount">$299.00</span></div>
-      <div class="price-row"><span class="cycle">Annual</span><span class="amount">$2,990.00</span></div>
       
+    <div class="price-row" data-period="monthly">
+      <span class="cycle">Monthly</span>
+      <span class="amount">$299.00</span>
+      <a class="buy" href="https://checkout.dodopayments.com/buy/pdt_0NkdQWCpT2SbojpuscwVI" data-period="monthly">Start ⚡ Growth Monthly</a>
+    </div>
+    <div class="price-row annual-row" data-period="annual">
+      <span class="cycle">Annual</span>
+      <span class="amount">$2,990.00</span>
+      <span class="equiv">$249.17/mo</span>
+      <span class="save">SAVE $598.00 (17%)</span>
+      <a class="buy annual" href="https://checkout.dodopayments.com/buy/pdt_0NkdQWOkJWfbSa7qtCLZm" data-period="annual">Choose ⚡ Growth Annual</a>
+    </div>
       <ul><li>10 seats</li><li>Civic Mixer + Sentinel Shield plugins</li><li>Enterprise Knowledge Intelligence</li><li>Email support</li></ul>
-      
     </div>
   
 
     <div class="price-card">
       <h3>👑 Business</h3>
       <p class="tagline">For revenue organizations</p>
-      <div class="price-row"><span class="cycle">Monthly</span><span class="amount">$999.00</span></div>
-      <div class="price-row"><span class="cycle">Annual</span><span class="amount">$9,990.00</span></div>
       
+    <div class="price-row" data-period="monthly">
+      <span class="cycle">Monthly</span>
+      <span class="amount">$999.00</span>
+      <a class="buy" href="https://checkout.dodopayments.com/buy/pdt_0NkdQWZ1Bkv413NqbbVFu" data-period="monthly">Start 👑 Business Monthly</a>
+    </div>
+    <div class="price-row annual-row" data-period="annual">
+      <span class="cycle">Annual</span>
+      <span class="amount">$9,990.00</span>
+      <span class="equiv">$832.50/mo</span>
+      <span class="save">SAVE $1,998.00 (17%)</span>
+      <a class="buy annual" href="https://checkout.dodopayments.com/buy/pdt_0NkdQWgxl0hJcb4skW8IK" data-period="annual">Choose 👑 Business Annual</a>
+    </div>
       <ul><li>25 seats</li><li>Third-party plugin installs</li><li>All platform add-ons</li><li>Priority support</li></ul>
-      
     </div>
   
 
     <div class="price-card">
       <h3>🏛️ Enterprise</h3>
       <p class="tagline">For large and sovereign organizations</p>
-      <div class="price-row"><span class="cycle">Monthly</span><span class="amount">Custom</span></div>
-      <div class="price-row"><span class="cycle">Annual</span><span class="amount">Custom</span></div>
-      <a class="buy" href="mailto:info@elmahrosa.com">Contact Sales</a>
-      <ul><li>Unlimited workspaces</li><li>Unlimited missions</li><li>Private deployment</li><li>Sentinel governance at scale</li><li>Dedicated success engineer</li></ul>
       
+    <div class="price-row" data-period="monthly">
+      <span class="cycle">Monthly</span>
+      <span class="amount">Custom</span>
+    </div>
+    <div class="price-row" data-period="annual">
+      <span class="cycle">Annual</span>
+      <span class="amount">Custom</span>
+    </div>
+    <a class="buy" href="mailto:info@elmahrosa.com" data-period="custom">Contact Sales</a>
+      <ul><li>Unlimited workspaces</li><li>Unlimited missions</li><li>Private deployment</li><li>Sentinel governance at scale</li><li>Dedicated success engineer</li></ul>
     </div>
   
     </div>
@@ -366,9 +468,26 @@
     </div>
   </section>
 
+  
+  <section id="sentinel-shield" class="sentinel-sell">
+    <div class="sentinel-inner">
+      <div class="sentinel-copy">
+        <h2 class="sect" data-i18n="sect_sentinel">PROTECT YOUR AI WORKFORCE</h2>
+        <h3 class="sentinel-name" data-i18n="sentinel_name">TEOS SENTINEL SHIELD</h3>
+        <p class="sect-sub" data-i18n="sentinel_tagline">AI Agent Security &amp; Execution Firewall</p>
+        <p data-i18n="sentinel_note">A separate product, available standalone. Sold on its own pricing page.</p>
+        <ul><li>Fail-closed policy enforcement on every tool and plugin call</li><li>Prompt injection and code security scanning</li><li>Continuous immutable audit of every allow/deny decision</li><li>Role-based entitlements per tenant plan</li></ul>
+      </div>
+      <div class="sentinel-card">
+        <a class="cta" href="https://sentinel.teosegypt.com" target="_blank" rel="noopener" data-i18n="sentinel_cta">EXPLORE TEOS SENTINEL SHIELD</a>
+        <p class="sentinel-hint" data-i18n="sentinel_hint">Included with Growth and Business plans</p>
+      </div>
+    </div>
+  </section>
+
   <footer>
     <span data-i18n="footer_line1">TEOS DEALMAKER — Enterprise AI Revenue Operating System</span><br>
-    <span data-i18n="footer_contact">A product of Elmahrosa International · contact <a href="mailto:info@elmahrosa.com">info@elmahrosa.com</a> · <a href="/dashboard">system status</a></span><br>
+    <span data-i18n="footer_contact">A product of Elmahrosa International · contact <a href="mailto:info@elmahrosa.com">info@elmahrosa.com</a> · <a href="/dashboard">system status</a> · <a href="/customer-0">Customer #0</a></span><br>
     <span data-i18n="footer_license">© 2026 Elmahrosa International — All rights reserved</span>
   </footer>
 </div>
@@ -378,11 +497,17 @@
   var I18N = {
     en: {
       nav_features: 'Features', nav_architecture: 'Architecture', nav_plugins: 'Plugins',
-      nav_mission: 'Mission', nav_sentinel: 'Sentinel', nav_pricing: 'Pricing', nav_console: 'Console',
-      hero_eyebrow: 'Policy-Governed AI Revenue Operating System',
-      hero_t1: 'Deals Made. ', hero_t2: 'AI-Governed.',
-      hero_text: 'TEOS DealMaker is live — and it runs on its own AI workforce. The same 13 policy-governed agents that generate leads, qualify prospects, draft proposals, and drive revenue for the platform are ready to do it for your business, under a Mission Controller with Sentinel governance enforced before any agent acts.',
-      cta_launch: 'Launch Mission Control', cta_demo: 'Activate Your AI Workforce',
+      nav_mission: 'Mission', nav_sentinel: 'Sentinel', nav_pricing: 'Pricing', nav_console: 'Console', nav_customer0: 'Customer #0',
+      nav_trust: 'Trust & Security',
+      hero_eyebrow: 'Mission-as-a-Trial · Real revenue work, not a demo',
+      hero_t1: 'Hire an AI Revenue Team. ', hero_t2: 'Not a Chatbot.',
+      hero_text: 'Complete one real business mission in just a few hours. TEOS DealMaker assigns a dedicated AI Revenue Team that does the actual work — research, outreach, qualification, pipeline — and delivers a real mission report with the tools and scripts to act on it. Every mission runs under Sentinel governance.',
+      hero_b1: '✅ Real work, not a demo', hero_b2: '⏱ One mission, a few hours',
+      hero_b3: '🧠 Dedicated AI Revenue Team', hero_b4: '📋 A mission report you can act on',
+      hero_b5: '🔒 Sentinel-governed execution',
+      hero_p1: '🤝 Claude Partner Network — built on Anthropic', hero_p2: '✓ Verified Credly Credential',
+      cta_launch: '🚀 Launch My First Mission', cta_reports: '📄 Read the Latest Mission Report', cta_demo: 'How the Mission-as-a-Trial works',
+      period_monthly: 'Monthly', period_annual: 'Annual',
       sect_features: 'Platform Capabilities', sub_features: 'One operating system for your revenue engine.',
       f_mission_t: 'Mission Controller', f_mission_1: 'Plan, approve, execute, monitor, audit', f_mission_2: 'Structured mission lifecycle', f_mission_3: 'Founder approval gates',
       f_workforce_t: 'AI Workforce Runtime', f_workforce_1: '13 policy-governed agents', f_workforce_2: 'Policy-governed pipeline automation', f_workforce_3: 'Human oversight at every stage',
@@ -409,12 +534,13 @@
       plugin_salesforce_p: 'Opportunity lifecycle automation at enterprise scale.',
       plugin_m365_p: 'Calendar, email, and document intelligence.',
       plugin_gws_p: 'Docs, Drive, and Gmail workflows for the workforce.',
-      sect_mission: 'Mission Center', sub_mission: 'Every revenue operation runs as a governed mission.',
-      m_plan_t: 'Plan', m_plan_d: 'Define objectives, playbooks, and agent assignments.',
-      m_approve_t: 'Approve', m_approve_d: 'Founder gates before any execution or spend.',
-      m_execute_t: 'Execute', m_execute_d: 'The 13-agent workforce runs the pipeline.',
-      m_monitor_t: 'Monitor', m_monitor_d: 'Live status, health, and usage telemetry.',
-      m_audit_t: 'Audit', m_audit_d: 'Every decision written to an immutable audit trail.',
+      sect_mission: 'Mission-as-a-Trial', sub_mission: "Don't test features. Complete one real revenue mission.",
+      m_company_t: 'Company', m_company_d: '· Tell us about your business in a few lines',
+      m_mission_t: 'Choose ONE Mission', m_mission_d: '· one goal, one AI Revenue Team, one report',
+      m_workforce_t: 'AI Workforce', m_workforce_d: '· a dedicated team executes the mission',
+      m_execute_t: 'Real Execution', m_execute_d: '· real research, real outreach, real pipeline work',
+      m_report_t: 'Mission Report', m_report_d: '· a real report you can act on',
+      m_upgrade_t: 'Upgrade', m_upgrade_d: '· decide whether to continue after the mission',
       sect_sentinel: 'Sentinel Shield', sub_sentinel: 'Enterprise AI governance on every capability.',
       s_policy_t: 'Policy Enforcement', s_policy_d: 'Fail-closed, deny-wins policy evaluation before every tool and plugin call.',
       s_prompt_t: 'Prompt Security', s_prompt_d: 'Block injection and unsafe instructions across the workforce.',
@@ -422,8 +548,15 @@
       s_contract_t: 'Smart Contract Review', s_contract_d: 'Risk scoring for contract and on-chain analysis.',
       s_compliance_t: 'Compliance', s_compliance_d: 'Tenant scoping and entitlement enforcement per plan.',
       s_audit_t: 'Continuous Audit', s_audit_d: 'Every allow and deny decision persisted for review.',
+      sec_t: 'Built for Security. Designed for Control.', sec_s: 'TEOS DealMaker operates within the Elmahrosa security and governance philosophy.',
+      sec_1: '🛡 Sentinel Shield', sec_2: '⚖ Policy & Human Oversight', sec_3: '📋 Auditable AI Operations',
+      sec_4: '🔐 Sovereignty Standards', sec_5: '🤝 Claude Partner Network', sec_6: '✓ Verified Credly Credential',
+      sec_cta1: 'View Trust Center →', sec_cta2: 'View Verified Credential →',
       sect_pricing: 'Pricing', sub_pricing: 'Annual plans include built-in savings. Enterprise is custom-priced.',
       pricing_addons: 'Platform Add-ons',
+      sect_sentinel: 'PROTECT YOUR AI WORKFORCE', sentinel_name: 'TEOS SENTINEL SHIELD',
+      sentinel_tagline: 'AI Agent Security & Execution Firewall', sentinel_note: 'A separate product, available standalone. Sold on its own pricing page.',
+      sentinel_cta: 'EXPLORE TEOS SENTINEL SHIELD', sentinel_hint: 'Included with Growth and Business plans',
       footer_line1: 'TEOS DEALMAKER — Enterprise AI Revenue Operating System',
       footer_contact: 'A product of Elmahrosa International · contact info@elmahrosa.com · system status',
       footer_license: '© 2026 Elmahrosa International — All rights reserved',
@@ -431,11 +564,17 @@
     },
     ar: {
       nav_features: 'المزايا', nav_architecture: 'البنية', nav_plugins: 'الإضافات',
-      nav_mission: 'المهام', nav_sentinel: 'سنتينل', nav_pricing: 'الأسعار', nav_console: 'لوحة التحكم',
-      hero_eyebrow: 'نظام تشغيل إيرادات بالذكاء الاصطناعي محكوم بالسياسات',
-      hero_t1: 'الصفقات تُنجَز. ', hero_t2: 'تُحكَم بالذكاء الاصطناعي.',
-      hero_text: 'صانع الصفقات تيوس يعمل الآن — ويدير نفسه بقوته العاملة من الذكاء الاصطناعي. الوكلاء الثلاثة عشر المحكومون بالسياسات الذين يولّدون العملاء المحتملين ويؤهلونهم ويصوغون العروض ويدفعون الإيرادات للمنصة جاهزون لفعل ذلك لأعمالك، تحت قيادة وحدة تحكم المهام مع حوكمة سنتينل قبل أن يتحرك أي وكيل.',
-      cta_launch: 'أطلق مركز تحكم المهام', cta_demo: 'فعّل قوتك العاملة بالذكاء الاصطناعي',
+      nav_mission: 'المهام', nav_sentinel: 'سنتينل', nav_pricing: 'الأسعار', nav_console: 'لوحة التحكم', nav_customer0: 'العميل 0',
+      nav_trust: 'الثقة والأمان',
+      hero_eyebrow: 'مهمة كتجربة · عمل إيرادات حقيقي، وليس عرضاً',
+      hero_t1: 'وظّف فريق إيرادات ذكي... ', hero_t2: 'وليس مجرد روبوت محادثة.',
+      hero_text: 'دع فريق الذكاء الاصطناعي ينفذ مهمة حقيقية لشركتك خلال ساعات. يكلّفك TEOS DealMaker فريق إيرادات ذكي مخصصاً يقوم بالعمل الفعلي — البحث، والتواصل، والتأهيل، والمسار — ويُسلّمك تقرير مهمة حقيقياً مع الأدوات والبرامج النصية للتصرف بناءً عليه. كل مهمة تُنفذ تحت حوكمة سنتينل.',
+      hero_b1: '✅ عمل حقيقي، وليس عرضاً', hero_b2: '⏱ مهمة واحدة في ساعات قليلة',
+      hero_b3: '🧠 فريق إيرادات ذكي مخصص', hero_b4: '📋 تقرير مهمة يمكنك التصرف بناءً عليه',
+      hero_b5: '🔒 تنفيذ محكوم بسنتينل',
+      hero_p1: '🤝 شبكة شركاء Claude — مبني على Anthropic', hero_p2: '✓ اعتماد موثق عبر Credly',
+      cta_launch: '🚀 ابدأ مهمتي الأولى', cta_reports: '📄 اقرأ أحدث تقرير مهمة', cta_demo: 'كيف تعمل مهمة كتجربة',
+      period_monthly: 'شهرياً', period_annual: 'سنوياً',
       sect_features: 'إمكانات المنصة', sub_features: 'نظام تشغيل واحد لمحرك إيراداتك.',
       f_mission_t: 'وحدة تحكم المهام', f_mission_1: 'خطط، اعتمد، نفّذ، راقب، دقّق', f_mission_2: 'دورة حياة مهام منظمة', f_mission_3: 'نقاط اعتماد للمؤسس',
       f_workforce_t: 'بيئة تشغيل القوى العاملة', f_workforce_1: '13 وكيلاً محكوماً بالسياسات', f_workforce_2: 'أتمتة مسار الإيرادات المحكوم بالسياسات', f_workforce_3: 'إشراف بشري في كل مرحلة',
@@ -462,12 +601,13 @@
       plugin_salesforce_p: 'أتمتة دورة حياة الفرص على نطاق المؤسسات.',
       plugin_m365_p: 'ذكاء التقويم والبريد والمستندات.',
       plugin_gws_p: 'سير عمل المستندات والتخزين والبريد للقوى العاملة.',
-      sect_mission: 'مركز المهام', sub_mission: 'كل عملية إيراد تعمل كمهمة محكومة.',
-      m_plan_t: 'التخطيط', m_plan_d: 'حدّد الأهداف وخطط العمل وتكليفات الوكلاء.',
-      m_approve_t: 'الاعتماد', m_approve_d: 'نقاط اعتماد للمؤسس قبل أي تنفيذ أو إنفاق.',
-      m_execute_t: 'التنفيذ', m_execute_d: 'القوى العاملة المكوّنة من 13 وكيلاً تشغّل المسار.',
-      m_monitor_t: 'المراقبة', m_monitor_d: 'مؤشرات حية للحالة والصحة والاستخدام.',
-      m_audit_t: 'التدقيق', m_audit_d: 'كل قرار يُسجَّل في سجل تدقيق غير قابل للتغيير.',
+      sect_mission: 'مهمة كتجربة', sub_mission: 'لا تختبر الميزات. أكمل مهمة إيراد حقيقية واحدة.',
+      m_company_t: 'الشركة', m_company_d: '· أخبرنا عن شركتك في بضعة أسطر',
+      m_mission_t: 'اختر مهمة واحدة', m_mission_d: '· هدف واحد، وفريق إيرادات واحد، وتقرير واحد',
+      m_workforce_t: 'فريق الذكاء الاصطناعي', m_workforce_d: '· فريق مخصص ينفذ المهمة',
+      m_execute_t: 'تنفيذ حقيقي', m_execute_d: '· بحث حقيقي، وتواصل حقيقي، وعمل مسار حقيقي',
+      m_report_t: 'تقرير المهمة', m_report_d: '· تقرير حقيقي يمكنك التصرف بناءً عليه',
+      m_upgrade_t: 'الترقية', m_upgrade_d: '· قرر ما إذا كنت ستواصل بعد المهمة',
       sect_sentinel: 'درع سنتينل', sub_sentinel: 'حوكمة ذكاء اصطناعي مؤسسية على كل إمكانية.',
       s_policy_t: 'فرض السياسات', s_policy_d: 'تقييم يُغلق عند الخطأ ويُرجّح الرفض قبل كل استدعاء أداة أو إضافة.',
       s_prompt_t: 'أمان المطالبات', s_prompt_d: 'حجب الحقن والتعليمات غير الآمنة عبر القوى العاملة.',
@@ -475,8 +615,15 @@
       s_contract_t: 'مراجعة العقود الذكية', s_contract_d: 'تقييم مخاطر العقود والتحليلات على السلسلة.',
       s_compliance_t: 'الامتثال', s_compliance_d: 'تحديد نطاق المستأجر وفرض الاستحقاقات حسب الخطة.',
       s_audit_t: 'التدقيق المستمر', s_audit_d: 'حفظ كل قرار سماح أو رفض للمراجعة.',
+      sec_t: 'مبني على الأمان. مصمم للتحكم.', sec_s: 'يعمل TEOS DealMaker ضمن منظومة الأمن والحوكمة الخاصة بالمحروسة.',
+      sec_1: '🛡 درع سنتينل', sec_2: '⚖ السياسات والرقابة البشرية', sec_3: '📋 عمليات ذكاء اصطناعي قابلة للتدقيق',
+      sec_4: '🔐 معايير السيادة الرقمية', sec_5: '🤝 شبكة شركاء Claude', sec_6: '✓ اعتماد موثق عبر Credly',
+      sec_cta1: 'عرض مركز الثقة ←', sec_cta2: 'عرض الاعتماد الموثق ←',
       sect_pricing: 'الأسعار', sub_pricing: 'الخطط السنوية تشمل توفيراً مضمّناً، والمؤسسي بسعر مخصص.',
       pricing_addons: 'إضافات المنصة',
+      sect_sentinel: 'احمِ قوتك العاملة من الذكاء الاصطناعي', sentinel_name: 'درع سنتينل تيوس',
+      sentinel_tagline: 'جدار الحماية لأمن وتنفيذ وكلاء الذكاء الاصطناعي', sentinel_note: 'منتج منفصل متاح بشكل مستقل، ويُباع عبر صفحة أسعاره الخاصة.',
+      sentinel_cta: 'اكتشف درع سنتينل تيوس', sentinel_hint: 'مشمول في خطتي Growth و Business',
       footer_line1: 'صانع الصفقات تيوس — نظام تشغيل الإيرادات المؤسسي بالذكاء الاصطناعي',
       footer_contact: 'منتج من المحروسة إنترناشيونال · تواصل عبر info@elmahrosa.com · حالة النظام',
       footer_license: '© 2026 المحروسة إنترناشيونال — جميع الحقوق محفوظة',
@@ -544,7 +691,7 @@
           card.querySelectorAll('.buy').forEach(function (b) {
             var href = b.getAttribute('href') || '';
             if (href.indexOf('mailto:') === 0) { b.textContent = 'تواصل مع المبيعات'; return; }
-            var annual = /annual/i.test(href);
+            var annual = b.getAttribute('data-period') === 'annual';
             b.textContent = 'ابدأ ' + tier + (annual ? ' سنوياً' : ' شهرياً');
           });
         });
@@ -561,6 +708,21 @@
     }
     try { localStorage.setItem('teos_lang', lang); } catch (_) { /* ignore */ }
   }
+
+  var billingButtons = document.querySelectorAll('.billing-toggle button');
+  function setBilling(period) {
+    if (!pricingGrid) return;
+    pricingGrid.classList.remove('view-monthly', 'view-annual');
+    pricingGrid.classList.add('view-' + period);
+    billingButtons.forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-period') === period);
+    });
+  }
+  var billingMatch = window.location.search.match(/[?&]billing=(monthly|annual)/);
+  setBilling(billingMatch ? billingMatch[1] : 'monthly');
+  billingButtons.forEach(function (b) {
+    b.addEventListener('click', function () { setBilling(b.getAttribute('data-period')); });
+  });
 
   var currentLang = detectLang();
   applyLang(currentLang);

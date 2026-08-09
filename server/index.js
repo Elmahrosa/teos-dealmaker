@@ -275,6 +275,44 @@ app.get('/customer-0', async (_req, res) => {
   }
 });
 
+async function getLatestReport(adapter) {
+  const { createRepos } = require('../db/repos');
+  const repos = createRepos(adapter);
+  const ws = await adapter.findOne('workspaces', { slug: 'workspace_founder' });
+  if (!ws) return null;
+  const plans = await repos.plans.list(ws.id);
+  if (!plans.length) return null;
+  plans.sort((a, b) => (b.id || 0) - (a.id || 0));
+  return require('../services/missionReport').missionReport(adapter, ws.id, plans[0].id);
+}
+
+app.get('/reports', async (_req, res) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow');
+  try {
+    const { getAdapter } = require('../db');
+    const adapter = getAdapter();
+    const report = await getLatestReport(adapter);
+    if (!report) return res.status(404).type('html').send('Mission report not found');
+    res.type('html').send(render.renderMissionReport(report));
+  } catch (err) {
+    console.error('[Sentinel] reports render error:', err.message);
+    res.status(500).type('html').send('Report unavailable');
+  }
+});
+
+app.get('/api/reports/latest', async (_req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    const adapter = getAdapter();
+    const report = await getLatestReport(adapter);
+    if (!report) return res.status(404).json({ error: 'report_not_found' });
+    res.json({ ok: true, report });
+  } catch (err) {
+    console.error('[Sentinel] reports api error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'not_found' });
 });

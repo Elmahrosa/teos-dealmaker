@@ -87,6 +87,19 @@
   .arch .arrow { text-align: center; color: var(--gold); font-size: 13px; line-height: 1; }
   .badge { display: inline-block; color: var(--green); font-size: 12px; margin-left: 8px; }
   .badge.soon { color: var(--muted); }
+  .hero-bullets { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; max-width: 760px; margin: 0 auto 28px; padding: 0; }
+  .hero-bullets li { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 6px 16px; color: var(--muted); font-size: 13px; }
+  .billing-toggle { display: flex; justify-content: center; margin: 0 0 24px; }
+  .billing-toggle button { background: var(--panel); color: var(--muted); border: 1px solid var(--border); padding: 8px 24px; font: inherit; letter-spacing: 1px; text-transform: uppercase; font-size: 13px; cursor: pointer; }
+  .billing-toggle button:first-child { border-radius: 6px 0 0 6px; }
+  .billing-toggle button:last-child { border-radius: 0 6px 6px 0; }
+  .billing-toggle button.active { background: var(--gold); color: #0b0f14; border-color: var(--gold); font-weight: 700; }
+  .price-grid.view-monthly .price-row[data-period="annual"] { display: none; }
+  .price-grid.view-annual .price-row[data-period="monthly"] { display: none; }
+  .price-row { flex-wrap: wrap; gap: 4px 10px; }
+  .price-row .buy { flex: 1 1 100%; }
+  .save { display: inline-block; color: var(--green); font-size: 12px; font-weight: 700; margin-inline-start: 8px; }
+  .equiv { color: var(--muted); font-size: 12px; margin-inline-start: 8px; }
   .price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 28px; }
   .price-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 22px; display: flex; flex-direction: column; }
   .price-card h3 { font-size: 17px; color: var(--gold); margin-bottom: 4px; }
@@ -137,9 +150,23 @@
   <div class="hero">
     <div class="eyebrow" data-i18n="hero_eyebrow">Mission-as-a-Trial · Real revenue work, not a demo</div>
     <h2><span data-i18n="hero_t1">Hire an AI Revenue Team. </span><span class="gold" data-i18n="hero_t2">Not a Chatbot.</span></h2>
-    <p data-i18n="hero_text">Complete one real business mission in just a few hours. TEOS DealMaker assigns a dedicated AI Revenue Team that does the actual work — research, outreach, qualification, pipeline — and delivers a real mission report you can act on.</p>
-    <a class="cta" href="https://t.me/TeosEgypt_bot" data-i18n="cta_launch">🚀 Launch My First Mission</a>
-    <a class="cta ghost" href="#mission" data-i18n="cta_demo">How the Mission-as-a-Trial works</a>
+    <p data-i18n="hero_text">Complete one real business mission in just a few hours. TEOS DealMaker assigns a dedicated AI Revenue Team that does the actual work — research, outreach, qualification, pipeline — and delivers a real mission report with the tools and scripts to act on it. Every mission runs under Sentinel governance.</p>
+    <ul class="hero-bullets">
+      <li data-i18n="hero_b1">✅ Real work, not a demo</li>
+      <li data-i18n="hero_b2">⏱ One mission, a few hours</li>
+      <li data-i18n="hero_b3">🧠 Dedicated AI Revenue Team</li>
+      <li data-i18n="hero_b4">📋 A mission report you can act on</li>
+      <li data-i18n="hero_b5">🔒 Sentinel-governed execution</li>
+    </ul>
+    <div style="margin-bottom:14px;">
+      <a class="cta" href="https://t.me/TeosEgypt_bot" data-i18n="cta_launch">🚀 Launch My First Mission</a>
+      <a class="cta ghost" href="{{SITE_URL}}/customer-0" target="_blank" rel="noopener" data-i18n="cta_reports">📄 Read the Latest Mission Report</a>
+      <a class="cta ghost" href="#mission" data-i18n="cta_demo">How the Mission-as-a-Trial works</a>
+    </div>
+    <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+      <span class="badge" data-i18n="hero_p1">🤝 Claude Partner Network — built on Anthropic</span>
+      <span class="badge" data-i18n="hero_p2">✓ Verified Credly Credential</span>
+    </div>
   </div>
 
   <section id="features">
@@ -301,21 +328,21 @@
     </div>
   </section>
 
-  <section id="trust">
-    <h2 class="sect" data-i18n="trust_t">Built for Trust. Designed for Control.</h2>
-    <div class="sect-sub" data-i18n="trust_s">TEOS DealMaker operates within the Elmahrosa security and governance philosophy.</div>
+  <section id="security">
+    <h2 class="sect" data-i18n="sec_t">Built for Security. Designed for Control.</h2>
+    <div class="sect-sub" data-i18n="sec_s">TEOS DealMaker operates within the Elmahrosa security and governance philosophy.</div>
     <div class="card">
       <ul class="trust-list">
-        <li data-i18n="trust_1">🛡 Sentinel Shield</li>
-        <li data-i18n="trust_2">⚖ Policy &amp; Human Oversight</li>
-        <li data-i18n="trust_3">📋 Auditable AI Operations</li>
-        <li data-i18n="trust_4">🔐 Sovereignty Standards</li>
-        <li data-i18n="trust_5">🤝 Claude Partner Network</li>
-        <li data-i18n="trust_6">✓ Verified Credly Credential</li>
+        <li data-i18n="sec_1">🛡 Sentinel Shield</li>
+        <li data-i18n="sec_2">⚖ Policy &amp; Human Oversight</li>
+        <li data-i18n="sec_3">📋 Auditable AI Operations</li>
+        <li data-i18n="sec_4">🔐 Sovereignty Standards</li>
+        <li data-i18n="sec_5">🤝 Claude Partner Network</li>
+        <li data-i18n="sec_6">✓ Verified Credly Credential</li>
       </ul>
       <div style="margin-top:16px;">
-        <a class="cta" href="https://elmahrosa.org/trust" target="_blank" rel="noopener" data-i18n="trust_cta1">View Trust Center →</a>
-        <a class="cta ghost" href="https://www.credly.com/badges/f14c9ae0-c594-4cf8-af37-398545f5b75f" target="_blank" rel="noopener" data-i18n="trust_cta2">View Verified Credential →</a>
+        <a class="cta" href="https://elmahrosa.org/trust" target="_blank" rel="noopener" data-i18n="sec_cta1">View Trust Center →</a>
+        <a class="cta ghost" href="https://www.credly.com/badges/f14c9ae0-c594-4cf8-af37-398545f5b75f" target="_blank" rel="noopener" data-i18n="sec_cta2">View Verified Credential →</a>
       </div>
     </div>
   </section>
@@ -323,6 +350,10 @@
   <section id="pricing">
     <h2 class="sect" data-i18n="sect_pricing">Pricing</h2>
     <div class="sect-sub" data-i18n="sub_pricing">Annual plans include built-in savings. Enterprise is custom-priced.</div>
+    <div class="billing-toggle" role="group" aria-label="Billing cycle">
+      <button type="button" data-period="monthly" class="active" data-i18n="period_monthly">Monthly</button>
+      <button type="button" data-period="annual" data-i18n="period_annual">Annual</button>
+    </div>
     <div class="price-grid" data-i18n-pricing>
       {{PRICING_CARDS}}
     </div>
@@ -350,8 +381,13 @@
       nav_trust: 'Trust & Security',
       hero_eyebrow: 'Mission-as-a-Trial · Real revenue work, not a demo',
       hero_t1: 'Hire an AI Revenue Team. ', hero_t2: 'Not a Chatbot.',
-      hero_text: 'Complete one real business mission in just a few hours. TEOS DealMaker assigns a dedicated AI Revenue Team that does the actual work — research, outreach, qualification, pipeline — and delivers a real mission report you can act on.',
-      cta_launch: '🚀 Launch My First Mission', cta_demo: 'How the Mission-as-a-Trial works',
+      hero_text: 'Complete one real business mission in just a few hours. TEOS DealMaker assigns a dedicated AI Revenue Team that does the actual work — research, outreach, qualification, pipeline — and delivers a real mission report with the tools and scripts to act on it. Every mission runs under Sentinel governance.',
+      hero_b1: '✅ Real work, not a demo', hero_b2: '⏱ One mission, a few hours',
+      hero_b3: '🧠 Dedicated AI Revenue Team', hero_b4: '📋 A mission report you can act on',
+      hero_b5: '🔒 Sentinel-governed execution',
+      hero_p1: '🤝 Claude Partner Network — built on Anthropic', hero_p2: '✓ Verified Credly Credential',
+      cta_launch: '🚀 Launch My First Mission', cta_reports: '📄 Read the Latest Mission Report', cta_demo: 'How the Mission-as-a-Trial works',
+      period_monthly: 'Monthly', period_annual: 'Annual',
       sect_features: 'Platform Capabilities', sub_features: 'One operating system for your revenue engine.',
       f_mission_t: 'Mission Controller', f_mission_1: 'Plan, approve, execute, monitor, audit', f_mission_2: 'Structured mission lifecycle', f_mission_3: 'Founder approval gates',
       f_workforce_t: 'AI Workforce Runtime', f_workforce_1: '13 policy-governed agents', f_workforce_2: 'Policy-governed pipeline automation', f_workforce_3: 'Human oversight at every stage',
@@ -392,10 +428,10 @@
       s_contract_t: 'Smart Contract Review', s_contract_d: 'Risk scoring for contract and on-chain analysis.',
       s_compliance_t: 'Compliance', s_compliance_d: 'Tenant scoping and entitlement enforcement per plan.',
       s_audit_t: 'Continuous Audit', s_audit_d: 'Every allow and deny decision persisted for review.',
-      trust_t: 'Built for Trust. Designed for Control.', trust_s: 'TEOS DealMaker operates within the Elmahrosa security and governance philosophy.',
-      trust_1: '🛡 Sentinel Shield', trust_2: '⚖ Policy & Human Oversight', trust_3: '📋 Auditable AI Operations',
-      trust_4: '🔐 Sovereignty Standards', trust_5: '🤝 Claude Partner Network', trust_6: '✓ Verified Credly Credential',
-      trust_cta1: 'View Trust Center →', trust_cta2: 'View Verified Credential →',
+      sec_t: 'Built for Security. Designed for Control.', sec_s: 'TEOS DealMaker operates within the Elmahrosa security and governance philosophy.',
+      sec_1: '🛡 Sentinel Shield', sec_2: '⚖ Policy & Human Oversight', sec_3: '📋 Auditable AI Operations',
+      sec_4: '🔐 Sovereignty Standards', sec_5: '🤝 Claude Partner Network', sec_6: '✓ Verified Credly Credential',
+      sec_cta1: 'View Trust Center →', sec_cta2: 'View Verified Credential →',
       sect_pricing: 'Pricing', sub_pricing: 'Annual plans include built-in savings. Enterprise is custom-priced.',
       pricing_addons: 'Platform Add-ons',
       sect_sentinel: 'PROTECT YOUR AI WORKFORCE', sentinel_name: 'TEOS SENTINEL SHIELD',
@@ -412,8 +448,13 @@
       nav_trust: 'الثقة والأمان',
       hero_eyebrow: 'مهمة كتجربة · عمل إيرادات حقيقي، وليس عرضاً',
       hero_t1: 'وظّف فريق إيرادات ذكي... ', hero_t2: 'وليس مجرد روبوت محادثة.',
-      hero_text: 'دع فريق الذكاء الاصطناعي ينفذ مهمة حقيقية لشركتك خلال ساعات. يكلّفك TEOS DealMaker فريق إيرادات ذكي مخصصاً يقوم بالعمل الفعلي — البحث، والتواصل، والتأهيل، والمسار — ويُسلّمك تقرير مهمة حقيقياً يمكنك التصرف بناءً عليه.',
-      cta_launch: '🚀 ابدأ مهمتي الأولى', cta_demo: 'كيف تعمل مهمة كتجربة',
+      hero_text: 'دع فريق الذكاء الاصطناعي ينفذ مهمة حقيقية لشركتك خلال ساعات. يكلّفك TEOS DealMaker فريق إيرادات ذكي مخصصاً يقوم بالعمل الفعلي — البحث، والتواصل، والتأهيل، والمسار — ويُسلّمك تقرير مهمة حقيقياً مع الأدوات والبرامج النصية للتصرف بناءً عليه. كل مهمة تُنفذ تحت حوكمة سنتينل.',
+      hero_b1: '✅ عمل حقيقي، وليس عرضاً', hero_b2: '⏱ مهمة واحدة في ساعات قليلة',
+      hero_b3: '🧠 فريق إيرادات ذكي مخصص', hero_b4: '📋 تقرير مهمة يمكنك التصرف بناءً عليه',
+      hero_b5: '🔒 تنفيذ محكوم بسنتينل',
+      hero_p1: '🤝 شبكة شركاء Claude — مبني على Anthropic', hero_p2: '✓ اعتماد موثق عبر Credly',
+      cta_launch: '🚀 ابدأ مهمتي الأولى', cta_reports: '📄 اقرأ أحدث تقرير مهمة', cta_demo: 'كيف تعمل مهمة كتجربة',
+      period_monthly: 'شهرياً', period_annual: 'سنوياً',
       sect_features: 'إمكانات المنصة', sub_features: 'نظام تشغيل واحد لمحرك إيراداتك.',
       f_mission_t: 'وحدة تحكم المهام', f_mission_1: 'خطط، اعتمد، نفّذ، راقب، دقّق', f_mission_2: 'دورة حياة مهام منظمة', f_mission_3: 'نقاط اعتماد للمؤسس',
       f_workforce_t: 'بيئة تشغيل القوى العاملة', f_workforce_1: '13 وكيلاً محكوماً بالسياسات', f_workforce_2: 'أتمتة مسار الإيرادات المحكوم بالسياسات', f_workforce_3: 'إشراف بشري في كل مرحلة',
@@ -454,10 +495,10 @@
       s_contract_t: 'مراجعة العقود الذكية', s_contract_d: 'تقييم مخاطر العقود والتحليلات على السلسلة.',
       s_compliance_t: 'الامتثال', s_compliance_d: 'تحديد نطاق المستأجر وفرض الاستحقاقات حسب الخطة.',
       s_audit_t: 'التدقيق المستمر', s_audit_d: 'حفظ كل قرار سماح أو رفض للمراجعة.',
-      trust_t: 'مصمم للثقة. مبني على التحكم.', trust_s: 'يعمل TEOS DealMaker ضمن منظومة الأمن والحوكمة الخاصة بالمحروسة.',
-      trust_1: '🛡 درع سنتينل', trust_2: '⚖ السياسات والرقابة البشرية', trust_3: '📋 عمليات ذكاء اصطناعي قابلة للتدقيق',
-      trust_4: '🔐 معايير السيادة الرقمية', trust_5: '🤝 شبكة شركاء Claude', trust_6: '✓ اعتماد موثق عبر Credly',
-      trust_cta1: 'عرض مركز الثقة ←', trust_cta2: 'عرض الاعتماد الموثق ←',
+      sec_t: 'مبني على الأمان. مصمم للتحكم.', sec_s: 'يعمل TEOS DealMaker ضمن منظومة الأمن والحوكمة الخاصة بالمحروسة.',
+      sec_1: '🛡 درع سنتينل', sec_2: '⚖ السياسات والرقابة البشرية', sec_3: '📋 عمليات ذكاء اصطناعي قابلة للتدقيق',
+      sec_4: '🔐 معايير السيادة الرقمية', sec_5: '🤝 شبكة شركاء Claude', sec_6: '✓ اعتماد موثق عبر Credly',
+      sec_cta1: 'عرض مركز الثقة ←', sec_cta2: 'عرض الاعتماد الموثق ←',
       sect_pricing: 'الأسعار', sub_pricing: 'الخطط السنوية تشمل توفيراً مضمّناً، والمؤسسي بسعر مخصص.',
       pricing_addons: 'إضافات المنصة',
       sect_sentinel: 'احمِ قوتك العاملة من الذكاء الاصطناعي', sentinel_name: 'درع سنتينل تيوس',
@@ -547,6 +588,21 @@
     }
     try { localStorage.setItem('teos_lang', lang); } catch (_) { /* ignore */ }
   }
+
+  var billingButtons = document.querySelectorAll('.billing-toggle button');
+  function setBilling(period) {
+    if (!pricingGrid) return;
+    pricingGrid.classList.remove('view-monthly', 'view-annual');
+    pricingGrid.classList.add('view-' + period);
+    billingButtons.forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-period') === period);
+    });
+  }
+  var billingMatch = window.location.search.match(/[?&]billing=(monthly|annual)/);
+  setBilling(billingMatch ? billingMatch[1] : 'monthly');
+  billingButtons.forEach(function (b) {
+    b.addEventListener('click', function () { setBilling(b.getAttribute('data-period')); });
+  });
 
   var currentLang = detectLang();
   applyLang(currentLang);

@@ -75,7 +75,7 @@ function renderSentinelCrossSell() {
   const url = PRICING.SENTINEL_URL;
   const features = SENTINEL_FEATURES.map(f => `<li>${f}</li>`).join('');
   return `
-  <section id="sentinel" class="sentinel-sell">
+  <section id="sentinel-shield" class="sentinel-sell">
     <div class="sentinel-inner">
       <div class="sentinel-copy">
         <h2 class="sect" data-i18n="sect_sentinel">PROTECT YOUR AI WORKFORCE</h2>
@@ -320,7 +320,7 @@ function renderCustomerZero(report) {
 }
 
 function robotsTxt() {
-  return `User-agent: *\nAllow: /\nDisallow: /dashboard\nDisallow: /report\nDisallow: /customer-0\nSitemap: ${SITE_URL}/sitemap.xml\n`;
+  return `User-agent: *\nAllow: /\nDisallow: /dashboard\nDisallow: /report\nDisallow: /reports\nDisallow: /customer-0\nSitemap: ${SITE_URL}/sitemap.xml\n`;
 }
 
 function sitemapXml() {
