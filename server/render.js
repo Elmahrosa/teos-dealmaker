@@ -67,7 +67,7 @@ function renderPricingCards() {
 const SENTINEL_FEATURES = [
   'Fail-closed policy enforcement on every tool and plugin call',
   'Prompt injection and code security scanning',
-  'Continuous immutable audit of every allow/deny decision',
+  'Continuous hash-chained audit of every allow/deny decision',
   'Role-based entitlements per tenant plan'
 ];
 

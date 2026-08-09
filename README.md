@@ -16,10 +16,10 @@ TEOS DEALMAKER transforms revenue operations by deploying a coordinated fleet of
 TEOS DEALMAKER operates as a policy-governed platform. The architecture enforces:
 
 - **Human oversight**: AI agents assist in decision preparation and workflow execution but do not perform irreversible actions without explicit authorization where required by organizational policy.
-- **Policy enforcement**: Every capability invocation passes through a deny-wins policy evaluator before execution.
+- **Policy enforcement**: Every capability invocation passes through a deny-wins policy evaluator before execution when platform governance is enabled (`TEOS_ENTERPRISE=true` and/or `MCP_ENABLED=true`).
 - **Approval workflows**: Mission-critical steps require explicit human approval through the Mission Center.
-- **Immutable audit trails**: Every decision, allowance, and denial is recorded in an append-only audit log.
-- **Role-based authorization**: Agent actions are scoped to tenant roles and plan entitlements.
+- **Hash-chained audit trails**: Every decision, allowance, and denial is recorded in a tamper-detectable, hash-chained audit log.
+- **Role-based authorization**: Agent actions are scoped to tenant roles and plan entitlements when `TEOS_ENTERPRISE=true` is enabled.
 
 Policy-governed AI that operates under enterprise governance, not outside it.
 
@@ -66,7 +66,7 @@ TEOS DEALMAKER implements a modular, platform-oriented architecture for AI agent
 5. **Providers** - Pluggable AI provider abstraction: 8+ LLM providers with automatic fallback chains.
 6. **Enterprise Platform** - Platform governance: tenant resolution, entitlements (license, plan, limits, quotas), and RBAC capability authorization.
 7. **Intelligence Layer** - Retrieval-augmented generation (RAG) system for company-specific knowledge grounding.
-8. **Integration Hub** - Unified interface to 17+ enterprise systems (CRM, email, calendar, storage).
+8. **Integration Hub** - Unified connector catalog (CRM, email, calendar, storage). Most connectors are catalog definitions pending configuration; none are wired to live credentials in the default deployment.
 9. **Persistence Layer** - Multi-tenant PostgreSQL with workspace isolation and audit trails.
 
 ### Key Architectural Principles
@@ -140,7 +140,7 @@ DealMaker includes an optional Model Context Protocol layer. Capabilities can be
 - **remote MCP servers**
 - **TEOS Civic Mixer**
 
-...without changing mission or workforce logic. When MCP is disabled, the platform behaves exactly as before. Config: `MCP_ENABLED`, `MCP_ENDPOINT`, `MCP_API_KEY`, `MCP_TIMEOUT`. See [docs/MCP_ARCHITECTURE.md](docs/MCP_ARCHITECTURE.md) for the call pipeline, sequence diagrams, and security model.
+...without changing mission or workforce logic. MCP is disabled by default (tool calls are simulated); when disabled the platform behaves exactly as before. Enable it with `MCP_ENABLED=true` and a real gateway endpoint via `MCP_ENDPOINT`. Config: `MCP_ENABLED`, `MCP_ENDPOINT`, `MCP_API_KEY`, `MCP_TIMEOUT`. See [docs/MCP_ARCHITECTURE.md](docs/MCP_ARCHITECTURE.md) for the call pipeline, sequence diagrams, and security model.
 
 ## Plugin Platform
 
@@ -175,7 +175,7 @@ See [docs/PLUGIN_CONTRACT.md](docs/PLUGIN_CONTRACT.md) for the plugin contract, 
 ### Policy-Governed Revenue Execution
 - Policy-governed execution with human approval at every critical juncture
 - Mission checkpoints and budget enforcement with automatic halts
-- Role-based access control and enterprise entitlements
+- Role-based access control and enterprise entitlements (enforced when `TEOS_ENTERPRISE=true`)
 - Complete auditability of every AI action and decision
 - Self-directed learning from outcomes to improve future performance under governance constraints
 
@@ -185,10 +185,10 @@ See [docs/PLUGIN_CONTRACT.md](docs/PLUGIN_CONTRACT.md) for the plugin contract, 
 - Progress tracking, agent handoffs, and budget-aware execution with automatic halts when limits are reached
 
 ### Enterprise Integration Hub
-- Pre-built connectors for Salesforce, HubSpot, Microsoft 365, Google Workspace
-- Bidirectional synchronization with CRM systems
-- Automated data enrichment from external sources
-- Webhook ingestion for real-time event processing
+- Connector catalog for Salesforce, HubSpot, Microsoft 365, Google Workspace and more (COMING SOON — not wired to live credentials in the default deployment)
+- Sync scaffolding for bidirectional CRM synchronization (requires configured credentials and an enabled MCP gateway)
+- Automated data enrichment from external sources (requires configured connectors)
+- Webhook ingestion scaffolding for real-time event processing
 
 ### Advanced Intelligence Layer
 - Retrieval-Augmented Generation (RAG) with company-specific knowledge
@@ -201,7 +201,7 @@ See [docs/PLUGIN_CONTRACT.md](docs/PLUGIN_CONTRACT.md) for the plugin contract, 
 - Detailed audit trails for all AI actions and decisions
 - Cost tracking and optimization recommendations
 - Health monitoring for all system components
-- Configurable alerting for anomalies and SLA breaches
+- Configurable alerting for anomalies
 
 ### TEOS Sentinel Shield
 
@@ -214,12 +214,12 @@ TEOS Sentinel Shield is delivered as an enterprise governance plugin. It provide
 - Policy enforcement
 - Audit logging
 
-Mission Controller invokes Sentinel through the Plugin Platform rather than direct integration. Sentinel is a production governance capability — code audit, smart-contract review, and CI/CD security are enforced live, with a public landing page and governance console served alongside the Dealmaker dashboard.
+Mission Controller invokes Sentinel through the Plugin Platform rather than direct integration. Sentinel is a governance plugin: code audit, smart-contract review, and CI/CD security scanning are enforced when the plugin is active and the MCP gateway is enabled. It ships alongside a public landing page and governance console.
 
 ### Deployment Flexibility
-- Multi-tenant architecture for SaaS or private instance deployment
-- Docker containerization for consistent environments
-- Kubernetes-ready with horizontal scaling capabilities
+- Multi-tenant architecture for SaaS (private/self-hosted instance deployment is planned, not yet supported)
+- Docker containerization — planned
+- Kubernetes deployment and horizontal scaling — planned
 - API-first design for extensive customization and extension
 
 ## Enterprise Platform
@@ -284,12 +284,11 @@ TEOS_ENTERPRISE=true
 The gate enforces tenant resolution, license/entitlement validity, plan capability scope, and RBAC authorization before any tool or plugin runs. Off by default — runtime behavior is unchanged.
 
 ### Production Deployment
-For production environments, we recommend:
-1. Using Docker containers with Kubernetes orchestration
-2. Configuring external secrets management (HashiCorp Vault, AWS Secrets Manager)
-3. Setting up monitoring and alerting (Prometheus/Grafana)
-4. Implementing regular backup and disaster recovery procedures
-5. Establishing CI/CD pipelines for automated testing and deployment
+The current production deployment runs as a single Railway service (web server, Telegram bot, PostgreSQL). For teams running their own instances, the following are recommended practices — they are not yet automated in this repository:
+1. Configuring external secrets management (HashiCorp Vault, AWS Secrets Manager)
+2. Setting up monitoring and alerting (Prometheus/Grafana)
+3. Implementing regular backup and disaster recovery procedures
+4. Establishing CI/CD pipelines for automated testing and deployment
 
 ## API Reference
 
@@ -314,23 +313,23 @@ Internal agent, workforce, and mission execution is driven by the Telegram bot a
 ## Enterprise Readiness
 
 ### Security & Compliance
-- Role-Based Access Control (RBAC) with fine-grained permissions
-- End-to-end encryption for data in transit and at rest
-- SOC 2 Type II and ISO 27001 ready architecture
-- GDPR/CCPA compliance tooling (data export, deletion, consent management)
-- Regular third-party penetration testing and security audits
+- Role-based authorization module (enforced only when `TEOS_ENTERPRISE=true` is enabled)
+- Transport encryption via TLS (HTTPS) on public endpoints; encryption at rest is not implemented
+- No SOC 2 or ISO 27001 certification
+- GDPR/CCPA compliance tooling (data export, deletion, consent management) — planned, not yet implemented
+- No third-party penetration testing conducted to date
 
 ### Reliability & Performance
-- 99.9% uptime SLA with multi-zone deployment options
-- Horizontal autoscaling based on workload demand
-- Automated failover and disaster recovery capabilities
-- Performance benchmarks: <200ms API response times, 1000+ concurrent workflows
+- No uptime SLA; single-instance deployment
+- Horizontal autoscaling — not implemented
+- Automated failover and disaster recovery — not implemented; no backup/restore automation
+- No published performance benchmarks; latency is observable via `/api/diagnostics` and `/api/health`
 
 ### Operations & Support
-- Comprehensive observability stack (metrics, logs, traces)
-- Automated health checks and self-healing mechanisms
-- Detailed runbooks for common operational scenarios
-- 24/7 enterprise support with defined SLAs
+- Structured console logging plus ops endpoints (`/api/health`, `/api/diagnostics`); no metrics/tracing stack
+- Health checks available; no self-healing mechanisms
+- Operational runbooks — planned
+- Support from the founding team via the Telegram console; no 24/7 SLA
 - Regular security patches and feature updates
 
 ## Customization & Extension
@@ -397,7 +396,7 @@ See [LICENSE](LICENSE) for full details.
 
 ## Enterprise Support
 
-For production deployments, service level agreements, and custom implementation services, please contact:
+For production deployments and custom implementation services, please contact:
 **Enterprise Sales**: enterprise@elmahrosa.org
 **Technical Support**: support@elmahrosa.org
 **Security Reporting**: security@elmahrosa.org

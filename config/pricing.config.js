@@ -100,9 +100,9 @@ const PRICING = [
     features: [
       'Unlimited workspaces',
       'Unlimited missions',
-      'Private deployment',
+      'Custom deployment options (COMING SOON)',
       'Sentinel governance at scale',
-      'Dedicated success engineer'
+      'Direct access to the founding team'
     ]
   }
 ];
@@ -110,9 +110,9 @@ const PRICING = [
 const ADDONS = [
   { id: 'sentinel', name: 'Sentinel Governance', description: 'Policy enforcement, prompt security, and continuous audit across every capability.' },
   { id: 'intelligence', name: 'Enterprise Intelligence', description: 'RAG knowledge base with source-attributed answers.' },
-  { id: 'connectors', name: 'CRM Connectors', description: 'Salesforce, HubSpot, Microsoft 365, and Google Workspace sync.' },
+  { id: 'connectors', name: 'CRM Connectors', description: 'Salesforce, HubSpot, Microsoft 365, and Google Workspace connectors (COMING SOON).' },
   { id: 'models', name: 'Premium AI Models', description: 'Access to frontier reasoning models.' },
-  { id: 'support', name: 'Dedicated Support', description: 'Named engineer with priority SLAs.' }
+  { id: 'support', name: 'Dedicated Support', description: 'Priority support from the founding team.' }
 ];
 
 // TEOS Sentinel is a SEPARATE product with its own pricing page — it must
