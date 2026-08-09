@@ -401,6 +401,124 @@ function createRepos(adapter) {
       update(workspace_id, id, changes) {
         return adapter.update('outbound_emails', { workspace_id, id }, changes);
       }
+    },
+
+    outboundService: {
+      async ensure() {
+        const existing = await adapter.findOne('outbound_service_state', { service: 'outbound' });
+        if (existing) return existing;
+        return adapter.insert('outbound_service_state', { service: 'outbound', state: 'PAUSED' });
+      },
+      get() {
+        return adapter.findOne('outbound_service_state', { service: 'outbound' });
+      },
+      set(state, meta = {}) {
+        return adapter.update('outbound_service_state', { service: 'outbound' }, Object.assign({ state, updated_at: new Date().toISOString() }, meta));
+      },
+      patch(changes) {
+        return adapter.update('outbound_service_state', { service: 'outbound' }, Object.assign({ updated_at: new Date().toISOString() }, changes));
+      }
+    },
+
+    outboundJobs: {
+      enqueue(data) {
+        return adapter.insert('outbound_jobs', data);
+      },
+      get(id) {
+        return adapter.findOne('outbound_jobs', { id });
+      },
+      getByIdempotencyKey(key) {
+        return adapter.findOne('outbound_jobs', { idempotency_key: key });
+      },
+      getByProviderMessageId(pid) {
+        return adapter.findOne('outbound_jobs', { provider_message_id: pid });
+      },
+      list(workspace_id, opts) {
+        const o = opts || {};
+        const where = { workspace_id };
+        if (o.status) where.status = o.status;
+        return adapter.find('outbound_jobs', where, { orderBy: 'id', order: o.order || 'desc', limit: o.limit });
+      },
+      update(id, changes) {
+        return adapter.update('outbound_jobs', { id }, changes);
+      },
+      claimIfQueued(id, changes) {
+        return adapter.update('outbound_jobs', { id, status: 'QUEUED' }, changes);
+      },
+      due(limit) {
+        return adapter.find('outbound_jobs', { status: 'QUEUED' }, { orderBy: 'id', order: 'asc', limit });
+      },
+      staleProcessing(limit) {
+        return adapter.find('outbound_jobs', { status: 'PROCESSING' }, { orderBy: 'id', order: 'asc', limit });
+      },
+      countByStatus(status) {
+        return adapter.count('outbound_jobs', { status });
+      },
+      countByStatusIn(statuses) {
+        return adapter.find('outbound_jobs', {}, { limit: 10000 }).filter(j => statuses.includes(j.status)).length;
+      },
+      countSentSince(since) {
+        return adapter.find('outbound_jobs', {}, { limit: 10000 })
+          .filter(j => ['SENT', 'PROVIDER_CONFIRMED'].includes(j.status) && j.sent_at && String(j.sent_at) >= String(since)).length;
+      },
+      countSentToRecipientSince(recipient, since) {
+        return adapter.find('outbound_jobs', {}, { limit: 10000 })
+          .filter(j => j.recipient && String(j.recipient).toLowerCase() === String(recipient).toLowerCase()
+            && ['SENT', 'PROVIDER_CONFIRMED'].includes(j.status)
+            && j.sent_at && String(j.sent_at) >= String(since)).length;
+      },
+      cancelQueued(reason, _by) {
+        const rows = adapter.find('outbound_jobs', { status: 'QUEUED' }, {});
+        for (const row of rows) {
+          adapter.update('outbound_jobs', { id: row.id }, {
+            status: 'CANCELLED',
+            failure_reason: reason,
+            updated_at: new Date().toISOString()
+          });
+        }
+        return rows.length;
+      }
+    },
+
+    emailSuppressions: {
+      _active(email) {
+        const rows = adapter.find('email_suppressions', { email: String(email).toLowerCase() }, {});
+        return rows.find(r => !r.cleared_at) || null;
+      },
+      add({ workspace_id, email, reason, source_event = null, source_job_id = null }) {
+        const existing = this._active(email);
+        if (existing) return existing;
+        return adapter.insert('email_suppressions', {
+          workspace_id,
+          email: String(email).toLowerCase(),
+          reason,
+          source_event,
+          source_job_id
+        });
+      },
+      isSuppressed(email) {
+        return Boolean(this._active(email));
+      },
+      list() {
+        return adapter.find('email_suppressions', {}, { orderBy: 'id', order: 'desc' });
+      },
+      clear(email, by) {
+        const row = this._active(email);
+        if (!row) return null;
+        return adapter.update('email_suppressions', { id: row.id }, {
+          cleared_at: new Date().toISOString(),
+          cleared_by: by || 'founder'
+        });
+      }
+    },
+
+    resendEvents: {
+      add(data) {
+        return adapter.insert('resend_events', data);
+      },
+      getByEventId(eventId) {
+        return adapter.findOne('resend_events', { event_id: eventId });
+      }
     }
   };
 }
@@ -541,6 +659,18 @@ function forWorkspace(adapter, workspaceId) {
       get: id => repos.outboundEmails.get(workspaceId, id),
       list: opts => repos.outboundEmails.list(workspaceId, opts),
       update: (id, changes) => repos.outboundEmails.update(workspaceId, id, changes)
+    },
+    outboundJobs: {
+      enqueue: data => repos.outboundJobs.enqueue({ ...data, workspace_id: workspaceId }),
+      get: id => repos.outboundJobs.get(id),
+      list: opts => repos.outboundJobs.list(workspaceId, opts),
+      update: (id, changes) => repos.outboundJobs.update(id, changes)
+    },
+    emailSuppressions: {
+      add: data => repos.emailSuppressions.add({ ...data, workspace_id: workspaceId }),
+      isSuppressed: email => repos.emailSuppressions.isSuppressed(email),
+      list: () => repos.emailSuppressions.list(),
+      clear: (email, by) => repos.emailSuppressions.clear(email, by)
     }
   };
 }

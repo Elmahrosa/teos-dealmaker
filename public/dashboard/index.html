@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sentinel Shield — TEOS DealMaker</title>
-<script>window.__PRICING__ = [{"tier":"🚀 Solo","tagline":"For founders and solo teams","monthly":{"price":"$99.00","url":"https://dodo.pe/teos-dealmaker-solo-monthly-13644952"},"annual":{"price":"$950.00","url":"https://dodo.pe/teos-dealmaker-solo-annual-13644952"},"features":["1 workspace","Mission Controller with a 13-agent AI workforce","Core agent capabilities","Community support"]},{"tier":"⚡ Growth","tagline":"For growing revenue teams","monthly":{"price":"$299.00","url":"https://dodo.pe/teos-dealmaker-growth-monthly-13644952"},"annual":{"price":"$2,990.00","url":"https://dodo.pe/teos-dealmaker-growth-annual-13644952"},"features":["10 seats","Civic Mixer + Sentinel Shield plugins","Enterprise Knowledge Intelligence","Email support"]},{"tier":"👑 Business","tagline":"For revenue organizations","monthly":{"price":"$999.00","url":"https://dodo.pe/teos-dealmaker-business-monthly-13644952"},"annual":{"price":"$9,990.00","url":"https://dodo.pe/teos-dealmaker-business-annual-13644952"},"features":["25 seats","Third-party plugin installs","All platform add-ons","Priority support"]},{"tier":"🏛️ Enterprise","tagline":"For large and sovereign organizations","monthly":{"price":"Custom","url":""},"annual":{"price":"Custom","url":""},"custom":true,"features":["Unlimited workspaces","Unlimited missions","Private deployment","Sentinel governance at scale","Dedicated success engineer"]}];</script>
+<title>TEOS DealMaker — Operations Console</title>
+<script>window.__PRICING__ = [{"tier":"🚀 Solo","tagline":"For founders and solo teams","monthly":{"price":"$99.00","url":"https://dodo.pe/teos-dealmaker-solo-monthly-13644952"},"annual":{"price":"$950.00","url":"https://dodo.pe/teos-dealmaker-solo-annual-13644952"},"features":["1 workspace","Mission Controller with a 13-agent AI workforce","Core agent capabilities","Community support"]},{"tier":"⚡ Growth","tagline":"For growing revenue teams","monthly":{"price":"$299.00","url":"https://dodo.pe/teos-dealmaker-growth-monthly-13644952"},"annual":{"price":"$2,990.00","url":"https://dodo.pe/teos-dealmaker-growth-annual-13644952"},"features":["10 seats","Civic Mixer + Sentinel Shield plugins","Enterprise Knowledge Intelligence","Email support"]},{"tier":"👑 Business","tagline":"For revenue organizations","monthly":{"price":"$999.00","url":"https://dodo.pe/teos-dealmaker-business-monthly-13644952"},"annual":{"price":"$9,990.00","url":"https://dodo.pe/teos-dealmaker-business-annual-13644952"},"features":["25 seats","Third-party plugin installs","All platform add-ons","Priority support"]},{"tier":"🏛️ Enterprise","tagline":"For large and sovereign organizations","monthly":{"price":"Custom","url":""},"annual":{"price":"Custom","url":""},"custom":true,"features":["Unlimited workspaces","Unlimited missions","Custom deployment options (COMING SOON)","Sentinel governance at scale","Direct access to the founding team"]}];</script>
 <style>
   :root {
     --bg: #0b0f14;
@@ -51,18 +51,29 @@
   footer { margin-top: 20px; color: var(--muted); font-size: 11px; }
   #lang-switch { margin-inline-start: auto; color: var(--gold); background: none; border: 1px solid var(--border); padding: 2px 12px; border-radius: 12px; cursor: pointer; font-family: inherit; fo[...]
   #lang-switch:hover { color: #0b0f14; background: var(--gold); border-color: var(--gold); }
+  #ops-strip { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 6px 16px; font-size: 13px; font-weight: 700; letter-spacing: 1px; }
+  .pill.ok { color: var(--green); border-color: var(--green); }
+  .pill.warn { color: var(--gold); border-color: var(--gold); }
+  .pill.err { color: var(--red); border-color: var(--red); }
+  .pill.off { color: var(--muted); border-color: var(--border); }
   html[dir="rtl"] th, html[dir="rtl"] td { text-align: right; }
   html[dir="rtl"] h1, html[dir="rtl"] h2 { letter-spacing: 0; }
 </style>
 </head>
 <body>
   <header>
-    <h1 data-i18n="header">🏛️ SENTINEL SHIELD</h1>
-    <span class="sub" data-i18n="sub">TEOS DealMaker · Enterprise AI Governance Console</span>
+    <h1 data-i18n="header">🏛️ TEOS DEALMAKER</h1>
+    <span class="sub" data-i18n="sub">Operations Console · Enterprise AI Revenue Operating System</span>
     <span id="mode" class="dry">…</span>
     <a href="/customer-0" style="color:var(--blue);text-decoration:none;font-size:13px;margin-inline-start:auto;">Customer #0 →</a>
     <button id="lang-switch" type="button" role="button" aria-label="Switch language">العربية</button>
   </header>
+
+  <div id="ops-strip">
+    <span class="pill" id="strip-service">🟢 SERVICE RUNNING</span>
+    <span class="pill" id="strip-outbound">🟡 OUTBOUND PAUSED</span>
+  </div>
 
   <div class="stats">
     <div class="stat"><div class="label" data-i18n="mode">Mode</div><div class="value" id="stat-mode">—</div></div>
@@ -74,6 +85,22 @@
     <h2 style="color:var(--gold);font-size:16px;letter-spacing:1px;margin-bottom:12px;" data-i18n="pricing">💳 PRICING</h2>
     <div id="pricing-cards" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
       <div data-i18n="loadingPricing" style="color:var(--muted);padding:12px;">Loading pricing…</div>
+    </div>
+  </section>
+
+  <section id="outreach" style="margin-bottom:24px;">
+    <h2 style="color:var(--gold);font-size:16px;letter-spacing:1px;margin-bottom:12px;" data-i18n="outreachHeader">📧 OUTBOUND OPS</h2>
+    <div class="stats" style="margin-bottom:12px;">
+      <div class="stat"><div class="label" data-i18n="workerState">Worker</div><div class="value" id="o-state">—</div></div>
+      <div class="stat"><div class="label" data-i18n="outboundEmail">Outbound Email</div><div class="value" id="o-email">—</div></div>
+      <div class="stat"><div class="label" data-i18n="queue">Queue</div><div class="value" id="o-queue" style="font-size:14px;">—</div></div>
+      <div class="stat"><div class="label" data-i18n="lastSent">Last Successful Send</div><div class="value" id="o-last" style="font-size:14px;">—</div></div>
+    </div>
+    <div id="o-controls" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <button id="o-pause" type="button" style="background:none;border:1px solid var(--border);color:var(--gold);padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;">Pause</button>
+      <button id="o-resume" type="button" style="background:none;border:1px solid var(--border);color:var(--green);padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;">Resume</button>
+      <button id="o-stop" type="button" style="background:none;border:1px solid var(--border);color:var(--red);padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;">Emergency Stop</button>
+      <span id="o-hint" style="color:var(--muted);font-size:11px;"></span>
     </div>
   </section>
 
@@ -97,12 +124,24 @@
 <script>
   var I18N = {
     en: {
-      header: '🏛️ SENTINEL SHIELD',
-      sub: 'TEOS DealMaker · Enterprise AI Governance Console',
+      header: '🏛️ TEOS DEALMAKER',
+      sub: 'Operations Console · Enterprise AI Revenue Operating System',
+      stripServiceRunning: '🟢 SERVICE RUNNING',
+      stripServiceOffline: '🔴 SERVICE OFFLINE',
+      stripOutboundRunning: '🟢 OUTBOUND RUNNING',
+      stripOutboundPaused: '🟡 OUTBOUND PAUSED',
+      stripOutboundStopped: '🔴 OUTBOUND EMERGENCY STOPPED',
+      stripOutboundUnknown: '⚪ OUTBOUND UNKNOWN',
       mode: 'Mode', auditEntries: 'Audit Entries', lastUpdate: 'Last Update',
       pricing: '💳 PRICING',
       loadingPricing: 'Loading pricing…', pricingUnavailable: 'Pricing unavailable.',
       colTime: 'Timestamp', colAction: 'Action', colTarget: 'Target', colStatus: 'Status', colDetails: 'Details',
+      outreachHeader: '📧 OUTBOUND OPS', workerState: 'Worker', outboundEmail: 'Outbound Email', queue: 'Queue', lastSent: 'Last Successful Send',
+      oPause: 'Pause', oResume: 'Resume', oStop: 'Emergency Stop',
+      oHintDisabled: 'Resume requires OUTREACH_ENABLED=true', oHintReady: '',
+      oPauseDone: 'Outbound paused', oResumeDone: 'Outbound resumed', oStopDone: 'Outbound emergency-stopped',
+      oActionFail: 'Action failed — check the admin key', oConfirmStop: 'Emergency stop disables ALL outbound email. Continue?',
+      oNeedKey: 'Enter the admin API key (AUDIT_API_KEY):',
       loadingAudit: 'Loading audit trail…', noAudit: 'No audit entries yet.',
       footer: 'Fail-closed governance · every capability decision is policy-evaluated and written to the audit vault',
       monthly: 'Monthly', annual: 'Annual', checkout: 'checkout',
@@ -111,12 +150,24 @@
       sw_ar: 'العربية', sw_en: 'English'
     },
     ar: {
-      header: '🏛️ درع سنتينل',
-      sub: 'صانع الصفقات تيوس · لوحة تحكم الحوكمة المؤسسية للذكاء الاصطناعي',
+      header: '🏛️ تيوس صانع الصفقات',
+      sub: 'لوحة تحكم العمليات · نظام تشغيل إيرادات المؤسسات بالذكاء الاصطناعي',
+      stripServiceRunning: '🟢 الخدمة قيد التشغيل',
+      stripServiceOffline: '🔴 الخدمة غير متصلة',
+      stripOutboundRunning: '🟢 المراسلات الصادرة تعمل',
+      stripOutboundPaused: '🟡 المراسلات الصادرة متوقفة مؤقتاً',
+      stripOutboundStopped: '🔴 إيقاف طارئ للمراسلات الصادرة',
+      stripOutboundUnknown: '⚪ حالة المراسلات الصادرة غير معروفة',
       mode: 'الوضع', auditEntries: 'سجلات التدقيق', lastUpdate: 'آخر تحديث',
       pricing: '💳 الأسعار',
       loadingPricing: 'جارٍ تحميل الأسعار…', pricingUnavailable: 'الأسعار غير متاحة.',
       colTime: 'الوقت', colAction: 'الإجراء', colTarget: 'الهدف', colStatus: 'الحالة', colDetails: 'التفاصيل',
+      outreachHeader: '📧 تشغيل المراسلات الصادرة', workerState: 'العامل', outboundEmail: 'البريد الصادر', queue: 'الطابور', lastSent: 'آخر إرسال ناجح',
+      oPause: 'إيقاف مؤقت', oResume: 'استئناف', oStop: 'إيقاف طارئ',
+      oHintDisabled: 'الاستئناف يتطلب OUTREACH_ENABLED=true', oHintReady: '',
+      oPauseDone: 'تم إيقاف المراسلات الصادرة', oResumeDone: 'تم استئناف المراسلات الصادرة', oStopDone: 'تم الإيقاف الطارئ للمراسلات الصادرة',
+      oActionFail: 'فشل الإجراء — تحقق من مفتاح الإدارة', oConfirmStop: 'الإيقاف الطارئ يعطل كل البريد الصادر. متابعة؟',
+      oNeedKey: 'أدخل مفتاح واجهة الإدارة (AUDIT_API_KEY):',
       loadingAudit: 'جارٍ تحميل سجل التدقيق…', noAudit: 'لا توجد سجلات تدقيق بعد.',
       footer: 'حوكمة تغلق عند الخطأ · كل قرار قدرة يُقيَّم حسب السياسات ويُسجَّل في خزنة التدقيق',
       monthly: 'شهرياً', annual: 'سنوياً', checkout: 'شراء',
@@ -127,14 +178,14 @@
   };
 
   var PRICING_AR = {
-    '🚀 Solo': { features: ['مساحة عمل واحدة', 'وحدة تحكم المهام مع قوة عاملة من 13 وكيل ذكاء اصطناعي', 'إمكانات الوكلاء ال[...]'] ,
+    '🚀 Solo': { features: ['مساحة عمل واحدة', 'وحدة تحكم المهام مع قوة عاملة من 13 وكيل ذكاء اصطناعي', 'إمكانات الوكلاء الأساسية'] },
     '⚡ Growth': { features: ['10 مقاعد', 'إضافات Civic Mixer و Sentinel Shield', 'ذكاء المعرفة المؤسسية', 'دعم عبر البريد الإلكتروني'] },
     '👑 Business': { features: ['25 مقعداً', 'تثبيت إضافات الطرف الثالث', 'جميع إضافات المنصة', 'دعم ذو أولوية'] },
-    '🏛️ Enterprise': { features: ['مساحات عمل غير محدودة', 'مهام غير محدودة', 'نشر خاص', 'حوكمة سنتينل على نطاق واسع', 'مهندس [...]']
+    '🏛️ Enterprise': { features: ['مساحات عمل غير محدودة', 'مهام غير محدودة', 'خيارات نشر مخصصة (قريباً)', 'حوكمة سنتينل على نطاق واسع', 'وصول مباشر للفريق المؤسس'] }
   };
 
   var MODE_AR = { production: 'إنتاج', live: 'مباشر', dry: 'تجريبي', dry_run: 'تشغيل تجريبي', offline: 'غير متصل' };
-  var STATUS_AR = { success: 'ناجح', blocked: 'محظور', denied: 'مرفوض', failed: 'فشل', error: 'خطأ', in_progress: 'قيد التنفيذ', dry_run: 'تشغيل تجريبي', [...] }
+  var STATUS_AR = { success: 'ناجح', blocked: 'محظور', denied: 'مرفوض', failed: 'فشل', error: 'خطأ', in_progress: 'قيد التنفيذ', dry_run: 'تشغيل تجريبي', cancelled: 'ملغي', sent: 'مرسل', paused: 'متوقف مؤقتاً' }
 
   var lang = 'en';
   var currentTiers = [];
@@ -207,10 +258,10 @@
       var ar = lang === 'ar' ? PRICING_AR[tier.tier] : null;
       var features = ar ? ar.features : (tier.features || []);
       var monthly = tier.monthly.url
-        ? '<div style="margin-top:6px;">' + esc(t('monthly')) + ' <b>' + esc(tier.monthly.price) + '</b> · <a href="' + esc(tier.monthly.url) + '" style="color:var(--blue);font-size:12px;">' + e[...]
+        ? '<div style="margin-top:6px;">' + esc(t('monthly')) + ' <b>' + esc(tier.monthly.price) + '</b> · <a href="' + esc(tier.monthly.url) + '" style="color:var(--blue);font-size:12px;">' + esc(t('checkout')) + '</a></div>'
         : '<div style="margin-top:6px;">' + esc(t('monthly')) + ' <b>' + esc(tier.monthly.price) + '</b></div>';
       var annual = tier.annual.url
-        ? '<div style="margin-top:6px;">' + esc(t('annual')) + ' <b>' + esc(tier.annual.price) + '</b> · <a href="' + esc(tier.annual.url) + '" style="color:var(--blue);font-size:12px;">' + esc([...]
+        ? '<div style="margin-top:6px;">' + esc(t('annual')) + ' <b>' + esc(tier.annual.price) + '</b> · <a href="' + esc(tier.annual.url) + '" style="color:var(--blue);font-size:12px;">' + esc(t('checkout')) + '</a></div>'
         : '<div style="margin-top:6px;">' + esc(t('annual')) + ' <b>' + esc(tier.annual.price) + '</b></div>';
       var lis = features.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('');
       return '<div class="stat" style="min-width:240px;">' +
@@ -242,6 +293,102 @@
     }).join('');
   }
 
+  function stateColor(s) {
+    if (s === 'RUNNING') return 'var(--green)';
+    if (s === 'PAUSED') return 'var(--gold)';
+    if (s === 'EMERGENCY_STOPPED') return 'var(--red)';
+    if (s === 'DEGRADED') return '#e67e22';
+    return 'var(--muted)';
+  }
+
+  function localState(s) {
+    if (lang === 'ar') {
+      if (s === 'RUNNING') return 'قيد التشغيل';
+      if (s === 'PAUSED') return 'متوقف مؤقتاً';
+      if (s === 'EMERGENCY_STOPPED') return 'إيقاف طارئ';
+      if (s === 'DEGRADED') return 'متدهور';
+    }
+    return s || '—';
+  }
+
+  // Public health status only: no secrets, no message bodies, no admin key.
+  function renderOutreach(h) {
+    var stateEl = document.getElementById('o-state');
+    var emailEl = document.getElementById('o-email');
+    var queueEl = document.getElementById('o-queue');
+    var lastEl = document.getElementById('o-last');
+    var hintEl = document.getElementById('o-hint');
+    if (!h) {
+      stateEl.textContent = '—';
+      emailEl.textContent = '—';
+      queueEl.textContent = '—';
+      lastEl.textContent = '—';
+      if (hintEl) hintEl.textContent = '';
+      return;
+    }
+    stateEl.textContent = localState(h.state);
+    stateEl.style.color = stateColor(h.state);
+    emailEl.textContent = h.outbound_email;
+    emailEl.style.color = h.outbound_email === 'ENABLED' ? 'var(--green)' : 'var(--muted)';
+    var q = h.queue_counts || {};
+    queueEl.textContent = (q.queued || 0) + ' queued · ' + (q.processing || 0) + ' processing · ' +
+      (q.send_failed || 0) + ' failed · ' + (q.send_unknown || 0) + ' unknown · ' + (q.sent_today || 0) + ' today';
+    lastEl.textContent = h.last_successful_job ? String(h.last_successful_job).replace('T', ' ').slice(0, 19) : '—';
+    if (hintEl) hintEl.textContent = h.enabled ? '' : t('oHintDisabled');
+  }
+
+  function updateStrip(online, h) {
+    var svc = document.getElementById('strip-service');
+    var out = document.getElementById('strip-outbound');
+    if (svc) {
+      if (!online) { svc.textContent = t('stripServiceOffline'); svc.className = 'pill err'; }
+      else { svc.textContent = t('stripServiceRunning'); svc.className = 'pill ok'; }
+    }
+    if (out) {
+      if (!online) { out.textContent = t('stripOutboundUnknown'); out.className = 'pill off'; return; }
+      var state = h && h.state;
+      if (state === 'EMERGENCY_STOPPED') { out.textContent = t('stripOutboundStopped'); out.className = 'pill err'; }
+      else if (state === 'RUNNING' && h.outbound_email === 'ENABLED') { out.textContent = t('stripOutboundRunning'); out.className = 'pill ok'; }
+      else { out.textContent = t('stripOutboundPaused'); out.className = 'pill warn'; }
+    }
+  }
+
+  function adminKey() {
+    return window.prompt(t('oNeedKey'), '');
+  }
+
+  async function outreachAction(path, doneMsg, confirmMsg) {
+    if (confirmMsg && !window.confirm(confirmMsg)) return;
+    var key = adminKey();
+    if (!key) return;
+    var payload = { by: 'founder' };
+    try {
+      var res = await fetch(path, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-api-key': key },
+        body: JSON.stringify(payload)
+      });
+      var data = await res.json().catch(function () { return null; });
+      if (!res.ok) {
+        window.alert(t('oActionFail') + (data && data.reason ? ': ' + data.reason : ''));
+        return;
+      }
+      window.alert(doneMsg);
+      refresh();
+    } catch (_) {
+      window.alert(t('oActionFail'));
+    }
+  }
+
+  function wireOutreachControls() {
+    var pause = document.getElementById('o-pause');
+    var resume = document.getElementById('o-resume');
+    var stop = document.getElementById('o-stop');
+    if (pause) pause.addEventListener('click', function () { outreachAction('/api/outreach/pause', t('oPauseDone')); });
+    if (resume) resume.addEventListener('click', function () { outreachAction('/api/outreach/resume', t('oResumeDone')); });
+    if (stop) stop.addEventListener('click', function () { outreachAction('/api/outreach/emergency-stop', t('oStopDone'), t('oConfirmStop')); });
+  }
+
   async function loadPricing() {
     try {
       var res = await fetch('/api/pricing');
@@ -268,6 +415,7 @@
       modeEl.textContent = t('staticPreview');
       modeEl.className = 'dry';
       renderRows([]);
+      updateStrip(false, null);
       return;
     }
 
@@ -284,6 +432,11 @@
     modeEl.className = String(health.mode).toUpperCase() === 'LIVE' ? 'live' : 'dry';
 
     renderRows(audit || []);
+
+    var outRes = await fetch('/api/outreach/status').then(function (r) { return { ok: r.ok, body: r.json().catch(function () { return null; }) }; });
+    var outbound = outRes.ok ? await outRes.body : null;
+    renderOutreach(outbound);
+    updateStrip(true, outbound);
   }
 
   function setLang(l) {
@@ -307,6 +460,7 @@
 
   refresh();
   loadPricing();
+  wireOutreachControls();
   setInterval(refresh, 5000);
 </script>
 </body>

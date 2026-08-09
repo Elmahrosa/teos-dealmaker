@@ -38,7 +38,7 @@ async function buildHome(userId) {
     if (isAdminOrFounder) {
       row4.push(design.textButton('Audit Log', 'cc_audit'));
     }
-    row4.push(design.textButton('Pricing', 'cc_pricing'));
+    row4.push(design.textButton('Pricing', 'cc_pricing'), design.textButton('Playground', 'cc_playground'));
     const row5 = [];
     if (isAdminOrFounder) {
       row5.push(design.textButton('Admin', 'cc_admin'));
@@ -85,7 +85,7 @@ async function buildHome(userId) {
         [design.textButton('Sales Pipeline', 'cc_pipeline'), design.textButton('My Revenue Team', 'cc_workforce')],
         [design.textButton('Activity', 'cc_activity'), design.textButton('Daily Summary', 'cc_briefing'), design.textButton('Costs', 'cc_costs')],
         [design.textButton('Health', 'cc_health'), design.textButton('Intelligence', 'cc_intelligence'), design.textButton('Integrations', 'cc_integrations')],
-        [design.textButton('Settings', 'cc_settings'), design.textButton('Audit Log', 'cc_audit'), design.textButton('Admin', 'cc_admin')]
+        [design.textButton('Playground', 'cc_playground'), design.textButton('Pricing', 'cc_pricing'), design.textButton('Settings', 'cc_settings'), design.textButton('Audit Log', 'cc_audit'), design.textButton('Admin', 'cc_admin')]
       ])
     };
   }
@@ -96,6 +96,7 @@ async function buildHome(userId) {
     { text: 'Approvals', callback: 'cc_approvals' },
     { text: 'Company Intelligence', callback: 'cc_intelligence' },
     { text: 'Pipeline', callback: 'cc_pipeline' },
+    { text: 'Playground', callback: 'cc_playground' },
     { text: 'Settings', callback: 'cc_settings' }
   ];
   const rows = [];

@@ -127,6 +127,39 @@
   html[dir="rtl"] header nav a, html[dir="rtl"] .lang-switch { margin-left: 0; margin-right: 16px; }
   html[dir="rtl"] .hero { text-align: center; }
   html[dir="rtl"] .badge { margin-left: 0; margin-right: 8px; }
+  .demo-banner { text-align: center; background: #2a1212; color: #ffb4b4; border: 1px solid #4a2020; border-radius: 6px; padding: 8px 14px; font-size: 13px; letter-spacing: 1px; font-weight: 700; margin-bottom: 16px; }
+  .pg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .pg-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
+  .pg-card h3 { font-size: 15px; color: var(--gold); margin-bottom: 10px; }
+  .pg-wide { grid-column: 1 / -1; }
+  .pg-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+  .pg-value { color: var(--text); font-size: 14px; margin-bottom: 8px; }
+  .pg-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  .pg-table th, .pg-table td { text-align: left; padding: 6px 8px; font-size: 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .pg-table th { color: var(--muted); font-size: 11px; text-transform: uppercase; }
+  .pg-table td { color: var(--text); }
+  html[dir="rtl"] .pg-table th, html[dir="rtl"] .pg-table td { text-align: right; }
+  .lc { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; margin: 14px 0; }
+  .lc .phase { border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; border-radius: 16px; font-size: 12px; letter-spacing: 1px; }
+  .lc .phase.active { background: var(--gold); color: #0b0f14; font-weight: 700; border-color: var(--gold); }
+  .lc .phase.done { border-color: var(--green); color: var(--green); }
+  .lc .arrow { color: var(--gold); font-size: 12px; }
+  #pg-log { background: #0b0f14; border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-top: 10px; min-height: 96px; max-height: 180px; overflow: auto; font-family: Consolas, monospace; font-size: 12px; color: var(--muted); line-height: 1.5; }
+  #pg-log .ok { color: var(--green); }
+  #pg-log .warn { color: var(--gold); }
+  #pg-log .deny { color: var(--red); }
+  .pg-btn { background: var(--gold); color: #0b0f14; font-weight: 700; border: none; border-radius: 6px; padding: 10px 22px; font-family: inherit; font-size: 14px; letter-spacing: 1px; cursor: pointer; margin-top: 12px; }
+  .pg-btn:hover { filter: brightness(1.1); }
+  .pg-btn:disabled { opacity: .6; cursor: default; }
+  .gov { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+  .gov .g { border: 1px solid var(--border); border-radius: 6px; padding: 10px; text-align: center; }
+  .gov .g b { font-size: 13px; letter-spacing: 1px; }
+  .gov .g.allow b { color: var(--green); }
+  .gov .g.warn b { color: var(--gold); }
+  .gov .g.review b { color: var(--blue); }
+  .gov .g.block b { color: var(--red); }
+  .gov .g p { color: var(--muted); font-size: 11px; margin-top: 4px; }
+  .pg-hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -135,6 +168,7 @@
     <h1>TEOS DEALMAKER</h1>
     <nav aria-label="Primary">
       <a href="#features" data-i18n="nav_features">Features</a>
+      <a href="#playground" data-i18n="nav_playground">Playground</a>
       <a href="#architecture" data-i18n="nav_architecture">Architecture</a>
       <a href="#plugins" data-i18n="nav_plugins">Plugins</a>
       <a href="#mission" data-i18n="nav_mission">Mission</a>
@@ -152,22 +186,58 @@
     <h2><span data-i18n="hero_t1">Hire an AI Revenue Team. </span><span class="gold" data-i18n="hero_t2">Not a Chatbot.</span></h2>
     <p data-i18n="hero_text">Complete one real business mission in just a few hours. TEOS DealMaker assigns a dedicated AI Revenue Team that does the actual work — research, governed outreach, qualification, and pipeline — and delivers a real mission report with the tools and scripts to act on it. Every mission runs under Sentinel governance.</p>
     <ul class="hero-bullets">
-      <li data-i18n="hero_b1">✅ Real work, not a demo</li>
+      <li data-i18n="hero_b1">✅ Plan → Approve → Execute → Report</li>
       <li data-i18n="hero_b2">⏱ One mission, a few hours</li>
       <li data-i18n="hero_b3">🧠 Dedicated AI Revenue Team</li>
       <li data-i18n="hero_b4">📋 A mission report you can act on</li>
       <li data-i18n="hero_b5">🔒 Sentinel-governed execution</li>
     </ul>
     <div style="margin-bottom:14px;">
-      <a class="cta" href="https://t.me/TeosEgypt_bot" data-i18n="cta_launch">🚀 Launch My First Mission</a>
+      <a class="cta" href="#playground" data-i18n="cta_demo_mission">🎮 Run a Demo Mission</a>
+      <a class="cta ghost" href="https://t.me/TeosEgypt_bot" data-i18n="cta_launch">🚀 Launch My First Mission</a>
       <a class="cta ghost" href="{{SITE_URL}}/customer-0" target="_blank" rel="noopener" data-i18n="cta_reports">📄 Read the Latest Mission Report</a>
-      <a class="cta ghost" href="#mission" data-i18n="cta_demo">How Mission-First works</a>
     </div>
     <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
-      <span class="badge" data-i18n="hero_p1">🤝 Claude Partner Network — built on Anthropic</span>
+      <span class="badge" data-i18n="hero_p1">🤝 Claude Partner Network — multi-provider AI, includes Anthropic Claude</span>
       <span class="badge" data-i18n="hero_p2">✓ Verified Credly Credential</span>
     </div>
   </div>
+
+  <section id="playground">
+    <div class="demo-banner" data-i18n="demo_banner">⚠ DEMO MODE — SIMULATED DATA</div>
+    <h2 class="sect" data-i18n="pg_title">Try DealMaker</h2>
+    <p class="sect-sub" data-i18n="pg_sub">An interactive, simulated walkthrough of the verified DealMaker workflow. No external email, no Dodo checkout, no prospect contact, and no real customer result — this is a demo only.</p>
+    <div class="pg-grid">
+      <div class="pg-card">
+        <h3>01 · <span data-i18n="pg_brief_t">Deal Brief</span></h3>
+        <div id="pg-brief"></div>
+      </div>
+      <div class="pg-card">
+        <h3>02 · <span data-i18n="pg_stake_t">Stakeholder Analysis</span></h3>
+        <div id="pg-stakeholders"></div>
+      </div>
+      <div class="pg-card">
+        <h3>03 · <span data-i18n="pg_sim_t">Deal Simulation</span></h3>
+        <div id="pg-simulation"></div>
+      </div>
+      <div class="pg-card pg-wide">
+        <h3>04 · <span data-i18n="pg_mc_t">Mission Controller</span></h3>
+        <p class="pg-hint" data-i18n="pg_mc_hint">The governed mission lifecycle. Press the button to watch a simulated run.</p>
+        <div class="lc" id="pg-lifecycle"></div>
+        <div id="pg-log"><span class="pg-hint" data-i18n="pg_log_idle">Ready — simulated run only.</span></div>
+        <button class="pg-btn" id="pg-run" type="button" data-i18n="pg_run">▶ Run a Demo Mission</button>
+      </div>
+      <div class="pg-card">
+        <h3>05 · <span data-i18n="pg_gov_t">Governance</span></h3>
+        <p class="pg-hint" data-i18n="pg_gov_hint">Every capability is policy-evaluated. Consequential external actions remain governed.</p>
+        <div class="gov" id="pg-governance"></div>
+      </div>
+      <div class="pg-card pg-wide" id="pg-report-wrap" hidden>
+        <h3>06 · <span data-i18n="pg_report_t">Mission Report Preview</span></h3>
+        <div id="pg-report"></div>
+      </div>
+    </div>
+  </section>
 
   <section id="features">
     <h2 class="sect" data-i18n="sect_features">Platform Capabilities</h2>
@@ -376,17 +446,24 @@
 (function () {
   var I18N = {
     en: {
-      nav_features: 'Features', nav_architecture: 'Architecture', nav_plugins: 'Plugins',
+      nav_features: 'Features', nav_playground: 'Playground', nav_architecture: 'Architecture', nav_plugins: 'Plugins',
       nav_mission: 'Mission', nav_sentinel: 'Sentinel', nav_pricing: 'Pricing', nav_console: 'Console', nav_customer0: 'Customer #0',
       nav_trust: 'Trust & Security',
       hero_eyebrow: 'Mission-First · Real revenue work, not a demo',
       hero_t1: 'Hire an AI Revenue Team. ', hero_t2: 'Not a Chatbot.',
       hero_text: 'Complete one real business mission in just a few hours. TEOS DealMaker assigns a dedicated AI Revenue Team that does the actual work — research, governed outreach, qualification, and pipeline — and delivers a real mission report with the tools and scripts to act on it. Every mission runs under Sentinel governance.',
-      hero_b1: '✅ Real work, not a demo', hero_b2: '⏱ One mission, a few hours',
+      hero_b1: '✅ Plan → Approve → Execute → Report', hero_b2: '⏱ One mission, a few hours',
       hero_b3: '🧠 Dedicated AI Revenue Team', hero_b4: '📋 A mission report you can act on',
       hero_b5: '🔒 Sentinel-governed execution',
-      hero_p1: '🤝 Claude Partner Network — built on Anthropic', hero_p2: '✓ Verified Credly Credential',
-      cta_launch: '🚀 Launch My First Mission', cta_reports: '📄 Read the Latest Mission Report', cta_demo: 'How Mission-First works',
+      hero_p1: '🤝 Claude Partner Network — multi-provider AI, includes Anthropic Claude', hero_p2: '✓ Verified Credly Credential',
+      cta_launch: '🚀 Launch My First Mission', cta_reports: '📄 Read the Latest Mission Report', cta_demo: 'How Mission-First works', cta_demo_mission: '🎮 Run a Demo Mission',
+      demo_banner: '⚠ DEMO MODE — SIMULATED DATA',
+      pg_title: 'Try DealMaker', pg_sub: 'An interactive, simulated walkthrough of the verified DealMaker workflow. No external email, no Dodo checkout, no prospect contact, and no real customer result — this is a demo only.',
+      pg_brief_t: 'Deal Brief', pg_stake_t: 'Stakeholder Analysis', pg_sim_t: 'Deal Simulation', pg_mc_t: 'Mission Controller',
+      pg_mc_hint: 'The governed mission lifecycle. Press the button to watch a simulated run.',
+      pg_run: '▶ Run a Demo Mission', pg_log_idle: 'Ready — simulated run only.',
+      pg_gov_t: 'Governance', pg_gov_hint: 'Every capability is policy-evaluated. Consequential external actions remain governed.',
+      pg_report_t: 'Mission Report Preview',
       period_monthly: 'Monthly', period_annual: 'Annual',
       sect_features: 'Platform Capabilities', sub_features: 'One operating system for your revenue engine.',
       f_mission_t: 'Mission Controller', f_mission_1: 'Plan, approve, execute, monitor, audit', f_mission_2: 'Structured mission lifecycle', f_mission_3: 'Founder approval gates',
@@ -444,17 +521,24 @@
       sw_en: 'English', sw_ar: 'العربية'
     },
     ar: {
-      nav_features: 'المزايا', nav_architecture: 'البنية', nav_plugins: 'الإضافات',
+      nav_features: 'المزايا', nav_playground: 'منطقة التجربة', nav_architecture: 'البنية', nav_plugins: 'الإضافات',
       nav_mission: 'المهام', nav_sentinel: 'سنتينل', nav_pricing: 'الأسعار', nav_console: 'لوحة التحكم', nav_customer0: 'العميل 0',
       nav_trust: 'الثقة والأمان',
       hero_eyebrow: 'البدء بمهمة أولاً · عمل إيرادات حقيقي، وليس عرضاً',
       hero_t1: 'وظّف فريق إيرادات ذكي... ', hero_t2: 'وليس مجرد روبوت محادثة.',
       hero_text: 'دع فريق الذكاء الاصطناعي ينفذ مهمة حقيقية لشركتك خلال ساعات. يكلّفك TEOS DealMaker فريق إيرادات ذكي مخصصاً يقوم بالعمل الفعلي — البحث، والتواصل المحكوم، والتأهيل، والمسار — ويُسلّمك تقرير مهمة حقيقياً مع الأدوات والبرامج النصية للتصرف بناءً عليه. كل مهمة تُنفذ تحت حوكمة سنتينل.',
-      hero_b1: '✅ عمل حقيقي، وليس عرضاً', hero_b2: '⏱ مهمة واحدة في ساعات قليلة',
+      hero_b1: '✅ خطط ← اعتمد ← نفّذ ← أبلغ', hero_b2: '⏱ مهمة واحدة في ساعات قليلة',
       hero_b3: '🧠 فريق إيرادات ذكي مخصص', hero_b4: '📋 تقرير مهمة يمكنك التصرف بناءً عليه',
       hero_b5: '🔒 تنفيذ محكوم بسنتينل',
-      hero_p1: '🤝 شبكة شركاء Claude — مبني على Anthropic', hero_p2: '✓ اعتماد موثق عبر Credly',
-      cta_launch: '🚀 ابدأ مهمتي الأولى', cta_reports: '📄 اقرأ أحدث تقرير مهمة', cta_demo: 'كيف يعمل البدء بمهمة أولاً',
+      hero_p1: '🤝 شبكة شركاء Claude — ذكاء اصطناعي متعدد المزوّدين، يتضمن Anthropic Claude', hero_p2: '✓ اعتماد موثق عبر Credly',
+      cta_launch: '🚀 ابدأ مهمتي الأولى', cta_reports: '📄 اقرأ أحدث تقرير مهمة', cta_demo: 'كيف يعمل البدء بمهمة أولاً', cta_demo_mission: '🎮 جرّب مهمة تجريبية',
+      demo_banner: '⚠ وضع التجربة — بيانات محاكاة',
+      pg_title: 'جرّب DealMaker', pg_sub: 'جولة تفاعلية محاكاة لمسار العمل المحقق في DealMaker. لا بريد خارجي، لا إنشاء طلب دفع عبر دودو، لا تواصل مع أي عميل محتمل، ولا أي نتيجة عميل حقيقية — هذا عرض تجريبي فقط.',
+      pg_brief_t: 'موجز الصفقة', pg_stake_t: 'تحليل الأطراف', pg_sim_t: 'محاكاة الصفقة', pg_mc_t: 'وحدة تحكم المهام',
+      pg_mc_hint: 'دورة حياة المهام المحكومة. اضغط الزر لمشاهدة تنفيذ محاكى.',
+      pg_run: '▶ جرّب مهمة تجريبية', pg_log_idle: 'جاهز — تنفيذ محاكى فقط.',
+      pg_gov_t: 'الحوكمة', pg_gov_hint: 'كل إمكانية تُقيّم بالسياسات. الإجراءات الخارجية الحساسة تبقى محكومة.',
+      pg_report_t: 'معاينة تقرير المهمة',
       period_monthly: 'شهرياً', period_annual: 'سنوياً',
       sect_features: 'إمكانات المنصة', sub_features: 'نظام تشغيل واحد لمحرك إيراداتك.',
       f_mission_t: 'وحدة تحكم المهام', f_mission_1: 'خطط، اعتمد، نفّذ، راقب، دقّق', f_mission_2: 'دورة حياة مهام منظمة', f_mission_3: 'نقاط اعتماد للمؤسس',
@@ -589,11 +673,233 @@
       }
     }
     try { localStorage.setItem('teos_lang', lang); } catch (_) { /* ignore */ }
+    renderPlayground(lang);
   }
 
+  var DEMO = {
+    en: {
+      brief: {
+        company: 'Acme Manufacturing (simulated)',
+        opportunity: '$120k annual recurring revenue from a mid-market distribution account',
+        objective: 'Secure a 12-month partnership pilot, then expand to 3 territories',
+        constraints: '48-month minimum term off the table; budget approval requires a 24-month ROI model; no data-room access before NDA.'
+      },
+      stakeholders: [
+        { role: 'Procurement Director', influence: 'High', interests: 'Cost reduction, vendor risk', posture: 'Risk-averse, process-driven' },
+        { role: 'VP Operations', influence: 'High', interests: 'On-time delivery, capacity', posture: 'Data-driven, skeptical' },
+        { role: 'Finance Controller', influence: 'Medium', interests: 'Payment terms, ROI', posture: 'Thorough, approval-gated' },
+        { role: 'Champion (Plant Lead)', influence: 'Medium', interests: 'Reliability, speed', posture: 'Supportive, internal sponsor' }
+      ],
+      sim: {
+        scenario: 'Enterprise baseline scenario',
+        assumptions: 'Current churn holds, implementation completes in 60 days, champion retains influence',
+        likely: 'Procurement opens negotiation on price and payment terms; ops pushes for a penalty-free pilot clause',
+        risks: ['Budget cut delays approval 1-2 quarters', 'Champion reassignment loses internal sponsorship', 'Competitor matches price with faster deployment'],
+        next: 'Run the negotiation rehearsal, then route the pilot proposal through founder approval before any external send'
+      },
+      lifecycle: ['PLAN', 'ANALYZE', 'SIMULATE', 'APPROVE', 'EXECUTE', 'REPORT'],
+      governance: [
+        { code: 'ALLOW', note: 'Policy pass — action permitted and audited', cls: 'allow' },
+        { code: 'WARN', note: 'Policy pass with caution — surfaced for founder awareness', cls: 'warn' },
+        { code: 'REVIEW', note: 'Draft / risky action routed to a human review gate', cls: 'review' },
+        { code: 'BLOCK', note: 'Policy deny — action never runs', cls: 'block' }
+      ],
+      logLines: {
+        PLAN: ['PLAN · mission brief compiled — 1 deal, 1 objective'],
+        ANALYZE: ['ANALYZE · 4 stakeholders mapped, influence scored'],
+        SIMULATE: ['SIMULATE · 1 scenario scored, 3 risks flagged', 'GOVERNANCE · BLOCK — outreach draft exceeds policy risk threshold', 'GOVERNANCE · ALLOW — internal proposal draft'],
+        APPROVE: ['APPROVE · founder approval gate recorded'],
+        EXECUTE: ['EXECUTE · governed actions queued', 'GOVERNANCE · REVIEW — outreach routed to human gate', 'OUTBOUND · PAUSED — nothing was sent'],
+        REPORT: ['REPORT · mission report written to the audit vault (simulated)']
+      },
+      report: {
+        objective: 'Secure a 12-month partnership pilot for Acme Manufacturing (simulated)',
+        kpis: ['Mission steps completed: 6 / 6', 'Success rate: 100%', 'Hours invested: ~4'],
+        timeline: ['T+0 PLAN', 'T+1 ANALYZE', 'T+2 SIMULATE', 'T+3 APPROVE', 'T+4 EXECUTE (queued, OUTBOUND PAUSED)', 'T+5 REPORT'],
+        actions: ['Proposal drafted and routed to founder approval', 'Outreach drafted and held at the human review gate', 'No external email sent in the demo', 'No Dodo checkout created', 'No prospect contacted'],
+        governanceDecisions: ['ALLOW — internal proposal draft', 'REVIEW — outreach draft (held)', 'BLOCK — simulated risk score above policy threshold'],
+        outcome: 'Simulated mission reached REPORT. Nothing external was sent, created, or contacted.'
+      }
+    },
+    ar: {
+      brief: {
+        company: 'Acme Manufacturing (محاكاة)',
+        opportunity: '120 ألف دولار إيرادات سنوية متكررة من حساب توزيع في السوق المتوسطة',
+        objective: 'تأمين تجربة شراكة لمدة 12 شهراً، ثم التوسع إلى 3 مناطق',
+        constraints: 'استبعاد مدة الحد الأدنى 48 شهراً؛ يتطلب اعتماد الميزانية نموذج عائد على مدى 24 شهراً؛ لا وصول لغرفة البيانات قبل توقيع اتفاقية عدم الإفصاح.'
+      },
+      stakeholders: [
+        { role: 'مدير المشتريات', influence: 'مرتفع', interests: 'خفض التكاليف، مخاطر الموردين', posture: 'يتجنب المخاطر، عملي' },
+        { role: 'نائب العمليات', influence: 'مرتفع', interests: 'الالتزام بالمواعيد، السعة', posture: 'يعتمد البيانات، متشكك' },
+        { role: 'مراقب المالية', influence: 'متوسط', interests: 'شروط السداد، العائد', posture: 'دقيق، يخضع للاعتماد' },
+        { role: 'البطل (قائد المصنع)', influence: 'متوسط', interests: 'الموثوقية، السرعة', posture: 'داعم، راعٍ داخلي' }
+      ],
+      sim: {
+        scenario: 'سيناريو الأساس للمؤسسات',
+        assumptions: 'استقرار معدل التهرب الحالي، إنجاز التنفيذ خلال 60 يوماً، بقاء نفوذ البطل',
+        likely: 'يفتح المشتري التفاوض على السعر وشروط السداد؛ وتدفع العمليات نحو بند تجريبي دون غرامات',
+        risks: ['تأجيل الاعتماد ربعاً أو ربعين بسبب خفض الميزانية', 'فقدان الرعاية الداخلية عند تغيير البطل', 'منافس يطابق السعر بتسليم أسرع'],
+        next: 'تشغيل بروفة التفاوض، ثم إرسال مقترح التجربة عبر موافقة المؤسس قبل أي إرسال خارجي'
+      },
+      lifecycle: ['خطط', 'حلّل', 'حاكِ', 'اعتمد', 'نفّذ', 'أبلغ'],
+      governance: [
+        { code: 'ALLOW', note: 'اجتياز السياسة — يُسمح بالإجراء ويُدقّق', cls: 'allow' },
+        { code: 'WARN', note: 'اجتياز مع تنبيه — يُعرض على المؤسس', cls: 'warn' },
+        { code: 'REVIEW', note: 'إجراء مسودّة / محفوف بالمخاطر يُحوَّل لمراجعة بشرية', cls: 'review' },
+        { code: 'BLOCK', note: 'رفض السياسة — لا يُنفَّذ الإجراء أبداً', cls: 'block' }
+      ],
+      logLines: {
+        PLAN: ['خطط · تجميع موجز المهمة — صفقة واحدة، هدف واحد'],
+        ANALYZE: ['حلّل · رسم خريطة 4 أطراف وتقييم النفوذ'],
+        SIMULATE: ['حاكِ · تقييم سيناريو واحد، رصد 3 مخاطر', 'الحوكمة · BLOCK — مسودّة التواصل تتجاوز عتبة المخاطر', 'الحوكمة · ALLOW — مسودّة الاقتراح الداخلي'],
+        APPROVE: ['اعتمد · تسجيل بوابة اعتماد المؤسس'],
+        EXECUTE: ['نفّذ · صفّ الإجراءات المحكومة', 'الحوكمة · REVIEW — التواصل مُحوَّل للبوابة البشرية', 'التواصل الخارجي · متوقف — لم يُرسَل شيء'],
+        REPORT: ['أبلغ · كتابة تقرير المهمة في سجل التدقيق (محاكاة)']
+      },
+      report: {
+        objective: 'تأمين تجربة شراكة لمدة 12 شهراً مع Acme Manufacturing (محاكاة)',
+        kpis: ['خطوات المهمة المنجزة: 6 / 6', 'نسبة النجاح: 100%', 'الساعات المستثمرة: ~4'],
+        timeline: ['T+0 خطط', 'T+1 حلّل', 'T+2 حاكِ', 'T+3 اعتمد', 'T+4 نفّذ (في الطابور، التواصل الخارجي متوقف)', 'T+5 أبلغ'],
+        actions: ['صياغة الاقتراح وإرساله لاعتماد المؤسس', 'صياغة التواصل وإبقاؤه عند بوابة المراجعة البشرية', 'لم يُرسَل أي بريد خارجي في التجربة', 'لم يُنشأ أي طلب دفع عبر دودو', 'لم يُتواصل مع أي عميل محتمل'],
+        governanceDecisions: ['ALLOW — مسودّة الاقتراح الداخلي', 'REVIEW — مسودّة التواصل (معلّقة)', 'BLOCK — درجة المخاطر المحاكاة فوق عتبة السياسة'],
+        outcome: 'بلغت المهمة المحاكاة مرحلة الإبلاغ. لم يُرسَل أو يُنشأ أو يُتواصل مع أي شيء خارجي.'
+      }
+    }
+  };
+
+  var demoRunning = false;
+  var demoTimers = [];
+
+  function el(html) { var d = document.createElement('div'); d.innerHTML = html; return d.firstElementChild; }
+
+  function renderPlayground(lang) {
+    var d = DEMO[lang] || DEMO.en;
+    var brief = document.getElementById('pg-brief');
+    if (brief) {
+      brief.innerHTML = '';
+      var items = [
+        { k: d.brief.company ? 'company' : '', v: d.brief.company },
+        { k: 'opportunity', v: d.brief.opportunity },
+        { k: 'objective', v: d.brief.objective }
+      ];
+      items.forEach(function (it) {
+        if (!it.v) return;
+        brief.appendChild(el('<div class="pg-label">' + (it.k === 'opportunity' ? (lang === 'ar' ? 'الفرصة' : 'Opportunity') : it.k === 'objective' ? (lang === 'ar' ? 'الهدف' : 'Objective') : (lang === 'ar' ? 'الشركة' : 'Company')) + '</div><div class="pg-value">' + it.v + '</div>'));
+      });
+      brief.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'القيود' : 'Constraints') + '</div><div class="pg-value">' + d.brief.constraints + '</div>'));
+    }
+    var st = document.getElementById('pg-stakeholders');
+    if (st) {
+      st.innerHTML = '';
+      var table = el('<table class="pg-table"></table>');
+      var head = el('<tr>' + ['role', 'influence', 'interests', 'posture'].map(function (k) {
+        return '<th>' + { role: lang === 'ar' ? 'الدور' : 'Role', influence: lang === 'ar' ? 'النفوذ' : 'Influence', interests: lang === 'ar' ? 'الاهتمامات' : 'Interests', posture: lang === 'ar' ? 'الموقف' : 'Posture' }[k] + '</th>';
+      }).join('') + '</tr>');
+      table.appendChild(head);
+      d.stakeholders.forEach(function (s) {
+        table.appendChild(el('<tr><td>' + s.role + '</td><td>' + s.influence + '</td><td>' + s.interests + '</td><td>' + s.posture + '</td></tr>'));
+      });
+      st.appendChild(table);
+    }
+    var sim = document.getElementById('pg-simulation');
+    if (sim) {
+      sim.innerHTML = '';
+      sim.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'السيناريو' : 'Scenario') + '</div><div class="pg-value">' + d.sim.scenario + '</div>'));
+      sim.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'الافتراضات' : 'Assumptions') + '</div><div class="pg-value">' + d.sim.assumptions + '</div>'));
+      sim.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'الاستجابة المتوقعة' : 'Likely response') + '</div><div class="pg-value">' + d.sim.likely + '</div>'));
+      sim.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'المخاطر' : 'Risks') + '</div>'));
+      d.sim.risks.forEach(function (r) { sim.appendChild(el('<div class="pg-value">⚠ ' + r + '</div>')); });
+      sim.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'الإجراء التالي' : 'Next action') + '</div><div class="pg-value">' + d.sim.next + '</div>'));
+    }
+    var lc = document.getElementById('pg-lifecycle');
+    if (lc) {
+      lc.innerHTML = '';
+      d.lifecycle.forEach(function (ph, i) {
+        if (i > 0) lc.appendChild(el('<span class="arrow">→</span>'));
+        lc.appendChild(el('<span class="phase" data-phase="' + i + '">' + ph + '</span>'));
+      });
+    }
+    var gov = document.getElementById('pg-governance');
+    if (gov) {
+      gov.innerHTML = '';
+      d.governance.forEach(function (g) {
+        gov.appendChild(el('<div class="g ' + g.cls + '"><b>' + g.code + '</b><p>' + g.note + '</p></div>'));
+      });
+    }
+    demoTimers.forEach(clearTimeout);
+    demoTimers = [];
+    demoRunning = false;
+    var run = document.getElementById('pg-run');
+    if (run) run.disabled = false;
+    var log = document.getElementById('pg-log');
+    if (log) log.innerHTML = '<span class="pg-hint">' + (lang === 'ar' ? 'جاهز — تنفيذ محاكى فقط.' : 'Ready — simulated run only.') + '</span>';
+    var wrap = document.getElementById('pg-report-wrap');
+    if (wrap) wrap.hidden = true;
+  }
+
+  function runDemo() {
+    if (demoRunning) return;
+    var lang = currentLang || 'en';
+    var d = DEMO[lang] || DEMO.en;
+    demoRunning = true;
+    var run = document.getElementById('pg-run');
+    if (run) run.disabled = true;
+    var log = document.getElementById('pg-log');
+    if (log) log.innerHTML = '';
+    var phases = document.querySelectorAll('#pg-lifecycle .phase');
+    var steps = ['PLAN', 'ANALYZE', 'SIMULATE', 'APPROVE', 'EXECUTE', 'REPORT'];
+    var append = function (html, cls) {
+      if (!log) return;
+      var line = el('<div class="' + (cls || '') + '">' + html + '</div>');
+      log.appendChild(line);
+      log.scrollTop = log.scrollHeight;
+    };
+    var idx = 0;
+    function step() {
+      if (idx < steps.length) {
+        var ph = steps[idx];
+        phases.forEach(function (p) {
+          p.classList.remove('active');
+          p.classList.toggle('done', parseInt(p.getAttribute('data-phase'), 10) < idx);
+        });
+        if (phases[idx]) phases[idx].classList.add('active');
+        d.logLines[ph].forEach(function (line) {
+          var cls = line.indexOf('BLOCK') !== -1 ? 'deny' : (line.indexOf('WARN') !== -1 || line.indexOf('PAUSED') !== -1 || line.indexOf('متوقف') !== -1 || line.indexOf('الخارجي') !== -1 ? 'warn' : 'ok');
+          append(line, cls);
+        });
+        idx++;
+        demoTimers.push(setTimeout(step, 700));
+      } else {
+        phases.forEach(function (p) { p.classList.remove('active'); p.classList.add('done'); });
+        append((lang === 'ar' ? 'اكتمال المحاكاة.' : 'Simulation complete.'), 'ok');
+        var wrap = document.getElementById('pg-report-wrap');
+        if (wrap) wrap.hidden = false;
+        var rep = document.getElementById('pg-report');
+        if (rep) {
+          var r = d.report;
+          rep.innerHTML = '';
+          rep.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'الهدف' : 'Objective') + '</div><div class="pg-value">' + r.objective + '</div>'));
+          rep.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'مؤشرات الأداء' : 'KPIs') + '</div>'));
+          r.kpis.forEach(function (k) { rep.appendChild(el('<div class="pg-value">' + k + '</div>')); });
+          rep.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'الجدول الزمني' : 'Timeline') + '</div><div class="pg-value">' + r.timeline.join(' · ') + '</div>'));
+          rep.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'الإجراءات المحكومة' : 'Governed actions') + '</div>'));
+          r.actions.forEach(function (a) { rep.appendChild(el('<div class="pg-value">→ ' + a + '</div>')); });
+          rep.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'قرارات الحوكمة' : 'Governance decisions') + '</div>'));
+          r.governanceDecisions.forEach(function (g) { rep.appendChild(el('<div class="pg-value">' + g + '</div>')); });
+          rep.appendChild(el('<div class="pg-value" style="color:var(--gold);font-weight:700;">' + r.outcome + '</div>'));
+        }
+        if (run) run.disabled = false;
+        demoRunning = false;
+      }
+    }
+    step();
+  }
+
+  var runBtn = document.getElementById('pg-run');
+  if (runBtn) runBtn.addEventListener('click', runDemo);
+
   var billingButtons = document.querySelectorAll('.billing-toggle button');
-  function setBilling(period) {
-    if (!pricingGrid) return;
+  function setBilling(period) {    if (!pricingGrid) return;
     pricingGrid.classList.remove('view-monthly', 'view-annual');
     pricingGrid.classList.add('view-' + period);
     billingButtons.forEach(function (b) {

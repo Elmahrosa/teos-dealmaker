@@ -85,6 +85,25 @@ const TABLES = {
     timestamps: true
   },
 
+  outbound_service_state: {
+    columns: ['service', 'state', 'prior_state', 'reason', 'updated_by', 'heartbeat_at', 'last_worker_at', 'last_successful_job_at', 'last_webhook_at', 'last_error', 'last_error_at'],
+    timestamps: true
+  },
+
+  outbound_jobs: {
+    columns: ['workspace_id', 'mission_id', 'prospect_id', 'approval_id', 'recipient', 'from_email', 'subject', 'body', 'template', 'idempotency_key', 'status', 'send_status', 'retry_count', 'max_retries', 'next_attempt_at', 'lease_until', 'provider', 'provider_message_id', 'message_id_header', 'failure_reason', 'approved_by', 'approved_at', 'sent_at', 'confirmed_at'],
+    timestamps: true
+  },
+
+  email_suppressions: {
+    columns: ['workspace_id', 'email', 'reason', 'source_event', 'source_job_id', 'suppressed_at', 'cleared_at', 'cleared_by']
+  },
+
+  resend_events: {
+    columns: ['event_id', 'event_type', 'email_id', 'job_id', 'message_id_header', 'recipient', 'payload', 'status', 'processed_at'],
+    timestamps: true
+  },
+
   deal_scenarios: {
     columns: ['workspace_id', 'deal_id', 'name', 'description', 'scenario_type', 'parameters'],
     timestamps: true

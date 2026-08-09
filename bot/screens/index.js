@@ -14,6 +14,7 @@ const intelligence = require('./intelligence');
 const integrations = require('./integrations');
 const ops = require('./ops');
 const founder = require('./founder');
+const playground = require('./playground');
 
 module.exports = {
   onboarding,
@@ -32,6 +33,7 @@ module.exports = {
   buildDeals: deals.buildDeals,
   buildAudit: audit.buildAudit,
   buildPricing: pricing.buildPricing,
+  buildPlayground: playground.buildPlayground,
   buildAdmin: admin.buildAdmin,
   buildAiGuide: settings.buildAiGuide,
   buildSettings: settings.buildSettings,

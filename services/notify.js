@@ -22,7 +22,7 @@ function createNotifier(opts) {
       channel: process.env.EMAIL_CHANNEL || o.emailChannel || 'webhook',
       webhook: process.env.EMAIL_WEBHOOK_URL || o.emailWebhookUrl || null,
       apiKey: process.env.RESEND_API_KEY || o.resendApiKey || null,
-      from: process.env.EMAIL_FROM || o.emailFrom || 'DealMaker <no-reply@elmahrosa.org>',
+      from: process.env.EMAIL_FROM || o.emailFrom || 'info@elmahrosa.org',
       to: process.env.EMAIL_TO || o.emailTo || null
     };
   }

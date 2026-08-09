@@ -149,8 +149,49 @@ async function missionReport(adapter, workspaceId, planId) {
       failed: v.failed,
       utilization: v.total ? Math.round((v.completed / v.total) * 100) : 0
     })),
-    providers: Object.entries(providersUsed).map(([provider, count]) => ({ provider, count }))
+    providers: Object.entries(providersUsed).map(([provider, count]) => ({ provider, count })),
+    outbound: await outboundActivity(adapter, workspaceId)
   };
+}
+
+// Governed outbound email activity for the report. Never exposes secrets:
+// only counts, timestamps and a sanitized last-sent entry. The recipient
+// address is stripped from the public report surface; the provider-confirmed
+// message id is kept. Any failure to read the queue is swallowed so the
+// mission report never breaks.
+function sanitizeOutboundActivity(activity) {
+  if (!activity || typeof activity !== 'object') return activity;
+  if (activity.last_sent && typeof activity.last_sent === 'object') {
+    const clean = Object.assign({}, activity.last_sent);
+    delete clean.recipient;
+    return Object.assign({}, activity, { last_sent: clean });
+  }
+  return activity;
+}
+
+async function outboundActivity(adapter, workspaceId) {
+  try {
+    const { createWorker } = require('./outboundWorker');
+    return sanitizeOutboundActivity(await createWorker().reportActivity(adapter, workspaceId));
+  } catch (_err) {
+    return {
+      total_jobs: 0,
+      queued: 0,
+      processing: 0,
+      sent: 0,
+      provider_confirmed: 0,
+      send_failed: 0,
+      send_unknown: 0,
+      blocked: 0,
+      suppressed_jobs: 0,
+      cancelled: 0,
+      sent_today: 0,
+      suppression_count: 0,
+      last_sent_at: null,
+      last_sent: null,
+      unavailable: true
+    };
+  }
 }
 
 async function executiveReportText(adapter, workspaceId, planId) {

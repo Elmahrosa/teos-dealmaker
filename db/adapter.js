@@ -12,7 +12,8 @@ const JSONB_COLUMNS = new Set([
   'workspace_memory.value',
   'knowledge_documents.metadata',
   'integration_connections.config',
-  'plans.metrics'
+  'plans.metrics',
+  'resend_events.payload'
 ]);
 
 function sanitize(table, row) {

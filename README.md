@@ -296,9 +296,16 @@ TEOS exposes a small set of public HTTP endpoints (no authentication required �
 
 ### Endpoints
 - GET /api/pricing - Returns live pricing tiers with Dodo checkout URLs
-- GET /api/health - Health check (`{"status":"ok","mode":...}`); used by uptime monitors
+- GET /api/health - Health check (`{"status":"ok",...}`); used by uptime monitors
+- GET /health - Service health probe (`{"status":"ok","service":"TEOS DealMaker","timestamp":...}`)
 - GET /api/audit - Audit-log entries from the file-backed audit store. Protected: requires the `AUDIT_API_KEY` in the `X-API-Key` header; returns `503` until that key is configured and `401` for missing/invalid keys
+- GET /api/reports/latest - Latest mission report (public)
+- GET /api/outreach/status - Governed outbound worker status (public, sanitized)
+- POST /api/outreach/pause · POST /api/outreach/resume · POST /api/outreach/emergency-stop - Founder controls for the 24/7 outbound worker (require `AUDIT_API_KEY`)
+- POST /api/outreach/founder-report - Sends the founder operations report to `FOUNDER_REPORT_TO` (requires `AUDIT_API_KEY`; returns `503` when Resend is not configured)
+- GET /api/deploy-verify - Deploy verification: existence-only checks of required environment variables plus revenue-path and outbound status (requires `AUDIT_API_KEY`; never returns secret values)
 - POST /webhook/dodo - Dodo payment webhook (HMAC-signed, validated with `DODO_WEBHOOK_SECRET`; rejects all requests when the secret is unset)
+- POST /webhook/resend - Resend delivery webhook (svix-signed, fail-closed without `RESEND_WEBHOOK_SECRET`)
 
 Other routes serve the landing page (`/`), static assets (`/robots.txt`, `/sitemap.xml`, `/favicon.svg`, `/og-image.*`), and the ops dashboard (`/dashboard`, `X-Robots-Tag: noindex`).
 
@@ -309,6 +316,17 @@ Other routes serve the landing page (`/`), static assets (`/robots.txt`, `/sitem
 - Security headers (HSTS, CSP, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy) are set on all responses
 
 Internal agent, workforce, and mission execution is driven by the Telegram bot and internal modules, not by public REST endpoints.
+
+### Landing Page, Playground & Telegram Bot Parity
+
+The product description is single-sourced in `config/product.config.js` (name, tagline, site URL, Telegram bot, contact, capabilities, mission lifecycle, governance, integrations, Sentinel separation, and demo behavior) and shared by the landing page (`server/landing.html`), the web server, and the Telegram bot (`bot/screens/playground.js`).
+
+- **Playground** (`#playground` on the landing page): an interactive, client-side walkthrough of the DealMaker workflow — Deal Brief, Stakeholder Analysis, Deal Simulation, Mission Controller lifecycle (PLAN → ANALYZE → SIMULATE → APPROVE → EXECUTE → REPORT), Governance (ALLOW · WARN · REVIEW · BLOCK), and a Mission Report preview. Everything is **DEMO MODE — SIMULATED DATA**: no external email, no Dodo checkout, no prospect contact, no real customer result.
+- **Bot Playground** (`🎮 Playground / Demo` in the bot menu): the same demo is linked from the bot, which also serves the canonical pricing via `config/pricing.config.js` — the bot and the website describe the identical product.
+- **Provider wording** is deliberately provider-agnostic (multi-provider AI, includes Anthropic Claude) — the platform is not "built on" a single vendor.
+- **Sentinel** is a separate product (`https://sentinel.teosegypt.com`) cross-linked from the DealMaker surface; it is never sold through DealMaker checkout.
+
+The operations dashboard (`/dashboard`, `public/dashboard/index.html`) is the TEOS DealMaker Operations Console: SERVICE RUNNING / OUTBOUND PAUSED status strip, founder controls (PAUSE OUTBOUND, RESUME OUTBOUND, EMERGENCY STOP), audit trail, and live pricing.
 
 ## Enterprise Readiness
 

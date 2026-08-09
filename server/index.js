@@ -111,6 +111,40 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Plain uptime check used by deployment verification and external monitors.
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'TEOS DealMaker',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Founder-only deployment configuration verification. Reports existence only —
+// never prints secret values, never exposes tokens or keys.
+app.get('/api/deploy-verify', requireAuditAuth, (req, res) => {
+  const has = name => process.env[name] !== undefined && process.env[name] !== '';
+  const result = {
+    ok: true,
+    mode: has('TEOS_MODE') ? (getMode() === 'LIVE' ? 'LIVE' : 'operational') : 'UNSET',
+    config: {
+      TEOS_MODE: has('TEOS_MODE'),
+      DATABASE_URL: has('DATABASE_URL'),
+      AUDIT_API_KEY: has('AUDIT_API_KEY'),
+      DODO_API_KEY: has('DODO_API_KEY'),
+      DODO_WEBHOOK_SECRET: has('DODO_WEBHOOK_SECRET'),
+      RESEND_API_KEY: has('RESEND_API_KEY'),
+      EMAIL_FROM: has('EMAIL_FROM'),
+      FOUNDER_REPORT_TO: has('FOUNDER_REPORT_TO'),
+      RESEND_TIMEOUT_MS: has('RESEND_TIMEOUT_MS')
+    },
+    revenue_path: has('DODO_API_KEY') && has('DODO_WEBHOOK_SECRET') ? 'CONFIRMED' : 'NOT_CONFIRMED',
+    outbound: has('RESEND_API_KEY') ? 'CONFIGURED' : 'BLOCKED',
+    timestamp: new Date().toISOString()
+  };
+  res.json(result);
+});
+
 app.get('/api/diagnostics', async (req, res) => {
   const out = { dbPingMs: null, dbWarmMs: null, helloMs: null, statusMs: null, error: null };
   try {
@@ -334,6 +368,106 @@ app.get('/api/emails', requireAuditAuth, async (_req, res) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// Governed 24/7 outbound worker controls (services/outboundWorker).
+// Fail-closed: sending requires a real RESEND_API_KEY, an approved message and
+// service state RUNNING. Controls require the same admin key as /api/audit.
+// ---------------------------------------------------------------------------
+const worker = require('../services/outboundWorker');
+
+// Public operational status. Never exposes any secret (no API keys, no bodies).
+app.get('/api/outreach/status', async (_req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    res.json(await worker.health(getAdapter()));
+  } catch (err) {
+    console.error('[outboundWorker] status error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.post('/api/outreach/pause', requireAuditAuth, express.json(), async (req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    const result = await worker.pause(getAdapter(), (req.body && req.body.by) || 'founder', req.body && req.body.reason);
+    res.json(result);
+  } catch (err) {
+    console.error('[outboundWorker] pause error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.post('/api/outreach/resume', requireAuditAuth, express.json(), async (req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    const result = await worker.resume(getAdapter(), (req.body && req.body.by) || 'founder');
+    if (!result.ok) return res.status(result.error === 'outreach_not_enabled' ? 409 : 403).json(result);
+    res.json(result);
+  } catch (err) {
+    console.error('[outboundWorker] resume error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.post('/api/outreach/emergency-stop', requireAuditAuth, express.json(), async (req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    const result = await worker.emergencyStop(getAdapter(), (req.body && req.body.by) || 'founder', req.body && req.body.reason);
+    res.json(result);
+  } catch (err) {
+    console.error('[outboundWorker] emergency-stop error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// Founder-controlled operational email report (destination: FOUNDER_REPORT_TO).
+// Sends only on explicit founder action; never automatic. Fails closed without
+// a configured destination or RESEND_API_KEY.
+app.post('/api/outreach/founder-report', requireAuditAuth, express.json(), async (req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    const result = await worker.sendFounderOpsReport(getAdapter(), (req.body && req.body.to) ? { to: req.body.to } : undefined);
+    if (!result.ok) return res.status(result.reason === 'resend_not_configured' ? 503 : 400).json(result);
+    res.json(result);
+  } catch (err) {
+    console.error('[outboundWorker] founder-report error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// Resend webhooks: Svix-style signature verification, idempotent processing,
+// provider events stored against the originating job. Bounces and complaints
+// suppress the address until explicitly cleared by policy.
+app.post('/webhook/resend', express.raw({ type: '*/*' }), async (req, res) => {
+  const rawBody = req.body ? req.body.toString('utf8') : '';
+  const verification = worker.verifyWebhookSignature(rawBody, req.headers || {});
+  if (!verification.ok) {
+    console.warn('[webhook] Resend signature verification failed:', verification.error);
+    return res.status(verification.error === 'webhook_not_configured' ? 503 : 401).json({ error: verification.error });
+  }
+  let event;
+  try {
+    event = JSON.parse(rawBody);
+  } catch (_err) {
+    console.warn('[webhook] malformed JSON body');
+    return res.status(400).json({ error: 'invalid_json' });
+  }
+  try {
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+    const result = await worker.handleWebhook(adapter, event);
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    console.error('[webhook] Resend handler error:', err.message);
+    res.status(500).json({ error: 'handler_error' });
+  }
+});
+
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'not_found' });
 });
@@ -361,6 +495,13 @@ const server = app.listen(PORT, () => {
   notify.install();
   const learningHook = require('../services/learningHook');
   learningHook.install(() => require('../bot/store').getStoreAdapter());
+  try {
+    const { createWorker } = require('../services/outboundWorker');
+    createWorker().start();
+    console.log('[Sentinel] governed outbound worker started (24/7, defaults to PAUSED; resume requires founder action)');
+  } catch (err) {
+    console.error('[Sentinel] outbound worker failed to start:', err.message);
+  }
 });
 
 function shutdown(signal) {

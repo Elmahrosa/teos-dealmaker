@@ -41,6 +41,8 @@ async function handleCallback(query, bot) {
       return send(await screens.buildDeals(userId));
     case 'cc_pricing':
       return send(screens.buildPricing(userId));
+    case 'cc_playground':
+      return send(screens.buildPlayground(userId));
     case 'cc_ai_guide':
       return send(screens.buildAiGuide());
     case 'cc_settings':

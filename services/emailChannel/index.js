@@ -123,7 +123,7 @@ function createEmailChannel(opts) {
   function config() {
     return {
       apiKey: process.env.RESEND_API_KEY || o.resendApiKey || null,
-      from: process.env.EMAIL_FROM || o.from || 'TEOS DealMaker <no-reply@elmahrosa.org>',
+      from: process.env.EMAIL_FROM || o.from || 'info@elmahrosa.org',
       timeoutMs: Number(process.env.RESEND_TIMEOUT_MS || o.timeoutMs || 15000) || 15000
     };
   }

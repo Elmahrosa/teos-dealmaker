@@ -107,7 +107,7 @@ const menu = require('../bot/menu');
   // Every exact callback_data namespace the router dispatches (case labels).
   const EXACT = new Set([
     'cc_home', 'btn_back', 'cc_dashboard', 'cc_workforce', 'cc_pipeline', 'cc_deals',
-    'cc_pricing', 'cc_ai_guide', 'cc_settings', 'cc_learn', 'cc_learn_skip', 'cc_learn_done',
+    'cc_pricing', 'cc_playground', 'cc_ai_guide', 'cc_settings', 'cc_learn', 'cc_learn_skip', 'cc_learn_done',
     'cc_learn_more', 'cc_learn_quit', 'cc_missions', 'cc_mission_goal', 'cc_mission1',
     'cc_mission2', 'cc_mission_market', 'cc_approvals', 'cc_memory', 'cc_mem_cancel',
     'cc_activity', 'cc_timeline', 'cc_costs', 'cc_health', 'cc_providers', 'cc_queue',
