@@ -1,9 +1,13 @@
 'use strict';
 
-// Commerce catalog for the TEOS DealMaker platform. Checkout URLs and Dodo
-// product ids come from the environment (DODO_*) so staging and production can
-// differ; when unset, tiers render with prices but no checkout link.
-// Enterprise is custom-priced with no public checkout.
+// Commerce catalog for the TEOS DealMaker platform. The checkout URLs below
+// are the canonical founder-provided Dodo payment links (real, publicly
+// reachable checkout pages — never placeholders). Environment overrides
+// (DODO_*) let staging swap in test products without touching the source of
+// truth. Enterprise is custom-priced with no public checkout.
+//
+// Security note: these are PUBLIC product IDs and checkout URLs — safe to
+// embed in the landing page. Never put API credentials in this file.
 
 const env = process.env;
 
@@ -11,11 +15,21 @@ const PRICING = [
   {
     tier: '🚀 Solo',
     tagline: 'For founders and solo teams',
-    monthly: { price: '$99.00', url: env.DODO_STARTER_MONTHLY_URL || '' },
-    annual: { price: '$950.00', url: env.DODO_STARTER_ANNUAL_URL || '' },
+    monthly: {
+      price: '$99.00',
+      priceCents: 9900,
+      url: env.DODO_STARTER_MONTHLY_URL || 'https://checkout.dodopayments.com/buy/pdt_0NkdQVk7ahfyz0VSoTGip',
+      shortUrl: 'https://dodo.pe/teos-dealmaker-solo-monthly-13644952'
+    },
+    annual: {
+      price: '$950.00',
+      priceCents: 95000,
+      url: env.DODO_STARTER_ANNUAL_URL || 'https://checkout.dodopayments.com/buy/pdt_0NkdQW1mGZrFIxz9dm7eZ',
+      shortUrl: 'https://dodo.pe/teos-dealmaker-solo-annual-13644952'
+    },
     productIds: {
-      monthly: env.DODO_STARTER_MONTHLY_PID || '',
-      annual: env.DODO_STARTER_ANNUAL_PID || ''
+      monthly: env.DODO_STARTER_MONTHLY_PID || 'pdt_0NkdQVk7ahfyz0VSoTGip',
+      annual: env.DODO_STARTER_ANNUAL_PID || 'pdt_0NkdQW1mGZrFIxz9dm7eZ'
     },
     features: [
       '1 workspace',
@@ -27,11 +41,21 @@ const PRICING = [
   {
     tier: '⚡ Growth',
     tagline: 'For growing revenue teams',
-    monthly: { price: '$299.00', url: env.DODO_GROWTH_MONTHLY_URL || '' },
-    annual: { price: '$2,990.00', url: env.DODO_GROWTH_ANNUAL_URL || '' },
+    monthly: {
+      price: '$299.00',
+      priceCents: 29900,
+      url: env.DODO_GROWTH_MONTHLY_URL || 'https://checkout.dodopayments.com/buy/pdt_0NkdQWCpT2SbojpuscwVI',
+      shortUrl: 'https://dodo.pe/teos-dealmaker-growth-monthly-13644952'
+    },
+    annual: {
+      price: '$2,990.00',
+      priceCents: 299000,
+      url: env.DODO_GROWTH_ANNUAL_URL || 'https://checkout.dodopayments.com/buy/pdt_0NkdQWOkJWfbSa7qtCLZm',
+      shortUrl: 'https://dodo.pe/teos-dealmaker-growth-annual-13644952'
+    },
     productIds: {
-      monthly: env.DODO_GROWTH_MONTHLY_PID || '',
-      annual: env.DODO_GROWTH_ANNUAL_PID || ''
+      monthly: env.DODO_GROWTH_MONTHLY_PID || 'pdt_0NkdQWCpT2SbojpuscwVI',
+      annual: env.DODO_GROWTH_ANNUAL_PID || 'pdt_0NkdQWOkJWfbSa7qtCLZm'
     },
     features: [
       '10 seats',
@@ -43,11 +67,21 @@ const PRICING = [
   {
     tier: '👑 Business',
     tagline: 'For revenue organizations',
-    monthly: { price: '$999.00', url: env.DODO_BUSINESS_MONTHLY_URL || '' },
-    annual: { price: '$9,990.00', url: env.DODO_BUSINESS_ANNUAL_URL || '' },
+    monthly: {
+      price: '$999.00',
+      priceCents: 99900,
+      url: env.DODO_BUSINESS_MONTHLY_URL || 'https://checkout.dodopayments.com/buy/pdt_0NkdQWZ1Bkv413NqbbVFu',
+      shortUrl: 'https://dodo.pe/teos-dealmaker-business-monthly-13644952'
+    },
+    annual: {
+      price: '$9,990.00',
+      priceCents: 999000,
+      url: env.DODO_BUSINESS_ANNUAL_URL || 'https://checkout.dodopayments.com/buy/pdt_0NkdQWgxl0hJcb4skW8IK',
+      shortUrl: 'https://dodo.pe/teos-dealmaker-business-annual-13644952'
+    },
     productIds: {
-      monthly: env.DODO_BUSINESS_MONTHLY_PID || '',
-      annual: env.DODO_BUSINESS_ANNUAL_PID || ''
+      monthly: env.DODO_BUSINESS_MONTHLY_PID || 'pdt_0NkdQWZ1Bkv413NqbbVFu',
+      annual: env.DODO_BUSINESS_ANNUAL_PID || 'pdt_0NkdQWgxl0hJcb4skW8IK'
     },
     features: [
       '25 seats',
@@ -59,8 +93,8 @@ const PRICING = [
   {
     tier: '🏛️ Enterprise',
     tagline: 'For large and sovereign organizations',
-    monthly: { price: 'Custom', url: env.DODO_ENTERPRISE_URL || '' },
-    annual: { price: 'Custom', url: env.DODO_ENTERPRISE_URL || '' },
+    monthly: { price: 'Custom', priceCents: null, url: '', shortUrl: '' },
+    annual: { price: 'Custom', priceCents: null, url: '', shortUrl: '' },
     productIds: { monthly: '', annual: '' },
     custom: true,
     features: [
@@ -80,6 +114,11 @@ const ADDONS = [
   { id: 'models', name: 'Premium AI Models', description: 'Access to frontier reasoning models.' },
   { id: 'support', name: 'Dedicated Support', description: 'Named engineer with priority SLAs.' }
 ];
+
+// TEOS Sentinel is a SEPARATE product with its own pricing page — it must
+// never be sold from the DealMaker commerce surface. This is a plain external
+// cross-link, not a checkout URL and not a price.
+const SENTINEL_URL = 'https://sentinel.teosegypt.com';
 
 function pricingWords(lang) {
   return lang === 'ar'
@@ -119,3 +158,4 @@ module.exports = PRICING;
 module.exports.formatPricingText = formatPricingText;
 module.exports.pricingButtons = pricingButtons;
 module.exports.ADDONS = ADDONS;
+module.exports.SENTINEL_URL = SENTINEL_URL;

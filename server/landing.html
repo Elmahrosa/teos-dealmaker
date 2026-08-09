@@ -98,6 +98,15 @@
   .buy:hover { filter: brightness(1.15); }
   .buy.annual { background: var(--green); }
   .pid { color: var(--muted); font-size: 11px; margin-top: 10px; text-align: center; }
+  .sentinel-sell { background: linear-gradient(180deg, #10161f 0%, #0b0f14 100%); border: 1px solid var(--border); border-radius: 12px; padding: 32px; }
+  .sentinel-inner { display: flex; gap: 24px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .sentinel-copy { flex: 1 1 420px; }
+  .sentinel-name { font-size: 22px; letter-spacing: 2px; color: var(--gold); margin: 4px 0; }
+  .sentinel-copy ul { list-style: none; margin-top: 10px; }
+  .sentinel-copy ul li::before { content: "🛡 "; font-size: 11px; }
+  .sentinel-copy ul li { color: var(--muted); font-size: 14px; padding: 2px 0; }
+  .sentinel-card { flex: 0 0 280px; text-align: center; }
+  .sentinel-hint { color: var(--muted); font-size: 12px; margin-top: 10px; }
   footer { border-top: 1px solid var(--border); padding-top: 20px; color: var(--muted); font-size: 13px; text-align: center; }
   footer a { color: var(--blue); text-decoration: none; }
   footer a:hover { color: var(--gold); }
@@ -323,6 +332,8 @@
     </div>
   </section>
 
+  {{SENTINEL_CROSS_SELL}}
+
   <footer>
     <span data-i18n="footer_line1">TEOS DEALMAKER — Enterprise AI Revenue Operating System</span><br>
     <span data-i18n="footer_contact">A product of Elmahrosa International · contact <a href="mailto:info@elmahrosa.com">info@elmahrosa.com</a> · <a href="/dashboard">system status</a> · <a href="/customer-0">Customer #0</a></span><br>
@@ -387,6 +398,9 @@
       trust_cta1: 'View Trust Center →', trust_cta2: 'View Verified Credential →',
       sect_pricing: 'Pricing', sub_pricing: 'Annual plans include built-in savings. Enterprise is custom-priced.',
       pricing_addons: 'Platform Add-ons',
+      sect_sentinel: 'PROTECT YOUR AI WORKFORCE', sentinel_name: 'TEOS SENTINEL SHIELD',
+      sentinel_tagline: 'AI Agent Security & Execution Firewall', sentinel_note: 'A separate product, available standalone. Sold on its own pricing page.',
+      sentinel_cta: 'EXPLORE TEOS SENTINEL SHIELD', sentinel_hint: 'Included with Growth and Business plans',
       footer_line1: 'TEOS DEALMAKER — Enterprise AI Revenue Operating System',
       footer_contact: 'A product of Elmahrosa International · contact info@elmahrosa.com · system status',
       footer_license: '© 2026 Elmahrosa International — All rights reserved',
@@ -446,6 +460,9 @@
       trust_cta1: 'عرض مركز الثقة ←', trust_cta2: 'عرض الاعتماد الموثق ←',
       sect_pricing: 'الأسعار', sub_pricing: 'الخطط السنوية تشمل توفيراً مضمّناً، والمؤسسي بسعر مخصص.',
       pricing_addons: 'إضافات المنصة',
+      sect_sentinel: 'احمِ قوتك العاملة من الذكاء الاصطناعي', sentinel_name: 'درع سنتينل تيوس',
+      sentinel_tagline: 'جدار الحماية لأمن وتنفيذ وكلاء الذكاء الاصطناعي', sentinel_note: 'منتج منفصل متاح بشكل مستقل، ويُباع عبر صفحة أسعاره الخاصة.',
+      sentinel_cta: 'اكتشف درع سنتينل تيوس', sentinel_hint: 'مشمول في خطتي Growth و Business',
       footer_line1: 'صانع الصفقات تيوس — نظام تشغيل الإيرادات المؤسسي بالذكاء الاصطناعي',
       footer_contact: 'منتج من المحروسة إنترناشيونال · تواصل عبر info@elmahrosa.com · حالة النظام',
       footer_license: '© 2026 المحروسة إنترناشيونال — جميع الحقوق محفوظة',
@@ -513,7 +530,7 @@
           card.querySelectorAll('.buy').forEach(function (b) {
             var href = b.getAttribute('href') || '';
             if (href.indexOf('mailto:') === 0) { b.textContent = 'تواصل مع المبيعات'; return; }
-            var annual = /annual/i.test(href);
+            var annual = b.getAttribute('data-period') === 'annual';
             b.textContent = 'ابدأ ' + tier + (annual ? ' سنوياً' : ' شهرياً');
           });
         });

@@ -8,35 +8,88 @@ const PRICING = require('../config/pricing.config');
 
 const SITE_URL = process.env.SITE_URL || 'https://dealmaker.elmahrosa.org';
 
+// Per-cycle checkout pricing for a tier. The annual row always carries its
+// real Dodo checkout CTA plus the founder-verified savings vs. monthly. Both
+// rows stay in the DOM so the Monthly|Annual toggle only changes emphasis.
+function renderPlanRows(t) {
+  if (t.custom) {
+    return `
+    <div class="price-row" data-period="monthly">
+      <span class="cycle">Monthly</span>
+      <span class="amount">${t.monthly.price}</span>
+    </div>
+    <div class="price-row" data-period="annual">
+      <span class="cycle">Annual</span>
+      <span class="amount">${t.annual.price}</span>
+    </div>
+    <a class="buy" href="mailto:info@elmahrosa.com" data-period="custom">Contact Sales</a>`;
+  }
+  const m = t.monthly;
+  const a = t.annual;
+  const equiv = a.priceCents ? fmtMoney(Math.round(a.priceCents / 12)) + '/mo' : '';
+  let save = '';
+  if (m.priceCents && a.priceCents && a.priceCents < m.priceCents * 12) {
+    const saveAmount = m.priceCents * 12 - a.priceCents;
+    const savePct = Math.round((1 - a.priceCents / (m.priceCents * 12)) * 100);
+    save = `<span class="save">SAVE ${fmtMoney(saveAmount)} (${savePct}%)</span>`;
+  }
+  return `
+    <div class="price-row" data-period="monthly">
+      <span class="cycle">Monthly</span>
+      <span class="amount">${m.price}</span>
+      <a class="buy" href="${m.url}" data-period="monthly">Start ${t.tier} Monthly</a>
+    </div>
+    <div class="price-row annual-row" data-period="annual">
+      <span class="cycle">Annual</span>
+      <span class="amount">${a.price}</span>
+      ${equiv ? `<span class="equiv">${equiv}</span>` : ''}
+      ${save}
+      <a class="buy annual" href="${a.url}" data-period="annual">Choose ${t.tier} Annual</a>
+    </div>`;
+}
+
 function renderPricingCards() {
   return PRICING.map(t => {
     const features = (t.features || []).map(f => `<li>${f}</li>`).join('');
-    const monthly = t.monthly.url
-      ? `<div class="price-row"><span class="cycle">Monthly</span><span class="amount">${t.monthly.price}</span></div>
-      <a class="buy" href="${t.monthly.url}">Start ${t.tier} Monthly</a>`
-      : `<div class="price-row"><span class="cycle">Monthly</span><span class="amount">${t.monthly.price}</span></div>`;
-    const annual = t.annual.url
-      ? `<div class="price-row"><span class="cycle">Annual</span><span class="amount">${t.annual.price}</span></div>
-      <a class="buy annual" href="${t.annual.url}">Start ${t.tier} Annual</a>`
-      : `<div class="price-row"><span class="cycle">Annual</span><span class="amount">${t.annual.price}</span></div>`;
-    const cta = t.custom
-      ? '<a class="buy" href="mailto:info@elmahrosa.com">Contact Sales</a>'
-      : '';
-    const pids = (t.productIds.monthly || t.productIds.annual)
-      ? `<div class="pid">${t.productIds.monthly} / ${t.productIds.annual}</div>`
-      : '';
     return `
     <div class="price-card">
       <h3>${t.tier}</h3>
       ${t.tagline ? `<p class="tagline">${t.tagline}</p>` : ''}
-      ${monthly}
-      ${annual}
-      ${cta}
+      ${renderPlanRows(t)}
       <ul>${features}</ul>
-      ${pids}
     </div>
   `;
   }).join('\n');
+}
+
+// TEOS Sentinel is a separate product. The DealMaker page only cross-links to
+// it — no price and no Dodo checkout appears anywhere in DealMaker's surface.
+const SENTINEL_FEATURES = [
+  'Fail-closed policy enforcement on every tool and plugin call',
+  'Prompt injection and code security scanning',
+  'Continuous immutable audit of every allow/deny decision',
+  'Role-based entitlements per tenant plan'
+];
+
+function renderSentinelCrossSell() {
+  const url = PRICING.SENTINEL_URL;
+  const features = SENTINEL_FEATURES.map(f => `<li>${f}</li>`).join('');
+  return `
+  <section id="sentinel" class="sentinel-sell">
+    <div class="sentinel-inner">
+      <div class="sentinel-copy">
+        <h2 class="sect" data-i18n="sect_sentinel">PROTECT YOUR AI WORKFORCE</h2>
+        <h3 class="sentinel-name" data-i18n="sentinel_name">TEOS SENTINEL SHIELD</h3>
+        <p class="sect-sub" data-i18n="sentinel_tagline">AI Agent Security &amp; Execution Firewall</p>
+        <p data-i18n="sentinel_note">A separate product, available standalone. Sold on its own pricing page.</p>
+        <ul>${features}</ul>
+      </div>
+      <div class="sentinel-card">
+        <a class="cta" href="${url}" target="_blank" rel="noopener" data-i18n="sentinel_cta">EXPLORE TEOS SENTINEL SHIELD</a>
+        <p class="sentinel-hint" data-i18n="sentinel_hint">Included with Growth and Business plans</p>
+      </div>
+    </div>
+  </section>`;
 }
 
 function renderAddons() {
@@ -70,13 +123,25 @@ function analyticsSnippet() {
 function renderLanding(template) {
   return template
     .replace('{{PRICING_CARDS}}', renderPricingCards())
+    .replace('{{SENTINEL_CROSS_SELL}}', renderSentinelCrossSell())
     .replace('{{ADDONS}}', renderAddons())
     .replace('{{ANALYTICS}}', analyticsSnippet())
     .replace(/\{\{SITE_URL\}\}/g, SITE_URL);
 }
 
+// The dashboard console only needs display fields; product IDs and checkout
+// URLs are trimmed to the public short links so the shipped dashboard never
+// leaks `pdt_` product ids into a public static artifact.
 function renderDashboard(template) {
-  return template.replace('{{PRICING_JSON}}', JSON.stringify(PRICING));
+  const sanitized = PRICING.map(t => ({
+    tier: t.tier,
+    tagline: t.tagline || '',
+    custom: !!t.custom,
+    features: t.features || [],
+    monthly: { price: t.monthly.price, url: t.monthly.shortUrl || t.monthly.url || '' },
+    annual: { price: t.annual.price, url: t.annual.shortUrl || t.annual.url || '' }
+  }));
+  return template.replace('{{PRICING_JSON}}', JSON.stringify(sanitized));
 }
 
 const REPORT_CSS = `
@@ -267,6 +332,7 @@ module.exports = {
   SITE_URL,
   PRICING,
   renderPricingCards,
+  renderSentinelCrossSell,
   renderAddons,
   analyticsSnippet,
   renderLanding,
