@@ -313,6 +313,27 @@ app.get('/api/reports/latest', async (_req, res) => {
   }
 });
 
+// Governed outbound email report surface. Fail-closed like /api/audit:
+// requires AUDIT_API_KEY, returns sanitized records (never the message body,
+// never any API key). Body content is excluded because a founder-approved
+// email may still contain confidential deal material.
+app.get('/api/emails', requireAuditAuth, async (_req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    const { createRepos } = require('../db/repos');
+    const adapter = getAdapter();
+    const repos = createRepos(adapter);
+    const requested = parseInt(_req.query.limit, 10);
+    const limit = Number.isInteger(requested) && requested > 0 ? Math.min(requested, 500) : 100;
+    const channel = require('../services/emailChannel').createEmailChannel();
+    const rows = await repos.outboundEmails.listAll(limit);
+    res.json({ ok: true, emails: rows.map(r => channel.toReport(r)) });
+  } catch (err) {
+    console.error('[emailChannel] emails api error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'not_found' });
 });

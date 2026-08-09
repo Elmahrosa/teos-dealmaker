@@ -80,6 +80,11 @@ const TABLES = {
     columns: ['workspace_id', 'plan_id', 'step_id', 'agent_type', 'reason', 'status', 'requested_at', 'decided_at', 'decided_by']
   },
 
+  outbound_emails: {
+    columns: ['workspace_id', 'to_email', 'from_email', 'subject', 'body', 'status', 'campaign', 'provider', 'provider_message_id', 'send_status', 'failure_reason', 'requested_at', 'approved_at', 'approved_by', 'rejected_at', 'rejected_by', 'sent_at', 'confirmed_at'],
+    timestamps: true
+  },
+
   deal_scenarios: {
     columns: ['workspace_id', 'deal_id', 'name', 'description', 'scenario_type', 'parameters'],
     timestamps: true

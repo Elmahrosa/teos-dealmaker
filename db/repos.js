@@ -380,6 +380,27 @@ function createRepos(adapter) {
       update(workspace_id, id, changes) {
         return adapter.update('approval_requests', { workspace_id, id }, changes);
       }
+    },
+
+    outboundEmails: {
+      create({ workspace_id, to_email, from_email, subject, body, status = 'DRAFT', campaign = null }) {
+        return adapter.insert('outbound_emails', { workspace_id, to_email, from_email, subject, body, status, campaign });
+      },
+      get(workspace_id, id) {
+        return adapter.findOne('outbound_emails', { workspace_id, id });
+      },
+      list(workspace_id, opts) {
+        const o = opts || {};
+        const where = { workspace_id };
+        if (o.status) where.status = o.status;
+        return adapter.find('outbound_emails', where, { orderBy: 'id', order: 'desc', limit: o.limit });
+      },
+      listAll(limit) {
+        return adapter.find('outbound_emails', {}, { orderBy: 'id', order: 'desc', limit });
+      },
+      update(workspace_id, id, changes) {
+        return adapter.update('outbound_emails', { workspace_id, id }, changes);
+      }
     }
   };
 }
@@ -514,6 +535,12 @@ function forWorkspace(adapter, workspaceId) {
       get: id => repos.approvals.get(workspaceId, id),
       list: status => repos.approvals.list(workspaceId, status),
       update: (id, changes) => repos.approvals.update(workspaceId, id, changes)
+    },
+    outboundEmails: {
+      create: data => repos.outboundEmails.create({ ...data, workspace_id: workspaceId }),
+      get: id => repos.outboundEmails.get(workspaceId, id),
+      list: opts => repos.outboundEmails.list(workspaceId, opts),
+      update: (id, changes) => repos.outboundEmails.update(workspaceId, id, changes)
     }
   };
 }
