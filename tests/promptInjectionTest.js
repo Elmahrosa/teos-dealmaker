@@ -1,5 +1,4 @@
 const { createMemoryAdapter } = require('../db/adapter');
-const { createRepos } = require('../db/repos');
 const dealSimulation = require('../services/dealSimulation');
 const negotiationRehearsal = require('../services/negotiationRehearsal');
 const interviewService = require('../services/interviewService');
@@ -10,7 +9,6 @@ async function runPromptInjectionTests() {
 
   // Setup
   const adapter = createMemoryAdapter();
-  const repos = createRepos(adapter);
 
   // Create a test workspace and deal
   const workspaceResult = await adapter.insert('workspaces', { name: 'Test Workspace', slug: 'test', plan: 'solo' });
@@ -101,7 +99,7 @@ async function runPromptInjectionTests() {
     if (report && typeof report === 'object' && report.metadata && report.executiveSummary) {
       console.log(`   ��� � � ✓ Hostile environment treated as data (generated report with ${Object.keys(report).length} sections)`);
     } else {
-      console.error(`   ��� � � ✗ Unexpected report structure`);
+      console.error('   ��� � � ✗ Unexpected report structure');
       allPassed = false;
     }
   } catch (error) {

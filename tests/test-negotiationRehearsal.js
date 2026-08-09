@@ -1,5 +1,4 @@
 const { createMemoryAdapter } = require('../db/adapter');
-const { createRepos } = require('../db/repos');
 const negotiationRehearsalService = require('../services/negotiationRehearsal');
 
 async function runTests() {
@@ -7,7 +6,6 @@ async function runTests() {
 
   // Setup
   const adapter = createMemoryAdapter();
-  const repos = createRepos(adapter);
 
   // Create a test workspace and deal
   const workspaceResult = await adapter.insert('workspaces', { name: 'Test Workspace', slug: 'test', plan: 'solo' });
@@ -33,7 +31,7 @@ async function runTests() {
     // We need to start a session first to get a sessionId
     const session = await negotiationRehearsalService.startRehearsal(adapter, workspaceId, dealId, 'user_1');
     const response = await negotiationRehearsalService.processResponse(adapter, workspaceId, session.sessionId, 'I understand your concerns about pricing.');
-    console.log(`   PASS: Processed response`);
+    console.log('   PASS: Processed response');
     console.log(`   Stakeholder: ${response.stakeholder.role}`);
     console.log(`   Reaction type: ${response.reaction.type}`);
     console.log(`   Feedback score: ${response.feedback.score}`);
@@ -50,7 +48,7 @@ async function runTests() {
     // Process one response to have some history
     await negotiationRehearsalService.processResponse(adapter, workspaceId, session.sessionId, 'Test response');
     const summary = negotiationRehearsalService.endRehearsal(session.sessionId);
-    console.log(`   PASS: Ended session`);
+    console.log('   PASS: Ended session');
     console.log(`   Duration: ${summary.durationMs}ms`);
     console.log(`   Total exchanges: ${summary.summary.totalExchanges}`);
   } catch (error) {

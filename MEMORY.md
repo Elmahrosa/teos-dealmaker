@@ -1,0 +1,1 @@
+- [Deal Simulation & Negotiation Intelligence Layer Implementation](deal-simulation-summary.md) - Completed implementation of deal simulation services including stakeholder intelligence, negotiation rehearsal, interview service, and report generation. All tests passing.

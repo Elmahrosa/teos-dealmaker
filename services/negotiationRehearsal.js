@@ -1,5 +1,4 @@
 // Note: Filename intentionally has a typo to avoid immediate conflict; will fix after writing
-const { createRepos } = require('../db/repos');
 const dealSimulationSvc = require('./dealSimulation');
 const intelligenceSvc = require('./intelligence');
 
@@ -170,14 +169,14 @@ class NegotiationRehearsalService {
     const question = `As a ${stakeholder.role} at ${intel.companyName}, what is your opening statement or primary concern regarding a potential deal?`;
 
     const result = await intelligenceSvc.ask(adapter, workspaceId, question);
-    return result.answer || `Thank you for the meeting. I have some concerns about the proposed solution.`;
+    return result.answer || 'Thank you for the meeting. I have some concerns about the proposed solution.';
   }
 
   /**
    * Generate stakeholder's reaction to user's response
    * @private
    */
-  async _generateStakeholderReaction(adapter, workspaceId, stakeholder, userResponse, intel) {
+  async _generateStakeholderReaction(adapter, workspaceId, stakeholder, userResponse, _intel) {
     const question = `As a ${stakeholder.role} with ${stakeholder.influenceLevel} influence, how would you respond to the following statement: "${userResponse}"? Consider your objectives, concerns, and decision authority.`;
 
     const result = await intelligenceSvc.ask(adapter, workspaceId, question);
@@ -204,7 +203,7 @@ class NegotiationRehearsalService {
    * Generate feedback on user's response
    * @private
    */
-  async _generateFeedback(adapter, workspaceId, userResponse, stakeholder, intel) {
+  async _generateFeedback(adapter, workspaceId, userResponse, stakeholder, _intel) {
     const question = `Evaluate the following response from a negotiation perspective: "${userResponse}". Consider the stakeholder's role as ${stakeholder.role}, their objectives, and effective negotiation techniques. Provide specific feedback on what worked well and what could be improved.`;
 
     const result = await intelligenceSvc.ask(adapter, workspaceId, question);
@@ -242,7 +241,7 @@ class NegotiationRehearsalService {
    * Calculate a simple score for the user's response
    * @private
    */
-  _calculateResponseScore(userResponse, stakeholder) {
+  _calculateResponseScore(userResponse, _stakeholder) {
     // Simplified scoring based on length and presence of key elements
     let score = 50; // Base score
 

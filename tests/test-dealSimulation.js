@@ -1,7 +1,6 @@
 const { createMemoryAdapter } = require('../db/adapter');
 const { createRepos } = require('../db/repos');
 const dealSimulation = require('../services/dealSimulation');
-const intelligence = require('../services/intelligence');
 
 async function runTests() {
   console.log('Testing Deal Simulation Service...\n');
@@ -107,7 +106,7 @@ async function runTests() {
     // Try to list scenarios for workspace 1, deal 1 - should not see workspace 2's scenario
     const list = await repos.deal_scenarios.list(workspaceId, dealId);
     if (list.length === 1 && list[0].name === 'Test Scenario') {
-      console.log(`   PASS: Correctly isolated - only sees own workspace's scenario`);
+      console.log('   PASS: Correctly isolated - only sees own workspace\'s scenario');
     } else {
       console.error(`   FAIL: Isolation broken - sees ${list.length} scenarios`);
       process.exit(1);

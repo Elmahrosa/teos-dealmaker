@@ -1,4 +1,3 @@
-const { createRepos } = require('../db/repos');
 const dealSimulationSvc = require('./dealSimulation');
 const intelligenceSvc = require('./intelligence');
 
@@ -175,14 +174,14 @@ class InterviewService {
    */
   _generateDefaultQuestions(intel) {
     const baseQuestions = [
-      "What are your primary objectives for this potential deal?",
-      "What concerns or objections do you have about the proposed solution?",
-      "What would make you decide NOT to proceed with this deal?",
-      "What information do you still need to make a decision?",
-      "How do you measure success for this type of initiative?",
-      "What is your decision-making process and timeline?",
-      "Who else needs to be involved in the decision?",
-      "What budget constraints or financial considerations do you have?"
+      'What are your primary objectives for this potential deal?',
+      'What concerns or objections do you have about the proposed solution?',
+      'What would make you decide NOT to proceed with this deal?',
+      'What information do you still need to make a decision?',
+      'How do you measure success for this type of initiative?',
+      'What is your decision-making process and timeline?',
+      'Who else needs to be involved in the decision?',
+      'What budget constraints or financial considerations do you have?'
     ];
 
     // Tailor questions based on stakeholder roles
@@ -191,33 +190,33 @@ class InterviewService {
 
     // Add role-specific questions
     if (roles.some(r => r.includes('ceo') || r.includes('founder') || r.includes('president'))) {
-      tailoredQuestions.push("How does this deal align with our long-term strategic vision?");
-      tailoredQuestions.push("What risks do you see to our market position or competitive advantage?");
+      tailoredQuestions.push('How does this deal align with our long-term strategic vision?');
+      tailoredQuestions.push('What risks do you see to our market position or competitive advantage?');
     }
 
     if (roles.some(r => r.includes('cfo') || r.includes('finance'))) {
-      tailoredQuestions.push("What is your expected return on investment timeline?");
-      tailoredQuestions.push("What budget flexibility do we have for unexpected costs?");
+      tailoredQuestions.push('What is your expected return on investment timeline?');
+      tailoredQuestions.push('What budget flexibility do we have for unexpected costs?');
     }
 
     if (roles.some(r => r.includes('cto') || r.includes('technology') || r.includes('technical'))) {
-      tailoredQuestions.push("How does this solution integrate with our existing technology stack?");
-      tailoredQuestions.push("What are the main technical risks or challenges you foresee?");
+      tailoredQuestions.push('How does this solution integrate with our existing technology stack?');
+      tailoredQuestions.push('What are the main technical risks or challenges you foresee?');
     }
 
     if (roles.some(r => r.includes('ciso') || r.includes('security'))) {
-      tailoredQuestions.push("What security and compliance requirements must we meet?");
+      tailoredQuestions.push('What security and compliance requirements must we meet?');
       tailoredQuestions.push("How do you assess the vendor's security practices?");
     }
 
     if (roles.some(r => r.includes('procurement') || r.includes('purchasing'))) {
-      tailoredQuestions.push("What are your standard procurement processes and timelines?");
-      tailoredQuestions.push("How do you evaluate total cost of ownership?");
+      tailoredQuestions.push('What are your standard procurement processes and timelines?');
+      tailoredQuestions.push('How do you evaluate total cost of ownership?');
     }
 
     if (roles.some(r => r.includes('legal'))) {
-      tailoredQuestions.push("What legal considerations or contractual terms are most important?");
-      tailoredQuestions.push("What liability concerns do you have?");
+      tailoredQuestions.push('What legal considerations or contractual terms are most important?');
+      tailoredQuestions.push('What liability concerns do you have?');
     }
 
     // Combine base and tailored, limit to reasonable number
@@ -298,13 +297,13 @@ Provide a realistic response that reflects your position, concerns, objectives, 
    * Find points of consensus across stakeholder responses
    * @private
    */
-  _findConsensus(responses) {
+  _findConsensus(_responses) {
     // Simplified consensus finding
     const consensus = [];
     // In a real implementation, we would use NLP to find common themes
     // For now, return placeholder
-    consensus.push("All stakeholders recognize the need for a solution");
-    consensus.push("Budget considerations are important across roles");
+    consensus.push('All stakeholders recognize the need for a solution');
+    consensus.push('Budget considerations are important across roles');
     return consensus;
   }
 
@@ -312,11 +311,11 @@ Provide a realistic response that reflects your position, concerns, objectives, 
    * Find conflicting views across stakeholder responses
    * @private
    */
-  _findConflicts(responses) {
+  _findConflicts(_responses) {
     // Simplified conflict finding
     const conflicts = [];
-    conflicts.push("Technical team concerned about implementation timeline vs. business team wanting quick deployment");
-    conflicts.push("Legal emphasizes risk mitigation while sales focuses on opportunity");
+    conflicts.push('Technical team concerned about implementation timeline vs. business team wanting quick deployment');
+    conflicts.push('Legal emphasizes risk mitigation while sales focuses on opportunity');
     return conflicts;
   }
 
@@ -327,7 +326,7 @@ Provide a realistic response that reflects your position, concerns, objectives, 
   _findGaps(responses, questions) {
     const gaps = [];
     // Check if any question has very few or superficial responses
-    questions.forEach((question, index) => {
+    questions.forEach((question, _index) => {
       let responseCount = 0;
       for (const stakeholder in responses) {
         if (responses[stakeholder][question] &&
@@ -393,8 +392,8 @@ Provide a realistic response that reflects your position, concerns, objectives, 
    * Generate overall recommendation based on interview
    * @private
    */
-  async _generateRecommendation(adapter, workspaceId, session) {
-    const question = `Based on the stakeholder interview responses for this deal, what is the recommended approach to proceed? Consider objections, concerns, and alignment points.`;
+  async _generateRecommendation(adapter, workspaceId, _session) {
+    const question = 'Based on the stakeholder interview responses for this deal, what is the recommended approach to proceed? Consider objections, concerns, and alignment points.';
 
     const result = await intelligenceSvc.ask(adapter, workspaceId, question);
     return {

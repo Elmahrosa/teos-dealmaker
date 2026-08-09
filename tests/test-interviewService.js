@@ -1,5 +1,4 @@
 const { createMemoryAdapter } = require('../db/adapter');
-const { createRepos } = require('../db/repos');
 const interviewService = require('../services/interviewService');
 
 async function runTests() {
@@ -7,7 +6,6 @@ async function runTests() {
 
   // Setup
   const adapter = createMemoryAdapter();
-  const repos = createRepos(adapter);
 
   // Create a test workspace and deal
   const workspaceResult = await adapter.insert('workspaces', { name: 'Test Workspace', slug: 'test', plan: 'solo' });
@@ -32,7 +30,7 @@ async function runTests() {
   try {
     const session = await interviewService.startInterview(adapter, workspaceId, dealId, 'user_1');
     const result = await interviewService.submitResponse(adapter, workspaceId, session.sessionId, 'This is my response to the question');
-    console.log(`   PASS: Submitted response`);
+    console.log('   PASS: Submitted response');
     console.log(`   Is complete: ${result.isComplete}`);
     console.log(`   Progress: ${result.progress.question}/${result.progress.totalQuestions}`);
   } catch (error) {
@@ -47,7 +45,7 @@ async function runTests() {
     // Submit one response
     await interviewService.submitResponse(adapter, workspaceId, session.sessionId, 'Test response');
     const partial = interviewService.endInterview(session.sessionId);
-    console.log(`   PASS: Ended interview`);
+    console.log('   PASS: Ended interview');
     console.log(`   Questions completed: ${partial.progress.questionsCompleted}/${partial.progress.totalQuestions}`);
     console.log(`   Stakeholders completed: ${partial.progress.stakeholdersCompleted}/${partial.progress.totalStakeholders}`);
   } catch (error) {

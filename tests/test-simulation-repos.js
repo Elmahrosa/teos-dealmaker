@@ -68,9 +68,9 @@ async function runTests() {
     }
     // Should only see workspace 1's scenario
     if (list1.length === 1 && list1[0].name === 'Workspace 1 Scenario') {
-      console.log(`   PASS: Correctly isolated - only sees own workspace's scenario`);
+      console.log('   PASS: Correctly isolated - only sees own workspace\'s scenario');
     } else {
-      console.error(`   FAIL: Isolation broken - sees wrong scenarios`);
+      console.error('   FAIL: Isolation broken - sees wrong scenarios');
       process.exit(1);
     }
   } catch (error) {
@@ -88,9 +88,9 @@ async function runTests() {
     }
     // Should only see workspace 2's scenario
     if (list2.length === 1 && list2[0].name === 'Workspace 2 Scenario') {
-      console.log(`   PASS: Correctly isolated - only sees own workspace's scenario`);
+      console.log('   PASS: Correctly isolated - only sees own workspace\'s scenario');
     } else {
-      console.error(`   FAIL: Isolation broken - sees wrong scenarios`);
+      console.error('   FAIL: Isolation broken - sees wrong scenarios');
       process.exit(1);
     }
   } catch (error) {
@@ -105,21 +105,21 @@ async function runTests() {
     const scenario = await repos.deal_scenarios.get(workspaceId1, scenario1);
     // Check if scenario exists before accessing properties
     if (scenario === null) {
-      console.error(`   FAIL: Retrieved scenario is null`);
+      console.error('   FAIL: Retrieved scenario is null');
       // Let's also try to list all scenarios in workspace 1 to see what's there
       const allScenarios = await repos.deal_scenarios.list(workspaceId1, dealId1);
       console.log(`      All scenarios in workspace 1, deal ${dealId1}: ${JSON.stringify(allScenarios)}`);
       process.exit(1);
     }
-    console.log(`   PASS: Retrieved scenario by ID`);
+    console.log('   PASS: Retrieved scenario by ID');
     console.log(`   Name: ${scenario.name}`);
     console.log(`   Type: ${scenario.scenario_type}`);
     console.log(`   Workspace ID: ${scenario.workspace_id}`);
     // Verify it's the right one
     if (scenario.id === scenario1 && scenario.workspace_id === workspaceId1) {
-      console.log(`   PASS: Correct scenario retrieved`);
+      console.log('   PASS: Correct scenario retrieved');
     } else {
-      console.error(`   FAIL: Wrong scenario retrieved`);
+      console.error('   FAIL: Wrong scenario retrieved');
       console.log(`      Expected ID: ${scenario1}, Workspace: ${workspaceId1}`);
       console.log(`      Got ID: ${scenario.id}, Workspace: ${scenario.workspace_id}`);
       process.exit(1);
@@ -134,9 +134,9 @@ async function runTests() {
   try {
     const scenario = await repos.deal_scenarios.get(workspaceId2, scenario1); // Trying to get workspace 1's scenario from workspace 2
     if (scenario === null || scenario === undefined) {
-      console.log(`   PASS: Correctly returned null for cross-workspace access`);
+      console.log('   PASS: Correctly returned null for cross-workspace access');
     } else {
-      console.error(`   FAIL: Should not be able to access scenario from other workspace`);
+      console.error('   FAIL: Should not be able to access scenario from other workspace');
       process.exit(1);
     }
   } catch (error) {
@@ -186,7 +186,7 @@ async function runTests() {
     });
     const runId = runResult.id;
     const completed = await repos.simulation_runs.complete(workspaceId1, runId, { result: 'done' }, 100, 15);
-    console.log(`   PASS: Completed simulation run`);
+    console.log('   PASS: Completed simulation run');
     console.log(`   Status: ${completed.status}`);
     console.log(`   Duration: ${completed.duration_ms}ms`);
     console.log(`   Cost: ${completed.cost_cents}cents`);
@@ -201,30 +201,30 @@ async function runTests() {
     // Update scenario
     const updated = await repos.deal_scenarios.update(workspaceId1, scenario1, { name: 'Updated Scenario Name' });
     if (updated) {
-      console.log(`   PASS: Scenario updated successfully`);
+      console.log('   PASS: Scenario updated successfully');
     } else {
-      console.log(`   PASS: Update operation completed (return value may vary)`);
+      console.log('   PASS: Update operation completed (return value may vary)');
     }
 
     // Get updated scenario to verify
     const scenario = await repos.deal_scenarios.get(workspaceId1, scenario1);
     if (scenario === null) {
-      console.error(`   FAIL: Retrieved scenario is null after update`);
+      console.error('   FAIL: Retrieved scenario is null after update');
       process.exit(1);
     }
     if (scenario.name === 'Updated Scenario Name') {
-      console.log(`   PASS: Update verified - name changed correctly`);
+      console.log('   PASS: Update verified - name changed correctly');
     } else {
-      console.error(`   FAIL: Update not persisted correctly`);
+      console.error('   FAIL: Update not persisted correctly');
       process.exit(1);
     }
 
     // Delete scenario
     const deleted = await repos.deal_scenarios.remove(workspaceId1, scenario1);
     if (deleted) {
-      console.log(`   PASS: Scenario deleted successfully`);
+      console.log('   PASS: Scenario deleted successfully');
     } else {
-      console.log(`   PASS: Delete operation completed`);
+      console.log('   PASS: Delete operation completed');
     }
   } catch (error) {
     console.error(`   FAIL: ${error.message}`);
@@ -235,7 +235,7 @@ async function runTests() {
   process.exit(0);
 }
 
-runTests().catch(err => {
+runTests().catch(_err => {
   console.error('����������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������█');
   process.exit(1);
 });

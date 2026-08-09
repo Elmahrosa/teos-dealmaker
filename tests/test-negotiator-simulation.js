@@ -1,14 +1,11 @@
 const { buildTerms, buildTermsWithSimulation } = require('../agents/negotiator');
 const { createMemoryAdapter } = require('../db/adapter');
-const { createRepos } = require('../db/repos');
-const dealSimulation = require('../services/dealSimulation');
 
 async function runTests() {
   console.log('Testing Negotiator Simulation Enhancement...\n');
 
   // Setup
   const adapter = createMemoryAdapter();
-  const repos = createRepos(adapter);
 
   // Create a test workspace and deal
   const workspaceId = 1;
@@ -25,7 +22,7 @@ async function runTests() {
   console.log('Test 1: Verifying original buildTerms still works...');
   try {
     const terms = buildTerms(testLead, targetPrice, budget);
-    console.log(`   PASS: Original buildTerms works`);
+    console.log('   PASS: Original buildTerms works');
     console.log(`   Feasible: ${terms.feasible}`);
     console.log(`   Floor price: ${terms.floorPrice}`);
     console.log(`   Landing price: ${terms.landingPrice}`);
@@ -39,7 +36,7 @@ async function runTests() {
   console.log('\nTest 2: Testing buildTermsWithSimulation fallback (no deal ID)...');
   try {
     const terms = await buildTermsWithSimulation(testLead, targetPrice, budget, adapter, workspaceId, null);
-    console.log(`   PASS: Falls back to original terms when no deal ID`);
+    console.log('   PASS: Falls back to original terms when no deal ID');
     console.log(`   Feasible: ${terms.feasible}`);
     console.log(`   Floor price: ${terms.floorPrice}`);
   } catch (error) {
@@ -51,7 +48,7 @@ async function runTests() {
   console.log('\nTest 3: Testing buildTermsWithSimulation with deal ID but no simulation data...');
   try {
     const terms = await buildTermsWithSimulation(testLead, targetPrice, budget, adapter, workspaceId, dealId);
-    console.log(`   PASS: Works with deal ID but no simulation data`);
+    console.log('   PASS: Works with deal ID but no simulation data');
     console.log(`   Feasible: ${terms.feasible}`);
     console.log(`   Floor price: ${terms.floorPrice}`);
     // Should have the enhancement audit entry
@@ -65,11 +62,11 @@ async function runTests() {
   try {
     const promise = buildTermsWithSimulation(testLead, targetPrice, budget, adapter, workspaceId, dealId);
     if (promise instanceof Promise) {
-      console.log(`   PASS: Returns a Promise`);
-      const terms = await promise;
-      console.log(`   PASS: Promise resolves successfully`);
+      console.log('   PASS: Returns a Promise');
+      await promise;
+      console.log('   PASS: Promise resolves successfully');
     } else {
-      console.error(`   FAIL: Does not return a Promise`);
+      console.error('   FAIL: Does not return a Promise');
       process.exit(1);
     }
   } catch (error) {

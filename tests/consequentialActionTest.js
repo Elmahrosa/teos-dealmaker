@@ -1,17 +1,14 @@
 const { createMemoryAdapter } = require('../db/adapter');
-const { createRepos } = require('../db/repos');
 const dealSimulation = require('../services/dealSimulation');
 const negotiationRehearsal = require('../services/negotiationRehearsal');
 const interviewService = require('../services/interviewService');
 const reportAgent = require('../services/reportAgent');
-const { agentExecution } = require('../agents/negotiator'); // Import the actual agent execution functions
 
 async function runConsequentialActionTests() {
   console.log('Testing Consequential Action Isolation...\n');
 
   // Setup
   const adapter = createMemoryAdapter();
-  const repos = createRepos(adapter);
 
   // Create a test workspace and deal
   const workspaceResult = await adapter.insert('workspaces', { name: 'Test Workspace', slug: 'test', plan: 'solo' });

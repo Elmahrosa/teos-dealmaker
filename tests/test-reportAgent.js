@@ -1,14 +1,11 @@
 const { createMemoryAdapter } = require('../db/adapter');
-const { createRepos } = require('../db/repos');
 const reportAgent = require('../services/reportAgent');
-const dealSimulation = require('../services/dealSimulation');
 
 async function runTests() {
   console.log('Testing Report Agent...\n');
 
   // Setup
   const adapter = createMemoryAdapter();
-  const repos = createRepos(adapter);
 
   // Create a test workspace and deal
   const workspaceResult = await adapter.insert('workspaces', { name: 'Test Workspace', slug: 'test', plan: 'solo' });
@@ -21,7 +18,7 @@ async function runTests() {
   try {
     // Since we don't have real data, this will use fallback mechanisms
     const report = await reportAgent.generateReport(adapter, workspaceId, dealId);
-    console.log(`   PASS: Generated report`);
+    console.log('   PASS: Generated report');
     console.log(`   Report ID: ${report.metadata.reportId}`);
     console.log(`   Executive summary length: ${report.executiveSummary.opportunity.length} chars`);
     console.log(`   Stakeholder count: ${report.stakeholderMap.stakeholders.length}`);

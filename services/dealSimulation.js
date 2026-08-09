@@ -1,6 +1,4 @@
 const { createRepos } = require('../db/repos');
-const memorySvc = require('./memory');
-const providers = require('./providers');
 const intelligenceSvc = require('./intelligence');
 
 /**
@@ -335,7 +333,7 @@ class DealSimulationService {
    */
   async _runStakeholderAnalysis(adapter, workspaceId, scenario) {
     // Use intelligence service to analyze stakeholder dynamics
-    const question = `Based on the stakeholder model for this deal, what are the likely objections, influence dynamics, and negotiation leverage points?`;
+    const question = 'Based on the stakeholder model for this deal, what are the likely objections, influence dynamics, and negotiation leverage points?';
 
     const intelResult = await intelligenceSvc.ask(adapter, workspaceId, question);
 
@@ -389,7 +387,7 @@ class DealSimulationService {
    */
   async _runRiskAssessment(adapter, workspaceId, scenario) {
     // Use intelligence to identify risks
-    const question = `What are the key risks associated with this deal scenario?`;
+    const question = 'What are the key risks associated with this deal scenario?';
 
     const intelResult = await intelligenceSvc.ask(adapter, workspaceId, question);
 
@@ -407,9 +405,9 @@ class DealSimulationService {
    * Run general simulation
    * @private
    */
-  async _runGeneralSimulation(adapter, workspaceId, scenario) {
+  async _runGeneralSimulation(adapter, workspaceId, _scenario) {
     // Fallback simulation
-    const question = `Provide insights and recommendations for this deal scenario.`;
+    const question = 'Provide insights and recommendations for this deal scenario.';
 
     const intelResult = await intelligenceSvc.ask(adapter, workspaceId, question);
 
@@ -441,7 +439,7 @@ class DealSimulationService {
    * Estimate objection likelihood
    * @private
    */
-  _estimateObjectionLikelihood(params) {
+  _estimateObjectionLikelihood(_params) {
     // Simplified objection estimation
     const objections = {
       price: Math.random() * 0.5 + 0.3, // 30-80%
@@ -456,7 +454,7 @@ class DealSimulationService {
    * Identify negotiation levers
    * @private
    */
-  _identifyNegotiationLevers(params) {
+  _identifyNegotiationLevers(_params) {
     // Simplified negotiation levers
     return [
       'Value-based pricing',
@@ -489,7 +487,7 @@ class DealSimulationService {
    * Create risk matrix from parameters
    * @private
    */
-  _createRiskMatrix(params) {
+  _createRiskMatrix(_params) {
     // Simplified risk matrix
     return {
       probability: {

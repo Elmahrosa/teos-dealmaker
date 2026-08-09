@@ -1,8 +1,6 @@
 const { createRepos } = require('../db/repos');
 const dealSimulationSvc = require('./dealSimulation');
 const intelligenceSvc = require('./intelligence');
-const negotiationRehearsalSvc = require('./negotiationRehearsal');
-const interviewSvc = require('./interviewService');
 
 /**
  * Deal Strategy Report Agent
@@ -157,7 +155,7 @@ class DealStrategyReportAgent {
    * Get interview data for the deal
    * @private
    */
-  async _getInterviewData(adapter, workspaceId, dealId) {
+  async _getInterviewData(_adapter, _workspaceId, _dealId) {
     // In a real implementation, we would store interview sessions in database
     // For now, return empty array as placeholder
     return [];
@@ -167,7 +165,7 @@ class DealStrategyReportAgent {
    * Get rehearsal data for the deal
    * @private
    */
-  async _getRehearsalData(adapter, workspaceId, dealId) {
+  async _getRehearsalData(_adapter, _workspaceId, _dealId) {
     // In a real implementation, we would store rehearsal sessions in database
     // For now, return empty array as placeholder
     return [];
@@ -177,7 +175,7 @@ class DealStrategyReportAgent {
    * Generate executive summary section
    * @private
    */
-  async _generateExecutiveSummary(adapter, workspaceId, dealInfo, stakeholderIntel, simulations, interviews, rehearsals) {
+  async _generateExecutiveSummary(adapter, workspaceId, dealInfo, stakeholderIntel, _simulations, _interviews, _rehearsals) {
     // Use intelligence service to synthesize key points
     const question = `Provide a concise executive summary of the deal with ${dealInfo.company_name}, covering the opportunity, key stakeholders, and recommended next steps.`;
 
@@ -200,7 +198,7 @@ class DealStrategyReportAgent {
    * Generate deal situation section
    * @private
    */
-  async _generateDealSituation(adapter, workspaceId, dealInfo, stakeholderIntel) {
+  async _generateDealSituation(adapter, workspaceId, dealInfo, _stakeholderIntel) {
     return {
       overview: {
         companyName: dealInfo.company_name,
@@ -312,7 +310,7 @@ class DealStrategyReportAgent {
    * Generate decision structure section
    * @private
    */
-  async _generateDecisionStructure(adapter, workspaceId, stakeholderIntel, dealInfo) {
+  async _generateDecisionStructure(adapter, workspaceId, stakeholderIntel, _dealInfo) {
     const question = `What is the decision-making process and structure for a deal like this with ${stakeholderIntel.companyName}?`;
 
     const result = await intelligenceSvc.ask(
@@ -338,7 +336,7 @@ class DealStrategyReportAgent {
    * Generate customer needs section
    * @private
    */
-  async _generateCustomerNeeds(adapter, workspaceId, stakeholderIntel, dealInfo) {
+  async _generateCustomerNeeds(adapter, workspaceId, stakeholderIntel, _dealInfo) {
     const question = `What are the primary business needs and pain points that ${stakeholderIntel.companyName} is trying to address with this type of solution?`;
 
     const result = await intelligenceSvc.ask(
@@ -364,7 +362,7 @@ class DealStrategyReportAgent {
    * Generate objections section
    * @private
    */
-  async _generateObjections(adapter, workspaceId, stakeholderIntel, simulations, interviews) {
+  async _generateObjections(adapter, workspaceId, stakeholderIntel, _simulations, _interviews) {
     // Collect objections from simulations and stakeholder intel
     const objections = [];
 
@@ -383,7 +381,7 @@ class DealStrategyReportAgent {
     });
 
     // Use intelligence to generate common objections
-    const question = `What are the typical objections or concerns that stakeholders might have regarding a deal like this?`;
+    const question = 'What are the typical objections or concerns that stakeholders might have regarding a deal like this?';
 
     const result = await intelligenceSvc.ask(
       adapter,
@@ -427,8 +425,8 @@ class DealStrategyReportAgent {
    * Generate negotiation risks section
    * @private
    */
-  async _generateNegotiationRisks(adapter, workspaceId, simulations, interviews, stakeholderIntel) {
-    const question = `What are the key negotiation risks and potential deal-breakers for this type of deal?`;
+  async _generateNegotiationRisks(adapter, workspaceId, _simulations, _interviews, _stakeholderIntel) {
+    const question = 'What are the key negotiation risks and potential deal-breakers for this type of deal?';
 
     const result = await intelligenceSvc.ask(
       adapter,
@@ -509,8 +507,8 @@ class DealStrategyReportAgent {
    * Generate recommended position section
    * @private
    */
-  async _generateRecommendedPosition(adapter, workspaceId, stakeholderIntel, simulations, interviews, rehearsals) {
-    const question = `Based on the stakeholder analysis, simulation results, and any negotiation rehearsals, what is the recommended negotiating position and strategy for this deal?`;
+  async _generateRecommendedPosition(adapter, workspaceId, stakeholderIntel, _simulations, _interviews, _rehearsals) {
+    const question = 'Based on the stakeholder analysis, simulation results, and any negotiation rehearsals, what is the recommended negotiating position and strategy for this deal?';
 
     const result = await intelligenceSvc.ask(
       adapter,
@@ -539,7 +537,7 @@ class DealStrategyReportAgent {
    * Generate next steps section
    * @private
    */
-  async _generateNextSteps(adapter, workspaceId, dealInfo, stakeholderIntel, simulations) {
+  async _generateNextSteps(_adapter, _workspaceId, _dealInfo, _stakeholderIntel, _simulations) {
     return {
       immediate: [
         'Validate stakeholder assumptions with discovery calls',
