@@ -276,6 +276,51 @@ function createRepos(adapter) {
       }
     },
 
+    deal_scenarios: {
+      add({ workspace_id, deal_id, name, description = null, scenario_type = null, parameters = null }) {
+        return adapter.insert('deal_scenarios', { workspace_id, deal_id, name, description, scenario_type, parameters });
+      },
+      get(workspace_id, id) {
+        return adapter.findOne('deal_scenarios', { workspace_id, id });
+      },
+      list(workspace_id, deal_id) {
+        return adapter.find('deal_scenarios', { workspace_id, deal_id }, { orderBy: 'id', order: 'asc' });
+      },
+      update(workspace_id, id, changes) {
+        return adapter.update('deal_scenarios', { workspace_id, id }, changes);
+      },
+      remove(workspace_id, id) {
+        return adapter.delete('deal_scenarios', { workspace_id, id });
+      }
+    },
+
+    simulation_runs: {
+      add({ workspace_id, deal_scenario_id, status = 'pending', started_at = null, completed_at = null, duration_ms = null, cost_cents = 0, results = null }) {
+        return adapter.insert('simulation_runs', { workspace_id, deal_scenario_id, status, started_at, completed_at, duration_ms, cost_cents, results });
+      },
+      get(workspace_id, id) {
+        return adapter.findOne('simulation_runs', { workspace_id, id });
+      },
+      list(workspace_id, deal_scenario_id) {
+        return adapter.find('simulation_runs', { workspace_id, deal_scenario_id }, { orderBy: 'id', order: 'desc' });
+      },
+      update(workspace_id, id, changes) {
+        return adapter.update('simulation_runs', { workspace_id, id }, changes);
+      },
+      remove(workspace_id, id) {
+        return adapter.delete('simulation_runs', { workspace_id, id });
+      },
+      complete(workspace_id, id, results, duration_ms, cost_cents) {
+        return adapter.update('simulation_runs', { workspace_id, id }, {
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          duration_ms,
+          cost_cents,
+          results
+        });
+      }
+    },
+
     integrations: {
       async upsert(workspace_id, connector_id, changes) {
         const existing = await adapter.findOne('integration_connections', { workspace_id, connector_id });
@@ -429,6 +474,22 @@ function forWorkspace(adapter, workspaceId) {
       list: source_type => repos.intelligence.list(workspaceId, source_type),
       update: (id, changes) => repos.intelligence.update(workspaceId, id, changes),
       remove: id => repos.intelligence.remove(workspaceId, id)
+    },
+    dealScenarios: {
+      add: data => repos.deal_scenarios.add({ ...data, workspace_id: workspaceId }),
+      get: id => repos.deal_scenarios.get(workspaceId, id),
+      list: (workspaceId, dealId) => repos.deal_scenarios.list(workspaceId, dealId),
+      update: (workspaceId, id, changes) => repos.deal_scenarios.update(workspaceId, id, changes),
+      remove: (workspaceId, id) => repos.deal_scenarios.remove(workspaceId, id)
+    },
+    simulationRuns: {
+      add: data => repos.simulation_runs.add({ ...data, workspace_id: workspaceId }),
+      get: id => repos.simulation_runs.get(workspaceId, id),
+      list: (workspaceId, scenarioId) => repos.simulation_runs.list(workspaceId, scenarioId),
+      update: (workspaceId, id, changes) => repos.simulation_runs.update(workspaceId, id, changes),
+      remove: (workspaceId, id) => repos.simulation_runs.remove(workspaceId, id),
+      complete: (workspaceId, id, results, durationMs, costCents) =>
+        repos.simulation_runs.complete(workspaceId, id, results, durationMs, costCents)
     },
     integrations: {
       upsert: (connector_id, changes) => repos.integrations.upsert(workspaceId, connector_id, changes),

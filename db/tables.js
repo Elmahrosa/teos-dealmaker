@@ -78,6 +78,16 @@ const TABLES = {
   },
   approval_requests: {
     columns: ['workspace_id', 'plan_id', 'step_id', 'agent_type', 'reason', 'status', 'requested_at', 'decided_at', 'decided_by']
+  },
+
+  deal_scenarios: {
+    columns: ['workspace_id', 'deal_id', 'name', 'description', 'scenario_type', 'parameters'],
+    timestamps: true
+  },
+
+  simulation_runs: {
+    columns: ['workspace_id', 'deal_scenario_id', 'status', 'started_at', 'completed_at', 'duration_ms', 'cost_cents', 'results'],
+    timestamps: true
   }
 };
 
