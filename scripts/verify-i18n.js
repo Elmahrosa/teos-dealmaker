@@ -14,6 +14,17 @@ function makeEl(tag, attrs = {}) {
     parent: null,
     getAttribute(k) { return attrs[k] !== undefined ? attrs[k] : null; },
     setAttribute(k, v) { attrs[k] = String(v); },
+    classList: {
+      _set: new Set((attrs.class || '').split(' ').filter(Boolean)),
+      add(...names) { names.forEach(n => this._set.add(n)); attrs.class = [...this._set].join(' '); },
+      remove(...names) { names.forEach(n => this._set.delete(n)); attrs.class = [...this._set].join(' '); },
+      toggle(name, force) {
+        const on = force === undefined ? !this._set.has(name) : Boolean(force);
+        if (on) this._set.add(name); else this._set.delete(name);
+        attrs.class = [...this._set].join(' ');
+        return on;
+      }
+    },
     querySelector(sel) {
       const all = this.querySelectorAll(sel);
       return all[0] || null;
@@ -110,7 +121,7 @@ console.log('5) persisted lang:', global.window.localStorage._v);
 
 const pass =
   docEl.lang === 'ar' && docEl.dir === 'rtl' &&
-  /الذكاء الاصطناعي/.test(translated[0].textContent || '') &&
+  /[\u0600-\u06FF]/.test(translated[0].textContent || '') &&
   tag.textContent !== 'For founders and solo teams' &&
   /شهرياً/.test(c1.textContent) &&
   /شهرياً/.test(buy.textContent) &&

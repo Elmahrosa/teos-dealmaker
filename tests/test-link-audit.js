@@ -33,6 +33,15 @@ const render = require('../server/render');
   }
   check((html.match(/id="sentinel"/g) || []).length === 1, 'single element carries the #sentinel id');
 
+  const enBlock = html.slice(html.indexOf('en: {'), html.indexOf('ar: {'));
+  const arBlock = html.slice(html.indexOf('ar: {'), html.indexOf('};'));
+  for (const [name, block] of [['en', enBlock], ['ar', arBlock]]) {
+    const seen = {};
+    for (const m of block.matchAll(/\n\s*([a-z_0-9]+):/g)) seen[m[1]] = (seen[m[1]] || 0) + 1;
+    const dups = Object.entries(seen).filter(([, c]) => c > 1).map(([k]) => k);
+    check(dups.length === 0, name + ' dict has no duplicate i18n keys' + (dups.length ? ': ' + dups.join(', ') : ''));
+  }
+
   const expectedDodo = [];
   for (const t of render.PRICING) {
     if (t.monthly.url) expectedDodo.push(t.monthly.url);

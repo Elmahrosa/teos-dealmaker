@@ -78,7 +78,7 @@ function renderSentinelCrossSell() {
   <section id="sentinel-shield" class="sentinel-sell">
     <div class="sentinel-inner">
       <div class="sentinel-copy">
-        <h2 class="sect" data-i18n="sect_sentinel">PROTECT YOUR AI WORKFORCE</h2>
+        <h2 class="sect" data-i18n="sentinel_sell_t">PROTECT YOUR AI WORKFORCE</h2>
         <h3 class="sentinel-name" data-i18n="sentinel_name">TEOS SENTINEL SHIELD</h3>
         <p class="sect-sub" data-i18n="sentinel_tagline">AI Agent Security &amp; Execution Firewall</p>
         <p data-i18n="sentinel_note">A separate product, available standalone. Sold on its own pricing page.</p>
