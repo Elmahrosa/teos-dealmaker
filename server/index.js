@@ -386,6 +386,19 @@ app.get('/api/outreach/status', async (_req, res) => {
   }
 });
 
+// Founder-gated queue view. Sanitized: job ids, statuses, provider ids,
+// timestamps, recipient domains — never bodies, never full recipient addresses.
+app.get('/api/outreach/queue', requireAuditAuth, async (req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    const limit = Math.min(Number(req.query.limit) || 50, 200);
+    res.json(await worker.queue(getAdapter(), limit));
+  } catch (err) {
+    console.error('[outboundWorker] queue error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
 app.post('/api/outreach/pause', requireAuditAuth, express.json(), async (req, res) => {
   try {
     const { getAdapter } = require('../db');

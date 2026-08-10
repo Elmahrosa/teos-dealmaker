@@ -448,6 +448,9 @@ function createRepos(adapter) {
       due(limit) {
         return adapter.find('outbound_jobs', { status: 'QUEUED' }, { orderBy: 'id', order: 'asc', limit });
       },
+      listRecent(limit) {
+        return adapter.find('outbound_jobs', {}, { orderBy: 'id', order: 'desc', limit: limit || 50 });
+      },
       staleProcessing(limit) {
         return adapter.find('outbound_jobs', { status: 'PROCESSING' }, { orderBy: 'id', order: 'asc', limit });
       },

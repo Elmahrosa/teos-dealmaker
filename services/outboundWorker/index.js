@@ -73,7 +73,7 @@ function createWorker(opts) {
     return {
       apiKey: process.env.RESEND_API_KEY || o.resendApiKey || null,
       from: process.env.EMAIL_FROM || process.env.RESEND_FROM_EMAIL || o.from || 'info@elmahrosa.org',
-      founderReportEmail: process.env.FOUNDER_REPORT_TO || process.env.FOUNDER_REPORT_EMAIL || o.founderReportTo || o.founderReportEmail || 'teosrgy@gmail.com',
+      founderReportEmail: process.env.FOUNDER_REPORT_EMAIL || process.env.FOUNDER_REPORT_TO || o.founderReportEmail || o.founderReportTo || 'teosegy@gmail.com',
       domain: process.env.RESEND_DOMAIN || o.domain || 'elmahrosa.org',
       webhookSecret: process.env.RESEND_WEBHOOK_SECRET || o.webhookSecret || null,
       enabled: String(process.env.OUTREACH_ENABLED !== undefined ? process.env.OUTREACH_ENABLED : (o.enabled !== undefined ? o.enabled : 'false')) === 'true',
@@ -833,6 +833,28 @@ function createWorker(opts) {
     };
   }
 
+  async function queue(adapter, limit) {
+    const r = await repos(adapter);
+    const counts = {};
+    for (const s of Object.values(JOB_STATES)) counts[s] = await r.outboundJobs.countByStatus(s);
+    const recent = await r.outboundJobs.listRecent(limit || 50);
+    return {
+      ok: true,
+      state: await effectiveState(adapter, cfg()),
+      counts,
+      recent: recent.map(j => ({
+        id: j.id,
+        status: j.status,
+        recipient_domain: String(j.recipient || '').split('@')[1] || null,
+        provider_message_id: j.provider_message_id || null,
+        next_attempt_at: j.next_attempt_at || null,
+        sent_at: j.sent_at || null,
+        created_at: j.created_at || null,
+        failure_reason: j.failure_reason || null
+      }))
+    };
+  }
+
   async function reportActivity(adapter, workspaceId) {
     const r = await repos(adapter);
     const jobs = await r.outboundJobs.list(workspaceId, { limit: 1000 });
@@ -1036,6 +1058,7 @@ function createWorker(opts) {
     applyEvent,
     notifyFounder,
     health,
+    queue,
     reportActivity,
     sendFounderOpsReport,
     idempotencyKey,

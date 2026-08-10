@@ -76,7 +76,7 @@
 
 - `services/outboundWorker/index.js`: persistent DB queue (`outbound_jobs`), approval-required enqueue, provider-confirmed sends (`email.delivered` → `PROVIDER_CONFIRMED`), per-recipient cooldown, daily/hourly/queue limits, retries, suppression on bounce/complaint, heartbeat + `last_error` on `outbound_service_state`.
 - **Default state PAUSED** (`outbound_service_state.state='PAUSED'`); only the founder can resume and only when `OUTREACH_ENABLED=true`. A new sender is never deployed RUNNING.
-- `sendFounderOpsReport()` → founder destination only (`FOUNDER_REPORT_TO=teosrgy@gmail.com`; never a sender address, never `teosegy@gmail.com`); sanitized aggregate (states, counts, last 10 provider-confirmed ids, heartbeat, errors); audited `FOUNDER_OPS_REPORT`.
+- `sendFounderOpsReport()` → founder destination only (`FOUNDER_REPORT_EMAIL=teosegy@gmail.com`; never a sender address); sanitized aggregate (states, counts, last 10 provider-confirmed ids, heartbeat, errors); audited `FOUNDER_OPS_REPORT`.
 - Worker start is try/caught and fail-closed; a missing DB table cannot crash the web/bot processes (verified: tables absent in prod today, service still healthy).
 
 ## FOUNDER_CONTROLS
@@ -92,7 +92,7 @@
 
 ## SECURITY
 
-- No secrets committed: `.env.example` canonicalized (`EMAIL_FROM=info@elmahrosa.org`, `FOUNDER_REPORT_TO=teosrgy@gmail.com`, legacy aliases commented); secret-scan of all new files clean.
+- No secrets committed: `.env.example` canonicalized (`EMAIL_FROM=info@elmahrosa.org`, `FOUNDER_REPORT_EMAIL=teosegy@gmail.com`, legacy aliases commented); secret-scan of all new files clean.
 - Fail-closed surfaces verified live: `/webhook/resend` 503, `/api/deploy-verify` 401 without key.
 - `health()`/status never expose key, webhook secret, or founder-report destination (asserted in `tests/test-outbound-worker.js`).
 - Legacy static artifact `hostinger/` remains tracked but stale — intentionally unchanged; documented here rather than modified.

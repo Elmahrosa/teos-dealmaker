@@ -598,7 +598,7 @@ const crypto = require('crypto');
     const fake = makeFakeFetch();
     fake.push(200, { id: 're_ops_job', to: 'o@acme.com' });
     fake.push(200, { id: 're_ops_alert', to: 'founder@elmahrosa.org' });
-    fake.push(200, { id: 're_ops_1', to: 'teosrgy@gmail.com' });
+    fake.push(200, { id: 're_ops_1', to: 'teosegy@gmail.com' });
     const { adapter, ws, worker } = setup(enabledOpts, fake);
     await worker.resume(adapter, 'founder');
     await worker.enqueue(adapter, baseJob(ws, { recipient: 'o@acme.com' }));
@@ -610,13 +610,27 @@ const crypto = require('crypto');
     const opsCall = fake.calls[2];
     ok(opsCall && opsCall.opts, 'ops report made a send call');
     const body = JSON.parse(opsCall.opts.body);
-    eq(body.to[0], 'teosrgy@gmail.com', 'ops report is addressed to the founder destination only');
+    eq(body.to[0], 'teosegy@gmail.com', 'ops report is addressed to the founder destination only');
     eq(body.from, 'info@elmahrosa.org', 'ops report uses the canonical sender (EMAIL_FROM default)');
     ok(String(body.text).indexOf('o@acme.com') === -1, 'ops report body never contains a prospect address');
     ok(String(body.text).indexOf('re_test_worker_key') === -1, 'ops report body never leaks the API key');
     const entries = auditLogger.readVault().filter(e => e.action === 'FOUNDER_OPS_REPORT');
     eq(entries.length, before + 1, 'ops report success is audited');
     eq(entries[entries.length - 1].status, 'success', 'ops report success audited as success');
+  }
+
+  // ===================== 28. queue view is sanitized =====================
+  {
+    const { adapter, ws, worker } = setup(enabledOpts, makeFakeFetch());
+    await worker.resume(adapter, 'founder');
+    await worker.enqueue(adapter, baseJob(ws, { recipient: 'o@acme.com' }));
+    const q = await worker.queue(adapter, 50);
+    ok(q && q.ok, 'queue view returns a valid payload');
+    ok(q.counts && typeof q.counts.QUEUED === 'number', 'queue view returns counts by status');
+    eq(q.counts.QUEUED >= 1, true, 'queue counts include the queued job');
+    ok(Array.isArray(q.recent), 'queue view returns a recent list');
+    ok(q.recent.every(j => !String(j.recipient_domain || '').includes('@')), 'queue view exposes domains, never full addresses');
+    ok(q.recent.every(j => !('body' in j) && !('subject' in j)), 'queue view never exposes bodies or subjects');
   }
 
   console.log(`\n✓ governed outbound worker (${passed} assertions passed)`);

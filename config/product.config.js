@@ -30,7 +30,7 @@ const PRODUCT = {
   telegramBotUrl: env.TELEGRAM_BOT_URL || 'https://t.me/TeosEgypt_bot',
   botHandle: env.BOT_NAME || 'TeosEgypt_bot',
   contactEmail: env.PUBLIC_CONTACT_EMAIL || 'info@elmahrosa.org',
-  founderReportEmail: env.FOUNDER_REPORT_TO || env.FOUNDER_REPORT_EMAIL || 'teosrgy@gmail.com',
+  founderReportEmail: env.FOUNDER_REPORT_EMAIL || env.FOUNDER_REPORT_TO || 'teosegy@gmail.com',
 
   // Providers: pluggable and provider-agnostic; multiple vendors with
   // automatic fallback chains. Verified in services/providers.js.
