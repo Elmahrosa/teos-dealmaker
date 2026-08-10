@@ -5,6 +5,7 @@ const { isFounder, isAdmin } = require('../access');
 const { getStoreAdapter } = require('../store');
 const learning = require('../../services/learning');
 const runtime = require('../../services/workforce/runtime');
+const i18n = require('../i18n');
 const {
   getCtx,
   lastEntry,
@@ -15,6 +16,7 @@ const {
 const { buildLearn } = require('./learning');
 
 async function buildHome(userId) {
+  const t = key => i18n.t(userId, key);
   if (isFounder(userId)) {
     return require('./founder').buildFounderHome(userId);
   }
@@ -24,24 +26,24 @@ async function buildHome(userId) {
     const entries = audit.readVault();
     const text = design.compose([
       `${design.EMOJI.ai} ${design.b('TEOS DEALMAKER')}`,
-      design.it('Mission Control — AI Revenue Workforce'),
+      design.it(t('home_sub_mission_control')),
       design.divider(),
-      `${design.row('Platform', 'Production · live')}`,
-      `${design.row('Revenue Team', '13 specialists available')}`,
-      `${design.row('Audit', `${entries.length} entries`)}\n${design.divider()}`,
-      `${design.it('Select a module to manage the workforce.')}`
+      `${design.row(t('home_row_platform'), t('home_val_production'))}`,
+      `${design.row(t('home_row_revenue_team'), t('home_val_13_spec'))}`,
+      `${design.row(t('home_row_audit'), i18n.sprintf(t('home_val_entries'), entries.length))}\n${design.divider()}`,
+      `${design.it(t('home_help_select'))}`
     ]);
-    const row1 = [design.textButton('Dashboard', 'cc_dashboard'), design.textButton('My Revenue Team', 'cc_workforce')];
-    const row2 = [design.textButton('Sales Pipeline', 'cc_pipeline'), design.textButton('Deals', 'cc_deals')];
-    const row3 = [design.textButton('Timeline', 'cc_timeline'), design.textButton('Costs', 'cc_costs'), design.textButton('Health', 'cc_health')];
+    const row1 = [design.textButton(t('btn_dashboard'), 'cc_dashboard'), design.textButton(t('btn_revenue_team'), 'cc_workforce')];
+    const row2 = [design.textButton(t('btn_sales_pipeline'), 'cc_pipeline'), design.textButton(t('btn_deals'), 'cc_deals')];
+    const row3 = [design.textButton(t('btn_timeline'), 'cc_timeline'), design.textButton(t('btn_costs'), 'cc_costs'), design.textButton(t('btn_health'), 'cc_health')];
     const row4 = [];
     if (isAdminOrFounder) {
-      row4.push(design.textButton('Audit Log', 'cc_audit'));
+      row4.push(design.textButton(t('btn_audit'), 'cc_audit'));
     }
-    row4.push(design.textButton('Pricing', 'cc_pricing'), design.textButton('Playground', 'cc_playground'));
+    row4.push(design.textButton(t('btn_pricing'), 'cc_pricing'), design.textButton(t('btn_playground'), 'cc_playground'));
     const row5 = [];
     if (isAdminOrFounder) {
-      row5.push(design.textButton('Admin', 'cc_admin'));
+      row5.push(design.textButton(t('btn_admin'), 'cc_admin'));
     }
     return {
       text,
@@ -62,17 +64,17 @@ async function buildHome(userId) {
   const nextMission = missions.find(m => !['completed', 'failed', 'cancelled'].includes(m.status));
   const recommendation = nextMission
     ? `${nextMission.title} · ${nextMission.progress}% · next: ${nextMission.next_agent || '—'}`
-    : 'Start Mission 1 to define your sales strategy.';
+    : t('home_recommend_empty');
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('MISSION CONTROL')}`,
+    `${design.EMOJI.ai} ${design.b(t('home_title'))}`,
     design.it(`${greetingFor(timezone)}, ${name}.`),
     design.divider(),
-    design.section('MISSIONS'),
-    design.row('In flight', String(running)),
-    design.row('Completed', String(completed)),
-    design.section('WORKFORCE'),
-    `${healthy ? design.EMOJI.success : design.EMOJI.warning} ${ctx.agents.active} agents ready · ${ctx.deals.open} active deals`,
-    design.section('NEXT ACTION'),
+    design.section(t('home_sect_missions')),
+    design.row(t('home_row_inflight'), String(running)),
+    design.row(t('home_row_completed'), String(completed)),
+    design.section(t('home_sect_workforce')),
+    `${healthy ? design.EMOJI.success : design.EMOJI.warning} ${i18n.sprintf(t('home_agents_ready'), ctx.agents.active, ctx.deals.open)}`,
+    design.section(t('home_sect_next')),
     design.it(recommendation),
     design.divider()
   ]);
@@ -80,24 +82,24 @@ async function buildHome(userId) {
     return {
       text,
       keyboard: design.keyboard([
-        [design.textButton('Mission 1 · Sell TEOS Dealmaker', 'cc_mission1'), design.textButton('New Mission', 'cc_mission_goal')],
-        [design.textButton('Mission Center', 'cc_missions'), design.textButton('Approvals', 'cc_approvals')],
-        [design.textButton('Sales Pipeline', 'cc_pipeline'), design.textButton('My Revenue Team', 'cc_workforce')],
-        [design.textButton('Activity', 'cc_activity'), design.textButton('Daily Summary', 'cc_briefing'), design.textButton('Costs', 'cc_costs')],
-        [design.textButton('Health', 'cc_health'), design.textButton('Intelligence', 'cc_intelligence'), design.textButton('Integrations', 'cc_integrations')],
-        [design.textButton('Playground', 'cc_playground'), design.textButton('Pricing', 'cc_pricing'), design.textButton('Settings', 'cc_settings'), design.textButton('Audit Log', 'cc_audit'), design.textButton('Admin', 'cc_admin')]
+        [design.textButton(t('btn_mission1'), 'cc_mission1'), design.textButton(t('btn_new_mission'), 'cc_mission_goal')],
+        [design.textButton(t('btn_mission_center'), 'cc_missions'), design.textButton(t('btn_approvals'), 'cc_approvals')],
+        [design.textButton(t('btn_sales_pipeline'), 'cc_pipeline'), design.textButton(t('btn_revenue_team'), 'cc_workforce')],
+        [design.textButton(t('btn_activity'), 'cc_activity'), design.textButton(t('btn_daily_summary'), 'cc_briefing'), design.textButton(t('btn_costs'), 'cc_costs')],
+        [design.textButton(t('btn_health'), 'cc_health'), design.textButton(t('btn_intelligence'), 'cc_intelligence'), design.textButton(t('btn_integrations'), 'cc_integrations')],
+        [design.textButton(t('btn_playground'), 'cc_playground'), design.textButton(t('btn_pricing'), 'cc_pricing'), design.textButton(t('btn_settings'), 'cc_settings'), design.textButton(t('btn_audit'), 'cc_audit'), design.textButton(t('btn_admin'), 'cc_admin')]
       ])
     };
   }
   const allowedButtons = [
-    { text: 'Mission 1 · Sell TEOS Dealmaker', callback: 'cc_mission1' },
-    { text: 'New Mission', callback: 'cc_mission_goal' },
-    { text: 'Mission Center', callback: 'cc_missions' },
-    { text: 'Approvals', callback: 'cc_approvals' },
-    { text: 'Company Intelligence', callback: 'cc_intelligence' },
-    { text: 'Pipeline', callback: 'cc_pipeline' },
-    { text: 'Playground', callback: 'cc_playground' },
-    { text: 'Settings', callback: 'cc_settings' }
+    { text: t('btn_mission1'), callback: 'cc_mission1' },
+    { text: t('btn_new_mission'), callback: 'cc_mission_goal' },
+    { text: t('btn_mission_center'), callback: 'cc_missions' },
+    { text: t('btn_approvals'), callback: 'cc_approvals' },
+    { text: t('btn_company_intelligence'), callback: 'cc_intelligence' },
+    { text: t('btn_pipeline'), callback: 'cc_pipeline' },
+    { text: t('btn_playground'), callback: 'cc_playground' },
+    { text: t('btn_settings'), callback: 'cc_settings' }
   ];
   const rows = [];
   for (let i = 0; i < allowedButtons.length; i += 2) {
@@ -112,6 +114,7 @@ async function buildHome(userId) {
 }
 
 async function buildDashboard(userId) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
   const entries = audit.readVault();
   const last = lastEntry();
@@ -122,27 +125,27 @@ async function buildDashboard(userId) {
     `${design.code((e.timestamp || '').slice(11, 19))} ${e.action} → ${e.target}`
   );
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Dashboard')}`,
-    design.it('Operational overview'),
+    `${design.EMOJI.ai} ${design.b(t('btn_dashboard'))}`,
+    design.it(t('dash_operational')),
     design.divider(),
-    ctx ? design.row('Workspace', ctx.workspace.name) : null,
-    design.row('Bot', `@${BOT_CONFIG.botName}`),
-    ctx ? design.row('Plan', titleCase(ctx.workspace.plan)) : null,
-    ctx ? design.row('Members', String(ctx.membersCount)) : null,
-    ctx ? design.row('Agents', `${ctx.agents.active} active`) : null,
-    ctx ? design.row('Subscription', ctx.subscriptionLabel) : null,
-    design.row('Audit', `${entries.length} entries`),
-    design.row('Closed deals', `${closed}`),
-    design.row('Last activity', last ? `${last.action} · ${(last.timestamp || '').slice(11, 19)}` : '—'),
-    design.section('RECENT ACTIVITY'),
-    recent.length ? design.list(recent) : design.it('No activity yet.'),
-    design.section('QUICK ACTIONS')
+    ctx ? design.row(t('settings_workspace'), ctx.workspace.name) : null,
+    design.row(t('dash_bot'), `@${BOT_CONFIG.botName}`),
+    ctx ? design.row(t('dash_plan'), titleCase(ctx.workspace.plan)) : null,
+    ctx ? design.row(t('dash_members'), String(ctx.membersCount)) : null,
+    ctx ? design.row(t('dash_agents'), i18n.sprintf(t('dash_agents_active'), ctx.agents.active)) : null,
+    ctx ? design.row(t('dash_sub_status'), ctx.subscriptionLabel) : null,
+    design.row(t('home_row_audit'), i18n.sprintf(t('home_val_entries'), entries.length)),
+    design.row(t('home_row_closed_deals'), `${closed}`),
+    design.row(t('health_last'), last ? `${last.action} · ${(last.timestamp || '').slice(11, 19)}` : '—'),
+    design.section(t('home_sect_recent')),
+    recent.length ? design.list(recent) : design.it(t('home_no_activity')),
+    design.section(t('home_sect_quick'))
   ]);
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('Run Sales Flow', 'cc_sales_run'), design.textButton('Run Pipeline', 'cc_pipeline_run')],
-      [design.textButton('Audit Log', 'cc_audit'), design.textButton('Back to Home', 'cc_home')]
+      [design.textButton(t('btn_run_sales_flow'), 'cc_sales_run'), design.textButton(t('btn_run_pipeline'), 'cc_pipeline_run')],
+      [design.textButton(t('btn_audit'), 'cc_audit'), design.textButton(t('btn_back_home'), 'cc_home')]
     ])
   };
 }

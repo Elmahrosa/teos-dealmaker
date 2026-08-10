@@ -1,114 +1,119 @@
 const design = require('../design');
+const i18n = require('../i18n');
 const { getStoreAdapter } = require('../store');
 const memory = require('../../services/memory');
 const { getCtx, titleCase } = require('./lib');
 
 async function buildSettings(userId) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
   const s = (ctx && ctx.settings) || { lang: 'en', timezone: 'UTC', notifications: 'on', theme: 'system' };
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Settings')}`,
-    design.it('Workspace configuration'),
+    `${design.EMOJI.ai} ${design.b(t('settings_title'))}`,
+    design.it(t('settings_workspace_config')),
     design.divider(),
-    design.row('Language', s.lang),
-    design.row('Timezone', s.timezone),
-    design.row('Notifications', s.notifications),
-    design.row('Theme', s.theme),
-    design.section('KNOWLEDGE'),
-    design.it('Company Intelligence stores what your company knows — products, pricing, FAQs, playbooks, competitor and customer profiles, and past proposals and conversations.'),
+    design.row(t('settings_language'), s.lang),
+    design.row(t('settings_timezone'), s.timezone),
+    design.row(t('settings_notifications'), s.notifications),
+    design.row(t('settings_theme'), s.theme),
+    design.section(t('settings_sect_knowledge')),
+    design.it(t('settings_knowledge_desc')),
     design.divider()
   ]);
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('English', 'cc_set_lang:en'), design.textButton('العربية', 'cc_set_lang:ar')],
-      [design.textButton('Company Intelligence', 'cc_intelligence')],
-      [design.textButton('Back to Home', 'cc_home')]
+      [design.textButton(t('lang_en'), 'cc_set_lang:en'), design.textButton(t('lang_ar'), 'cc_set_lang:ar')],
+      [design.textButton(t('btn_company_intelligence'), 'cc_intelligence')],
+      [design.textButton(t('btn_back_home'), 'cc_home')]
     ])
   };
 }
 
-function buildAiGuide() {
+function buildAiGuide(userId) {
+  const t = key => i18n.t(userId, key);
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('AI Guide')}`,
-    design.it('How your revenue team works'),
+    `${design.EMOJI.ai} ${design.b(t('guide_title'))}`,
+    design.it(t('guide_sub')),
     design.divider(),
-    design.section('YOUR REVENUE TEAM'),
-    design.it('13 specialists run your revenue motion: Prospecting → Qualification → Outreach → Sales → Negotiation → Treasurer → Closing.'),
-    design.section('MISSIONS'),
-    design.it('Every mission starts with the Revenue Strategist, which decides if it makes sense, picks the specialists, sets success criteria and a budget, and asks for your approval before anything ships.'),
-    design.section('FLOW'),
-    design.it('A deal moves Lead → Qualified → Meeting → Proposal → Negotiation → Won → Customer. Specialists advance it automatically.'),
-    design.section('TEAM'),
-    design.it('Specialists hand off work — each leaves notes for the next, like a real team.'),
-    design.section('BUSINESS KNOWLEDGE'),
-    design.it('The system remembers your products, pricing, ICP and competitors — every specialist reads the context it needs before acting, and you can ask it questions with /ask.'),
-    design.section('INTEGRATION HUB'),
-    design.it('Connect CRM, email, calendar, storage, website and communication tools. Specialists use one uniform interface — searchContacts, searchDeals, sendMessage, createMeeting, storeDocument, fetchKnowledge, crawl — and synced data flows straight into Company Intelligence.'),
-    design.section('CONTROL'),
-    design.it('Run /mission <goal> to launch a mission. Open Mission Center for progress and approvals.'),
+    design.section(t('guide_sect_team')),
+    design.it(t('guide_team_desc')),
+    design.section(t('guide_sect_missions')),
+    design.it(t('guide_missions_desc')),
+    design.section(t('guide_sect_flow')),
+    design.it(t('guide_flow_desc')),
+    design.section(t('guide_sect_teamwork')),
+    design.it(t('guide_teamwork_desc')),
+    design.section(t('guide_sect_knowledge')),
+    design.it(t('guide_knowledge_desc')),
+    design.section(t('guide_sect_integrations')),
+    design.it(t('guide_integrations_desc')),
+    design.section(t('guide_sect_control')),
+    design.it(t('guide_control_desc')),
     design.divider()
   ]);
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('Back to Home', 'cc_home')]
+      [design.textButton(t('btn_back_home'), 'cc_home')]
     ])
   };
 }
 
 async function buildMemory(userId) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
-  if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first with /start.').text, keyboard: null };
   const mem = await memory.getMemory(getStoreAdapter(), ctx.workspace.id);
   const rows = memory.describe(mem);
   const lines = [
-    `${design.EMOJI.ai} ${design.b('Business Knowledge')}`,
-    design.it('Core profile every agent reads before working.'),
+    `${design.EMOJI.ai} ${design.b(t('memory_title'))}`,
+    design.it(t('memory_sub')),
     design.divider(),
-    ...(rows.length ? rows.map(r => design.row(r.split(':')[0], r.split(':').slice(1).join(':'))) : [design.it('Nothing saved yet — add your company details below.')]),
-    design.section('HOW AGENTS USE IT'),
-    design.it('Prospector: industry · ICP · competitors'),
-    design.it('Outreach: brand voice · playbook · languages'),
-    design.it('Negotiator: products · preferred providers'),
+    ...(rows.length ? rows.map(r => design.row(r.split(':')[0], r.split(':').slice(1).join(':'))) : [design.it(t('memory_empty'))]),
+    design.section(t('memory_sect_how')),
+    design.it(t('memory_how_prospector')),
+    design.it(t('memory_how_outreach')),
+    design.it(t('memory_how_negotiator')),
     design.divider()
   ];
   return {
     text: design.compose(lines),
     keyboard: design.keyboard([
-      [design.textButton('Edit Company', 'cc_mem_edit:company_name'), design.textButton('Edit Industry', 'cc_mem_edit:industry')],
-      [design.textButton('Edit Products', 'cc_mem_edit:products'), design.textButton('Edit Services', 'cc_mem_edit:services')],
-      [design.textButton('Edit ICP', 'cc_mem_edit:icp'), design.textButton('Edit Competitors', 'cc_mem_edit:competitors')],
-      [design.textButton('Edit Brand Voice', 'cc_mem_edit:brand_voice'), design.textButton('Edit Playbook', 'cc_mem_edit:sales_playbook')],
-      [design.textButton('Intelligence Hub', 'cc_intelligence')],
-      [design.textButton('Back to Home', 'cc_home')]
+      [design.textButton(t('btn_edit_company'), 'cc_mem_edit:company_name'), design.textButton(t('btn_edit_industry'), 'cc_mem_edit:industry')],
+      [design.textButton(t('btn_edit_products'), 'cc_mem_edit:products'), design.textButton(t('btn_edit_services'), 'cc_mem_edit:services')],
+      [design.textButton(t('btn_edit_icp'), 'cc_mem_edit:icp'), design.textButton(t('btn_edit_competitors'), 'cc_mem_edit:competitors')],
+      [design.textButton(t('btn_edit_brand_voice'), 'cc_mem_edit:brand_voice'), design.textButton(t('btn_edit_playbook'), 'cc_mem_edit:sales_playbook')],
+      [design.textButton(t('btn_intelligence_hub'), 'cc_intelligence')],
+      [design.textButton(t('btn_back_home'), 'cc_home')]
     ])
   };
 }
 
 function buildMemoryEdit(userId, key) {
+  const t = k => i18n.t(userId, k);
   const hints = {
-    company_name: 'Company name',
-    industry: 'Industry (e.g. SaaS, Fintech, Logistics)',
-    products: 'Products (comma-separated)',
-    services: 'Services (comma-separated)',
-    icp: 'Ideal Customer Profile, e.g. industries: SaaS; size: 50-500; geos: US, EU',
-    competitors: 'Competitors (comma-separated)',
-    brand_voice: 'Brand voice (e.g. direct, consultative, friendly)',
-    sales_playbook: 'Sales playbook (e.g. value-led, MEDDIC, consultative)'
+    company_name: 'memory_edit_hint_company_name',
+    industry: 'memory_edit_hint_industry',
+    products: 'memory_edit_hint_products',
+    services: 'memory_edit_hint_services',
+    icp: 'memory_edit_hint_icp',
+    competitors: 'memory_edit_hint_competitors',
+    brand_voice: 'memory_edit_hint_brand_voice',
+    sales_playbook: 'memory_edit_hint_sales_playbook'
   };
-  const label = hints[key] || key;
+  const label = t(hints[key] || 'memory_edit_hint_company_name');
   return {
     text: design.compose([
-      `${design.EMOJI.ai} ${design.b('Edit ' + titleCase(key))}`,
+      `${design.EMOJI.ai} ${design.b(i18n.sprintf(t('memory_edit_title'), titleCase(key)))}`,
       design.it(label),
       design.divider(),
-      design.it('Type the new value below.'),
-      design.it('For lists, separate items with commas.'),
+      design.it(t('memory_edit_type')),
+      design.it(t('memory_edit_lists')),
       design.divider()
     ]),
     keyboard: design.keyboard([
-      [design.textButton('Cancel', 'cc_mem_cancel')]
+      [design.textButton(t('confirm_no'), 'cc_mem_cancel')]
     ])
   };
 }

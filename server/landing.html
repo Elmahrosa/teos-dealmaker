@@ -721,15 +721,13 @@
     var st = document.getElementById('pg-stakeholders');
     if (st) {
       st.innerHTML = '';
-      var table = el('<table class="pg-table"></table>');
-      var head = el('<tr>' + ['role', 'influence', 'interests', 'posture'].map(function (k) {
+      var headHtml = ['role', 'influence', 'interests', 'posture'].map(function (k) {
         return '<th>' + { role: lang === 'ar' ? 'الدور' : 'Role', influence: lang === 'ar' ? 'النفوذ' : 'Influence', interests: lang === 'ar' ? 'الاهتمامات' : 'Interests', posture: lang === 'ar' ? 'الموقف' : 'Posture' }[k] + '</th>';
-      }).join('') + '</tr>');
-      table.appendChild(head);
-      d.stakeholders.forEach(function (s) {
-        table.appendChild(el('<tr><td>' + s.role + '</td><td>' + s.influence + '</td><td>' + s.interests + '</td><td>' + s.posture + '</td></tr>'));
-      });
-      st.appendChild(table);
+      }).join('');
+      var rowsHtml = d.stakeholders.map(function (s) {
+        return '<tr><td>' + s.role + '</td><td>' + s.influence + '</td><td>' + s.interests + '</td><td>' + s.posture + '</td></tr>';
+      }).join('');
+      st.appendChild(el('<table class="pg-table"><tr>' + headHtml + '</tr>' + rowsHtml + '</table>'));
     }
     var sim = document.getElementById('pg-simulation');
     if (sim) {
