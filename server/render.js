@@ -79,17 +79,18 @@ function renderFreePlugins() {
 }
 
 // Elmahrosa commercial products — independent products, cross-linked only.
-// No price, no checkout, no "included" claim: Sentinel is sold separately.
+// No price, no checkout, no "included" claim: they are OPTIONAL add-ons, never
+// part of any DealMaker plan or subscription.
 function renderElmahrosaProducts() {
   const products = (PRODUCT.elmahrosaProducts || []);
   if (!products.length) return '';
   const cards = products.map(p => `
     <div class="card elmahrosa-product">
-      <span class="independent-tag" data-i18n="elmahrosa_independent">INDEPENDENT PRODUCT</span>
+      <span class="independent-tag" data-i18n="elmahrosa_independent">OPTIONAL ADD-ON · INDEPENDENT PRODUCT</span>
       <h3>${p.name}</h3>
       <p class="tagline">${p.tagline}</p>
       <p>${p.description}</p>
-      <p class="product-note" data-i18n="elmahrosa_note">A separate product, available standalone. Sold on its own pricing page.</p>
+      <p class="product-note" data-i18n="elmahrosa_note">Optional add-on — a separate product sold on its own pricing page. Not included with any DealMaker plan.</p>
       <div class="product-actions">
         <a class="cta" href="${p.url}" target="_blank" rel="noopener" data-i18n="elmahrosa_view">View Sentinel →</a>
         <a class="cta ghost" href="${p.url}" target="_blank" rel="noopener" data-i18n="elmahrosa_pricing">Pricing →</a>
@@ -102,7 +103,7 @@ function renderElmahrosaProducts() {
   return `
   <section id="elmahrosa-products" class="elmahrosa-products">
     <h2 class="sect" data-i18n="elmahrosa_products_t">ELMAHROSA PRODUCTS</h2>
-    <p class="sect-sub" data-i18n="elmahrosa_products_sub">Extend DealMaker with independent Elmahrosa products.</p>
+    <p class="sect-sub" data-i18n="elmahrosa_products_sub">Optional add-ons — independent Elmahrosa products sold separately. Not included with the DealMaker base product.</p>
     <div class="grid">${cards}</div>${cross}
   </section>`;
 }
