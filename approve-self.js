@@ -1,12 +1,12 @@
-const { createAdapter } = require('./db');
+const { getAdapter, createMemoryAdapter } = require('./db');
 const { createRepos } = require('./db/repos');
 const runtime = require('./services/workforce/runtime');
 
 let adapter;
 if (process.env.DATABASE_URL) {
-  adapter = require('./db').getAdapter();
+  adapter = getAdapter();
 } else {
-  adapter = require('./db').createMemoryAdapter();
+  adapter = createMemoryAdapter();
 }
 
 async function main() {
@@ -32,10 +32,8 @@ async function main() {
       // Check if this is for our plan (planId 5) and agent_type gatekeeper
       if (req.plan_id === 5 && req.agent_type === 'gatekeeper') {
         console.log(`Approving request ${req.id} as founder user ${founderUserId}...`);
-        const decision = await repos.approvals.update(req.id, { status: 'approved' });
-        // Also need to update the plan step? The runtime's approveAndResume handles that.
-        // Let's use the runtime's approveAndResume function.
-        const { decision: dec, resumed, ...outcome } = await runtime.approveAndResume(adapter, workspaceId, req.id, founderUserId);
+        await repos.approvals.update(req.id, { status: 'approved' });
+        const { decision, resumed, ...outcome } = await runtime.approveAndResume(adapter, workspaceId, req.id, founderUserId);
         console.log(`Approval decision: ${decision.status}`);
         console.log(`Resumed: ${resumed}`);
         if (resumed) {

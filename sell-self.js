@@ -1,13 +1,13 @@
-const { createAdapter } = require('./db');
+const { getAdapter, createMemoryAdapter } = require('./db');
 const { createRepos } = require('./db/repos');
 const runtime = require('./services/workforce/runtime');
 
 // Use memory adapter if no DATABASE_URL
 let adapter;
 if (process.env.DATABASE_URL) {
-  adapter = require('./db').getAdapter();
+  adapter = getAdapter();
 } else {
-  adapter = require('./db').createMemoryAdapter();
+  adapter = createMemoryAdapter();
 }
 
 async function main() {

@@ -1,11 +1,11 @@
-const { createAdapter } = require('./db');
+const { getAdapter, createMemoryAdapter } = require('./db');
 const { createRepos } = require('./db/repos');
 
 let adapter;
 if (process.env.DATABASE_URL) {
-  adapter = require('./db').getAdapter();
+  adapter = getAdapter();
 } else {
-  adapter = require('./db').createMemoryAdapter();
+  adapter = createMemoryAdapter();
 }
 
 async function main() {
