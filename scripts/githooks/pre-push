@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# pre-push hook — EU AI Act transparency enforcement gate.
+# Installed via `npm run hooks:install`. Blocks a push whose code would ship
+# without the transparency markers wired into the send paths.
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+if [ -n "${CI:-}" ]; then
+  echo "[pre-push] CI detected — transparency checks enforced separately in CI."
+  exit 0
+fi
+
+echo "[pre-push] Running EU AI Act transparency check..."
+npm run transparency:check

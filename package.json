@@ -16,6 +16,8 @@
     "lint": "eslint .",
     "build": "node scripts/check-syntax.js",
     "build:static": "node scripts/build-static.js",
+    "transparency:check": "node scripts/transparency-check.js",
+    "hooks:install": "node -e \"const fs=require('fs'),p='.git/hooks';fs.mkdirSync(p,{recursive:true});fs.copyFileSync('scripts/githooks/pre-push',p+'/pre-push');console.log('[hooks] pre-push installed')\"",
     "test:outreach": "node agents/outreach/test.js",
     "test:qualify": "node agents/qualification/test.js",
     "test:sales": "node agents/sales/test.js",

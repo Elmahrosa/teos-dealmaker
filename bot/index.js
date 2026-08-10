@@ -4,6 +4,8 @@ const { handleMessage } = require('./handlers');
 const { handleCallback } = require('./menu');
 const onboarding = require('./onboarding');
 const audit = require('../utils/auditLogger');
+const i18n = require('./i18n');
+const { withAiDisclosure } = require('../services/transparency');
 const { getMode } = require('../config/mode');
 const { getStoreAdapter } = require('./store');
 const { bootstrapFounder } = require('../services/founderSeed');
@@ -25,7 +27,8 @@ bot.on('message', async (msg) => {
       await bot.sendChatAction(result.chatId, 'typing').catch(() => {});
       const sendOpts = { parse_mode: 'HTML' };
       if (result.replyMarkup) sendOpts.reply_markup = result.replyMarkup;
-      await bot.sendMessage(result.chatId, result.text, sendOpts);
+      const text = withAiDisclosure(result.text, i18n.getLang(String(result.chatId)));
+      await bot.sendMessage(result.chatId, text, sendOpts);
       audit.writeEntry('BOT_SEND', String(msg.chat.id), 'success', {
         durationMs: Date.now() - start,
         mode: getMode()

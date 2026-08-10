@@ -24,6 +24,7 @@ const crypto = require('crypto');
 const { createRepos } = require('../../db/repos');
 const { writeEntry } = require('../../utils/auditLogger');
 const { sendRaw, extractAddress } = require('../emailChannel');
+const { withContentMarking } = require('../transparency');
 
 const SERVICE_STATES = Object.freeze({
   RUNNING: 'RUNNING',
@@ -365,13 +366,17 @@ function createWorker(opts) {
       return { sent: false, blocked: true, reason: gate.reason };
     }
 
+    // Every email that leaves the perimeter is marked as AI-generated content
+    // (EU AI Act Art. 50(2)). The marker is appended in the send path, so a
+    // job can never dispatch unmarked content; the stored job body is left
+    // untouched so idempotency keys remain stable.
     const res = await sendRaw({
       apiKey: c.apiKey,
       fetch: fetchImpl,
       from: job.from_email,
       to: job.recipient,
       subject: job.subject,
-      text: job.body,
+      text: withContentMarking(job.body),
       timeoutMs: c.timeoutMs
     });
 
@@ -391,7 +396,8 @@ function createWorker(opts) {
         job_id: job.id,
         recipient: job.recipient,
         provider: 'resend',
-        provider_message_id: res.provider_message_id
+        provider_message_id: res.provider_message_id,
+        content_marked: 'ai-generated'
       });
       this.notifyFounder(adapter, 'Outbound email sent', `Sent to ${job.recipient} (job #${job.id}). Provider id ${res.provider_message_id}.`);
       return { sent: true };
