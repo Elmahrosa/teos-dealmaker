@@ -1,8 +1,8 @@
 # TEOS DealMaker — Final Production Verification Report
 
 - **Date:** 2026-08-10
-- **Release:** `a27ead4` (fix: restore navigation and product boundaries) on `origin/main`; prior `4d1a120`, `cccf9fb`, `57ce5c3`, `c77c659`
-- **Scope:** 24/7 governed worker + reporting + landing/bot consistency + production migration (applied) + PG-adapter fix + navigation/product-boundary release + production verification
+- **Release:** `89f9057` (feat: mission intake contact channel + product boundary cleanup) on `origin/main`; includes `43cdf23` (mission intake funnel), prior `a27ead4`, `14511e7`
+- **Scope:** mission intake funnel live (`/start`, `POST /api/intake`, `/api/intakes`, `/intakes`, migration 006), contact-channel fallback + sanitized public endpoint, dashboard contact channel rows (web + bot), product boundary cleanup, production verification
 - **Final state required and preserved:** PROCESS = RUNNING · GOVERNED = PAUSED · OUTBOUND = PAUSED · CUSTOMER_1 = NOT_ACQUIRED · REVENUE = NOT_CONFIRMED · **no email sent during QA**
 
 ---
@@ -20,11 +20,12 @@
 | OUTBOUND | **PAUSED** (no real outreach sent; resume requires explicit founder action) |
 | RESEND | **UNAVAILABLE** (no `RESEND_API_KEY` in prod ⇒ OUTBOUND BLOCKED, fail-closed) |
 | EMERGENCY_STOP | **VERIFIED** (test section 8: immediate stop, queued jobs cancelled, env override persists, resume refused until cleared; live route auth-gated) |
-| TESTS | 57 suites, **57 passed, 0 failed** (outbound-worker suite: 144 assertions) |
+| TESTS | **58 suites, 58 passed, 0 failed** (mission-intake + callback-navigation + bot-boot suites included) |
 | LINT | **PASS** (eslint clean) |
-| BUILD | **PASS** (255 JS files pass `node --check`) |
+| BUILD | **PASS** (259 JS files pass `node --check`) |
 | DIFF_CHECK | **PASS** (`git diff --check` clean) |
-| DEPLOYED_SHA | **`a27ead4`** (verified live; report commit appended and re-verified after push) |
+| MISSION_INTAKE | **LIVE** (`GET /start` 200 · `POST /api/intake` 202 · `mission_intakes` table present · contact fallback stored) |
+| DEPLOYED_SHA | **`89f9057`** (verified live; `/start` and `/dashboard/` byte-identical to the local `89f9057` render/build) |
 | REVENUE | **NOT_CONFIRMED** (no real payment has occurred) |
 | CUSTOMER_1 | **NOT_ACQUIRED** |
 
@@ -105,3 +106,27 @@ Release `a27ead4` restores the DealMaker navigation and product boundaries on th
 | Resend webhook | fail-closed: `POST /webhook/resend` → 503 `webhook_not_configured` |
 
 Live production verification after deploy: `/`, `/dashboard/`, `/reports`, `/health`, `/api/reports/latest`, `/api/outreach/status` all 200; `/api/audit`, `/api/outreach/queue`, `/api/deploy-verify` all 401 without credentials; landing HTML byte-identical to the local `a27ead4` render (only env-configured Dodo checkout URLs differ).
+
+## 8. Mission intake + contact channel release (`89f9057`) — verified live
+
+Release `89f9057` ships the one-shot mission intake funnel and the contact-channel surfaces, and keeps every security boundary intact.
+
+| Invariant | Result |
+|---|---|
+| `GET /start` (one-shot intake, EN/AR, draft-aware) | **200** — live HTML byte-identical to the local `89f9057` render |
+| `POST /api/intake` | **202** `{ok:true, intakeId, status:"received", thanksUrl}` — verification intake recorded; no email, no execution claim |
+| Contact fallback | **PASS** — production row stores `"Contact channel not yet established"` when no email/phone provided |
+| `GET /start/thanks?id=` | **200** — shows "None provided" for fallback contact, "Provided — we can reply" when contact given |
+| `GET /api/intakes/contact-channel` (public, sanitized) | **200** `{ok, present, channel: "none"|"email"|"telegram"}` — channel type only, **never the raw contact value** |
+| Web dashboard `/dashboard/` | **200** — "Contact Channel" row present (EN + AR), backed by the sanitized endpoint; byte-identical to the local build |
+| Bot founder Revenue panel | "Contact channel" row with the latest intake contact (founder-only output) |
+| `GET /api/intakes` (no auth) | **401** fail-closed |
+| `GET /api/audit`, `/api/deploy-verify`, `/api/outreach/queue` (no auth) | **401** fail-closed |
+| `POST /webhook/resend` | **503** `webhook_not_configured` (fail-closed) |
+| `GET /api/outreach/status` | **200** — `state: PAUSED`, `db_state: PAUSED`, `worker: PAUSED`, `outbound_email: DISABLED`, queue HEALTHY |
+| Mission intakes table (production Postgres) | migration 006 applied; verification row present with `status=received` |
+| Product boundary | bot console "Sentinel Shield" → "Security Layers"; Elmahrosa products CTA "View Sentinel →" → "View product →" (EN/AR); Sentinel remains a separate product link only |
+| Static build sync | `public/dashboard/index.html` and `hostinger/` regenerated from the server template; `BROKEN_LINKS=0 · MISSING_ROUTES=0` |
+| Validation | `npm test` 58/58 · eslint clean · 259 JS files pass `node --check` · `git diff --check` clean |
+
+Deployed SHA **`89f9057`** verified live: `/start` and `/dashboard/` are byte-identical to the local commit output. PROCESS = RUNNING (worker started, recovered PAUSED). No email was sent during verification; no payment/checkout was created; no customer was contacted; no secret was exposed.
