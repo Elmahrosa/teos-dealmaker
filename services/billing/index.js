@@ -25,6 +25,19 @@ function getPlanForProduct(productId) {
   return productMap[productId] || null;
 }
 
+// Mission limits per plan
+const MISSION_LIMITS = {
+  solo: 5,
+  growth: 20,
+  corporate: 100,
+  trial: 1,
+  founder: Infinity
+};
+
+function getMissionLimitForPlan(plan) {
+  return MISSION_LIMITS[plan] || null;
+}
+
 function verifySignature(rawBody, signature) {
   const secret = process.env.DODO_WEBHOOK_SECRET;
   // Fail closed: without a configured secret no webhook is accepted. A
@@ -78,6 +91,28 @@ async function founderProtected(repos, workspaceId) {
   return false;
 }
 
+async function isEntitled(adapter, workspaceId) {
+  const repos = createRepos(adapter);
+  const workspace = await repos.workspaces.get(workspaceId);
+  if (!workspace) return false;
+  if (workspace.plan === 'founder') return true;
+  const subscription = await repos.subscriptions.get(workspaceId);
+  if (!subscription) return false;
+  if (subscription.status !== 'active') return false;
+  const limit = getMissionLimitForPlan(subscription.plan);
+  if (limit === null) return true; // unlimited
+  return subscription.missions_used < limit;
+}
+
+async function incrementMissionsUsed(adapter, workspaceId, increment = 1) {
+  const repos = createRepos(adapter);
+  const subscription = await repos.subscriptions.get(workspaceId);
+  if (!subscription) return;
+  await repos.subscriptions.update(subscription.id, {
+    missions_used: subscription.missions_used + increment
+  });
+}
+
 async function handleSubscriptionCreated(adapter, data) {
   const repos = createRepos(adapter);
   const productId = data.product_id || data.plan_id || null;
@@ -117,6 +152,7 @@ async function handleSubscriptionCreated(adapter, data) {
       status,
       cycle,
       renewal_date: renewalDate,
+      missions_used: 0, // Reset missions used on new subscription
       provider_customer_id: customerId || existing.provider_customer_id
     });
   } else {
@@ -127,6 +163,7 @@ async function handleSubscriptionCreated(adapter, data) {
       cycle,
       start_date: startDate,
       renewal_date: renewalDate,
+      missions_used: 0,
       provider: 'dodo',
       provider_customer_id: customerId
     });
@@ -143,10 +180,10 @@ async function handleSubscriptionCreated(adapter, data) {
     agent_name: 'billing',
     action_type: 'SUBSCRIPTION_CREATED',
     details: { plan, cycle, customerId, productId },
-    version: 'v1.0.0'
+    version: 'v1.1.0'
   });
 
-  await sendTelegramNotification(`✅ <b>New Subscription</b>\nPlan: ${plan}\nCycle: ${cycle}\nWorkspace: ${workspaceId}`);
+  await sendTelegramNotification(`��✅ <b>New Subscription</b>\nPlan: ${plan}\nCycle: ${cycle}\nWorkspace: ${workspaceId}`);
 
   return { ok: true, workspaceId, plan, status };
 }
@@ -176,7 +213,11 @@ async function handleSubscriptionRenewed(adapter, data) {
 
   const sub = await repos.subscriptions.get(workspaceId);
   if (sub) {
-    await repos.subscriptions.update(sub.id, { status: 'active', renewal_date: renewalDate });
+    await repos.subscriptions.update(sub.id, {
+      status: 'active',
+      renewal_date: renewalDate,
+      missions_used: 0 // Reset missions used on renewal
+    });
   }
 
   await repos.audit.add({
@@ -184,10 +225,10 @@ async function handleSubscriptionRenewed(adapter, data) {
     agent_name: 'billing',
     action_type: 'SUBSCRIPTION_RENEWED',
     details: { customerId, renewalDate },
-    version: 'v1.0.0'
+    version: 'v1.1.0'
   });
 
-  await sendTelegramNotification(`🔄 <b>Subscription Renewed</b>\nWorkspace: ${workspaceId}\nRenewal: ${renewalDate}`);
+  await sendTelegramNotification(`���🔄 <b>Subscription Renewed</b>\nWorkspace: ${workspaceId}\nRenewal: ${renewalDate}`);
 
   return { ok: true, workspaceId };
 }
@@ -223,10 +264,10 @@ async function handleSubscriptionCancelled(adapter, data) {
     agent_name: 'billing',
     action_type: 'SUBSCRIPTION_CANCELLED',
     details: { customerId },
-    version: 'v1.0.0'
+    version: 'v1.1.0'
   });
 
-  await sendTelegramNotification(`❌ <b>Subscription Cancelled</b>\nWorkspace: ${workspaceId}\nPlan retained; subscription inactive`);
+  await sendTelegramNotification(`��❌ <b>Subscription Cancelled</b>\nWorkspace: ${workspaceId}\nPlan retained; subscription inactive`);
 
   return { ok: true, workspaceId };
 }
@@ -258,10 +299,10 @@ async function handlePaymentSucceeded(adapter, data) {
     agent_name: 'billing',
     action_type: 'PAYMENT_SUCCEEDED',
     details: { amount, currency, customerId },
-    version: 'v1.0.0'
+    version: 'v1.1.0'
   });
 
-  await sendTelegramNotification(`💰 <b>Payment Received</b>\nAmount: ${(amount / 100).toFixed(2)} ${currency}\nWorkspace: ${workspaceId}`);
+  await sendTelegramNotification(`���💰 <b>Payment Received</b>\nAmount: ${(amount / 100).toFixed(2)} ${currency}\nWorkspace: ${workspaceId}`);
 
   return { ok: true, workspaceId };
 }
@@ -297,10 +338,10 @@ async function handlePaymentFailed(adapter, data) {
     agent_name: 'billing',
     action_type: 'PAYMENT_FAILED',
     details: { customerId },
-    version: 'v1.0.0'
+    version: 'v1.1.0'
   });
 
-  await sendTelegramNotification(`⚠️ <b>Payment Failed</b>\nWorkspace: ${workspaceId}\nSubscription set to past_due`);
+  await sendTelegramNotification(`��⚠��️ <b>Payment Failed</b>\nWorkspace: ${workspaceId}\nSubscription set to past_due`);
 
   return { ok: true, workspaceId };
 }
@@ -328,10 +369,10 @@ async function handleRefund(adapter, data) {
     agent_name: 'billing',
     action_type: 'REFUND_ISSUED',
     details: { amount, currency, customerId },
-    version: 'v1.0.0'
+    version: 'v1.1.0'
   });
 
-  await sendTelegramNotification(`💸 <b>Refund Issued</b>\nAmount: ${(amount / 100).toFixed(2)} ${currency}\nWorkspace: ${workspaceId}`);
+  await sendTelegramNotification(`���💸 <b>Refund Issued</b>\nAmount: ${(amount / 100).toFixed(2)} ${currency}\nWorkspace: ${workspaceId}`);
 
   return { ok: true, workspaceId };
 }
@@ -373,10 +414,10 @@ async function handlePlanChange(adapter, data, direction) {
     agent_name: 'billing',
     action_type: actionType,
     details: { customerId, newPlan, direction },
-    version: 'v1.0.0'
+    version: 'v1.1.0'
   });
 
-  const arrow = direction === 'upgraded' ? '⬆️' : '⬇️';
+  const arrow = direction === 'upgraded' ? '��⬆��️' : '��⬇��️';
   await sendTelegramNotification(`${arrow} <b>Subscription ${direction}</b>\nNew plan: ${newPlan}\nWorkspace: ${workspaceId}`);
 
   return { ok: true, workspaceId, plan: newPlan };
@@ -406,6 +447,8 @@ module.exports = {
   verifySignature,
   handleEvent,
   getPlanForProduct,
+  isEntitled,
+  incrementMissionsUsed,
   sendTelegramNotification,
   EVENT_HANDLERS
 };

@@ -1,0 +1,1 @@
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS missions_used INTEGER DEFAULT 0;
