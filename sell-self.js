@@ -1,6 +1,7 @@
 const { getAdapter, createMemoryAdapter } = require('./db');
 const { createRepos } = require('./db/repos');
 const runtime = require('./services/workforce/runtime');
+const { today, addMonths } = require('./services/identity');
 
 // Use memory adapter if no DATABASE_URL
 let adapter;
@@ -26,6 +27,19 @@ async function main() {
     });
     const workspaceId = workspace.id;
     console.log(`Workspace created with ID: ${workspaceId}`);
+
+    // Create a subscription for the workspace (assuming payment success for the test)
+    const subscription = await repos.subscriptions.create({
+      workspace_id: workspaceId,
+      plan: 'solo',
+      status: 'active',
+      cycle: 'monthly',
+      start_date: today(),
+      renewal_date: addMonths(today(), 1),
+      missions_used: 0
+    });
+    // Update workspace with subscription_id
+    await repos.workspaces.update(workspaceId, { subscription_id: subscription.id });
 
     // Create a user (founder)
     console.log('Creating founder user...');

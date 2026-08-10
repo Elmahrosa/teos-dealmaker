@@ -8,6 +8,7 @@ const rateLimit = require('express-rate-limit');
 const audit = require('../utils/auditLogger');
 const { getMode } = require('../config/mode');
 const billing = require('../services/billing');
+const auth = require('../services/auth');
 const render = require('./render');
 
 const app = express();
@@ -96,6 +97,110 @@ function cacheImmutable(req, res, next) {
 
 app.get('/api/pricing', (req, res) => {
   res.json({ tiers: render.PRICING, addons: render.PRICING.ADDONS });
+});
+
+// Authentication endpoints
+app.post('/api/auth/signup', express.json({ limit: '32kb' }), async (req, res) => {
+  try {
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+    const result = await auth.signup(adapter, req.body || {});
+    // Remove sensitive data before sending response
+    const { password_hash: _, salt: _, ...safeUser } = result.user || {};
+    res.status(201).json({
+      ok: true,
+      user: safeUser,
+      workspace: result.workspace,
+      subscription: result.subscription
+    });
+  } catch (err) {
+    console.error('[auth] signup error:', err.message);
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/auth/login', express.json({ limit: '32kb' }), async (req, res) => {
+  try {
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+    const result = await auth.login(adapter, req.body || {});
+    res.json({
+      ok: true,
+      user: result.user
+    });
+  } catch (err) {
+    console.error('[auth] login error:', err.message);
+    res.status(401).json({ ok: false, error: 'Invalid email or password' });
+  }
+});
+
+// Entitlement check endpoint
+app.get('/api/auth/entitlement', async (req, res) => {
+  try {
+    // In a real app, we would get user ID from session/JWT
+    // For now, we'll check if there's a user ID in headers (for demo purposes)
+    const userId = req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({ ok: false, error: 'User ID required' });
+    }
+
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+    const entitled = await auth.checkUserEntitlement(adapter, parseInt(userId, 10));
+    res.json({
+      ok: true,
+      entitled
+    });
+  } catch (err) {
+    console.error('[auth] entitlement check error:', err.message);
+    res.status(500).json({ ok: false, error: 'Internal server error' });
+  }
+});
+
+// Increment mission usage endpoint
+app.post('/api/auth/missions/increment', express.json({ limit: '32kb' }), async (req, res) => {
+  try {
+    const userId = req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({ ok: false, error: 'User ID required' });
+    }
+
+    const increment = req.body && req.body.increment ? parseInt(req.body.increment) : 1;
+    if (isNaN(increment) || increment < 1) {
+      return res.status(400).json({ ok: false, error: 'Valid increment required' });
+    }
+
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+    const result = await auth.incrementUserMissionUsage(adapter, parseInt(userId, 10), increment);
+    res.json({
+      ok: true,
+      subscription: result
+    });
+  } catch (err) {
+    console.error('[auth] mission increment error:', err.message);
+    res.status(400).json({ ok: false, error: err.message });
+  }
 });
 
 app.get('/api/health', (req, res) => {
