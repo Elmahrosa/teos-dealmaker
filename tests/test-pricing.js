@@ -118,7 +118,7 @@ CANONICAL.forEach(m => {
   check('annual', m.annual);
 });
 
-if (!ADDONS || ADDONS.length < 5 || !ADDONS.some(a => a.name === 'Sentinel Governance')) {
+if (!ADDONS || ADDONS.length < 3 || !ADDONS.some(a => a.name === 'Enterprise Intelligence')) {
   console.log('FAIL: missing add-ons catalog'); ok = false;
 }
 
@@ -149,7 +149,7 @@ const buttons = pricingButtons().inline_keyboard;
 TIER_NAMES.forEach(name => {
   if (!text.includes(name)) { console.log(`FAIL: formatted text missing ${name}`); ok = false; }
 });
-if (!text.includes('Add-ons') || !text.includes('Sentinel Governance')) {
+if (!text.includes('Add-ons') || !text.includes('Enterprise Intelligence')) {
   console.log('FAIL: formatted text missing add-ons'); ok = false;
 }
 if (text.includes(SENTINEL_PID) || text.includes('$690')) {

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TEOS DealMaker — Operations Console</title>
-<script>window.__PRICING__ = [{"tier":"🚀 Solo","tagline":"For founders and solo teams","monthly":{"price":"$99.00","url":"https://dodo.pe/teos-dealmaker-solo-monthly-13644952"},"annual":{"price":"$950.00","url":"https://dodo.pe/teos-dealmaker-solo-annual-13644952"},"features":["1 workspace","Mission Controller with a 13-agent AI workforce","Core agent capabilities","Community support"]},{"tier":"⚡ Growth","tagline":"For growing revenue teams","monthly":{"price":"$299.00","url":"https://dodo.pe/teos-dealmaker-growth-monthly-13644952"},"annual":{"price":"$2,990.00","url":"https://dodo.pe/teos-dealmaker-growth-annual-13644952"},"features":["10 seats","Civic Mixer + Sentinel Shield plugins","Enterprise Knowledge Intelligence","Email support"]},{"tier":"👑 Business","tagline":"For revenue organizations","monthly":{"price":"$999.00","url":"https://dodo.pe/teos-dealmaker-business-monthly-13644952"},"annual":{"price":"$9,990.00","url":"https://dodo.pe/teos-dealmaker-business-annual-13644952"},"features":["25 seats","Third-party plugin installs","All platform add-ons","Priority support"]},{"tier":"🏛️ Enterprise","tagline":"For large and sovereign organizations","monthly":{"price":"Custom","url":""},"annual":{"price":"Custom","url":""},"custom":true,"features":["Unlimited workspaces","Unlimited missions","Custom deployment options (COMING SOON)","Sentinel governance at scale","Direct access to the founding team"]}];</script>
+<script>window.__PRICING__ = [{"tier":"🚀 Solo","tagline":"For founders and solo teams","monthly":{"price":"$99.00","url":"https://dodo.pe/teos-dealmaker-solo-monthly-13644952"},"annual":{"price":"$950.00","url":"https://dodo.pe/teos-dealmaker-solo-annual-13644952"},"features":["1 workspace","Mission Controller with a 13-agent AI workforce","Core agent capabilities","Community support"]},{"tier":"⚡ Growth","tagline":"For growing revenue teams","monthly":{"price":"$299.00","url":"https://dodo.pe/teos-dealmaker-growth-monthly-13644952"},"annual":{"price":"$2,990.00","url":"https://dodo.pe/teos-dealmaker-growth-annual-13644952"},"features":["10 seats","Civic Mixer free plugin","Enterprise Knowledge Intelligence","Email support"]},{"tier":"👑 Business","tagline":"For revenue organizations","monthly":{"price":"$999.00","url":"https://dodo.pe/teos-dealmaker-business-monthly-13644952"},"annual":{"price":"$9,990.00","url":"https://dodo.pe/teos-dealmaker-business-annual-13644952"},"features":["25 seats","Third-party plugin installs","All platform add-ons","Priority support"]},{"tier":"🏛️ Enterprise","tagline":"For large and sovereign organizations","monthly":{"price":"Custom","url":""},"annual":{"price":"Custom","url":""},"custom":true,"features":["Unlimited workspaces","Unlimited missions","Custom deployment options","Policy governance at scale","Direct access to the founding team"]}];</script>
 <style>
   :root {
     --bg: #0b0f14;
@@ -146,7 +146,9 @@
       footer: 'Fail-closed governance · every capability decision is policy-evaluated and written to the audit vault',
       monthly: 'Monthly', annual: 'Annual', checkout: 'checkout',
       offline: 'offline', staticPreview: 'OFFLINE',
-      offlineMsg: 'Live telemetry unavailable — connecting to the TEOS backend. The audit trail, mode, and health will stream in once connected.',
+      offlineMsg: 'Backend unavailable — cannot reach the TEOS server.',
+      auditKeyRequired: 'Admin key required — enter the AUDIT_API_KEY to view the audit trail.',
+      auditUnavailable: 'Audit trail temporarily unavailable — check the backend.',
       sw_ar: 'العربية', sw_en: 'English'
     },
     ar: {
@@ -172,16 +174,18 @@
       footer: 'حوكمة تغلق عند الخطأ · كل قرار قدرة يُقيَّم حسب السياسات ويُسجَّل في خزنة التدقيق',
       monthly: 'شهرياً', annual: 'سنوياً', checkout: 'شراء',
       offline: 'غير متصل', staticPreview: 'غير متصل',
-      offlineMsg: 'القياسات الحية غير متاحة — جارٍ الاتصال بخادم TEOS. سيتدفق سجل التدقيق والوضع والصحة فور الاتصال.',
+      offlineMsg: 'الخادم غير متاح — تعذر الوصول إلى خادم TEOS.',
+      auditKeyRequired: 'مطلوب مفتاح الإدارة — أدخل AUDIT_API_KEY لعرض سجل التدقيق.',
+      auditUnavailable: 'سجل التدقيق غير متاح مؤقتاً — تحقق من الخادم.',
       sw_ar: 'العربية', sw_en: 'English'
     }
   };
 
   var PRICING_AR = {
-    '🚀 Solo': { features: ['مساحة عمل واحدة', 'وحدة تحكم المهام مع قوة عاملة من 13 وكيل ذكاء اصطناعي', 'إمكانات الوكلاء الأساسية'] },
-    '⚡ Growth': { features: ['10 مقاعد', 'إضافات Civic Mixer و Sentinel Shield', 'ذكاء المعرفة المؤسسية', 'دعم عبر البريد الإلكتروني'] },
+    '🚀 Solo': { features: ['مساحة عمل واحدة', 'وحدة تحكم المهام مع قوة عاملة من 13 وكيل ذكاء اصطناعي', 'إمكانات الوكلاء الأساسية', 'دعم المجتمع'] },
+    '⚡ Growth': { features: ['10 مقاعد', 'إضافة Civic Mixer المجانية', 'ذكاء المعرفة المؤسسية', 'دعم عبر البريد الإلكتروني'] },
     '👑 Business': { features: ['25 مقعداً', 'تثبيت إضافات الطرف الثالث', 'جميع إضافات المنصة', 'دعم ذو أولوية'] },
-    '🏛️ Enterprise': { features: ['مساحات عمل غير محدودة', 'مهام غير محدودة', 'خيارات نشر مخصصة (قريباً)', 'حوكمة سنتينل على نطاق واسع', 'وصول مباشر للفريق المؤسس'] }
+    '🏛️ Enterprise': { features: ['مساحات عمل غير محدودة', 'مهام غير محدودة', 'خيارات نشر مخصصة', 'حوكمة السياسات على نطاق واسع', 'وصول مباشر للفريق المؤسس'] }
   };
 
   var MODE_AR = { production: 'إنتاج', live: 'مباشر', dry: 'تجريبي', dry_run: 'تشغيل تجريبي', offline: 'غير متصل' };
@@ -275,6 +279,14 @@
     var rows = document.getElementById('rows');
     if (offline) {
       rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('offlineMsg')) + '</td></tr>';
+      return;
+    }
+    if (audit === 'AUTH_REQUIRED') {
+      rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('auditKeyRequired')) + '</td></tr>';
+      return;
+    }
+    if (audit === 'UNAVAILABLE') {
+      rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('auditUnavailable')) + '</td></tr>';
       return;
     }
     if (!audit.length) {
@@ -402,11 +414,46 @@
     }
   }
 
-  async function refresh() {
-    var healthRes = await fetch('/api/health').then(function (r) { return { ok: r.ok, body: r.json().catch(function () { return null; }) }; });
-    var auditRes = await fetch('/api/audit?limit=100').then(function (r) { return { ok: r.ok, body: r.json().catch(function () { return null; }) }; });
+  // Admin key stays in memory only (never persisted, never embedded in the
+  // page). It is used exclusively for the protected audit trail and the
+  // governed outbound controls.
+  var adminKeyValue = '';
 
-    if (!healthRes.ok || !auditRes.ok) {
+  function getAdminKey() {
+    if (adminKeyValue) return adminKeyValue;
+    var k = window.prompt(t('oNeedKey'), '');
+    if (k) adminKeyValue = k;
+    return k;
+  }
+
+  function fetchJson(path, opts) {
+    return fetch(path, opts).then(function (r) {
+      return { ok: r.ok, status: r.status, body: r.json().catch(function () { return null; }) };
+    });
+  }
+
+  async function loadAudit() {
+    var res = await fetchJson('/api/audit?limit=100', {
+      headers: adminKeyValue ? { 'x-api-key': adminKeyValue } : {}
+    });
+    if (res.ok) return res.body || [];
+    if (res.status === 401 || res.status === 503) {
+      var key = getAdminKey();
+      if (!key) return 'AUTH_REQUIRED';
+      var retry = await fetchJson('/api/audit?limit=100', { headers: { 'x-api-key': key } });
+      return retry.ok ? (retry.body || []) : 'AUTH_REQUIRED';
+    }
+    return 'UNAVAILABLE';
+  }
+
+  // Connectivity is judged by the PUBLIC /api/health endpoint only. The audit
+  // trail is auth-gated (401/503 without the admin key) and must never mark the
+  // whole backend as offline. Outbound telemetry (/api/outreach/status) is
+  // public and rendered whenever the backend is reachable.
+  async function refresh() {
+    var healthRes = await fetchJson('/api/health');
+
+    if (!healthRes.ok) {
       offline = true;
       document.getElementById('stat-mode').textContent = t('offline');
       document.getElementById('stat-total').textContent = '—';
@@ -416,12 +463,12 @@
       modeEl.className = 'dry';
       renderRows([]);
       updateStrip(false, null);
+      renderOutreach(null);
       return;
     }
 
     offline = false;
-    var health = await healthRes.body;
-    var audit = await auditRes.body;
+    var health = healthRes.body;
 
     document.getElementById('stat-mode').textContent = publicMode(health.mode);
     document.getElementById('stat-total').textContent = health.totalEntries;
@@ -431,12 +478,11 @@
     modeEl.textContent = publicMode(health.mode);
     modeEl.className = String(health.mode).toUpperCase() === 'LIVE' ? 'live' : 'dry';
 
-    renderRows(audit || []);
+    renderRows(await loadAudit());
 
-    var outRes = await fetch('/api/outreach/status').then(function (r) { return { ok: r.ok, body: r.json().catch(function () { return null; }) }; });
-    var outbound = outRes.ok ? await outRes.body : null;
-    renderOutreach(outbound);
-    updateStrip(true, outbound);
+    var outRes = await fetchJson('/api/outreach/status');
+    renderOutreach(outRes.ok ? outRes.body : null);
+    updateStrip(true, outRes.ok ? outRes.body : null);
   }
 
   function setLang(l) {

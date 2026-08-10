@@ -5,6 +5,7 @@
 // logic here guarantees the deployed bundle always matches the server output.
 
 const PRICING = require('../config/pricing.config');
+const { PRODUCT } = require('../config/product.config');
 
 const SITE_URL = process.env.SITE_URL || 'https://dealmaker.elmahrosa.org';
 
@@ -62,33 +63,47 @@ function renderPricingCards() {
   }).join('\n');
 }
 
-// TEOS Sentinel is a separate product. The DealMaker page only cross-links to
-// it — no price and no Dodo checkout appears anywhere in DealMaker's surface.
-const SENTINEL_FEATURES = [
-  'Fail-closed policy enforcement on every tool and plugin call',
-  'Prompt injection and code security scanning',
-  'Continuous hash-chained audit of every allow/deny decision',
-  'Role-based entitlements per tenant plan'
-];
+// Free Plugins — rendered only from the verified available-plugin registry
+// (config/product.config.js). Nothing is hard-coded here; an entry appears
+// only if it is implemented, usable, and enabled.
+function renderFreePlugins() {
+  const plugins = (PRODUCT.plugins || []);
+  if (!plugins.length) return '';
+  const cards = plugins.map(p => `
+    <div class="card plugin-card">
+      <h3>${p.name}${p.free && p.installed ? '<span class="badge" data-i18n="badge_free_installed">FREE · INSTALLED</span>' : ''}</h3>
+      <p ${p.i18nKey ? `data-i18n="${p.i18nKey}"` : ''}>${p.description}</p>
+      ${p.url ? `<a class="open-btn" href="${p.url}" data-i18n="plugin_open">Open →</a>` : ''}
+    </div>`).join('');
+  return `<div class="grid">${cards}</div>`;
+}
 
-function renderSentinelCrossSell() {
-  const url = PRICING.SENTINEL_URL;
-  const features = SENTINEL_FEATURES.map(f => `<li>${f}</li>`).join('');
+// Elmahrosa commercial products — independent products, cross-linked only.
+// No price, no checkout, no "included" claim: Sentinel is sold separately.
+function renderElmahrosaProducts() {
+  const products = (PRODUCT.elmahrosaProducts || []);
+  if (!products.length) return '';
+  const cards = products.map(p => `
+    <div class="card elmahrosa-product">
+      <span class="independent-tag" data-i18n="elmahrosa_independent">INDEPENDENT PRODUCT</span>
+      <h3>${p.name}</h3>
+      <p class="tagline">${p.tagline}</p>
+      <p>${p.description}</p>
+      <p class="product-note" data-i18n="elmahrosa_note">A separate product, available standalone. Sold on its own pricing page.</p>
+      <div class="product-actions">
+        <a class="cta" href="${p.url}" target="_blank" rel="noopener" data-i18n="elmahrosa_view">View Sentinel →</a>
+        <a class="cta ghost" href="${p.url}" target="_blank" rel="noopener" data-i18n="elmahrosa_pricing">Pricing →</a>
+      </div>
+    </div>`).join('');
+  const first = products[0];
+  const cross = first ? `
+    <p class="sect-sub elmahrosa-cross"><span data-i18n="elmahrosa_cross_q">Need enterprise AI execution governance?</span>
+      <a href="${first.url}" target="_blank" rel="noopener" data-i18n="elmahrosa_cross_l">Explore TEOS Sentinel Shield →</a></p>` : '';
   return `
-  <section id="sentinel-shield" class="sentinel-sell">
-    <div class="sentinel-inner">
-      <div class="sentinel-copy">
-        <h2 class="sect" data-i18n="sentinel_sell_t">PROTECT YOUR AI WORKFORCE</h2>
-        <h3 class="sentinel-name" data-i18n="sentinel_name">TEOS SENTINEL SHIELD</h3>
-        <p class="sect-sub" data-i18n="sentinel_tagline">AI Agent Security &amp; Execution Firewall</p>
-        <p data-i18n="sentinel_note">A separate product, available standalone. Sold on its own pricing page.</p>
-        <ul>${features}</ul>
-      </div>
-      <div class="sentinel-card">
-        <a class="cta" href="${url}" target="_blank" rel="noopener" data-i18n="sentinel_cta">EXPLORE TEOS SENTINEL SHIELD</a>
-        <p class="sentinel-hint" data-i18n="sentinel_hint">Included with Growth and Business plans</p>
-      </div>
-    </div>
+  <section id="elmahrosa-products" class="elmahrosa-products">
+    <h2 class="sect" data-i18n="elmahrosa_products_t">ELMAHROSA PRODUCTS</h2>
+    <p class="sect-sub" data-i18n="elmahrosa_products_sub">Extend DealMaker with independent Elmahrosa products.</p>
+    <div class="grid">${cards}</div>${cross}
   </section>`;
 }
 
@@ -123,7 +138,8 @@ function analyticsSnippet() {
 function renderLanding(template) {
   return template
     .replace('{{PRICING_CARDS}}', renderPricingCards())
-    .replace('{{SENTINEL_CROSS_SELL}}', renderSentinelCrossSell())
+    .replace('{{PLUGIN_CARDS}}', renderFreePlugins())
+    .replace('{{ELMAHROSA_PRODUCTS}}', renderElmahrosaProducts())
     .replace('{{ADDONS}}', renderAddons())
     .replace('{{ANALYTICS}}', analyticsSnippet())
     .replace(/\{\{SITE_URL\}\}/g, SITE_URL);
@@ -332,7 +348,8 @@ module.exports = {
   SITE_URL,
   PRICING,
   renderPricingCards,
-  renderSentinelCrossSell,
+  renderFreePlugins,
+  renderElmahrosaProducts,
   renderAddons,
   analyticsSnippet,
   renderLanding,

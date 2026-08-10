@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sentinel Shield — TEOS DealMaker</title>
+<title>TEOS DealMaker — Governance Console</title>
 <script>window.__PRICING__ = {{PRICING_JSON}};</script>
 <style>
   :root {
@@ -51,23 +51,45 @@
   footer { margin-top: 20px; color: var(--muted); font-size: 11px; }
   #lang-switch { margin-inline-start: auto; color: var(--gold); background: none; border: 1px solid var(--border); padding: 2px 12px; border-radius: 12px; cursor: pointer; font-family: inherit; font-size: 12px; letter-spacing: 1px; }
   #lang-switch:hover { color: #0b0f14; background: var(--gold); border-color: var(--gold); }
+  #ops-strip { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 6px 16px; font-size: 13px; font-weight: 700; letter-spacing: 1px; }
+  .pill.ok { color: var(--green); border-color: var(--green); }
+  .pill.warn { color: var(--gold); border-color: var(--gold); }
+  .pill.err { color: var(--red); border-color: var(--red); }
+  .pill.off { color: var(--muted); border-color: var(--border); }
   html[dir="rtl"] th, html[dir="rtl"] td { text-align: right; }
   html[dir="rtl"] h1, html[dir="rtl"] h2 { letter-spacing: 0; }
 </style>
 </head>
 <body>
   <header>
-    <h1 data-i18n="header">🏛️ SENTINEL SHIELD</h1>
+    <h1 data-i18n="header">🏛️ TEOS DEALMAKER — GOVERNANCE CONSOLE</h1>
     <span class="sub" data-i18n="sub">TEOS DealMaker · Enterprise AI Governance Console</span>
     <span id="mode" class="dry">…</span>
+    <a href="/customer-0" style="color:var(--blue);text-decoration:none;font-size:13px;">Customer #0 →</a>
     <button id="lang-switch" type="button" role="button" aria-label="Switch language">العربية</button>
   </header>
+
+  <div id="ops-strip">
+    <span class="pill" id="strip-service">🟢 SERVICE RUNNING</span>
+    <span class="pill" id="strip-outbound">🟡 OUTBOUND PAUSED</span>
+  </div>
 
   <div class="stats">
     <div class="stat"><div class="label" data-i18n="mode">Mode</div><div class="value" id="stat-mode">—</div></div>
     <div class="stat"><div class="label" data-i18n="auditEntries">Audit Entries</div><div class="value" id="stat-total">—</div></div>
     <div class="stat"><div class="label" data-i18n="lastUpdate">Last Update</div><div class="value" id="stat-time" style="font-size:14px;">—</div></div>
   </div>
+
+  <section id="outreach" style="margin-bottom:24px;">
+    <h2 style="color:var(--gold);font-size:16px;letter-spacing:1px;margin-bottom:12px;" data-i18n="outreachHeader">📧 OUTBOUND OPS</h2>
+    <div class="stats" style="margin-bottom:12px;">
+      <div class="stat"><div class="label" data-i18n="workerState">Worker</div><div class="value" id="o-state">—</div></div>
+      <div class="stat"><div class="label" data-i18n="outboundEmail">Outbound Email</div><div class="value" id="o-email">—</div></div>
+      <div class="stat"><div class="label" data-i18n="queue">Queue</div><div class="value" id="o-queue" style="font-size:14px;">—</div></div>
+      <div class="stat"><div class="label" data-i18n="lastSent">Last Successful Send</div><div class="value" id="o-last" style="font-size:14px;">—</div></div>
+    </div>
+  </section>
 
   <section id="pricing">
     <h2 style="color:var(--gold);font-size:16px;letter-spacing:1px;margin-bottom:12px;" data-i18n="pricing">💳 PRICING</h2>
@@ -96,7 +118,7 @@
 <script>
   var I18N = {
     en: {
-      header: '🏛️ SENTINEL SHIELD',
+      header: '🏛️ TEOS DEALMAKER — GOVERNANCE CONSOLE',
       sub: 'TEOS DealMaker · Enterprise AI Governance Console',
       mode: 'Mode', auditEntries: 'Audit Entries', lastUpdate: 'Last Update',
       pricing: '💳 PRICING',
@@ -106,11 +128,18 @@
       footer: 'Fail-closed governance · every capability decision is policy-evaluated and written to the audit vault',
       monthly: 'Monthly', annual: 'Annual', checkout: 'checkout',
       offline: 'offline', staticPreview: 'OFFLINE',
-      offlineMsg: 'Live telemetry unavailable — connecting to the TEOS backend. The audit trail, mode, and health will stream in once connected.',
+      offlineMsg: 'Backend unavailable — cannot reach the TEOS server.',
+      auditKeyRequired: 'Admin key required — enter the AUDIT_API_KEY to view the audit trail.',
+      auditUnavailable: 'Audit trail temporarily unavailable — check the backend.',
+      stripServiceRunning: '🟢 SERVICE RUNNING', stripServiceOffline: '🔴 SERVICE OFFLINE',
+      stripOutboundRunning: '🟢 OUTBOUND RUNNING', stripOutboundPaused: '🟡 OUTBOUND PAUSED',
+      stripOutboundStopped: '🔴 OUTBOUND EMERGENCY STOPPED', stripOutboundUnknown: '⚪ OUTBOUND UNKNOWN',
+      outreachHeader: '📧 OUTBOUND OPS', workerState: 'Worker', outboundEmail: 'Outbound Email', queue: 'Queue', lastSent: 'Last Successful Send',
+      oNeedKey: 'Enter the admin API key (AUDIT_API_KEY):',
       sw_ar: 'العربية', sw_en: 'English'
     },
     ar: {
-      header: '🏛️ درع سنتينل',
+      header: '🏛️ صانع الصفقات تيوس — لوحة الحوكمة',
       sub: 'صانع الصفقات تيوس · لوحة تحكم الحوكمة المؤسسية للذكاء الاصطناعي',
       mode: 'الوضع', auditEntries: 'سجلات التدقيق', lastUpdate: 'آخر تحديث',
       pricing: '💳 الأسعار',
@@ -120,16 +149,23 @@
       footer: 'حوكمة تغلق عند الخطأ · كل قرار قدرة يُقيَّم حسب السياسات ويُسجَّل في خزنة التدقيق',
       monthly: 'شهرياً', annual: 'سنوياً', checkout: 'شراء',
       offline: 'غير متصل', staticPreview: 'غير متصل',
-      offlineMsg: 'القياسات الحية غير متاحة — جارٍ الاتصال بخادم TEOS. سيتدفق سجل التدقيق والوضع والصحة فور الاتصال.',
+      offlineMsg: 'الخادم غير متاح — تعذر الوصول إلى خادم TEOS.',
+      auditKeyRequired: 'مطلوب مفتاح الإدارة — أدخل AUDIT_API_KEY لعرض سجل التدقيق.',
+      auditUnavailable: 'سجل التدقيق غير متاح مؤقتاً — تحقق من الخادم.',
+      stripServiceRunning: '🟢 الخدمة قيد التشغيل', stripServiceOffline: '🔴 الخدمة غير متصلة',
+      stripOutboundRunning: '🟢 المراسلات الصادرة تعمل', stripOutboundPaused: '🟡 المراسلات الصادرة متوقفة مؤقتاً',
+      stripOutboundStopped: '🔴 إيقاف طارئ للمراسلات الصادرة', stripOutboundUnknown: '⚪ حالة المراسلات الصادرة غير معروفة',
+      outreachHeader: '📧 تشغيل المراسلات الصادرة', workerState: 'العامل', outboundEmail: 'البريد الصادر', queue: 'الطابور', lastSent: 'آخر إرسال ناجح',
+      oNeedKey: 'أدخل مفتاح واجهة الإدارة (AUDIT_API_KEY):',
       sw_ar: 'العربية', sw_en: 'English'
     }
   };
 
   var PRICING_AR = {
     '🚀 Solo': { features: ['مساحة عمل واحدة', 'وحدة تحكم المهام مع قوة عاملة من 13 وكيل ذكاء اصطناعي', 'إمكانات الوكلاء الأساسية', 'دعم المجتمع'] },
-    '⚡ Growth': { features: ['10 مقاعد', 'إضافات Civic Mixer و Sentinel Shield', 'ذكاء المعرفة المؤسسية', 'دعم عبر البريد الإلكتروني'] },
+    '⚡ Growth': { features: ['10 مقاعد', 'إضافة Civic Mixer المجانية', 'ذكاء المعرفة المؤسسية', 'دعم عبر البريد الإلكتروني'] },
     '👑 Business': { features: ['25 مقعداً', 'تثبيت إضافات الطرف الثالث', 'جميع إضافات المنصة', 'دعم ذو أولوية'] },
-    '🏛️ Enterprise': { features: ['مساحات عمل غير محدودة', 'مهام غير محدودة', 'نشر خاص', 'حوكمة سنتينل على نطاق واسع', 'مهندس نجاح مخصص'] }
+    '🏛️ Enterprise': { features: ['مساحات عمل غير محدودة', 'مهام غير محدودة', 'نشر خاص', 'حوكمة السياسات على نطاق واسع', 'مهندس نجاح مخصص'] }
   };
 
   var MODE_AR = { production: 'إنتاج', live: 'مباشر', dry: 'تجريبي', dry_run: 'تشغيل تجريبي', offline: 'غير متصل' };
@@ -225,6 +261,14 @@
       rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('offlineMsg')) + '</td></tr>';
       return;
     }
+    if (audit === 'AUTH_REQUIRED') {
+      rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('auditKeyRequired')) + '</td></tr>';
+      return;
+    }
+    if (audit === 'UNAVAILABLE') {
+      rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('auditUnavailable')) + '</td></tr>';
+      return;
+    }
     if (!audit.length) {
       rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('noAudit')) + '</td></tr>';
       return;
@@ -254,11 +298,98 @@
     }
   }
 
-  async function refresh() {
-    var healthRes = await fetch('/api/health').then(function (r) { return { ok: r.ok, body: r.json().catch(function () { return null; }) }; });
-    var auditRes = await fetch('/api/audit?limit=100').then(function (r) { return { ok: r.ok, body: r.json().catch(function () { return null; }) }; });
+  // Public health status only: no secrets, no message bodies, no admin key.
+  function stateColor(s) {
+    if (s === 'RUNNING') return 'var(--green)';
+    if (s === 'PAUSED') return 'var(--gold)';
+    if (s === 'EMERGENCY_STOPPED') return 'var(--red)';
+    if (s === 'DEGRADED') return '#e67e22';
+    return 'var(--muted)';
+  }
 
-    if (!healthRes.ok || !auditRes.ok) {
+  function localState(s) {
+    if (lang === 'ar') {
+      if (s === 'RUNNING') return 'قيد التشغيل';
+      if (s === 'PAUSED') return 'متوقف مؤقتاً';
+      if (s === 'EMERGENCY_STOPPED') return 'إيقاف طارئ';
+      if (s === 'DEGRADED') return 'متدهور';
+    }
+    return s || '—';
+  }
+
+  function renderOutreach(h) {
+    var stateEl = document.getElementById('o-state');
+    var emailEl = document.getElementById('o-email');
+    var queueEl = document.getElementById('o-queue');
+    var lastEl = document.getElementById('o-last');
+    if (!h) {
+      stateEl.textContent = '—';
+      emailEl.textContent = '—';
+      queueEl.textContent = '—';
+      lastEl.textContent = '—';
+      return;
+    }
+    stateEl.textContent = localState(h.state);
+    stateEl.style.color = stateColor(h.state);
+    emailEl.textContent = h.outbound_email;
+    emailEl.style.color = h.outbound_email === 'ENABLED' ? 'var(--green)' : 'var(--muted)';
+    var q = h.queue_counts || {};
+    queueEl.textContent = (q.queued || 0) + ' queued · ' + (q.processing || 0) + ' processing · ' +
+      (q.send_failed || 0) + ' failed · ' + (q.send_unknown || 0) + ' unknown · ' + (q.sent_today || 0) + ' today';
+    lastEl.textContent = h.last_successful_job ? String(h.last_successful_job).replace('T', ' ').slice(0, 19) : '—';
+  }
+
+  function updateStrip(online, h) {
+    var svc = document.getElementById('strip-service');
+    var out = document.getElementById('strip-outbound');
+    if (svc) {
+      if (!online) { svc.textContent = t('stripServiceOffline'); svc.className = 'pill err'; }
+      else { svc.textContent = t('stripServiceRunning'); svc.className = 'pill ok'; }
+    }
+    if (out) {
+      if (!online) { out.textContent = t('stripOutboundUnknown'); out.className = 'pill off'; return; }
+      var state = h && h.state;
+      if (state === 'EMERGENCY_STOPPED') { out.textContent = t('stripOutboundStopped'); out.className = 'pill err'; }
+      else if (state === 'RUNNING' && h.outbound_email === 'ENABLED') { out.textContent = t('stripOutboundRunning'); out.className = 'pill ok'; }
+      else { out.textContent = t('stripOutboundPaused'); out.className = 'pill warn'; }
+    }
+  }
+
+  // Admin key stays in memory only (never persisted, never embedded in the
+  // page). It is used exclusively for the protected audit trail.
+  var adminKeyValue = '';
+
+  function getAdminKey() {
+    if (adminKeyValue) return adminKeyValue;
+    var k = window.prompt(t('oNeedKey'), '');
+    if (k) adminKeyValue = k;
+    return k;
+  }
+
+  function fetchJson(path, opts) {
+    return fetch(path, opts).then(function (r) {
+      return { ok: r.ok, status: r.status, body: r.json().catch(function () { return null; }) };
+    });
+  }
+
+  async function loadAudit() {
+    var res = await fetchJson('/api/audit?limit=100', {
+      headers: adminKeyValue ? { 'x-api-key': adminKeyValue } : {}
+    });
+    if (res.ok) return res.body || [];
+    if (res.status === 401 || res.status === 503) {
+      var key = getAdminKey();
+      if (!key) return 'AUTH_REQUIRED';
+      var retry = await fetchJson('/api/audit?limit=100', { headers: { 'x-api-key': key } });
+      return retry.ok ? (retry.body || []) : 'AUTH_REQUIRED';
+    }
+    return 'UNAVAILABLE';
+  }
+
+  async function refresh() {
+    var healthRes = await fetchJson('/api/health');
+
+    if (!healthRes.ok) {
       offline = true;
       document.getElementById('stat-mode').textContent = t('offline');
       document.getElementById('stat-total').textContent = '—';
@@ -267,12 +398,13 @@
       modeEl.textContent = t('staticPreview');
       modeEl.className = 'dry';
       renderRows([]);
+      updateStrip(false, null);
+      renderOutreach(null);
       return;
     }
 
     offline = false;
-    var health = await healthRes.body;
-    var audit = await auditRes.body;
+    var health = healthRes.body;
 
     document.getElementById('stat-mode').textContent = publicMode(health.mode);
     document.getElementById('stat-total').textContent = health.totalEntries;
@@ -282,7 +414,11 @@
     modeEl.textContent = publicMode(health.mode);
     modeEl.className = String(health.mode).toUpperCase() === 'LIVE' ? 'live' : 'dry';
 
-    renderRows(audit || []);
+    renderRows(await loadAudit());
+
+    var outRes = await fetchJson('/api/outreach/status');
+    renderOutreach(outRes.ok ? outRes.body : null);
+    updateStrip(true, outRes.ok ? outRes.body : null);
   }
 
   function setLang(l) {

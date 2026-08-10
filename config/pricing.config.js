@@ -59,7 +59,7 @@ const PRICING = [
     },
     features: [
       '10 seats',
-      'Civic Mixer + Sentinel Shield plugins',
+      'Civic Mixer free plugin',
       'Enterprise Knowledge Intelligence',
       'Email support'
     ]
@@ -100,17 +100,15 @@ const PRICING = [
     features: [
       'Unlimited workspaces',
       'Unlimited missions',
-      'Custom deployment options (COMING SOON)',
-      'Sentinel governance at scale',
+      'Custom deployment options',
+      'Policy governance at scale',
       'Direct access to the founding team'
     ]
   }
 ];
 
 const ADDONS = [
-  { id: 'sentinel', name: 'Sentinel Governance', description: 'Policy enforcement, prompt security, and continuous audit across every capability.' },
   { id: 'intelligence', name: 'Enterprise Intelligence', description: 'RAG knowledge base with source-attributed answers.' },
-  { id: 'connectors', name: 'CRM Connectors', description: 'Salesforce, HubSpot, Microsoft 365, and Google Workspace connectors (COMING SOON).' },
   { id: 'models', name: 'Premium AI Models', description: 'Access to frontier reasoning models.' },
   { id: 'support', name: 'Dedicated Support', description: 'Priority support from the founding team.' }
 ];

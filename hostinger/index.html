@@ -9,7 +9,7 @@
 <link rel="canonical" href="https://dealmaker.elmahrosa.org/">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <meta property="og:title" content="TEOS DEALMAKER — Enterprise AI Revenue Operating System">
-<meta property="og:description" content="A 13-agent AI workforce, a Mission Controller, an enterprise plugin platform, and Sentinel governance — one revenue operating system. Live now, running its own revenue pipeline.">
+<meta property="og:description" content="A 13-agent AI workforce, a Mission Controller, an enterprise plugin platform, and policy governance — one revenue operating system. Live now, running its own revenue pipeline.">
 <meta property="og:url" content="https://dealmaker.elmahrosa.org/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="TEOS DealMaker">
@@ -27,7 +27,7 @@
   "applicationCategory": "BusinessApplication",
   "operatingSystem": "Web",
   "url": "https://dealmaker.elmahrosa.org/",
-  "description": "Policy-Governed AI Revenue Operating System: a 13-agent workforce, Mission Controller, enterprise plugin platform, MCP gateway, and Sentinel governance.",
+  "description": "Policy-Governed AI Revenue Operating System: a 13-agent workforce, Mission Controller, enterprise plugin platform, MCP gateway, and policy governance.",
   "offers": [
     { "@type": "Offer", "name": "Solo", "price": "99", "priceCurrency": "USD" },
     { "@type": "Offer", "name": "Growth", "price": "299", "priceCurrency": "USD" },
@@ -111,15 +111,17 @@
   .buy:hover { filter: brightness(1.15); }
   .buy.annual { background: var(--green); }
   .pid { color: var(--muted); font-size: 11px; margin-top: 10px; text-align: center; }
-  .sentinel-sell { background: linear-gradient(180deg, #10161f 0%, #0b0f14 100%); border: 1px solid var(--border); border-radius: 12px; padding: 32px; }
-  .sentinel-inner { display: flex; gap: 24px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-  .sentinel-copy { flex: 1 1 420px; }
-  .sentinel-name { font-size: 22px; letter-spacing: 2px; color: var(--gold); margin: 4px 0; }
-  .sentinel-copy ul { list-style: none; margin-top: 10px; }
-  .sentinel-copy ul li::before { content: "🛡 "; font-size: 11px; }
-  .sentinel-copy ul li { color: var(--muted); font-size: 14px; padding: 2px 0; }
-  .sentinel-card { flex: 0 0 280px; text-align: center; }
-  .sentinel-hint { color: var(--muted); font-size: 12px; margin-top: 10px; }
+  .elmahrosa-products { border-top: 1px solid var(--border); padding-top: 24px; }
+  .elmahrosa-product { border-left: 3px solid var(--blue); }
+  .independent-tag { display: inline-block; color: var(--blue); font-size: 11px; letter-spacing: 2px; font-weight: 700; margin-bottom: 8px; }
+  .elmahrosa-product .tagline { color: var(--text); font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .product-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .product-actions .cta { margin: 0; padding: 10px 18px; font-size: 13px; }
+  .product-note { color: var(--muted); font-size: 12px; margin-top: 10px; }
+  .elmahrosa-cross { margin-top: 18px; }
+  .plugin-card h3 .badge { color: var(--green); }
+  .open-btn { display: inline-block; margin-top: 12px; color: var(--blue); text-decoration: none; font-weight: 700; font-size: 14px; }
+  .open-btn:hover { color: var(--gold); }
   footer { border-top: 1px solid var(--border); padding-top: 20px; color: var(--muted); font-size: 13px; text-align: center; }
   footer a { color: var(--blue); text-decoration: none; }
   footer a:hover { color: var(--gold); }
@@ -127,6 +129,39 @@
   html[dir="rtl"] header nav a, html[dir="rtl"] .lang-switch { margin-left: 0; margin-right: 16px; }
   html[dir="rtl"] .hero { text-align: center; }
   html[dir="rtl"] .badge { margin-left: 0; margin-right: 8px; }
+  .demo-banner { text-align: center; background: #2a1212; color: #ffb4b4; border: 1px solid #4a2020; border-radius: 6px; padding: 8px 14px; font-size: 13px; letter-spacing: 1px; font-weight: 700; margin-bottom: 16px; }
+  .pg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .pg-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
+  .pg-card h3 { font-size: 15px; color: var(--gold); margin-bottom: 10px; }
+  .pg-wide { grid-column: 1 / -1; }
+  .pg-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+  .pg-value { color: var(--text); font-size: 14px; margin-bottom: 8px; }
+  .pg-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  .pg-table th, .pg-table td { text-align: left; padding: 6px 8px; font-size: 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .pg-table th { color: var(--muted); font-size: 11px; text-transform: uppercase; }
+  .pg-table td { color: var(--text); }
+  html[dir="rtl"] .pg-table th, html[dir="rtl"] .pg-table td { text-align: right; }
+  .lc { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; margin: 14px 0; }
+  .lc .phase { border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; border-radius: 16px; font-size: 12px; letter-spacing: 1px; }
+  .lc .phase.active { background: var(--gold); color: #0b0f14; font-weight: 700; border-color: var(--gold); }
+  .lc .phase.done { border-color: var(--green); color: var(--green); }
+  .lc .arrow { color: var(--gold); font-size: 12px; }
+  #pg-log { background: #0b0f14; border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-top: 10px; min-height: 96px; max-height: 180px; overflow: auto; font-family: Consolas, monospace; font-size: 12px; color: var(--muted); line-height: 1.5; }
+  #pg-log .ok { color: var(--green); }
+  #pg-log .warn { color: var(--gold); }
+  #pg-log .deny { color: var(--red); }
+  .pg-btn { background: var(--gold); color: #0b0f14; font-weight: 700; border: none; border-radius: 6px; padding: 10px 22px; font-family: inherit; font-size: 14px; letter-spacing: 1px; cursor: pointer; margin-top: 12px; }
+  .pg-btn:hover { filter: brightness(1.1); }
+  .pg-btn:disabled { opacity: .6; cursor: default; }
+  .gov { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+  .gov .g { border: 1px solid var(--border); border-radius: 6px; padding: 10px; text-align: center; }
+  .gov .g b { font-size: 13px; letter-spacing: 1px; }
+  .gov .g.allow b { color: var(--green); }
+  .gov .g.warn b { color: var(--gold); }
+  .gov .g.review b { color: var(--blue); }
+  .gov .g.block b { color: var(--red); }
+  .gov .g p { color: var(--muted); font-size: 11px; margin-top: 4px; }
+  .pg-hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -135,10 +170,11 @@
     <h1>TEOS DEALMAKER</h1>
     <nav aria-label="Primary">
       <a href="#features" data-i18n="nav_features">Features</a>
+      <a href="#playground" data-i18n="nav_playground">Playground</a>
       <a href="#architecture" data-i18n="nav_architecture">Architecture</a>
       <a href="#plugins" data-i18n="nav_plugins">Plugins</a>
       <a href="#mission" data-i18n="nav_mission">Mission</a>
-      <a href="#sentinel" data-i18n="nav_sentinel">Sentinel</a>
+      <a href="#elmahrosa-products" data-i18n="nav_elmahrosa">Elmahrosa Products</a>
       <a href="#pricing" data-i18n="nav_pricing">Pricing</a>
       <a href="https://elmahrosa.org/trust" target="_blank" rel="noopener" data-i18n="nav_trust">Trust &amp; Security</a>
       <a href="/dashboard" data-i18n="nav_console">Console</a>
@@ -148,26 +184,62 @@
   </header>
 
   <div class="hero">
-    <div class="eyebrow" data-i18n="hero_eyebrow">Mission-as-a-Trial · Real revenue work, not a demo</div>
+    <div class="eyebrow" data-i18n="hero_eyebrow">Mission-First · Real revenue work, not a demo</div>
     <h2><span data-i18n="hero_t1">Hire an AI Revenue Team. </span><span class="gold" data-i18n="hero_t2">Not a Chatbot.</span></h2>
-    <p data-i18n="hero_text">Complete one real business mission in just a few hours. TEOS DealMaker assigns a dedicated AI Revenue Team that does the actual work — research, outreach, qualification, pipeline — and delivers a real mission report with the tools and scripts to act on it. Every mission runs under Sentinel governance.</p>
+    <p data-i18n="hero_text">Complete one real business mission in just a few hours. TEOS DealMaker assigns a dedicated AI Revenue Team that does the actual work — research, governed outreach, qualification, and pipeline — and delivers a real mission report with the tools and scripts to act on it. Every mission runs under policy governance.</p>
     <ul class="hero-bullets">
-      <li data-i18n="hero_b1">✅ Real work, not a demo</li>
+      <li data-i18n="hero_b1">✅ Plan → Approve → Execute → Report</li>
       <li data-i18n="hero_b2">⏱ One mission, a few hours</li>
       <li data-i18n="hero_b3">🧠 Dedicated AI Revenue Team</li>
       <li data-i18n="hero_b4">📋 A mission report you can act on</li>
-      <li data-i18n="hero_b5">🔒 Sentinel-governed execution</li>
+      <li data-i18n="hero_b5">🔒 Policy-governed execution</li>
     </ul>
     <div style="margin-bottom:14px;">
-      <a class="cta" href="https://t.me/TeosEgypt_bot" data-i18n="cta_launch">🚀 Launch My First Mission</a>
+      <a class="cta" href="#playground" data-i18n="cta_demo_mission">🎮 Run a Demo Mission</a>
+      <a class="cta ghost" href="https://t.me/TeosEgypt_bot" data-i18n="cta_launch">🚀 Launch My First Mission</a>
       <a class="cta ghost" href="https://dealmaker.elmahrosa.org/customer-0" target="_blank" rel="noopener" data-i18n="cta_reports">📄 Read the Latest Mission Report</a>
-      <a class="cta ghost" href="#mission" data-i18n="cta_demo">How the Mission-as-a-Trial works</a>
     </div>
     <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
-      <span class="badge" data-i18n="hero_p1">🤝 Claude Partner Network — built on Anthropic</span>
+      <span class="badge" data-i18n="hero_p1">🤝 Claude Partner Network — multi-provider AI, includes Anthropic Claude</span>
       <span class="badge" data-i18n="hero_p2">✓ Verified Credly Credential</span>
     </div>
   </div>
+
+  <section id="playground">
+    <div class="demo-banner" data-i18n="demo_banner">⚠ DEMO MODE — SIMULATED DATA</div>
+    <h2 class="sect" data-i18n="pg_title">Try DealMaker</h2>
+    <p class="sect-sub" data-i18n="pg_sub">An interactive, simulated walkthrough of the verified DealMaker workflow. No external email, no Dodo checkout, no prospect contact, and no real customer result — this is a demo only.</p>
+    <div class="pg-grid">
+      <div class="pg-card">
+        <h3>01 · <span data-i18n="pg_brief_t">Deal Brief</span></h3>
+        <div id="pg-brief"></div>
+      </div>
+      <div class="pg-card">
+        <h3>02 · <span data-i18n="pg_stake_t">Stakeholder Analysis</span></h3>
+        <div id="pg-stakeholders"></div>
+      </div>
+      <div class="pg-card">
+        <h3>03 · <span data-i18n="pg_sim_t">Deal Simulation</span></h3>
+        <div id="pg-simulation"></div>
+      </div>
+      <div class="pg-card pg-wide">
+        <h3>04 · <span data-i18n="pg_mc_t">Mission Controller</span></h3>
+        <p class="pg-hint" data-i18n="pg_mc_hint">The governed mission lifecycle. Press the button to watch a simulated run.</p>
+        <div class="lc" id="pg-lifecycle"></div>
+        <div id="pg-log"><span class="pg-hint" data-i18n="pg_log_idle">Ready — simulated run only.</span></div>
+        <button class="pg-btn" id="pg-run" type="button" data-i18n="pg_run">▶ Run a Demo Mission</button>
+      </div>
+      <div class="pg-card">
+        <h3>05 · <span data-i18n="pg_gov_t">Governance</span></h3>
+        <p class="pg-hint" data-i18n="pg_gov_hint">Every capability is policy-evaluated. Consequential external actions remain governed.</p>
+        <div class="gov" id="pg-governance"></div>
+      </div>
+      <div class="pg-card pg-wide" id="pg-report-wrap" hidden>
+        <h3>06 · <span data-i18n="pg_report_t">Mission Report Preview</span></h3>
+        <div id="pg-report"></div>
+      </div>
+    </div>
+  </section>
 
   <section id="features">
     <h2 class="sect" data-i18n="sect_features">Platform Capabilities</h2>
@@ -193,8 +265,8 @@
         <h3 data-i18n="f_plugins_t">Enterprise Plugin Platform</h3>
         <ul>
           <li data-i18n="f_plugins_1">Plugin registry with capability isolation</li>
-          <li data-i18n="f_plugins_2">Signed and audited installs</li>
-          <li data-i18n="f_plugins_3">Civic Mixer + Sentinel Shield included</li>
+          <li data-i18n="f_plugins_2">Audited and capability-isolated installs</li>
+          <li data-i18n="f_plugins_3">Civic Mixer free plugin included</li>
         </ul>
       </div>
       <div class="card">
@@ -222,7 +294,7 @@
         </ul>
       </div>
       <div class="card">
-        <h3 data-i18n="f_sentinel_t">Sentinel Governance</h3>
+        <h3 data-i18n="f_sentinel_t">Policy Governance</h3>
         <ul>
           <li data-i18n="f_sentinel_1">Policy enforcement on every capability</li>
           <li data-i18n="f_sentinel_2">Fail-closed deny-wins evaluation</li>
@@ -232,9 +304,9 @@
       <div class="card">
         <h3 data-i18n="f_analytics_t">Enterprise Analytics</h3>
         <ul>
-          <li data-i18n="f_analytics_1">Immutable audit trail</li>
+          <li data-i18n="f_analytics_1">Hash-chained audit trail</li>
           <li data-i18n="f_analytics_2">Revenue and mission telemetry</li>
-          <li data-i18n="f_analytics_3">Health and usage APIs</li>
+          <li data-i18n="f_analytics_3">Health and audit APIs</li>
         </ul>
       </div>
     </div>
@@ -248,7 +320,7 @@
       <div class="arrow">▼</div>
       <div class="layer"><b data-i18n="arch_2_b">AI Workforce Runtime</b> <span data-i18n="arch_2_s">· 13 specialized revenue agents</span></div>
       <div class="arrow">▼</div>
-      <div class="layer"><b data-i18n="arch_3_b">Plugin Platform</b> <span data-i18n="arch_3_s">· registry · capabilities · signing</span></div>
+      <div class="layer"><b data-i18n="arch_3_b">Plugin Platform</b> <span data-i18n="arch_3_s">· registry · capabilities · governance</span></div>
       <div class="arrow">▼</div>
       <div class="layer"><b data-i18n="arch_4_b">Platform Services</b> <span data-i18n="arch_4_s">· tenants · entitlements · authorization · policy</span></div>
       <div class="arrow">▼</div>
@@ -259,46 +331,18 @@
   </section>
 
   <section id="plugins">
-    <h2 class="sect" data-i18n="sect_plugins">Enterprise Plugin Marketplace</h2>
-    <div class="sect-sub" data-i18n="sub_plugins">Extend the platform through a governed plugin ecosystem.</div>
+    <h2 class="sect" data-i18n="sect_plugins">Plugin Platform</h2>
+    <div class="sect-sub" data-i18n="sub_plugins">Free extensions that are actually available.</div>
     <div class="grid">
-      <div class="card">
-        <h3>Civic Mixer<span class="badge" data-i18n="badge_installed">✓ Installed</span></h3>
-        <p data-i18n="plugin_civic_p">Open-source MCP gateway that connects the workforce to your tools and providers.</p>
-      </div>
-      <div class="card">
-        <h3>Sentinel Shield<span class="badge" data-i18n="badge_installed">✓ Installed</span></h3>
-        <p data-i18n="plugin_sentinel_p">Enterprise AI governance: policy enforcement, prompt security, and continuous audit.</p>
-      </div>
-      <div class="card">
-        <h3>GitHub</h3>
-        <p data-i18n="plugin_github_p">Code review and repository intelligence for engineering-led teams.</p>
-      </div>
-      <div class="card">
-        <h3>Slack</h3>
-        <p data-i18n="plugin_slack_p">Mission updates and approvals inside your team channels.</p>
-      </div>
-      <div class="card">
-        <h3>HubSpot</h3>
-        <p data-i18n="plugin_hubspot_p">Pipeline sync, enrichment, and deal routing.</p>
-      </div>
-      <div class="card">
-        <h3>Salesforce</h3>
-        <p data-i18n="plugin_salesforce_p">Opportunity lifecycle automation at enterprise scale.</p>
-      </div>
-      <div class="card">
-        <h3>Microsoft 365</h3>
-        <p data-i18n="plugin_m365_p">Calendar, email, and document intelligence.</p>
-      </div>
-      <div class="card">
-        <h3>Google Workspace</h3>
-        <p data-i18n="plugin_gws_p">Docs, Drive, and Gmail workflows for the workforce.</p>
-      </div>
-    </div>
+    <div class="card plugin-card">
+      <h3>Civic Mixer<span class="badge" data-i18n="badge_free_installed">FREE · INSTALLED</span></h3>
+      <p data-i18n="plugin_civic_p">Open-source civic governance / MCP gateway that connects the workforce to your tools and providers.</p>
+      <a class="open-btn" href="#playground" data-i18n="plugin_open">Open →</a>
+    </div></div>
   </section>
 
   <section id="mission">
-    <h2 class="sect" data-i18n="sect_mission">Mission-as-a-Trial</h2>
+    <h2 class="sect" data-i18n="sect_mission">Mission-First</h2>
     <div class="sect-sub" data-i18n="sub_mission">Don't test features. Complete one real revenue mission.</div>
     <div class="arch">
       <div class="layer"><b data-i18n="m_company_t">Company</b> <span data-i18n="m_company_d">· Tell us about your business in a few lines</span></div>
@@ -307,24 +351,11 @@
       <div class="arrow">▼</div>
       <div class="layer"><b data-i18n="m_workforce_t">AI Workforce</b> <span data-i18n="m_workforce_d">· a dedicated team executes the mission</span></div>
       <div class="arrow">▼</div>
-      <div class="layer"><b data-i18n="m_execute_t">Real Execution</b> <span data-i18n="m_execute_d">· real research, real outreach, real pipeline work</span></div>
+      <div class="layer"><b data-i18n="m_execute_t">Real Execution</b> <span data-i18n="m_execute_d">· real research, governed outreach, real pipeline work</span></div>
       <div class="arrow">▼</div>
       <div class="layer"><b data-i18n="m_report_t">Mission Report</b> <span data-i18n="m_report_d">· a real report you can act on</span></div>
       <div class="arrow">▼</div>
       <div class="layer"><b data-i18n="m_upgrade_t">Upgrade</b> <span data-i18n="m_upgrade_d">· decide whether to continue after the mission</span></div>
-    </div>
-  </section>
-
-  <section id="sentinel">
-    <h2 class="sect" data-i18n="sect_sentinel">Sentinel Shield</h2>
-    <div class="sect-sub" data-i18n="sub_sentinel">Enterprise AI governance on every capability.</div>
-    <div class="grid">
-      <div class="card"><h3 data-i18n="s_policy_t">Policy Enforcement</h3><p data-i18n="s_policy_d">Fail-closed, deny-wins policy evaluation before every tool and plugin call.</p></div>
-      <div class="card"><h3 data-i18n="s_prompt_t">Prompt Security</h3><p data-i18n="s_prompt_d">Block injection and unsafe instructions across the workforce.</p></div>
-      <div class="card"><h3 data-i18n="s_code_t">Code Security</h3><p data-i18n="s_code_d">Flag vulnerabilities in code reviews and CI/CD contexts.</p></div>
-      <div class="card"><h3 data-i18n="s_contract_t">Smart Contract Review</h3><p data-i18n="s_contract_d">Risk scoring for contract and on-chain analysis.</p></div>
-      <div class="card"><h3 data-i18n="s_compliance_t">Compliance</h3><p data-i18n="s_compliance_d">Tenant scoping and entitlement enforcement per plan.</p></div>
-      <div class="card"><h3 data-i18n="s_audit_t">Continuous Audit</h3><p data-i18n="s_audit_d">Every allow and deny decision persisted for review.</p></div>
     </div>
   </section>
 
@@ -333,7 +364,7 @@
     <div class="sect-sub" data-i18n="sec_s">TEOS DealMaker operates within the Elmahrosa security and governance philosophy.</div>
     <div class="card">
       <ul class="trust-list">
-        <li data-i18n="sec_1">🛡 Sentinel Shield</li>
+        <li data-i18n="sec_1">🛡 Policy-Governed Execution</li>
         <li data-i18n="sec_2">⚖ Policy &amp; Human Oversight</li>
         <li data-i18n="sec_3">📋 Auditable AI Operations</li>
         <li data-i18n="sec_4">🔐 Sovereignty Standards</li>
@@ -392,7 +423,7 @@
       <span class="save">SAVE $598.00 (17%)</span>
       <a class="buy annual" href="https://checkout.dodopayments.com/buy/pdt_0NkdQWOkJWfbSa7qtCLZm" data-period="annual">Choose ⚡ Growth Annual</a>
     </div>
-      <ul><li>10 seats</li><li>Civic Mixer + Sentinel Shield plugins</li><li>Enterprise Knowledge Intelligence</li><li>Email support</li></ul>
+      <ul><li>10 seats</li><li>Civic Mixer free plugin</li><li>Enterprise Knowledge Intelligence</li><li>Email support</li></ul>
     </div>
   
 
@@ -429,7 +460,7 @@
       <span class="amount">Custom</span>
     </div>
     <a class="buy" href="mailto:info@elmahrosa.com" data-period="custom">Contact Sales</a>
-      <ul><li>Unlimited workspaces</li><li>Unlimited missions</li><li>Private deployment</li><li>Sentinel governance at scale</li><li>Dedicated success engineer</li></ul>
+      <ul><li>Unlimited workspaces</li><li>Unlimited missions</li><li>Custom deployment options</li><li>Policy governance at scale</li><li>Direct access to the founding team</li></ul>
     </div>
   
     </div>
@@ -437,20 +468,8 @@
     <div class="grid" data-i18n-addons>
       
     <div class="card">
-      <h3>Sentinel Governance</h3>
-      <p>Policy enforcement, prompt security, and continuous audit across every capability.</p>
-    </div>
-  
-
-    <div class="card">
       <h3>Enterprise Intelligence</h3>
       <p>RAG knowledge base with source-attributed answers.</p>
-    </div>
-  
-
-    <div class="card">
-      <h3>CRM Connectors</h3>
-      <p>Salesforce, HubSpot, Microsoft 365, and Google Workspace sync.</p>
     </div>
   
 
@@ -462,27 +481,30 @@
 
     <div class="card">
       <h3>Dedicated Support</h3>
-      <p>Named engineer with priority SLAs.</p>
+      <p>Priority support from the founding team.</p>
     </div>
   
     </div>
   </section>
 
   
-  <section id="sentinel-shield" class="sentinel-sell">
-    <div class="sentinel-inner">
-      <div class="sentinel-copy">
-        <h2 class="sect" data-i18n="sentinel_sell_t">PROTECT YOUR AI WORKFORCE</h2>
-        <h3 class="sentinel-name" data-i18n="sentinel_name">TEOS SENTINEL SHIELD</h3>
-        <p class="sect-sub" data-i18n="sentinel_tagline">AI Agent Security &amp; Execution Firewall</p>
-        <p data-i18n="sentinel_note">A separate product, available standalone. Sold on its own pricing page.</p>
-        <ul><li>Fail-closed policy enforcement on every tool and plugin call</li><li>Prompt injection and code security scanning</li><li>Continuous immutable audit of every allow/deny decision</li><li>Role-based entitlements per tenant plan</li></ul>
+  <section id="elmahrosa-products" class="elmahrosa-products">
+    <h2 class="sect" data-i18n="elmahrosa_products_t">ELMAHROSA PRODUCTS</h2>
+    <p class="sect-sub" data-i18n="elmahrosa_products_sub">Extend DealMaker with independent Elmahrosa products.</p>
+    <div class="grid">
+    <div class="card elmahrosa-product">
+      <span class="independent-tag" data-i18n="elmahrosa_independent">INDEPENDENT PRODUCT</span>
+      <h3>TEOS Sentinel Shield</h3>
+      <p class="tagline">Enterprise AI governance and execution security</p>
+      <p>Independent Elmahrosa product — AI Agent Security & Execution Firewall.</p>
+      <p class="product-note" data-i18n="elmahrosa_note">A separate product, available standalone. Sold on its own pricing page.</p>
+      <div class="product-actions">
+        <a class="cta" href="https://sentinel.teosegypt.com" target="_blank" rel="noopener" data-i18n="elmahrosa_view">View Sentinel →</a>
+        <a class="cta ghost" href="https://sentinel.teosegypt.com" target="_blank" rel="noopener" data-i18n="elmahrosa_pricing">Pricing →</a>
       </div>
-      <div class="sentinel-card">
-        <a class="cta" href="https://sentinel.teosegypt.com" target="_blank" rel="noopener" data-i18n="sentinel_cta">EXPLORE TEOS SENTINEL SHIELD</a>
-        <p class="sentinel-hint" data-i18n="sentinel_hint">Included with Growth and Business plans</p>
-      </div>
-    </div>
+    </div></div>
+    <p class="sect-sub elmahrosa-cross"><span data-i18n="elmahrosa_cross_q">Need enterprise AI execution governance?</span>
+      <a href="https://sentinel.teosegypt.com" target="_blank" rel="noopener" data-i18n="elmahrosa_cross_l">Explore TEOS Sentinel Shield →</a></p>
   </section>
 
   <footer>
@@ -496,134 +518,126 @@
 (function () {
   var I18N = {
     en: {
-      nav_features: 'Features', nav_architecture: 'Architecture', nav_plugins: 'Plugins',
-      nav_mission: 'Mission', nav_sentinel: 'Sentinel', nav_pricing: 'Pricing', nav_console: 'Console', nav_customer0: 'Customer #0',
+      nav_features: 'Features', nav_playground: 'Playground', nav_architecture: 'Architecture', nav_plugins: 'Plugins',
+      nav_mission: 'Mission', nav_elmahrosa: 'Elmahrosa Products', nav_pricing: 'Pricing', nav_console: 'Console', nav_customer0: 'Customer #0',
       nav_trust: 'Trust & Security',
-      hero_eyebrow: 'Mission-as-a-Trial · Real revenue work, not a demo',
+      hero_eyebrow: 'Mission-First · Real revenue work, not a demo',
       hero_t1: 'Hire an AI Revenue Team. ', hero_t2: 'Not a Chatbot.',
-      hero_text: 'Complete one real business mission in just a few hours. TEOS DealMaker assigns a dedicated AI Revenue Team that does the actual work — research, outreach, qualification, pipeline — and delivers a real mission report with the tools and scripts to act on it. Every mission runs under Sentinel governance.',
-      hero_b1: '✅ Real work, not a demo', hero_b2: '⏱ One mission, a few hours',
+      hero_text: 'Complete one real business mission in just a few hours. TEOS DealMaker assigns a dedicated AI Revenue Team that does the actual work — research, governed outreach, qualification, and pipeline — and delivers a real mission report with the tools and scripts to act on it. Every mission runs under policy governance.',
+      hero_b1: '✅ Plan → Approve → Execute → Report', hero_b2: '⏱ One mission, a few hours',
       hero_b3: '🧠 Dedicated AI Revenue Team', hero_b4: '📋 A mission report you can act on',
-      hero_b5: '🔒 Sentinel-governed execution',
-      hero_p1: '🤝 Claude Partner Network — built on Anthropic', hero_p2: '✓ Verified Credly Credential',
-      cta_launch: '🚀 Launch My First Mission', cta_reports: '📄 Read the Latest Mission Report', cta_demo: 'How the Mission-as-a-Trial works',
+      hero_b5: '🔒 Policy-governed execution',
+      hero_p1: '🤝 Claude Partner Network — multi-provider AI, includes Anthropic Claude', hero_p2: '✓ Verified Credly Credential',
+      cta_launch: '🚀 Launch My First Mission', cta_reports: '📄 Read the Latest Mission Report', cta_demo: 'How Mission-First works', cta_demo_mission: '🎮 Run a Demo Mission',
+      demo_banner: '⚠ DEMO MODE — SIMULATED DATA',
+      pg_title: 'Try DealMaker', pg_sub: 'An interactive, simulated walkthrough of the verified DealMaker workflow. No external email, no Dodo checkout, no prospect contact, and no real customer result — this is a demo only.',
+      pg_brief_t: 'Deal Brief', pg_stake_t: 'Stakeholder Analysis', pg_sim_t: 'Deal Simulation', pg_mc_t: 'Mission Controller',
+      pg_mc_hint: 'The governed mission lifecycle. Press the button to watch a simulated run.',
+      pg_run: '▶ Run a Demo Mission', pg_log_idle: 'Ready — simulated run only.',
+      pg_gov_t: 'Governance', pg_gov_hint: 'Every capability is policy-evaluated. Consequential external actions remain governed.',
+      pg_report_t: 'Mission Report Preview',
       period_monthly: 'Monthly', period_annual: 'Annual',
       sect_features: 'Platform Capabilities', sub_features: 'One operating system for your revenue engine.',
       f_mission_t: 'Mission Controller', f_mission_1: 'Plan, approve, execute, monitor, audit', f_mission_2: 'Structured mission lifecycle', f_mission_3: 'Founder approval gates',
       f_workforce_t: 'AI Workforce Runtime', f_workforce_1: '13 policy-governed agents', f_workforce_2: 'Policy-governed pipeline automation', f_workforce_3: 'Human oversight at every stage',
-      f_plugins_t: 'Enterprise Plugin Platform', f_plugins_1: 'Plugin registry with capability isolation', f_plugins_2: 'Signed and audited installs', f_plugins_3: 'Civic Mixer + Sentinel Shield included',
+      f_plugins_t: 'Enterprise Plugin Platform', f_plugins_1: 'Plugin registry with capability isolation', f_plugins_2: 'Audited and capability-isolated installs', f_plugins_3: 'Civic Mixer free plugin included',
       f_mcp_t: 'MCP Integration', f_mcp_1: 'Model Context Protocol gateway', f_mcp_2: 'Tool-calling for the workforce', f_mcp_3: 'Provider-agnostic adapters',
       f_intel_t: 'Enterprise Knowledge Intelligence', f_intel_1: 'RAG with source attribution', f_intel_2: 'Company knowledge base', f_intel_3: 'Intelligence copilot',
       f_pipeline_t: 'Revenue Pipeline Automation', f_pipeline_1: 'Lead qualification to contract', f_pipeline_2: 'Negotiation thresholds and terms', f_pipeline_3: 'Checkout wired to Dodo',
-      f_sentinel_t: 'Sentinel Governance', f_sentinel_1: 'Policy enforcement on every capability', f_sentinel_2: 'Fail-closed deny-wins evaluation', f_sentinel_3: 'Prompt and code security',
-      f_analytics_t: 'Enterprise Analytics', f_analytics_1: 'Immutable audit trail', f_analytics_2: 'Revenue and mission telemetry', f_analytics_3: 'Health and usage APIs',
+      f_sentinel_t: 'Policy Governance', f_sentinel_1: 'Policy enforcement on every capability', f_sentinel_2: 'Fail-closed deny-wins evaluation', f_sentinel_3: 'Prompt and code security',
+      f_analytics_t: 'Enterprise Analytics', f_analytics_1: 'Hash-chained audit trail', f_analytics_2: 'Revenue and mission telemetry', f_analytics_3: 'Health and audit APIs',
       sect_architecture: 'Platform Architecture', sub_architecture: 'Every mission flows through a governed execution chain.',
       arch_1_b: 'Mission Controller', arch_1_s: '· Plan → Approve → Execute → Monitor → Audit',
       arch_2_b: 'AI Workforce Runtime', arch_2_s: '· 13 specialized revenue agents',
-      arch_3_b: 'Plugin Platform', arch_3_s: '· registry · capabilities · signing',
+      arch_3_b: 'Plugin Platform', arch_3_s: '· registry · capabilities · governance',
       arch_4_b: 'Platform Services', arch_4_s: '· tenants · entitlements · authorization · policy',
       arch_5_b: 'MCP Gateway', arch_5_s: '· Model Context Protocol tool calls',
       arch_6_a: 'AI Providers', arch_6_aa: '· tool and reasoning models', arch_6_b: 'Enterprise Database', arch_6_bb: '· deals · missions · audit',
-      sect_plugins: 'Enterprise Plugin Marketplace', sub_plugins: 'Extend the platform through a governed plugin ecosystem.',
-      badge_installed: '✓ Installed',
-      plugin_civic_p: 'Open-source MCP gateway that connects the workforce to your tools and providers.',
-      plugin_sentinel_p: 'Enterprise AI governance: policy enforcement, prompt security, and continuous audit.',
-      plugin_github_p: 'Code review and repository intelligence for engineering-led teams.',
-      plugin_slack_p: 'Mission updates and approvals inside your team channels.',
-      plugin_hubspot_p: 'Pipeline sync, enrichment, and deal routing.',
-      plugin_salesforce_p: 'Opportunity lifecycle automation at enterprise scale.',
-      plugin_m365_p: 'Calendar, email, and document intelligence.',
-      plugin_gws_p: 'Docs, Drive, and Gmail workflows for the workforce.',
-      sect_mission: 'Mission-as-a-Trial', sub_mission: "Don't test features. Complete one real revenue mission.",
+      sect_plugins: 'Plugin Platform', sub_plugins: 'Free extensions that are actually available.',
+      badge_free_installed: 'FREE · INSTALLED',
+      plugin_open: 'Open →',
+      plugin_civic_p: 'Open-source civic governance / MCP gateway that connects the workforce to your tools and providers.',
+      sect_mission: 'Mission-First', sub_mission: "Don't test features. Complete one real revenue mission.",
       m_company_t: 'Company', m_company_d: '· Tell us about your business in a few lines',
       m_mission_t: 'Choose ONE Mission', m_mission_d: '· one goal, one AI Revenue Team, one report',
       m_workforce_t: 'AI Workforce', m_workforce_d: '· a dedicated team executes the mission',
-      m_execute_t: 'Real Execution', m_execute_d: '· real research, real outreach, real pipeline work',
+      m_execute_t: 'Real Execution', m_execute_d: '· real research, governed outreach, real pipeline work',
       m_report_t: 'Mission Report', m_report_d: '· a real report you can act on',
       m_upgrade_t: 'Upgrade', m_upgrade_d: '· decide whether to continue after the mission',
-      sect_sentinel: 'Sentinel Shield', sub_sentinel: 'Enterprise AI governance on every capability.',
-      s_policy_t: 'Policy Enforcement', s_policy_d: 'Fail-closed, deny-wins policy evaluation before every tool and plugin call.',
-      s_prompt_t: 'Prompt Security', s_prompt_d: 'Block injection and unsafe instructions across the workforce.',
-      s_code_t: 'Code Security', s_code_d: 'Flag vulnerabilities in code reviews and CI/CD contexts.',
-      s_contract_t: 'Smart Contract Review', s_contract_d: 'Risk scoring for contract and on-chain analysis.',
-      s_compliance_t: 'Compliance', s_compliance_d: 'Tenant scoping and entitlement enforcement per plan.',
-      s_audit_t: 'Continuous Audit', s_audit_d: 'Every allow and deny decision persisted for review.',
       sec_t: 'Built for Security. Designed for Control.', sec_s: 'TEOS DealMaker operates within the Elmahrosa security and governance philosophy.',
-      sec_1: '🛡 Sentinel Shield', sec_2: '⚖ Policy & Human Oversight', sec_3: '📋 Auditable AI Operations',
+      sec_1: '🛡 Policy-Governed Execution', sec_2: '⚖ Policy & Human Oversight', sec_3: '📋 Auditable AI Operations',
       sec_4: '🔐 Sovereignty Standards', sec_5: '🤝 Claude Partner Network', sec_6: '✓ Verified Credly Credential',
       sec_cta1: 'View Trust Center →', sec_cta2: 'View Verified Credential →',
       sect_pricing: 'Pricing', sub_pricing: 'Annual plans include built-in savings. Enterprise is custom-priced.',
       pricing_addons: 'Platform Add-ons',
-      sentinel_sell_t: 'PROTECT YOUR AI WORKFORCE', sentinel_name: 'TEOS SENTINEL SHIELD',
-      sentinel_tagline: 'AI Agent Security & Execution Firewall', sentinel_note: 'A separate product, available standalone. Sold on its own pricing page.',
-      sentinel_cta: 'EXPLORE TEOS SENTINEL SHIELD', sentinel_hint: 'Included with Growth and Business plans',
+      elmahrosa_products_t: 'ELMAHROSA PRODUCTS', elmahrosa_products_sub: 'Extend DealMaker with independent Elmahrosa products.',
+      elmahrosa_independent: 'INDEPENDENT PRODUCT',
+      elmahrosa_note: 'A separate product, available standalone. Sold on its own pricing page.',
+      elmahrosa_view: 'View Sentinel →', elmahrosa_pricing: 'Pricing →',
+      elmahrosa_cross_q: 'Need enterprise AI execution governance?', elmahrosa_cross_l: 'Explore TEOS Sentinel Shield →',
       footer_line1: 'TEOS DEALMAKER — Enterprise AI Revenue Operating System',
       footer_contact: 'A product of Elmahrosa International · contact info@elmahrosa.com · system status',
       footer_license: '© 2026 Elmahrosa International — All rights reserved',
       sw_en: 'English', sw_ar: 'العربية'
     },
     ar: {
-      nav_features: 'المزايا', nav_architecture: 'البنية', nav_plugins: 'الإضافات',
-      nav_mission: 'المهام', nav_sentinel: 'سنتينل', nav_pricing: 'الأسعار', nav_console: 'لوحة التحكم', nav_customer0: 'العميل 0',
+      nav_features: 'المزايا', nav_playground: 'منطقة التجربة', nav_architecture: 'البنية', nav_plugins: 'الإضافات',
+      nav_mission: 'المهام', nav_elmahrosa: 'منتجات المحروسة', nav_pricing: 'الأسعار', nav_console: 'لوحة التحكم', nav_customer0: 'العميل 0',
       nav_trust: 'الثقة والأمان',
-      hero_eyebrow: 'مهمة كتجربة · عمل إيرادات حقيقي، وليس عرضاً',
+      hero_eyebrow: 'البدء بمهمة أولاً · عمل إيرادات حقيقي، وليس عرضاً',
       hero_t1: 'وظّف فريق إيرادات ذكي... ', hero_t2: 'وليس مجرد روبوت محادثة.',
-      hero_text: 'دع فريق الذكاء الاصطناعي ينفذ مهمة حقيقية لشركتك خلال ساعات. يكلّفك TEOS DealMaker فريق إيرادات ذكي مخصصاً يقوم بالعمل الفعلي — البحث، والتواصل، والتأهيل، والمسار — ويُسلّمك تقرير مهمة حقيقياً مع الأدوات والبرامج النصية للتصرف بناءً عليه. كل مهمة تُنفذ تحت حوكمة سنتينل.',
-      hero_b1: '✅ عمل حقيقي، وليس عرضاً', hero_b2: '⏱ مهمة واحدة في ساعات قليلة',
+      hero_text: 'دع فريق الذكاء الاصطناعي ينفذ مهمة حقيقية لشركتك خلال ساعات. يكلّفك TEOS DealMaker فريق إيرادات ذكي مخصصاً يقوم بالعمل الفعلي — البحث، والتواصل المحكوم، والتأهيل، والمسار — ويُسلّمك تقرير مهمة حقيقياً مع الأدوات والبرامج النصية للتصرف بناءً عليه. كل مهمة تُنفذ تحت حوكمة السياسات.',
+      hero_b1: '✅ خطط ← اعتمد ← نفّذ ← أبلغ', hero_b2: '⏱ مهمة واحدة في ساعات قليلة',
       hero_b3: '🧠 فريق إيرادات ذكي مخصص', hero_b4: '📋 تقرير مهمة يمكنك التصرف بناءً عليه',
-      hero_b5: '🔒 تنفيذ محكوم بسنتينل',
-      hero_p1: '🤝 شبكة شركاء Claude — مبني على Anthropic', hero_p2: '✓ اعتماد موثق عبر Credly',
-      cta_launch: '🚀 ابدأ مهمتي الأولى', cta_reports: '📄 اقرأ أحدث تقرير مهمة', cta_demo: 'كيف تعمل مهمة كتجربة',
+      hero_b5: '🔒 تنفيذ محكوم بالسياسات',
+      hero_p1: '🤝 شبكة شركاء Claude — ذكاء اصطناعي متعدد المزوّدين، يتضمن Anthropic Claude', hero_p2: '✓ اعتماد موثق عبر Credly',
+      cta_launch: '🚀 ابدأ مهمتي الأولى', cta_reports: '📄 اقرأ أحدث تقرير مهمة', cta_demo: 'كيف يعمل البدء بمهمة أولاً', cta_demo_mission: '🎮 جرّب مهمة تجريبية',
+      demo_banner: '⚠ وضع التجربة — بيانات محاكاة',
+      pg_title: 'جرّب DealMaker', pg_sub: 'جولة تفاعلية محاكاة لمسار العمل المحقق في DealMaker. لا بريد خارجي، لا إنشاء طلب دفع عبر دودو، لا تواصل مع أي عميل محتمل، ولا أي نتيجة عميل حقيقية — هذا عرض تجريبي فقط.',
+      pg_brief_t: 'موجز الصفقة', pg_stake_t: 'تحليل الأطراف', pg_sim_t: 'محاكاة الصفقة', pg_mc_t: 'وحدة تحكم المهام',
+      pg_mc_hint: 'دورة حياة المهام المحكومة. اضغط الزر لمشاهدة تنفيذ محاكى.',
+      pg_run: '▶ جرّب مهمة تجريبية', pg_log_idle: 'جاهز — تنفيذ محاكى فقط.',
+      pg_gov_t: 'الحوكمة', pg_gov_hint: 'كل إمكانية تُقيّم بالسياسات. الإجراءات الخارجية الحساسة تبقى محكومة.',
+      pg_report_t: 'معاينة تقرير المهمة',
       period_monthly: 'شهرياً', period_annual: 'سنوياً',
       sect_features: 'إمكانات المنصة', sub_features: 'نظام تشغيل واحد لمحرك إيراداتك.',
       f_mission_t: 'وحدة تحكم المهام', f_mission_1: 'خطط، اعتمد، نفّذ، راقب، دقّق', f_mission_2: 'دورة حياة مهام منظمة', f_mission_3: 'نقاط اعتماد للمؤسس',
       f_workforce_t: 'بيئة تشغيل القوى العاملة', f_workforce_1: '13 وكيلاً محكوماً بالسياسات', f_workforce_2: 'أتمتة مسار الإيرادات المحكوم بالسياسات', f_workforce_3: 'إشراف بشري في كل مرحلة',
-      f_plugins_t: 'منصة الإضافات المؤسسية', f_plugins_1: 'سجلّ إضافات مع عزل للإمكانات', f_plugins_2: 'تثبيتات موقّعة ومدقّقة', f_plugins_3: 'تشمل Civic Mixer و Sentinel Shield',
+      f_plugins_t: 'منصة الإضافات المؤسسية', f_plugins_1: 'سجلّ إضافات مع عزل للإمكانات', f_plugins_2: 'تثبيتات مدقّقة ومعزولة الإمكانات', f_plugins_3: 'إضافة Civic Mixer المجانية',
       f_mcp_t: 'تكامل MCP', f_mcp_1: 'بوابة بروتوكول سياق النموذج (MCP)', f_mcp_2: 'استدعاء الأدوات للقوى العاملة', f_mcp_3: 'محوّلات مستقلة عن المزوّد',
       f_intel_t: 'ذكاء المعرفة المؤسسية', f_intel_1: 'استرجاع معزّز بالتوليد (RAG) مع إسناد المصادر', f_intel_2: 'قاعدة معرفة الشركة', f_intel_3: 'مساعد ذكي',
       f_pipeline_t: 'أتمتة مسار الإيرادات', f_pipeline_1: 'من تأهيل العملاء إلى العقود', f_pipeline_2: 'حدود التفاوض والشروط', f_pipeline_3: 'إتمام الدفع متصل بمنصة دودو',
-      f_sentinel_t: 'حوكمة سنتينل', f_sentinel_1: 'فرض السياسات على كل إمكانية', f_sentinel_2: 'تقييم يُغلق عند الخطأ ويُرجّح الرفض', f_sentinel_3: 'أمان المطالبات والأكواد',
-      f_analytics_t: 'التحليلات المؤسسية', f_analytics_1: 'سجل تدقيق غير قابل للتغيير', f_analytics_2: 'مؤشرات الإيرادات والمهام', f_analytics_3: 'واجهات برمجية للصحة والاستخدام',
+      f_sentinel_t: 'حوكمة السياسات', f_sentinel_1: 'فرض السياسات على كل إمكانية', f_sentinel_2: 'تقييم يُغلق عند الخطأ ويُرجّح الرفض', f_sentinel_3: 'أمان المطالبات والأكواد',
+      f_analytics_t: 'التحليلات المؤسسية', f_analytics_1: 'سجل تدقيق متسلسل التجزئة', f_analytics_2: 'مؤشرات الإيرادات والمهام', f_analytics_3: 'واجهات برمجية للصحة والتدقيق',
       sect_architecture: 'بنية المنصة', sub_architecture: 'كل مهمة تمر عبر سلسلة تنفيذ محكومة.',
       arch_1_b: 'وحدة تحكم المهام', arch_1_s: '· تخطيط ← اعتماد ← تنفيذ ← مراقبة ← تدقيق',
       arch_2_b: 'بيئة تشغيل القوى العاملة', arch_2_s: '· 13 وكيل إيرادات متخصص',
-      arch_3_b: 'منصة الإضافات', arch_3_s: '· سجلّ · إمكانات · توقيع',
+      arch_3_b: 'منصة الإضافات', arch_3_s: '· سجلّ · إمكانات · حوكمة',
       arch_4_b: 'خدمات المنصة', arch_4_s: '· المستأجرون · الاستحقاقات · التفويض · السياسات',
       arch_5_b: 'بوابة MCP', arch_5_s: '· استدعاءات أدوات عبر بروتوكول سياق النموذج',
       arch_6_a: 'مزودو الذكاء الاصطناعي', arch_6_aa: '· نماذج الأدوات والاستدلال', arch_6_b: 'قاعدة بيانات المؤسسة', arch_6_bb: '· الصفقات · المهام · التدقيق',
-      sect_plugins: 'سوق الإضافات المؤسسية', sub_plugins: 'وسّع المنصة عبر نظام إضافات محكوم.',
-      badge_installed: '✓ مثبّت',
-      plugin_civic_p: 'بوابة MCP مفتوحة المصدر تربط القوى العاملة بأدواتك ومزوّديك.',
-      plugin_sentinel_p: 'حوكمة ذكاء اصطناعي مؤسسية: فرض السياسات وأمان المطالبات والتدقيق المستمر.',
-      plugin_github_p: 'مراجعة الأكواد وذكاء المستودعات للفرق الهندسية.',
-      plugin_slack_p: 'تحديثات المهام والاعتمادات داخل قنوات فريقك.',
-      plugin_hubspot_p: 'مزامنة مسار الصفقات وإثراؤه وتوجيه الصفقات.',
-      plugin_salesforce_p: 'أتمتة دورة حياة الفرص على نطاق المؤسسات.',
-      plugin_m365_p: 'ذكاء التقويم والبريد والمستندات.',
-      plugin_gws_p: 'سير عمل المستندات والتخزين والبريد للقوى العاملة.',
-      sect_mission: 'مهمة كتجربة', sub_mission: 'لا تختبر الميزات. أكمل مهمة إيراد حقيقية واحدة.',
+      sect_plugins: 'منصة الإضافات', sub_plugins: 'إضافات مجانية متاحة فعلياً.',
+      badge_free_installed: 'مجاني · مثبّت',
+      plugin_open: 'فتح ←',
+      plugin_civic_p: 'بوابة MCP مفتوحة المصدر للحوكمة المدنية تربط القوى العاملة بأدواتك ومزوّديك.',
+      sect_mission: 'البدء بمهمة أولاً', sub_mission: 'لا تختبر الميزات. أكمل مهمة إيراد حقيقية واحدة.',
       m_company_t: 'الشركة', m_company_d: '· أخبرنا عن شركتك في بضعة أسطر',
       m_mission_t: 'اختر مهمة واحدة', m_mission_d: '· هدف واحد، وفريق إيرادات واحد، وتقرير واحد',
       m_workforce_t: 'فريق الذكاء الاصطناعي', m_workforce_d: '· فريق مخصص ينفذ المهمة',
-      m_execute_t: 'تنفيذ حقيقي', m_execute_d: '· بحث حقيقي، وتواصل حقيقي، وعمل مسار حقيقي',
+      m_execute_t: 'تنفيذ حقيقي', m_execute_d: '· بحث حقيقي، وتواصل محكوم، وعمل مسار حقيقي',
       m_report_t: 'تقرير المهمة', m_report_d: '· تقرير حقيقي يمكنك التصرف بناءً عليه',
       m_upgrade_t: 'الترقية', m_upgrade_d: '· قرر ما إذا كنت ستواصل بعد المهمة',
-      sect_sentinel: 'درع سنتينل', sub_sentinel: 'حوكمة ذكاء اصطناعي مؤسسية على كل إمكانية.',
-      s_policy_t: 'فرض السياسات', s_policy_d: 'تقييم يُغلق عند الخطأ ويُرجّح الرفض قبل كل استدعاء أداة أو إضافة.',
-      s_prompt_t: 'أمان المطالبات', s_prompt_d: 'حجب الحقن والتعليمات غير الآمنة عبر القوى العاملة.',
-      s_code_t: 'أمان الأكواد', s_code_d: 'رصد الثغرات في مراجعات الأكواد وسياقات CI/CD.',
-      s_contract_t: 'مراجعة العقود الذكية', s_contract_d: 'تقييم مخاطر العقود والتحليلات على السلسلة.',
-      s_compliance_t: 'الامتثال', s_compliance_d: 'تحديد نطاق المستأجر وفرض الاستحقاقات حسب الخطة.',
-      s_audit_t: 'التدقيق المستمر', s_audit_d: 'حفظ كل قرار سماح أو رفض للمراجعة.',
       sec_t: 'مبني على الأمان. مصمم للتحكم.', sec_s: 'يعمل TEOS DealMaker ضمن منظومة الأمن والحوكمة الخاصة بالمحروسة.',
-      sec_1: '🛡 درع سنتينل', sec_2: '⚖ السياسات والرقابة البشرية', sec_3: '📋 عمليات ذكاء اصطناعي قابلة للتدقيق',
+      sec_1: '🛡 تنفيذ محكوم بالسياسات', sec_2: '⚖ السياسات والرقابة البشرية', sec_3: '📋 عمليات ذكاء اصطناعي قابلة للتدقيق',
       sec_4: '🔐 معايير السيادة الرقمية', sec_5: '🤝 شبكة شركاء Claude', sec_6: '✓ اعتماد موثق عبر Credly',
       sec_cta1: 'عرض مركز الثقة ←', sec_cta2: 'عرض الاعتماد الموثق ←',
       sect_pricing: 'الأسعار', sub_pricing: 'الخطط السنوية تشمل توفيراً مضمّناً، والمؤسسي بسعر مخصص.',
       pricing_addons: 'إضافات المنصة',
-      sentinel_sell_t: 'احمِ قوتك العاملة من الذكاء الاصطناعي', sentinel_name: 'درع سنتينل تيوس',
-      sentinel_tagline: 'جدار الحماية لأمن وتنفيذ وكلاء الذكاء الاصطناعي', sentinel_note: 'منتج منفصل متاح بشكل مستقل، ويُباع عبر صفحة أسعاره الخاصة.',
-      sentinel_cta: 'اكتشف درع سنتينل تيوس', sentinel_hint: 'مشمول في خطتي Growth و Business',
+      elmahrosa_products_t: 'منتجات المحروسة', elmahrosa_products_sub: 'وسّع DealMaker بمنتجات المحروسة المستقلة.',
+      elmahrosa_independent: 'منتج مستقل',
+      elmahrosa_note: 'منتج منفصل متاح بشكل مستقل، ويُباع عبر صفحة أسعاره الخاصة.',
+      elmahrosa_view: 'عرض سنتينل ←', elmahrosa_pricing: 'الأسعار ←',
+      elmahrosa_cross_q: 'تحتاج حوكمة تنفيذ مؤسسية للذكاء الاصطناعي؟', elmahrosa_cross_l: 'اكتشف درع سنتينل تيوس ←',
       footer_line1: 'صانع الصفقات تيوس — نظام تشغيل الإيرادات المؤسسي بالذكاء الاصطناعي',
       footer_contact: 'منتج من المحروسة إنترناشيونال · تواصل عبر info@elmahrosa.com · حالة النظام',
       footer_license: '© 2026 المحروسة إنترناشيونال — جميع الحقوق محفوظة',
@@ -633,17 +647,15 @@
 
   var PRICING_AR = {
     '🚀 Solo': { tagline: 'للمؤسسين والفرق الفردية', features: ['مساحة عمل واحدة', 'وحدة التحكم بالمهام مع قوة عاملة من 13 وكيل ذكاء اصطناعي', 'إمكانات الوكلاء الأساسية', 'دعم المجتمع'] },
-    '⚡ Growth': { tagline: 'لفرق الإيرادات المتنامية', features: ['10 مقاعد', 'إضافات Civic Mixer و Sentinel Shield', 'ذكاء المعرفة المؤسسية', 'دعم عبر البريد الإلكتروني'] },
+    '⚡ Growth': { tagline: 'لفرق الإيرادات المتنامية', features: ['10 مقاعد', 'إضافة Civic Mixer المجانية', 'ذكاء المعرفة المؤسسية', 'دعم عبر البريد الإلكتروني'] },
     '👑 Business': { tagline: 'لمنظمات الإيرادات', features: ['25 مقعداً', 'تثبيت إضافات الطرف الثالث', 'جميع إضافات المنصة', 'دعم ذو أولوية'] },
-    '🏛️ Enterprise': { tagline: 'للمنظمات الكبيرة والسيادية', features: ['مساحات عمل غير محدودة', 'مهام غير محدودة', 'نشر خاص', 'حوكمة سنتينل على نطاق واسع', 'مهندس نجاح مخصص'] }
+    '🏛️ Enterprise': { tagline: 'للمنظمات الكبيرة والسيادية', features: ['مساحات عمل غير محدودة', 'مهام غير محدودة', 'خيارات نشر مخصصة', 'حوكمة السياسات على نطاق واسع', 'تواصل مباشر مع الفريق المؤسس'] }
   };
 
   var ADDON_AR = {
-    'Sentinel Governance': ['حوكمة سنتينل', 'فرض السياسات وأمان المطالبات والتدقيق المستمر عبر كل إمكانية.'],
     'Enterprise Intelligence': ['ذكاء المؤسسة', 'قاعدة معرفة RAG بإجابات مسندة إلى المصادر.'],
-    'CRM Connectors': ['موصلات CRM', 'مزامنة Salesforce وHubSpot وMicrosoft 365 وGoogle Workspace.'],
     'Premium AI Models': ['نماذج ذكاء اصطناعي متقدمة', 'الوصول إلى نماذج استدلال رائدة.'],
-    'Dedicated Support': ['دعم مخصص', 'مهندس معيّن مع اتفاقيات مستوى خدمة ذات أولوية.']
+    'Dedicated Support': ['دعم مخصص', 'دعم ذو أولوية من الفريق المؤسس.']
   };
 
   var pricingGrid = document.querySelector('[data-i18n-pricing]');
@@ -707,11 +719,233 @@
       }
     }
     try { localStorage.setItem('teos_lang', lang); } catch (_) { /* ignore */ }
+    renderPlayground(lang);
   }
 
+  var DEMO = {
+    en: {
+      brief: {
+        company: 'Acme Manufacturing (simulated)',
+        opportunity: '$120k annual recurring revenue from a mid-market distribution account',
+        objective: 'Secure a 12-month partnership pilot, then expand to 3 territories',
+        constraints: '48-month minimum term off the table; budget approval requires a 24-month ROI model; no data-room access before NDA.'
+      },
+      stakeholders: [
+        { role: 'Procurement Director', influence: 'High', interests: 'Cost reduction, vendor risk', posture: 'Risk-averse, process-driven' },
+        { role: 'VP Operations', influence: 'High', interests: 'On-time delivery, capacity', posture: 'Data-driven, skeptical' },
+        { role: 'Finance Controller', influence: 'Medium', interests: 'Payment terms, ROI', posture: 'Thorough, approval-gated' },
+        { role: 'Champion (Plant Lead)', influence: 'Medium', interests: 'Reliability, speed', posture: 'Supportive, internal sponsor' }
+      ],
+      sim: {
+        scenario: 'Enterprise baseline scenario',
+        assumptions: 'Current churn holds, implementation completes in 60 days, champion retains influence',
+        likely: 'Procurement opens negotiation on price and payment terms; ops pushes for a penalty-free pilot clause',
+        risks: ['Budget cut delays approval 1-2 quarters', 'Champion reassignment loses internal sponsorship', 'Competitor matches price with faster deployment'],
+        next: 'Run the negotiation rehearsal, then route the pilot proposal through founder approval before any external send'
+      },
+      lifecycle: ['PLAN', 'ANALYZE', 'SIMULATE', 'APPROVE', 'EXECUTE', 'REPORT'],
+      governance: [
+        { code: 'ALLOW', note: 'Policy pass — action permitted and audited', cls: 'allow' },
+        { code: 'WARN', note: 'Policy pass with caution — surfaced for founder awareness', cls: 'warn' },
+        { code: 'REVIEW', note: 'Draft / risky action routed to a human review gate', cls: 'review' },
+        { code: 'BLOCK', note: 'Policy deny — action never runs', cls: 'block' }
+      ],
+      logLines: {
+        PLAN: ['PLAN · mission brief compiled — 1 deal, 1 objective'],
+        ANALYZE: ['ANALYZE · 4 stakeholders mapped, influence scored'],
+        SIMULATE: ['SIMULATE · 1 scenario scored, 3 risks flagged', 'GOVERNANCE · BLOCK — outreach draft exceeds policy risk threshold', 'GOVERNANCE · ALLOW — internal proposal draft'],
+        APPROVE: ['APPROVE · founder approval gate recorded'],
+        EXECUTE: ['EXECUTE · governed actions queued', 'GOVERNANCE · REVIEW — outreach routed to human gate', 'OUTBOUND · PAUSED — nothing was sent'],
+        REPORT: ['REPORT · mission report written to the audit vault (simulated)']
+      },
+      report: {
+        objective: 'Secure a 12-month partnership pilot for Acme Manufacturing (simulated)',
+        kpis: ['Mission steps completed: 6 / 6', 'Success rate: 100%', 'Hours invested: ~4'],
+        timeline: ['T+0 PLAN', 'T+1 ANALYZE', 'T+2 SIMULATE', 'T+3 APPROVE', 'T+4 EXECUTE (queued, OUTBOUND PAUSED)', 'T+5 REPORT'],
+        actions: ['Proposal drafted and routed to founder approval', 'Outreach drafted and held at the human review gate', 'No external email sent in the demo', 'No Dodo checkout created', 'No prospect contacted'],
+        governanceDecisions: ['ALLOW — internal proposal draft', 'REVIEW — outreach draft (held)', 'BLOCK — simulated risk score above policy threshold'],
+        outcome: 'Simulated mission reached REPORT. Nothing external was sent, created, or contacted.'
+      }
+    },
+    ar: {
+      brief: {
+        company: 'Acme Manufacturing (محاكاة)',
+        opportunity: '120 ألف دولار إيرادات سنوية متكررة من حساب توزيع في السوق المتوسطة',
+        objective: 'تأمين تجربة شراكة لمدة 12 شهراً، ثم التوسع إلى 3 مناطق',
+        constraints: 'استبعاد مدة الحد الأدنى 48 شهراً؛ يتطلب اعتماد الميزانية نموذج عائد على مدى 24 شهراً؛ لا وصول لغرفة البيانات قبل توقيع اتفاقية عدم الإفصاح.'
+      },
+      stakeholders: [
+        { role: 'مدير المشتريات', influence: 'مرتفع', interests: 'خفض التكاليف، مخاطر الموردين', posture: 'يتجنب المخاطر، عملي' },
+        { role: 'نائب العمليات', influence: 'مرتفع', interests: 'الالتزام بالمواعيد، السعة', posture: 'يعتمد البيانات، متشكك' },
+        { role: 'مراقب المالية', influence: 'متوسط', interests: 'شروط السداد، العائد', posture: 'دقيق، يخضع للاعتماد' },
+        { role: 'البطل (قائد المصنع)', influence: 'متوسط', interests: 'الموثوقية، السرعة', posture: 'داعم، راعٍ داخلي' }
+      ],
+      sim: {
+        scenario: 'سيناريو الأساس للمؤسسات',
+        assumptions: 'استقرار معدل التهرب الحالي، إنجاز التنفيذ خلال 60 يوماً، بقاء نفوذ البطل',
+        likely: 'يفتح المشتري التفاوض على السعر وشروط السداد؛ وتدفع العمليات نحو بند تجريبي دون غرامات',
+        risks: ['تأجيل الاعتماد ربعاً أو ربعين بسبب خفض الميزانية', 'فقدان الرعاية الداخلية عند تغيير البطل', 'منافس يطابق السعر بتسليم أسرع'],
+        next: 'تشغيل بروفة التفاوض، ثم إرسال مقترح التجربة عبر موافقة المؤسس قبل أي إرسال خارجي'
+      },
+      lifecycle: ['خطط', 'حلّل', 'حاكِ', 'اعتمد', 'نفّذ', 'أبلغ'],
+      governance: [
+        { code: 'ALLOW', note: 'اجتياز السياسة — يُسمح بالإجراء ويُدقّق', cls: 'allow' },
+        { code: 'WARN', note: 'اجتياز مع تنبيه — يُعرض على المؤسس', cls: 'warn' },
+        { code: 'REVIEW', note: 'إجراء مسودّة / محفوف بالمخاطر يُحوَّل لمراجعة بشرية', cls: 'review' },
+        { code: 'BLOCK', note: 'رفض السياسة — لا يُنفَّذ الإجراء أبداً', cls: 'block' }
+      ],
+      logLines: {
+        PLAN: ['خطط · تجميع موجز المهمة — صفقة واحدة، هدف واحد'],
+        ANALYZE: ['حلّل · رسم خريطة 4 أطراف وتقييم النفوذ'],
+        SIMULATE: ['حاكِ · تقييم سيناريو واحد، رصد 3 مخاطر', 'الحوكمة · BLOCK — مسودّة التواصل تتجاوز عتبة المخاطر', 'الحوكمة · ALLOW — مسودّة الاقتراح الداخلي'],
+        APPROVE: ['اعتمد · تسجيل بوابة اعتماد المؤسس'],
+        EXECUTE: ['نفّذ · صفّ الإجراءات المحكومة', 'الحوكمة · REVIEW — التواصل مُحوَّل للبوابة البشرية', 'التواصل الخارجي · متوقف — لم يُرسَل شيء'],
+        REPORT: ['أبلغ · كتابة تقرير المهمة في سجل التدقيق (محاكاة)']
+      },
+      report: {
+        objective: 'تأمين تجربة شراكة لمدة 12 شهراً مع Acme Manufacturing (محاكاة)',
+        kpis: ['خطوات المهمة المنجزة: 6 / 6', 'نسبة النجاح: 100%', 'الساعات المستثمرة: ~4'],
+        timeline: ['T+0 خطط', 'T+1 حلّل', 'T+2 حاكِ', 'T+3 اعتمد', 'T+4 نفّذ (في الطابور، التواصل الخارجي متوقف)', 'T+5 أبلغ'],
+        actions: ['صياغة الاقتراح وإرساله لاعتماد المؤسس', 'صياغة التواصل وإبقاؤه عند بوابة المراجعة البشرية', 'لم يُرسَل أي بريد خارجي في التجربة', 'لم يُنشأ أي طلب دفع عبر دودو', 'لم يُتواصل مع أي عميل محتمل'],
+        governanceDecisions: ['ALLOW — مسودّة الاقتراح الداخلي', 'REVIEW — مسودّة التواصل (معلّقة)', 'BLOCK — درجة المخاطر المحاكاة فوق عتبة السياسة'],
+        outcome: 'بلغت المهمة المحاكاة مرحلة الإبلاغ. لم يُرسَل أو يُنشأ أو يُتواصل مع أي شيء خارجي.'
+      }
+    }
+  };
+
+  var demoRunning = false;
+  var demoTimers = [];
+
+  function el(html) { var d = document.createElement('div'); d.innerHTML = html; return d.firstElementChild; }
+
+  function renderPlayground(lang) {
+    var d = DEMO[lang] || DEMO.en;
+    var brief = document.getElementById('pg-brief');
+    if (brief) {
+      brief.innerHTML = '';
+      var items = [
+        { k: d.brief.company ? 'company' : '', v: d.brief.company },
+        { k: 'opportunity', v: d.brief.opportunity },
+        { k: 'objective', v: d.brief.objective }
+      ];
+      items.forEach(function (it) {
+        if (!it.v) return;
+        brief.appendChild(el('<div class="pg-label">' + (it.k === 'opportunity' ? (lang === 'ar' ? 'الفرصة' : 'Opportunity') : it.k === 'objective' ? (lang === 'ar' ? 'الهدف' : 'Objective') : (lang === 'ar' ? 'الشركة' : 'Company')) + '</div><div class="pg-value">' + it.v + '</div>'));
+      });
+      brief.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'القيود' : 'Constraints') + '</div><div class="pg-value">' + d.brief.constraints + '</div>'));
+    }
+    var st = document.getElementById('pg-stakeholders');
+    if (st) {
+      st.innerHTML = '';
+      var table = el('<table class="pg-table"></table>');
+      var head = el('<tr>' + ['role', 'influence', 'interests', 'posture'].map(function (k) {
+        return '<th>' + { role: lang === 'ar' ? 'الدور' : 'Role', influence: lang === 'ar' ? 'النفوذ' : 'Influence', interests: lang === 'ar' ? 'الاهتمامات' : 'Interests', posture: lang === 'ar' ? 'الموقف' : 'Posture' }[k] + '</th>';
+      }).join('') + '</tr>');
+      table.appendChild(head);
+      d.stakeholders.forEach(function (s) {
+        table.appendChild(el('<tr><td>' + s.role + '</td><td>' + s.influence + '</td><td>' + s.interests + '</td><td>' + s.posture + '</td></tr>'));
+      });
+      st.appendChild(table);
+    }
+    var sim = document.getElementById('pg-simulation');
+    if (sim) {
+      sim.innerHTML = '';
+      sim.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'السيناريو' : 'Scenario') + '</div><div class="pg-value">' + d.sim.scenario + '</div>'));
+      sim.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'الافتراضات' : 'Assumptions') + '</div><div class="pg-value">' + d.sim.assumptions + '</div>'));
+      sim.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'الاستجابة المتوقعة' : 'Likely response') + '</div><div class="pg-value">' + d.sim.likely + '</div>'));
+      sim.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'المخاطر' : 'Risks') + '</div>'));
+      d.sim.risks.forEach(function (r) { sim.appendChild(el('<div class="pg-value">⚠ ' + r + '</div>')); });
+      sim.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'الإجراء التالي' : 'Next action') + '</div><div class="pg-value">' + d.sim.next + '</div>'));
+    }
+    var lc = document.getElementById('pg-lifecycle');
+    if (lc) {
+      lc.innerHTML = '';
+      d.lifecycle.forEach(function (ph, i) {
+        if (i > 0) lc.appendChild(el('<span class="arrow">→</span>'));
+        lc.appendChild(el('<span class="phase" data-phase="' + i + '">' + ph + '</span>'));
+      });
+    }
+    var gov = document.getElementById('pg-governance');
+    if (gov) {
+      gov.innerHTML = '';
+      d.governance.forEach(function (g) {
+        gov.appendChild(el('<div class="g ' + g.cls + '"><b>' + g.code + '</b><p>' + g.note + '</p></div>'));
+      });
+    }
+    demoTimers.forEach(clearTimeout);
+    demoTimers = [];
+    demoRunning = false;
+    var run = document.getElementById('pg-run');
+    if (run) run.disabled = false;
+    var log = document.getElementById('pg-log');
+    if (log) log.innerHTML = '<span class="pg-hint">' + (lang === 'ar' ? 'جاهز — تنفيذ محاكى فقط.' : 'Ready — simulated run only.') + '</span>';
+    var wrap = document.getElementById('pg-report-wrap');
+    if (wrap) wrap.hidden = true;
+  }
+
+  function runDemo() {
+    if (demoRunning) return;
+    var lang = currentLang || 'en';
+    var d = DEMO[lang] || DEMO.en;
+    demoRunning = true;
+    var run = document.getElementById('pg-run');
+    if (run) run.disabled = true;
+    var log = document.getElementById('pg-log');
+    if (log) log.innerHTML = '';
+    var phases = document.querySelectorAll('#pg-lifecycle .phase');
+    var steps = ['PLAN', 'ANALYZE', 'SIMULATE', 'APPROVE', 'EXECUTE', 'REPORT'];
+    var append = function (html, cls) {
+      if (!log) return;
+      var line = el('<div class="' + (cls || '') + '">' + html + '</div>');
+      log.appendChild(line);
+      log.scrollTop = log.scrollHeight;
+    };
+    var idx = 0;
+    function step() {
+      if (idx < steps.length) {
+        var ph = steps[idx];
+        phases.forEach(function (p) {
+          p.classList.remove('active');
+          p.classList.toggle('done', parseInt(p.getAttribute('data-phase'), 10) < idx);
+        });
+        if (phases[idx]) phases[idx].classList.add('active');
+        d.logLines[ph].forEach(function (line) {
+          var cls = line.indexOf('BLOCK') !== -1 ? 'deny' : (line.indexOf('WARN') !== -1 || line.indexOf('PAUSED') !== -1 || line.indexOf('متوقف') !== -1 || line.indexOf('الخارجي') !== -1 ? 'warn' : 'ok');
+          append(line, cls);
+        });
+        idx++;
+        demoTimers.push(setTimeout(step, 700));
+      } else {
+        phases.forEach(function (p) { p.classList.remove('active'); p.classList.add('done'); });
+        append((lang === 'ar' ? 'اكتمال المحاكاة.' : 'Simulation complete.'), 'ok');
+        var wrap = document.getElementById('pg-report-wrap');
+        if (wrap) wrap.hidden = false;
+        var rep = document.getElementById('pg-report');
+        if (rep) {
+          var r = d.report;
+          rep.innerHTML = '';
+          rep.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'الهدف' : 'Objective') + '</div><div class="pg-value">' + r.objective + '</div>'));
+          rep.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'مؤشرات الأداء' : 'KPIs') + '</div>'));
+          r.kpis.forEach(function (k) { rep.appendChild(el('<div class="pg-value">' + k + '</div>')); });
+          rep.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'الجدول الزمني' : 'Timeline') + '</div><div class="pg-value">' + r.timeline.join(' · ') + '</div>'));
+          rep.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'الإجراءات المحكومة' : 'Governed actions') + '</div>'));
+          r.actions.forEach(function (a) { rep.appendChild(el('<div class="pg-value">→ ' + a + '</div>')); });
+          rep.appendChild(el('<div class="pg-label">' + (lang === 'ar' ? 'قرارات الحوكمة' : 'Governance decisions') + '</div>'));
+          r.governanceDecisions.forEach(function (g) { rep.appendChild(el('<div class="pg-value">' + g + '</div>')); });
+          rep.appendChild(el('<div class="pg-value" style="color:var(--gold);font-weight:700;">' + r.outcome + '</div>'));
+        }
+        if (run) run.disabled = false;
+        demoRunning = false;
+      }
+    }
+    step();
+  }
+
+  var runBtn = document.getElementById('pg-run');
+  if (runBtn) runBtn.addEventListener('click', runDemo);
+
   var billingButtons = document.querySelectorAll('.billing-toggle button');
-  function setBilling(period) {
-    if (!pricingGrid) return;
+  function setBilling(period) {    if (!pricingGrid) return;
     pricingGrid.classList.remove('view-monthly', 'view-annual');
     pricingGrid.classList.add('view-' + period);
     billingButtons.forEach(function (b) {

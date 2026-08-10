@@ -32,7 +32,7 @@ Telegram / Web UI / REST API
         │
    Intelligence (RAG)       → company-specific knowledge grounding
         │
-   Integration Hub          → 17+ enterprise systems (CRM, email, calendar, storage)
+   Integration Hub          → connector catalog (CRM, email, calendar, storage)
         │
    Persistence              → multi-tenant PostgreSQL, workspace isolation
 ```

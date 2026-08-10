@@ -25,13 +25,16 @@ const render = require('../server/render');
 
   check(!/\{\{[A-Z_]+\}\}/.test(html), 'no unreplaced {{PLACEHOLDER}} tokens');
 
-  const sentinelBlock = html.match(/<section id="sentinel-shield"[\s\S]*?<\/section>/);
-  check(!!sentinelBlock, 'sentinel cross-sell section present');
-  if (sentinelBlock) {
-    check(!sentinelBlock[0].includes('checkout.dodopayments.com'), 'sentinel section has no Dodo checkout link');
-    check(sentinelBlock[0].includes('sentinel.teosegypt.com'), 'sentinel section cross-links to sentinel.teosegypt.com');
+  const productsBlock = html.match(/<section id="elmahrosa-products"[\s\S]*?<\/section>/);
+  check(!!productsBlock, 'elmahrosa products section present');
+  if (productsBlock) {
+    check(!productsBlock[0].includes('checkout.dodopayments.com'), 'elmahrosa products section has no Dodo checkout link');
+    check(productsBlock[0].includes('sentinel.teosegypt.com'), 'elmahrosa products section cross-links to sentinel.teosegypt.com');
+    check(productsBlock[0].includes('INDEPENDENT PRODUCT'), 'elmahrosa products are labelled as independent');
   }
-  check((html.match(/id="sentinel"/g) || []).length === 1, 'single element carries the #sentinel id');
+  // Sentinel must NOT appear as a DealMaker section, plugin, or installed item.
+  check((html.match(/id="sentinel"/g) || []).length === 0, 'no #sentinel section remains inside DealMaker');
+  check(!/[Cc]oming\s?soon/i.test(html), 'no coming-soon placeholders in the rendered landing page');
 
   const enBlock = html.slice(html.indexOf('en: {'), html.indexOf('ar: {'));
   const arBlock = html.slice(html.indexOf('ar: {'), html.indexOf('};'));

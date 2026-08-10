@@ -9,7 +9,7 @@
 <link rel="canonical" href="{{SITE_URL}}/">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <meta property="og:title" content="TEOS DEALMAKER — Enterprise AI Revenue Operating System">
-<meta property="og:description" content="A 13-agent AI workforce, a Mission Controller, an enterprise plugin platform, and Sentinel governance — one revenue operating system. Live now, running its own revenue pipeline.">
+<meta property="og:description" content="A 13-agent AI workforce, a Mission Controller, an enterprise plugin platform, and policy governance — one revenue operating system. Live now, running its own revenue pipeline.">
 <meta property="og:url" content="{{SITE_URL}}/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="TEOS DealMaker">
@@ -27,7 +27,7 @@
   "applicationCategory": "BusinessApplication",
   "operatingSystem": "Web",
   "url": "{{SITE_URL}}/",
-  "description": "Policy-Governed AI Revenue Operating System: a 13-agent workforce, Mission Controller, enterprise plugin platform, MCP gateway, and Sentinel governance.",
+  "description": "Policy-Governed AI Revenue Operating System: a 13-agent workforce, Mission Controller, enterprise plugin platform, MCP gateway, and policy governance.",
   "offers": [
     { "@type": "Offer", "name": "Solo", "price": "99", "priceCurrency": "USD" },
     { "@type": "Offer", "name": "Growth", "price": "299", "priceCurrency": "USD" },
@@ -111,15 +111,17 @@
   .buy:hover { filter: brightness(1.15); }
   .buy.annual { background: var(--green); }
   .pid { color: var(--muted); font-size: 11px; margin-top: 10px; text-align: center; }
-  .sentinel-sell { background: linear-gradient(180deg, #10161f 0%, #0b0f14 100%); border: 1px solid var(--border); border-radius: 12px; padding: 32px; }
-  .sentinel-inner { display: flex; gap: 24px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-  .sentinel-copy { flex: 1 1 420px; }
-  .sentinel-name { font-size: 22px; letter-spacing: 2px; color: var(--gold); margin: 4px 0; }
-  .sentinel-copy ul { list-style: none; margin-top: 10px; }
-  .sentinel-copy ul li::before { content: "🛡 "; font-size: 11px; }
-  .sentinel-copy ul li { color: var(--muted); font-size: 14px; padding: 2px 0; }
-  .sentinel-card { flex: 0 0 280px; text-align: center; }
-  .sentinel-hint { color: var(--muted); font-size: 12px; margin-top: 10px; }
+  .elmahrosa-products { border-top: 1px solid var(--border); padding-top: 24px; }
+  .elmahrosa-product { border-left: 3px solid var(--blue); }
+  .independent-tag { display: inline-block; color: var(--blue); font-size: 11px; letter-spacing: 2px; font-weight: 700; margin-bottom: 8px; }
+  .elmahrosa-product .tagline { color: var(--text); font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .product-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .product-actions .cta { margin: 0; padding: 10px 18px; font-size: 13px; }
+  .product-note { color: var(--muted); font-size: 12px; margin-top: 10px; }
+  .elmahrosa-cross { margin-top: 18px; }
+  .plugin-card h3 .badge { color: var(--green); }
+  .open-btn { display: inline-block; margin-top: 12px; color: var(--blue); text-decoration: none; font-weight: 700; font-size: 14px; }
+  .open-btn:hover { color: var(--gold); }
   footer { border-top: 1px solid var(--border); padding-top: 20px; color: var(--muted); font-size: 13px; text-align: center; }
   footer a { color: var(--blue); text-decoration: none; }
   footer a:hover { color: var(--gold); }
@@ -172,7 +174,7 @@
       <a href="#architecture" data-i18n="nav_architecture">Architecture</a>
       <a href="#plugins" data-i18n="nav_plugins">Plugins</a>
       <a href="#mission" data-i18n="nav_mission">Mission</a>
-      <a href="#sentinel" data-i18n="nav_sentinel">Sentinel</a>
+      <a href="#elmahrosa-products" data-i18n="nav_elmahrosa">Elmahrosa Products</a>
       <a href="#pricing" data-i18n="nav_pricing">Pricing</a>
       <a href="https://elmahrosa.org/trust" target="_blank" rel="noopener" data-i18n="nav_trust">Trust &amp; Security</a>
       <a href="/dashboard" data-i18n="nav_console">Console</a>
@@ -184,13 +186,13 @@
   <div class="hero">
     <div class="eyebrow" data-i18n="hero_eyebrow">Mission-First · Real revenue work, not a demo</div>
     <h2><span data-i18n="hero_t1">Hire an AI Revenue Team. </span><span class="gold" data-i18n="hero_t2">Not a Chatbot.</span></h2>
-    <p data-i18n="hero_text">Complete one real business mission in just a few hours. TEOS DealMaker assigns a dedicated AI Revenue Team that does the actual work — research, governed outreach, qualification, and pipeline — and delivers a real mission report with the tools and scripts to act on it. Every mission runs under Sentinel governance.</p>
+    <p data-i18n="hero_text">Complete one real business mission in just a few hours. TEOS DealMaker assigns a dedicated AI Revenue Team that does the actual work — research, governed outreach, qualification, and pipeline — and delivers a real mission report with the tools and scripts to act on it. Every mission runs under policy governance.</p>
     <ul class="hero-bullets">
       <li data-i18n="hero_b1">✅ Plan → Approve → Execute → Report</li>
       <li data-i18n="hero_b2">⏱ One mission, a few hours</li>
       <li data-i18n="hero_b3">🧠 Dedicated AI Revenue Team</li>
       <li data-i18n="hero_b4">📋 A mission report you can act on</li>
-      <li data-i18n="hero_b5">🔒 Sentinel-governed execution</li>
+      <li data-i18n="hero_b5">🔒 Policy-governed execution</li>
     </ul>
     <div style="margin-bottom:14px;">
       <a class="cta" href="#playground" data-i18n="cta_demo_mission">🎮 Run a Demo Mission</a>
@@ -264,7 +266,7 @@
         <ul>
           <li data-i18n="f_plugins_1">Plugin registry with capability isolation</li>
           <li data-i18n="f_plugins_2">Audited and capability-isolated installs</li>
-          <li data-i18n="f_plugins_3">Civic Mixer + Sentinel Shield included</li>
+          <li data-i18n="f_plugins_3">Civic Mixer free plugin included</li>
         </ul>
       </div>
       <div class="card">
@@ -292,7 +294,7 @@
         </ul>
       </div>
       <div class="card">
-        <h3 data-i18n="f_sentinel_t">Sentinel Governance</h3>
+        <h3 data-i18n="f_sentinel_t">Policy Governance</h3>
         <ul>
           <li data-i18n="f_sentinel_1">Policy enforcement on every capability</li>
           <li data-i18n="f_sentinel_2">Fail-closed deny-wins evaluation</li>
@@ -330,41 +332,8 @@
 
   <section id="plugins">
     <h2 class="sect" data-i18n="sect_plugins">Plugin Platform</h2>
-    <div class="sect-sub" data-i18n="sub_plugins">Extend the platform through a governed plugin ecosystem.</div>
-    <div class="grid">
-      <div class="card">
-        <h3>Civic Mixer<span class="badge" data-i18n="badge_installed">✓ Installed</span></h3>
-        <p data-i18n="plugin_civic_p">Open-source MCP gateway that connects the workforce to your tools and providers.</p>
-      </div>
-      <div class="card">
-        <h3>Sentinel Shield<span class="badge" data-i18n="badge_installed">✓ Installed</span></h3>
-        <p data-i18n="plugin_sentinel_p">Enterprise AI governance: policy enforcement, prompt security, and continuous audit.</p>
-      </div>
-      <div class="card">
-        <h3>GitHub<span class="badge" data-i18n="badge_soon">Coming soon</span></h3>
-        <p data-i18n="plugin_github_p">Code review and repository intelligence for engineering-led teams.</p>
-      </div>
-      <div class="card">
-        <h3>Slack<span class="badge" data-i18n="badge_soon">Coming soon</span></h3>
-        <p data-i18n="plugin_slack_p">Mission updates and approvals inside your team channels.</p>
-      </div>
-      <div class="card">
-        <h3>HubSpot<span class="badge" data-i18n="badge_soon">Coming soon</span></h3>
-        <p data-i18n="plugin_hubspot_p">Pipeline sync, enrichment, and deal routing.</p>
-      </div>
-      <div class="card">
-        <h3>Salesforce<span class="badge" data-i18n="badge_soon">Coming soon</span></h3>
-        <p data-i18n="plugin_salesforce_p">Opportunity lifecycle automation at enterprise scale.</p>
-      </div>
-      <div class="card">
-        <h3>Microsoft 365<span class="badge" data-i18n="badge_soon">Coming soon</span></h3>
-        <p data-i18n="plugin_m365_p">Calendar, email, and document intelligence.</p>
-      </div>
-      <div class="card">
-        <h3>Google Workspace<span class="badge" data-i18n="badge_soon">Coming soon</span></h3>
-        <p data-i18n="plugin_gws_p">Docs, Drive, and Gmail workflows for the workforce.</p>
-      </div>
-    </div>
+    <div class="sect-sub" data-i18n="sub_plugins">Free extensions that are actually available.</div>
+    {{PLUGIN_CARDS}}
   </section>
 
   <section id="mission">
@@ -385,25 +354,12 @@
     </div>
   </section>
 
-  <section id="sentinel">
-    <h2 class="sect" data-i18n="sect_sentinel">Sentinel Shield</h2>
-    <div class="sect-sub" data-i18n="sub_sentinel">Enterprise AI governance on every capability.</div>
-    <div class="grid">
-      <div class="card"><h3 data-i18n="s_policy_t">Policy Enforcement</h3><p data-i18n="s_policy_d">Fail-closed, deny-wins policy evaluation before every tool and plugin call.</p></div>
-      <div class="card"><h3 data-i18n="s_prompt_t">Prompt Security</h3><p data-i18n="s_prompt_d">Block injection and unsafe instructions across the workforce.</p></div>
-      <div class="card"><h3 data-i18n="s_code_t">Code Security</h3><p data-i18n="s_code_d">Flag vulnerabilities in code reviews and CI/CD contexts.</p></div>
-      <div class="card"><h3 data-i18n="s_contract_t">Smart Contract Review</h3><p data-i18n="s_contract_d">Risk scoring for contract and on-chain analysis.</p></div>
-      <div class="card"><h3 data-i18n="s_compliance_t">Compliance</h3><p data-i18n="s_compliance_d">Tenant scoping and entitlement enforcement per plan.</p></div>
-      <div class="card"><h3 data-i18n="s_audit_t">Continuous Audit</h3><p data-i18n="s_audit_d">Every allow and deny decision persisted for review.</p></div>
-    </div>
-  </section>
-
   <section id="security">
     <h2 class="sect" data-i18n="sec_t">Built for Security. Designed for Control.</h2>
     <div class="sect-sub" data-i18n="sec_s">TEOS DealMaker operates within the Elmahrosa security and governance philosophy.</div>
     <div class="card">
       <ul class="trust-list">
-        <li data-i18n="sec_1">🛡 Sentinel Shield</li>
+        <li data-i18n="sec_1">🛡 Policy-Governed Execution</li>
         <li data-i18n="sec_2">⚖ Policy &amp; Human Oversight</li>
         <li data-i18n="sec_3">📋 Auditable AI Operations</li>
         <li data-i18n="sec_4">🔐 Sovereignty Standards</li>
@@ -433,7 +389,7 @@
     </div>
   </section>
 
-  {{SENTINEL_CROSS_SELL}}
+  {{ELMAHROSA_PRODUCTS}}
 
   <footer>
     <span data-i18n="footer_line1">TEOS DEALMAKER — Enterprise AI Revenue Operating System</span><br>
@@ -447,14 +403,14 @@
   var I18N = {
     en: {
       nav_features: 'Features', nav_playground: 'Playground', nav_architecture: 'Architecture', nav_plugins: 'Plugins',
-      nav_mission: 'Mission', nav_sentinel: 'Sentinel', nav_pricing: 'Pricing', nav_console: 'Console', nav_customer0: 'Customer #0',
+      nav_mission: 'Mission', nav_elmahrosa: 'Elmahrosa Products', nav_pricing: 'Pricing', nav_console: 'Console', nav_customer0: 'Customer #0',
       nav_trust: 'Trust & Security',
       hero_eyebrow: 'Mission-First · Real revenue work, not a demo',
       hero_t1: 'Hire an AI Revenue Team. ', hero_t2: 'Not a Chatbot.',
-      hero_text: 'Complete one real business mission in just a few hours. TEOS DealMaker assigns a dedicated AI Revenue Team that does the actual work — research, governed outreach, qualification, and pipeline — and delivers a real mission report with the tools and scripts to act on it. Every mission runs under Sentinel governance.',
+      hero_text: 'Complete one real business mission in just a few hours. TEOS DealMaker assigns a dedicated AI Revenue Team that does the actual work — research, governed outreach, qualification, and pipeline — and delivers a real mission report with the tools and scripts to act on it. Every mission runs under policy governance.',
       hero_b1: '✅ Plan → Approve → Execute → Report', hero_b2: '⏱ One mission, a few hours',
       hero_b3: '🧠 Dedicated AI Revenue Team', hero_b4: '📋 A mission report you can act on',
-      hero_b5: '🔒 Sentinel-governed execution',
+      hero_b5: '🔒 Policy-governed execution',
       hero_p1: '🤝 Claude Partner Network — multi-provider AI, includes Anthropic Claude', hero_p2: '✓ Verified Credly Credential',
       cta_launch: '🚀 Launch My First Mission', cta_reports: '📄 Read the Latest Mission Report', cta_demo: 'How Mission-First works', cta_demo_mission: '🎮 Run a Demo Mission',
       demo_banner: '⚠ DEMO MODE — SIMULATED DATA',
@@ -468,11 +424,11 @@
       sect_features: 'Platform Capabilities', sub_features: 'One operating system for your revenue engine.',
       f_mission_t: 'Mission Controller', f_mission_1: 'Plan, approve, execute, monitor, audit', f_mission_2: 'Structured mission lifecycle', f_mission_3: 'Founder approval gates',
       f_workforce_t: 'AI Workforce Runtime', f_workforce_1: '13 policy-governed agents', f_workforce_2: 'Policy-governed pipeline automation', f_workforce_3: 'Human oversight at every stage',
-      f_plugins_t: 'Enterprise Plugin Platform', f_plugins_1: 'Plugin registry with capability isolation', f_plugins_2: 'Audited and capability-isolated installs', f_plugins_3: 'Civic Mixer + Sentinel Shield included',
+      f_plugins_t: 'Enterprise Plugin Platform', f_plugins_1: 'Plugin registry with capability isolation', f_plugins_2: 'Audited and capability-isolated installs', f_plugins_3: 'Civic Mixer free plugin included',
       f_mcp_t: 'MCP Integration', f_mcp_1: 'Model Context Protocol gateway', f_mcp_2: 'Tool-calling for the workforce', f_mcp_3: 'Provider-agnostic adapters',
       f_intel_t: 'Enterprise Knowledge Intelligence', f_intel_1: 'RAG with source attribution', f_intel_2: 'Company knowledge base', f_intel_3: 'Intelligence copilot',
       f_pipeline_t: 'Revenue Pipeline Automation', f_pipeline_1: 'Lead qualification to contract', f_pipeline_2: 'Negotiation thresholds and terms', f_pipeline_3: 'Checkout wired to Dodo',
-      f_sentinel_t: 'Sentinel Governance', f_sentinel_1: 'Policy enforcement on every capability', f_sentinel_2: 'Fail-closed deny-wins evaluation', f_sentinel_3: 'Prompt and code security',
+      f_sentinel_t: 'Policy Governance', f_sentinel_1: 'Policy enforcement on every capability', f_sentinel_2: 'Fail-closed deny-wins evaluation', f_sentinel_3: 'Prompt and code security',
       f_analytics_t: 'Enterprise Analytics', f_analytics_1: 'Hash-chained audit trail', f_analytics_2: 'Revenue and mission telemetry', f_analytics_3: 'Health and audit APIs',
       sect_architecture: 'Platform Architecture', sub_architecture: 'Every mission flows through a governed execution chain.',
       arch_1_b: 'Mission Controller', arch_1_s: '· Plan → Approve → Execute → Monitor → Audit',
@@ -481,17 +437,10 @@
       arch_4_b: 'Platform Services', arch_4_s: '· tenants · entitlements · authorization · policy',
       arch_5_b: 'MCP Gateway', arch_5_s: '· Model Context Protocol tool calls',
       arch_6_a: 'AI Providers', arch_6_aa: '· tool and reasoning models', arch_6_b: 'Enterprise Database', arch_6_bb: '· deals · missions · audit',
-      sect_plugins: 'Plugin Platform', sub_plugins: 'Extend the platform through a governed plugin ecosystem.',
-      badge_installed: '✓ Installed',
-      badge_soon: 'Coming soon',
-      plugin_civic_p: 'Open-source MCP gateway that connects the workforce to your tools and providers.',
-      plugin_sentinel_p: 'Enterprise AI governance: policy enforcement, prompt security, and continuous audit.',
-      plugin_github_p: 'Code review and repository intelligence for engineering-led teams.',
-      plugin_slack_p: 'Mission updates and approvals inside your team channels.',
-      plugin_hubspot_p: 'Pipeline sync, enrichment, and deal routing.',
-      plugin_salesforce_p: 'Opportunity lifecycle automation at enterprise scale.',
-      plugin_m365_p: 'Calendar, email, and document intelligence.',
-      plugin_gws_p: 'Docs, Drive, and Gmail workflows for the workforce.',
+      sect_plugins: 'Plugin Platform', sub_plugins: 'Free extensions that are actually available.',
+      badge_free_installed: 'FREE · INSTALLED',
+      plugin_open: 'Open →',
+      plugin_civic_p: 'Open-source civic governance / MCP gateway that connects the workforce to your tools and providers.',
       sect_mission: 'Mission-First', sub_mission: "Don't test features. Complete one real revenue mission.",
       m_company_t: 'Company', m_company_d: '· Tell us about your business in a few lines',
       m_mission_t: 'Choose ONE Mission', m_mission_d: '· one goal, one AI Revenue Team, one report',
@@ -499,22 +448,17 @@
       m_execute_t: 'Real Execution', m_execute_d: '· real research, governed outreach, real pipeline work',
       m_report_t: 'Mission Report', m_report_d: '· a real report you can act on',
       m_upgrade_t: 'Upgrade', m_upgrade_d: '· decide whether to continue after the mission',
-      sect_sentinel: 'Sentinel Shield', sub_sentinel: 'Enterprise AI governance on every capability.',
-      s_policy_t: 'Policy Enforcement', s_policy_d: 'Fail-closed, deny-wins policy evaluation before every tool and plugin call.',
-      s_prompt_t: 'Prompt Security', s_prompt_d: 'Block injection and unsafe instructions across the workforce.',
-      s_code_t: 'Code Security', s_code_d: 'Flag vulnerabilities in code reviews and CI/CD contexts.',
-      s_contract_t: 'Smart Contract Review', s_contract_d: 'Risk scoring for contract and on-chain analysis.',
-      s_compliance_t: 'Compliance', s_compliance_d: 'Tenant scoping and entitlement enforcement per plan.',
-      s_audit_t: 'Continuous Audit', s_audit_d: 'Every allow and deny decision persisted for review.',
       sec_t: 'Built for Security. Designed for Control.', sec_s: 'TEOS DealMaker operates within the Elmahrosa security and governance philosophy.',
-      sec_1: '🛡 Sentinel Shield', sec_2: '⚖ Policy & Human Oversight', sec_3: '📋 Auditable AI Operations',
+      sec_1: '🛡 Policy-Governed Execution', sec_2: '⚖ Policy & Human Oversight', sec_3: '📋 Auditable AI Operations',
       sec_4: '🔐 Sovereignty Standards', sec_5: '🤝 Claude Partner Network', sec_6: '✓ Verified Credly Credential',
       sec_cta1: 'View Trust Center →', sec_cta2: 'View Verified Credential →',
       sect_pricing: 'Pricing', sub_pricing: 'Annual plans include built-in savings. Enterprise is custom-priced.',
       pricing_addons: 'Platform Add-ons',
-      sentinel_sell_t: 'PROTECT YOUR AI WORKFORCE', sentinel_name: 'TEOS SENTINEL SHIELD',
-      sentinel_tagline: 'AI Agent Security & Execution Firewall', sentinel_note: 'A separate product, available standalone. Sold on its own pricing page.',
-      sentinel_cta: 'EXPLORE TEOS SENTINEL SHIELD', sentinel_hint: 'Included with Growth and Business plans',
+      elmahrosa_products_t: 'ELMAHROSA PRODUCTS', elmahrosa_products_sub: 'Extend DealMaker with independent Elmahrosa products.',
+      elmahrosa_independent: 'INDEPENDENT PRODUCT',
+      elmahrosa_note: 'A separate product, available standalone. Sold on its own pricing page.',
+      elmahrosa_view: 'View Sentinel →', elmahrosa_pricing: 'Pricing →',
+      elmahrosa_cross_q: 'Need enterprise AI execution governance?', elmahrosa_cross_l: 'Explore TEOS Sentinel Shield →',
       footer_line1: 'TEOS DEALMAKER — Enterprise AI Revenue Operating System',
       footer_contact: 'A product of Elmahrosa International · contact info@elmahrosa.com · system status',
       footer_license: '© 2026 Elmahrosa International — All rights reserved',
@@ -522,14 +466,14 @@
     },
     ar: {
       nav_features: 'المزايا', nav_playground: 'منطقة التجربة', nav_architecture: 'البنية', nav_plugins: 'الإضافات',
-      nav_mission: 'المهام', nav_sentinel: 'سنتينل', nav_pricing: 'الأسعار', nav_console: 'لوحة التحكم', nav_customer0: 'العميل 0',
+      nav_mission: 'المهام', nav_elmahrosa: 'منتجات المحروسة', nav_pricing: 'الأسعار', nav_console: 'لوحة التحكم', nav_customer0: 'العميل 0',
       nav_trust: 'الثقة والأمان',
       hero_eyebrow: 'البدء بمهمة أولاً · عمل إيرادات حقيقي، وليس عرضاً',
       hero_t1: 'وظّف فريق إيرادات ذكي... ', hero_t2: 'وليس مجرد روبوت محادثة.',
-      hero_text: 'دع فريق الذكاء الاصطناعي ينفذ مهمة حقيقية لشركتك خلال ساعات. يكلّفك TEOS DealMaker فريق إيرادات ذكي مخصصاً يقوم بالعمل الفعلي — البحث، والتواصل المحكوم، والتأهيل، والمسار — ويُسلّمك تقرير مهمة حقيقياً مع الأدوات والبرامج النصية للتصرف بناءً عليه. كل مهمة تُنفذ تحت حوكمة سنتينل.',
+      hero_text: 'دع فريق الذكاء الاصطناعي ينفذ مهمة حقيقية لشركتك خلال ساعات. يكلّفك TEOS DealMaker فريق إيرادات ذكي مخصصاً يقوم بالعمل الفعلي — البحث، والتواصل المحكوم، والتأهيل، والمسار — ويُسلّمك تقرير مهمة حقيقياً مع الأدوات والبرامج النصية للتصرف بناءً عليه. كل مهمة تُنفذ تحت حوكمة السياسات.',
       hero_b1: '✅ خطط ← اعتمد ← نفّذ ← أبلغ', hero_b2: '⏱ مهمة واحدة في ساعات قليلة',
       hero_b3: '🧠 فريق إيرادات ذكي مخصص', hero_b4: '📋 تقرير مهمة يمكنك التصرف بناءً عليه',
-      hero_b5: '🔒 تنفيذ محكوم بسنتينل',
+      hero_b5: '🔒 تنفيذ محكوم بالسياسات',
       hero_p1: '🤝 شبكة شركاء Claude — ذكاء اصطناعي متعدد المزوّدين، يتضمن Anthropic Claude', hero_p2: '✓ اعتماد موثق عبر Credly',
       cta_launch: '🚀 ابدأ مهمتي الأولى', cta_reports: '📄 اقرأ أحدث تقرير مهمة', cta_demo: 'كيف يعمل البدء بمهمة أولاً', cta_demo_mission: '🎮 جرّب مهمة تجريبية',
       demo_banner: '⚠ وضع التجربة — بيانات محاكاة',
@@ -543,11 +487,11 @@
       sect_features: 'إمكانات المنصة', sub_features: 'نظام تشغيل واحد لمحرك إيراداتك.',
       f_mission_t: 'وحدة تحكم المهام', f_mission_1: 'خطط، اعتمد، نفّذ، راقب، دقّق', f_mission_2: 'دورة حياة مهام منظمة', f_mission_3: 'نقاط اعتماد للمؤسس',
       f_workforce_t: 'بيئة تشغيل القوى العاملة', f_workforce_1: '13 وكيلاً محكوماً بالسياسات', f_workforce_2: 'أتمتة مسار الإيرادات المحكوم بالسياسات', f_workforce_3: 'إشراف بشري في كل مرحلة',
-      f_plugins_t: 'منصة الإضافات المؤسسية', f_plugins_1: 'سجلّ إضافات مع عزل للإمكانات', f_plugins_2: 'تثبيتات مدقّقة ومعزولة الإمكانات', f_plugins_3: 'تشمل Civic Mixer و Sentinel Shield',
+      f_plugins_t: 'منصة الإضافات المؤسسية', f_plugins_1: 'سجلّ إضافات مع عزل للإمكانات', f_plugins_2: 'تثبيتات مدقّقة ومعزولة الإمكانات', f_plugins_3: 'إضافة Civic Mixer المجانية',
       f_mcp_t: 'تكامل MCP', f_mcp_1: 'بوابة بروتوكول سياق النموذج (MCP)', f_mcp_2: 'استدعاء الأدوات للقوى العاملة', f_mcp_3: 'محوّلات مستقلة عن المزوّد',
       f_intel_t: 'ذكاء المعرفة المؤسسية', f_intel_1: 'استرجاع معزّز بالتوليد (RAG) مع إسناد المصادر', f_intel_2: 'قاعدة معرفة الشركة', f_intel_3: 'مساعد ذكي',
       f_pipeline_t: 'أتمتة مسار الإيرادات', f_pipeline_1: 'من تأهيل العملاء إلى العقود', f_pipeline_2: 'حدود التفاوض والشروط', f_pipeline_3: 'إتمام الدفع متصل بمنصة دودو',
-      f_sentinel_t: 'حوكمة سنتينل', f_sentinel_1: 'فرض السياسات على كل إمكانية', f_sentinel_2: 'تقييم يُغلق عند الخطأ ويُرجّح الرفض', f_sentinel_3: 'أمان المطالبات والأكواد',
+      f_sentinel_t: 'حوكمة السياسات', f_sentinel_1: 'فرض السياسات على كل إمكانية', f_sentinel_2: 'تقييم يُغلق عند الخطأ ويُرجّح الرفض', f_sentinel_3: 'أمان المطالبات والأكواد',
       f_analytics_t: 'التحليلات المؤسسية', f_analytics_1: 'سجل تدقيق متسلسل التجزئة', f_analytics_2: 'مؤشرات الإيرادات والمهام', f_analytics_3: 'واجهات برمجية للصحة والتدقيق',
       sect_architecture: 'بنية المنصة', sub_architecture: 'كل مهمة تمر عبر سلسلة تنفيذ محكومة.',
       arch_1_b: 'وحدة تحكم المهام', arch_1_s: '· تخطيط ← اعتماد ← تنفيذ ← مراقبة ← تدقيق',
@@ -556,17 +500,10 @@
       arch_4_b: 'خدمات المنصة', arch_4_s: '· المستأجرون · الاستحقاقات · التفويض · السياسات',
       arch_5_b: 'بوابة MCP', arch_5_s: '· استدعاءات أدوات عبر بروتوكول سياق النموذج',
       arch_6_a: 'مزودو الذكاء الاصطناعي', arch_6_aa: '· نماذج الأدوات والاستدلال', arch_6_b: 'قاعدة بيانات المؤسسة', arch_6_bb: '· الصفقات · المهام · التدقيق',
-      sect_plugins: 'منصة الإضافات', sub_plugins: 'وسّع المنصة عبر نظام إضافات محكوم.',
-      badge_installed: '✓ مثبّت',
-      badge_soon: 'قريباً',
-      plugin_civic_p: 'بوابة MCP مفتوحة المصدر تربط القوى العاملة بأدواتك ومزوّديك.',
-      plugin_sentinel_p: 'حوكمة ذكاء اصطناعي مؤسسية: فرض السياسات وأمان المطالبات والتدقيق المستمر.',
-      plugin_github_p: 'مراجعة الأكواد وذكاء المستودعات للفرق الهندسية.',
-      plugin_slack_p: 'تحديثات المهام والاعتمادات داخل قنوات فريقك.',
-      plugin_hubspot_p: 'مزامنة مسار الصفقات وإثراؤه وتوجيه الصفقات.',
-      plugin_salesforce_p: 'أتمتة دورة حياة الفرص على نطاق المؤسسات.',
-      plugin_m365_p: 'ذكاء التقويم والبريد والمستندات.',
-      plugin_gws_p: 'سير عمل المستندات والتخزين والبريد للقوى العاملة.',
+      sect_plugins: 'منصة الإضافات', sub_plugins: 'إضافات مجانية متاحة فعلياً.',
+      badge_free_installed: 'مجاني · مثبّت',
+      plugin_open: 'فتح ←',
+      plugin_civic_p: 'بوابة MCP مفتوحة المصدر للحوكمة المدنية تربط القوى العاملة بأدواتك ومزوّديك.',
       sect_mission: 'البدء بمهمة أولاً', sub_mission: 'لا تختبر الميزات. أكمل مهمة إيراد حقيقية واحدة.',
       m_company_t: 'الشركة', m_company_d: '· أخبرنا عن شركتك في بضعة أسطر',
       m_mission_t: 'اختر مهمة واحدة', m_mission_d: '· هدف واحد، وفريق إيرادات واحد، وتقرير واحد',
@@ -574,22 +511,17 @@
       m_execute_t: 'تنفيذ حقيقي', m_execute_d: '· بحث حقيقي، وتواصل محكوم، وعمل مسار حقيقي',
       m_report_t: 'تقرير المهمة', m_report_d: '· تقرير حقيقي يمكنك التصرف بناءً عليه',
       m_upgrade_t: 'الترقية', m_upgrade_d: '· قرر ما إذا كنت ستواصل بعد المهمة',
-      sect_sentinel: 'درع سنتينل', sub_sentinel: 'حوكمة ذكاء اصطناعي مؤسسية على كل إمكانية.',
-      s_policy_t: 'فرض السياسات', s_policy_d: 'تقييم يُغلق عند الخطأ ويُرجّح الرفض قبل كل استدعاء أداة أو إضافة.',
-      s_prompt_t: 'أمان المطالبات', s_prompt_d: 'حجب الحقن والتعليمات غير الآمنة عبر القوى العاملة.',
-      s_code_t: 'أمان الأكواد', s_code_d: 'رصد الثغرات في مراجعات الأكواد وسياقات CI/CD.',
-      s_contract_t: 'مراجعة العقود الذكية', s_contract_d: 'تقييم مخاطر العقود والتحليلات على السلسلة.',
-      s_compliance_t: 'الامتثال', s_compliance_d: 'تحديد نطاق المستأجر وفرض الاستحقاقات حسب الخطة.',
-      s_audit_t: 'التدقيق المستمر', s_audit_d: 'حفظ كل قرار سماح أو رفض للمراجعة.',
       sec_t: 'مبني على الأمان. مصمم للتحكم.', sec_s: 'يعمل TEOS DealMaker ضمن منظومة الأمن والحوكمة الخاصة بالمحروسة.',
-      sec_1: '🛡 درع سنتينل', sec_2: '⚖ السياسات والرقابة البشرية', sec_3: '📋 عمليات ذكاء اصطناعي قابلة للتدقيق',
+      sec_1: '🛡 تنفيذ محكوم بالسياسات', sec_2: '⚖ السياسات والرقابة البشرية', sec_3: '📋 عمليات ذكاء اصطناعي قابلة للتدقيق',
       sec_4: '🔐 معايير السيادة الرقمية', sec_5: '🤝 شبكة شركاء Claude', sec_6: '✓ اعتماد موثق عبر Credly',
       sec_cta1: 'عرض مركز الثقة ←', sec_cta2: 'عرض الاعتماد الموثق ←',
       sect_pricing: 'الأسعار', sub_pricing: 'الخطط السنوية تشمل توفيراً مضمّناً، والمؤسسي بسعر مخصص.',
       pricing_addons: 'إضافات المنصة',
-      sentinel_sell_t: 'احمِ قوتك العاملة من الذكاء الاصطناعي', sentinel_name: 'درع سنتينل تيوس',
-      sentinel_tagline: 'جدار الحماية لأمن وتنفيذ وكلاء الذكاء الاصطناعي', sentinel_note: 'منتج منفصل متاح بشكل مستقل، ويُباع عبر صفحة أسعاره الخاصة.',
-      sentinel_cta: 'اكتشف درع سنتينل تيوس', sentinel_hint: 'مشمول في خطتي Growth و Business',
+      elmahrosa_products_t: 'منتجات المحروسة', elmahrosa_products_sub: 'وسّع DealMaker بمنتجات المحروسة المستقلة.',
+      elmahrosa_independent: 'منتج مستقل',
+      elmahrosa_note: 'منتج منفصل متاح بشكل مستقل، ويُباع عبر صفحة أسعاره الخاصة.',
+      elmahrosa_view: 'عرض سنتينل ←', elmahrosa_pricing: 'الأسعار ←',
+      elmahrosa_cross_q: 'تحتاج حوكمة تنفيذ مؤسسية للذكاء الاصطناعي؟', elmahrosa_cross_l: 'اكتشف درع سنتينل تيوس ←',
       footer_line1: 'صانع الصفقات تيوس — نظام تشغيل الإيرادات المؤسسي بالذكاء الاصطناعي',
       footer_contact: 'منتج من المحروسة إنترناشيونال · تواصل عبر info@elmahrosa.com · حالة النظام',
       footer_license: '© 2026 المحروسة إنترناشيونال — جميع الحقوق محفوظة',
@@ -599,15 +531,13 @@
 
   var PRICING_AR = {
     '🚀 Solo': { tagline: 'للمؤسسين والفرق الفردية', features: ['مساحة عمل واحدة', 'وحدة التحكم بالمهام مع قوة عاملة من 13 وكيل ذكاء اصطناعي', 'إمكانات الوكلاء الأساسية', 'دعم المجتمع'] },
-    '⚡ Growth': { tagline: 'لفرق الإيرادات المتنامية', features: ['10 مقاعد', 'إضافات Civic Mixer و Sentinel Shield', 'ذكاء المعرفة المؤسسية', 'دعم عبر البريد الإلكتروني'] },
+    '⚡ Growth': { tagline: 'لفرق الإيرادات المتنامية', features: ['10 مقاعد', 'إضافة Civic Mixer المجانية', 'ذكاء المعرفة المؤسسية', 'دعم عبر البريد الإلكتروني'] },
     '👑 Business': { tagline: 'لمنظمات الإيرادات', features: ['25 مقعداً', 'تثبيت إضافات الطرف الثالث', 'جميع إضافات المنصة', 'دعم ذو أولوية'] },
-    '🏛️ Enterprise': { tagline: 'للمنظمات الكبيرة والسيادية', features: ['مساحات عمل غير محدودة', 'مهام غير محدودة', 'خيارات نشر مخصصة (قريباً)', 'حوكمة سنتينل على نطاق واسع', 'تواصل مباشر مع الفريق المؤسس'] }
+    '🏛️ Enterprise': { tagline: 'للمنظمات الكبيرة والسيادية', features: ['مساحات عمل غير محدودة', 'مهام غير محدودة', 'خيارات نشر مخصصة', 'حوكمة السياسات على نطاق واسع', 'تواصل مباشر مع الفريق المؤسس'] }
   };
 
   var ADDON_AR = {
-    'Sentinel Governance': ['حوكمة سنتينل', 'فرض السياسات وأمان المطالبات والتدقيق المستمر عبر كل إمكانية.'],
     'Enterprise Intelligence': ['ذكاء المؤسسة', 'قاعدة معرفة RAG بإجابات مسندة إلى المصادر.'],
-    'CRM Connectors': ['موصلات CRM', 'موصلات Salesforce وHubSpot وMicrosoft 365 وGoogle Workspace (قريباً).'],
     'Premium AI Models': ['نماذج ذكاء اصطناعي متقدمة', 'الوصول إلى نماذج استدلال رائدة.'],
     'Dedicated Support': ['دعم مخصص', 'دعم ذو أولوية من الفريق المؤسس.']
   };

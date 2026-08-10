@@ -66,7 +66,7 @@ pricingGrid.children.push(priceCard);
 
 const addonGrid = makeEl('div');
 const addonCard = makeEl('div', { class: 'card' });
-const ah3 = makeEl('h3'); ah3.textContent = 'Sentinel Governance';
+const ah3 = makeEl('h3'); ah3.textContent = 'Enterprise Intelligence';
 const ap = makeEl('p'); ap.textContent = 'Policy enforcement...';
 addonCard.children.push(ah3, ap); addonGrid.children.push(addonCard);
 

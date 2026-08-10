@@ -8,8 +8,8 @@
 //   - product name, tagline, description, contact
 //   - pricing (delegated to ./pricing.config.js — never duplicated here)
 //   - mission lifecycle and governance terminology
-//   - supported integrations (COMING SOON is the default status)
-//   - Sentinel relationship (separate product, cross-link only)
+//   - verified free plugins (only what is actually implemented and usable)
+//   - Elmahrosa independent products (cross-link only, never priced here)
 //   - playground / demo behavior (simulated data only)
 //
 // Provider wording is deliberately provider-agnostic: the platform supports
@@ -44,7 +44,7 @@ const PRODUCT = {
     'Governed email + 24/7 outbound worker',
     'Mission Reports',
     'Dodo checkout',
-    'Sentinel governance / audit'
+    'Policy governance / audit'
   ],
 
   // Lifecycle shown on the landing playground and mirrored by the bot.
@@ -59,14 +59,40 @@ const PRODUCT = {
     { code: 'BLOCK', note: 'policy deny — action never runs' }
   ],
 
-  // Supported integrations. Anything without a live adapter stays COMING SOON.
-  integrations: [
-    { id: 'github', name: 'GitHub', status: 'COMING_SOON' },
-    { id: 'slack', name: 'Slack', status: 'COMING_SOON' },
-    { id: 'hubspot', name: 'HubSpot', status: 'COMING_SOON' },
-    { id: 'salesforce', name: 'Salesforce', status: 'COMING_SOON' },
-    { id: 'm365', name: 'Microsoft 365', status: 'COMING_SOON' },
-    { id: 'gws', name: 'Google Workspace', status: 'COMING_SOON' }
+  // Verified available-plugin registry. Only plugins that are actually
+  // implemented, usable, and enabled are advertised. Civic Mixer is the
+  // built-in free plugin (MCP gateway + civic governance capabilities).
+  plugins: [
+    {
+      id: 'civic-mixer',
+      name: 'Civic Mixer',
+      status: 'AVAILABLE',
+      free: true,
+      installed: true,
+      description: 'Open-source civic governance / MCP gateway that connects the workforce to your tools and providers.',
+      i18nKey: 'plugin_civic_p',
+      url: '#playground'
+    }
+  ],
+
+  // Connectors advertised as AVAILABLE free plugins on the public surface.
+  // Empty: the internal workspace integration hub (services/integrations)
+  // exists but is not wired to live provider credentials in the default
+  // deployment, so no connector is advertised as an available plugin.
+  integrations: [],
+
+  // Elmahrosa commercial products — INDEPENDENT products, never DealMaker
+  // plugins. Cross-linked only; never priced or checked out inside DealMaker.
+  elmahrosaProducts: [
+    {
+      id: 'sentinel',
+      name: 'TEOS Sentinel Shield',
+      tagline: 'Enterprise AI governance and execution security',
+      description: 'Independent Elmahrosa product — AI Agent Security & Execution Firewall.',
+      url: PRICING.SENTINEL_URL,
+      pricing: 'Contact Sales',
+      independent: true
+    }
   ],
 
   reports: {

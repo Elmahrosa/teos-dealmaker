@@ -156,7 +156,8 @@ The Plugin Platform allows new enterprise capabilities to be added without chang
 Current plugins:
 
 - **Civic Mixer** - MCP gateway transport adapter + civic capabilities
-- **Sentinel Shield** - Enterprise governance shield
+
+> **TEOS Sentinel Shield** is an **independent Elmahrosa product** (`https://sentinel.teosegypt.com`) — it is cross-linked from the DealMaker surface only, never sold through the DealMaker plugin platform. Its internal plugin implementation lives in `plugins/sentinel` (see [TEOS Sentinel Shield](#teos-sentinel-shield)).
 
 Future plugins:
 
@@ -185,7 +186,7 @@ See [docs/PLUGIN_CONTRACT.md](docs/PLUGIN_CONTRACT.md) for the plugin contract, 
 - Progress tracking, agent handoffs, and budget-aware execution with automatic halts when limits are reached
 
 ### Enterprise Integration Hub
-- Connector catalog for Salesforce, HubSpot, Microsoft 365, Google Workspace and more (COMING SOON — not wired to live credentials in the default deployment)
+- Connector catalog definitions for Salesforce, HubSpot, Microsoft 365, Google Workspace and more (not wired to live credentials in the default deployment)
 - Sync scaffolding for bidirectional CRM synchronization (requires configured credentials and an enabled MCP gateway)
 - Automated data enrichment from external sources (requires configured connectors)
 - Webhook ingestion scaffolding for real-time event processing
