@@ -4,14 +4,14 @@ const TABLES = {
     timestamps: true
   },
   users: {
-    columns: ['email', 'display_name', 'telegram_id'],
+    columns: ['email', 'display_name', 'telegram_id', 'password_hash', 'salt'],
     timestamps: true
   },
   workspace_members: {
     columns: ['workspace_id', 'user_id', 'role']
   },
   subscriptions: {
-    columns: ['workspace_id', 'plan', 'status', 'cycle', 'start_date', 'renewal_date', 'refund_eligibility', 'provider', 'provider_customer_id'],
+    columns: ['workspace_id', 'plan', 'status', 'cycle', 'start_date', 'renewal_date', 'refund_eligibility', 'provider', 'provider_customer_id', 'missions_used'],
     timestamps: true
   },
   dodo_customers: {

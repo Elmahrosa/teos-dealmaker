@@ -5,6 +5,7 @@ const executor = require('./executor');
 const approvals = require('./approvals');
 const telemetry = require('./telemetry');
 const { emit, EVENT_NAMES } = require('./events');
+const billing = require('../billing');
 
 function buildBriefing(plan, steps) {
   const lines = [`Executive briefing — ${plan.title}`, ''];
@@ -20,6 +21,12 @@ function buildBriefing(plan, steps) {
 async function runPlan(adapter, workspaceId, opts) {
   const o = opts || {};
   const repos = forWorkspace(adapter, workspaceId);
+
+  // Check entitlement before allowing mission execution
+  const entitled = await billing.isEntitled(adapter, workspaceId);
+  if (!entitled) {
+    throw new Error('Workspace not entitled to run missions. Please check subscription status.');
+  }
 
   let plan;
   if (o.planId) {
@@ -136,6 +143,11 @@ async function runPlan(adapter, workspaceId, opts) {
       budget_exceeded: budgetExceeded ? true : null
     }
   });
+
+  // Increment mission usage if mission completed successfully
+  if (finalStatus === 'completed') {
+    await billing.incrementMissionsUsed(adapter, workspaceId, 1);
+  }
 
   const finalPlan = await repos.plans.get(plan.id);
   const briefing = buildBriefing({ ...finalPlan, title: finalPlan.title }, finalSteps);

@@ -107,10 +107,11 @@ async function isEntitled(adapter, workspaceId) {
 async function incrementMissionsUsed(adapter, workspaceId, increment = 1) {
   const repos = createRepos(adapter);
   const subscription = await repos.subscriptions.get(workspaceId);
-  if (!subscription) return;
+  if (!subscription) return null;
   await repos.subscriptions.update(subscription.id, {
     missions_used: subscription.missions_used + increment
   });
+  return await repos.subscriptions.get(workspaceId);
 }
 
 async function handleSubscriptionCreated(adapter, data) {
@@ -447,6 +448,7 @@ module.exports = {
   verifySignature,
   handleEvent,
   getPlanForProduct,
+  getMissionLimitForPlan,
   isEntitled,
   incrementMissionsUsed,
   sendTelegramNotification,

@@ -16,8 +16,8 @@ function createRepos(adapter) {
     },
 
     users: {
-      create({ email, display_name = null, telegram_id = null }) {
-        return adapter.insert('users', { email, display_name, telegram_id });
+      create(userData) {
+        return adapter.insert('users', userData);
       },
       getById(id) {
         return adapter.findOne('users', { id });
@@ -46,8 +46,8 @@ function createRepos(adapter) {
     },
 
     subscriptions: {
-      create({ workspace_id, plan, status = 'pending', cycle = 'monthly', start_date = null, renewal_date = null, refund_eligibility = null, provider = 'dodo', provider_customer_id = null }) {
-        return adapter.insert('subscriptions', { workspace_id, plan, status, cycle, start_date, renewal_date, refund_eligibility, provider, provider_customer_id });
+      create({ workspace_id, plan, status = 'pending', cycle = 'monthly', start_date = null, renewal_date = null, refund_eligibility = null, provider = 'dodo', provider_customer_id = null, missions_used = 0 }) {
+        return adapter.insert('subscriptions', { workspace_id, plan, status, cycle, start_date, renewal_date, refund_eligibility, provider, provider_customer_id, missions_used });
       },
       get(workspace_id) {
         return adapter.findOne('subscriptions', { workspace_id });

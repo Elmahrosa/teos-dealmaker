@@ -131,6 +131,7 @@ async function onboardWorkspace(adapter, { ownerUserId, companyName, lang, plan 
     cycle: 'monthly',
     start_date: startDate,
     renewal_date: renewalDate,
+    missions_used: 0,
     provider: 'dodo',
     provider_customer_id: null
   });
@@ -154,5 +155,7 @@ module.exports = {
   uniqueSlug,
   onboardWorkspace,
   provisionWorkspace,
-  addMember
+  addMember,
+  today,
+  addMonths
 };

@@ -185,6 +185,131 @@ const crypto = require('crypto');
   const handlerCount = Object.keys(billing.EVENT_HANDLERS).length;
   eq(handlerCount, 8, 'EVENT_HANDLERS has 8 registered event types');
 
+  // ------------------------------------------ 16. mission tracking: isEntitled function
+  // Founder plan should always be entitled (unlimited missions)
+  const founderWs = repos.workspaces.create({ name: 'Founder Corp', slug: 'founder-corp', plan: 'founder', status: 'active' });
+  ok(await billing.isEntitled(adapter, founderWs.id), 'founder workspace entitled without subscription');
+
+  // Create a subscription for testing
+  const testWs = repos.workspaces.create({ name: 'TestCorp', slug: 'testcorp', plan: 'solo', status: 'active' });
+  const testSub = repos.subscriptions.create({
+    workspace_id: testWs.id,
+    plan: 'solo',
+    status: 'active',
+    cycle: 'monthly',
+    provider: 'dodo',
+    provider_customer_id: 'test_cust_123',
+    missions_used: 0
+  });
+
+  // Test isEntitled with active subscription and missions under limit
+  ok(await billing.isEntitled(adapter, testWs.id), 'active subscription with 0 missions used is entitled');
+
+  // Test isEntitled with missions at limit (should not be entitled)
+  await repos.subscriptions.update(testSub.id, { missions_used: 5 }); // solo plan limit is 5
+  ok(!(await billing.isEntitled(adapter, testWs.id)), 'subscription at mission limit is not entitled');
+
+  // Test isEntitled with missions over limit (should not be entitled)
+  await repos.subscriptions.update(testSub.id, { missions_used: 6 });
+  ok(!(await billing.isEntitled(adapter, testWs.id)), 'subscription over mission limit is not entitled');
+
+  // Test isEntitled with inactive subscription (should not be entitled)
+  await repos.subscriptions.update(testSub.id, { status: 'cancelled', missions_used: 0 });
+  ok(!(await billing.isEntitled(adapter, testWs.id)), 'subscription with cancelled status is not entitled');
+
+  // Test isEntitled on growth plan with various mission counts
+  const growthWs = repos.workspaces.create({ name: 'GrowthInc', slug: 'growthinc', plan: 'growth', status: 'active' });
+  const growthSub = repos.subscriptions.create({
+    workspace_id: growthWs.id,
+    plan: 'growth',
+    status: 'active',
+    cycle: 'monthly',
+    provider: 'dodo',
+    provider_customer_id: 'cust_456',
+    missions_used: 0
+  });
+
+  // Under limit (20 for growth plan)
+  ok(await billing.isEntitled(adapter, growthWs.id), 'growth plan with 0 missions used is entitled');
+
+  await repos.subscriptions.update(growthSub.id, { missions_used: 19 });
+  ok(await billing.isEntitled(adapter, growthWs.id), 'growth plan with 19 missions used is entitled');
+
+  // At limit
+  await repos.subscriptions.update(growthSub.id, { missions_used: 20 });
+  ok(!(await billing.isEntitled(adapter, growthWs.id)), 'growth plan at mission limit is not entitled');
+
+  // Test isEntitled on corporate plan (limit 100)
+  const corpWs = repos.workspaces.create({ name: 'CorpLtd', slug: 'corpltd', plan: 'corporate', status: 'active' });
+  const corpSub = repos.subscriptions.create({
+    workspace_id: corpWs.id,
+    plan: 'corporate',
+    status: 'active',
+    cycle: 'monthly',
+    provider: 'dodo',
+    provider_customer_id: 'cust_789',
+    missions_used: 0
+  });
+
+  ok(await billing.isEntitled(adapter, corpWs.id), 'corporate plan with 0 missions used is entitled');
+
+  await repos.subscriptions.update(corpSub.id, { missions_used: 99 });
+  ok(await billing.isEntitled(adapter, corpWs.id), 'corporate plan with 99 missions used is entitled');
+
+  await repos.subscriptions.update(corpSub.id, { missions_used: 100 });
+  ok(!(await billing.isEntitled(adapter, corpWs.id)), 'corporate plan at mission limit is not entitled');
+
+  // Test isEntitled on trial plan (limit 1)
+  const trialWs = repos.workspaces.create({ name: 'TrialLLC', slug: 'trial-llc', plan: 'trial', status: 'active' });
+  const trialSub = repos.subscriptions.create({
+    workspace_id: trialWs.id,
+    plan: 'trial',
+    status: 'active',
+    cycle: 'monthly',
+    provider: 'dodo',
+    provider_customer_id: 'cust_abc',
+    missions_used: 0
+  });
+
+  ok(await billing.isEntitled(adapter, trialWs.id), 'trial plan with 0 missions used is entitled');
+
+  await repos.subscriptions.update(trialSub.id, { missions_used: 1 });
+  ok(!(await billing.isEntitled(adapter, trialWs.id)), 'trial plan at mission limit is not entitled');
+
+  // ------------------------------------------ 17. mission tracking: incrementMissionsUsed function
+  // Test incrementing missions used
+  const incrementWs = repos.workspaces.create({ name: 'IncrementInc', slug: 'incrementinc', plan: 'solo', status: 'active' });
+  const incrementSub = repos.subscriptions.create({
+    workspace_id: incrementWs.id,
+    plan: 'solo',
+    status: 'active',
+    cycle: 'monthly',
+    provider: 'dodo',
+    provider_customer_id: 'cust_inc',
+    missions_used: 2
+  });
+
+  // Increment by 1 (default)
+  await billing.incrementMissionsUsed(adapter, incrementWs.id);
+  const afterIncrement = repos.subscriptions.get(incrementWs.id);
+  ok(afterIncrement && afterIncrement.missions_used === 3, 'incrementMissionsUsed increases count by 1');
+
+  // Increment by 3
+  await billing.incrementMissionsUsed(adapter, incrementWs.id, 3);
+  const afterIncrement3 = repos.subscriptions.get(incrementWs.id);
+  ok(afterIncrement3 && afterIncrement3.missions_used === 6, 'incrementMissionsUsed increases count by specified amount');
+
+  // Test that increment works on founder plan (should not cause issues even though unlimited)
+  await billing.incrementMissionsUsed(adapter, founderWs.id); // founder workspace
+  const founderSub = repos.subscriptions.get(founderWs.id);
+  ok(!founderSub || founderSub.missions_used === 0, 'founder plan missions_used remains 0 (unlimited)');
+
+  // Test increment on non-existent subscription (should not throw)
+  const fakeWs = repos.workspaces.create({ name: 'FakeInc', slug: 'fakeinc', plan: 'solo', status: 'active' });
+  // Don't create subscription for this workspace
+  await billing.incrementMissionsUsed(adapter, fakeWs.id); // Should not throw
+  ok(true, 'incrementMissionsUsed handles missing subscription gracefully');
+
   console.log(`\n✓ tests/test-billing.js — ${passed} assertions passed`);
   process.exit(0);
 })().catch(err => {
