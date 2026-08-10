@@ -111,6 +111,12 @@ function buildBundle() {
     fs.writeFileSync(path.join(OUT_DIR, name), content, 'utf8');
   }
 
+  // Keep the committed customer copy of the operations console
+  // (public/dashboard/index.html, served by /dashboard) in sync with the
+  // server template that also feeds the static build.
+  fs.mkdirSync(path.join(root, 'public', 'dashboard'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'public', 'dashboard', 'index.html'), render.renderDashboard(dashboard), 'utf8');
+
   for (const asset of ASSETS) {
     const src = path.join(SERVER_DIR, asset);
     if (fs.existsSync(src)) {

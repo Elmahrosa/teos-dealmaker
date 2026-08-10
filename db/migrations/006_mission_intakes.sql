@@ -1,6 +1,5 @@
 -- Migration 006: mission_intakes table for the one-shot /start funnel.
-
-: one-shot customer funnel (the real /start funnel).
+-- One-shot customer funnel (the real /start funnel).
 CREATE TABLE IF NOT EXISTS mission_intakes (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,

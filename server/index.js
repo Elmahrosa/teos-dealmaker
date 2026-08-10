@@ -236,7 +236,7 @@ app.get('/', (req, res) => {
 // here; a submission records a mission_intakes row (status 'received') via
 // services/missionIntake.js. Recording an intake never claims execution —
 // the mission plan still has to be approved under policy governance.
-// Founder review is audit-gated (/api/missions and /intakes).
+// Founder review is audit-gated (/api/intakes and /intakes).
 // ---------------------------------------------------------------------------
 app.get('/start', (_req, res) => {
   res.type('html').send(render.renderStart());
@@ -263,7 +263,7 @@ app.get('/start/thanks', async (req, res) => {
   }
 });
 
-app.post('/api/missions', express.json({ limit: '32kb' }), async (req, res) => {
+app.post('/api/intake', express.json({ limit: '32kb' }), async (req, res) => {
   try {
     const missionIntake = require('../services/missionIntake');
     const normalized = missionIntake.normalize(req.body || {});
@@ -289,7 +289,7 @@ app.post('/api/missions', express.json({ limit: '32kb' }), async (req, res) => {
 
 // Founder-only intake list (same key gate as /api/audit). Includes contact
 // because the founder acts on the intake.
-app.get('/api/missions', requireAuditAuth, async (req, res) => {
+app.get('/api/intakes', requireAuditAuth, async (req, res) => {
   try {
     const { getAdapter } = require('../db');
     const { createRepos } = require('../db/repos');
@@ -326,6 +326,33 @@ app.get('/intakes', requireAuditAuth, async (req, res) => {
   } catch (err) {
     console.error('[intake] admin render error:', err.message);
     res.status(500).type('html').send('Intake console unavailable');
+  }
+});
+
+// Public sanitized intake contact channel. Returns ONLY the channel type of
+// the latest intake ('email' | 'telegram' | 'none') — never the raw contact
+// value. The customer-facing dashboard renders this as a neutral status row
+// so no customer contact data is exposed outside the audit-gated consoles.
+app.get('/api/intakes/contact-channel', async (_req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    const { createRepos } = require('../db/repos');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = require('../services/missionIntake').sharedAdapter();
+    }
+    const rows = await createRepos(adapter).intakes.list();
+    if (!rows.length) return res.json({ ok: true, present: false, channel: 'none' });
+    const { CONTACT_FALLBACK } = require('../services/missionIntake');
+    const raw = String((rows[rows.length - 1].contact) || '');
+    if (!raw || raw === CONTACT_FALLBACK) return res.json({ ok: true, present: true, channel: 'none' });
+    const emailLike = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw);
+    res.json({ ok: true, present: true, channel: emailLike ? 'email' : 'telegram' });
+  } catch (err) {
+    console.error('[intake] contact-channel error:', err.message);
+    res.status(503).json({ ok: false, error: 'intakes_unavailable' });
   }
 });
 

@@ -34,7 +34,8 @@
     "test:operations": "node tests/test-operations.js",
     "test:intelligence": "node tests/test-intelligence.js",
     "test:pipeline": "node tests/final_pipeline.test.js",
-    "db:migrate": "node -e \"require('./db').createTables().then(()=>console.log('[db] schema applied')).catch(e=>{console.error('[db] '+e.message);process.exit(1)})\""
+    "db:migrate": "node -e \"require('./db').createTables().then(()=>console.log('[db] schema applied')).catch(e=>{console.error('[db] '+e.message);process.exit(1)})\"",
+    "db:migrations": "node scripts/apply-migrations.js"
   },
   "dependencies": {
     "compression": "^1.8.1",

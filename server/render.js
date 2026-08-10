@@ -4,6 +4,8 @@
 // the static production build (scripts/build-static.js). Keeping the render
 // logic here guarantees the deployed bundle always matches the server output.
 
+const fs = require('fs');
+const path = require('path');
 const PRICING = require('../config/pricing.config');
 const { PRODUCT } = require('../config/product.config');
 
@@ -92,7 +94,7 @@ function renderElmahrosaProducts() {
       <p>${p.description}</p>
       <p class="product-note" data-i18n="elmahrosa_note">Optional add-on — a separate product sold on its own pricing page. Not included with any DealMaker plan.</p>
       <div class="product-actions">
-        <a class="cta" href="${p.url}" target="_blank" rel="noopener" data-i18n="elmahrosa_view">View Sentinel →</a>
+        <a class="cta" href="${p.url}" target="_blank" rel="noopener" data-i18n="elmahrosa_view">View product →</a>
         <a class="cta ghost" href="${p.url}" target="_blank" rel="noopener" data-i18n="elmahrosa_pricing">Pricing →</a>
       </div>
     </div>`).join('');
@@ -179,15 +181,15 @@ function renderDashboard(template) {
   return template.replace('{{PRICING_JSON}}', JSON.stringify(sanitized));
 }
 function renderStart() {
-  const steps = (PRODUCT.mission && PRODUCT.mission.steps) || [];
-  const stepList = steps.map(s => `<li><b>${s.n}</b> ${s.label}</li>`).join('\n      ');
-  const choices = MISSION_CHOICES.map(c => `<option value="${c}">${c}</option>`).join('');
-  return pageHead('Start a Mission · TEOS DealMaker') + `\n  <header>\n    <span class="brand">TEOS DEALMAKER</span>\n    <a class="back" href="/">← Back to the landing page</a>\n  </header>\n  <h1>Start a Real Mission</h1>\n  <p class="sub">Mission-First: complete one real business mission, then decide whether to continue. No software to buy up front.</p>\n  <ol class="steps">${stepList}</ol>\n  <form id="intake-form" novalidate>\n  <label for="mission">Your mission *</label>\n  <select id="mission" name="mission" required>\n    <option value="">Choose ONE mission to start</option>\n    ${choices}\n  </select>\n  <div class="hint">One goal, one AI Revenue Team, one report.</div>\n  <label for="business">Tell us about your business *</label>\n  <textarea id="business" name="business" required maxlength="5000" placeholder="Product or service, industry, what you sell, and who buys it — a few lines is enough."></textarea>\n  <label for="objective">What does success look like?</label>\n  <textarea id="objective" name="objective" maxlength="5000" placeholder="e.g. 5 qualified conversations with enterprise prospects this month. If blank, we use your business description."></textarea>\n  <label for="outcome">Desired outcome / deliverable</label>\n  <input id="outcome" name="outcome" maxlength="1000" placeholder="e.g. a qualified prospect list with outreach scripts">\n  <label for="target_customer">Who is the target customer?</label>\n  <input id="target_customer" name="target_customer" maxlength="1000" placeholder="Company size, segment, geography — or 'unsure'">\n  <label for="market">Market / geography</label>\n  <input id="market" name="market" maxlength="1000">\n  <label for="budget">Budget range (optional)</label>\n  <input id="budget" name="budget" maxlength="1000" placeholder="e.g. $5K–$50K MRR targets, or product price range">\n  <label for="timeline">Timeline</label>\n  <input id="timeline" name="timeline" maxlength="1000" placeholder="e.g. within 30 days">\n  <label for="capabilities">Anything the team can use — data, docs, links</label>\n  <textarea id="capabilities" name="capabilities" maxlength="5000" placeholder="Links to your website, product docs, previous outreach, a CRM export, a target list…"></textarea>\n  <label for="contact">Contact (optional)</label>\n  <input id="contact" name="contact" maxlength="500" placeholder="Email or Telegram handle — only if you want us to reply">\n  <div class="check">\n    <input type="checkbox" id="consent" required>\n    <label for="consent" style="margin:0;text-transform:none;letter-spacing:0;font-size:12px;">I understand this brief starts a real revenue mission handled by a governed AI team, and that I am not buying software yet — I decide to continue after the mission.</label>\n  </div>\n  <div class="err" id="form-err"></div>\n  <button type="submit">Start My Mission</button>\n  </form>\n  <script>\n  (function () {\n    var form = document.getElementById('intake-form');\n    var err = document.getElementById('form-err');\n    form.addEventListener('submit', function (e) {\n      e.preventDefault();\n      err.style.display = 'none';\n      var data = {};\n      ['mission', 'business', 'objective', 'outcome', 'target_customer', 'market', 'budget', 'timeline', 'capabilities', 'contact'].forEach(function (k) {\n        var el = form.elements[k];\n        if (el) data[k] = el.value;\n      });\n      fetch('/api/missions', {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify(data)\n      }).then(function (r) {\n        return r.json().then(function (j) { return { ok: r.ok, j: j }; });\n      }).then(function (res) {\n        if (res.ok && res.j.ok) {\n          window.location.href = res.j.thanksUrl || '/start/thanks?id=' + res.j.intakeId;\n        } else {\n          err.textContent = 'Please complete the required fields (' + (res.j.fields || []).join(', ') + ').';\n          err.style.display = 'block';\n        }\n      }).catch(function () {\n        err.textContent = 'Could not reach the server. Please try again.';\n        err.style.display = 'block';\n      });\n    });\n  })();\n  </script>\n` + pageFoot;
+  const startPath = path.join(__dirname, '..', 'public', 'start.html');
+  return fs.readFileSync(startPath, 'utf8');
 }
 
 function renderStartThanks(intake) {
   const i = intake || {};
-  return pageHead('Mission received · TEOS DealMaker') + `\n  <header>\n    <span class="brand">TEOS DEALMAKER</span>\n    <a class="back" href="/">← Back to the landing page</a>\n  </header>\n  <h1>Mission brief received</h1>\n  <div class="okbox"><b>✓ Received</b> — your brief is recorded as intake #${esc(i.id)} with status <span class="status">${esc(i.status)}</span>.</div>\n  <h2>Mission brief</h2>\n  <table>\n    <tbody>\n      <tr><th>Mission</th><td>${esc(i.title)}</td></tr>\n      <tr><th>Business</th><td>${esc(i.objective)}</td></tr>\n      ${i.outcome ? `<tr><th>Success</th><td>${esc(i.outcome)}</td></tr>` : ''}\n      ${i.contact ? '<tr><th>Contact</th><td>Provided — we can reply</td></tr>' : '<tr><th>Contact</th><td>None provided</td></tr>'}\n      <tr><th>Recorded</th><td>${esc(i.created_at)}</td></tr>\n    </tbody>\n  </table>\n  <h2>What happens next</h2>\n  <p class="muted">The founder reviews your brief and assigns your dedicated AI Revenue Team. You will receive the mission plan for approval — the mission only executes under policy governance, and you decide whether to continue after the first mission. While you wait, <a href="https://t.me/TeosEgypt_bot">open the Telegram app</a> or <a href="/#playground">run the demo</a>.</p>\n  <footer><span>TEOS DealMaker · Elmahrosa International · <a href="mailto:info@elmahrosa.org">info@elmahrosa.org</a></span></footer>\n` + pageFoot;
+  const { CONTACT_FALLBACK } = require('../services/missionIntake');
+  const hasContact = Boolean(i.contact) && i.contact !== CONTACT_FALLBACK;
+  return pageHead('Mission received · TEOS DealMaker') + `\n  <header>\n    <span class="brand">TEOS DEALMAKER</span>\n    <a class="back" href="/">← Back to the landing page</a>\n  </header>\n  <h1>Mission brief received</h1>\n  <div class="okbox"><b>✓ Received</b> — your brief is recorded as intake #${esc(i.id)} with status <span class="status">${esc(i.status)}</span>.</div>\n  <h2>Mission brief</h2>\n  <table>\n    <tbody>\n      <tr><th>Mission</th><td>${esc(i.title)}</td></tr>\n      <tr><th>Business</th><td>${esc(i.objective)}</td></tr>\n      ${i.outcome ? `<tr><th>Success</th><td>${esc(i.outcome)}</td></tr>` : ''}\n      ${hasContact ? '<tr><th>Contact</th><td>Provided — we can reply</td></tr>' : '<tr><th>Contact</th><td>None provided</td></tr>'}\n      <tr><th>Recorded</th><td>${esc(i.created_at)}</td></tr>\n    </tbody>\n  </table>\n  <h2>What happens next</h2>\n  <p class="muted">The founder reviews your brief and assigns your dedicated AI Revenue Team. You will receive the mission plan for approval — the mission only executes under policy governance, and you decide whether to continue after the first mission. While you wait, <a href="https://t.me/TeosEgypt_bot">open the Telegram app</a> or <a href="/#playground">run the demo</a>.</p>\n  <footer><span>TEOS DealMaker · Elmahrosa International · <a href="mailto:info@elmahrosa.org">info@elmahrosa.org</a></span></footer>\n` + pageFoot;
 }
 
 function renderIntakesAdmin(rows) {
@@ -232,15 +234,6 @@ td.mono{font-family:Consolas,monospace;color:var(--blue);}
 const pageHead = (title) => `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="robots" content="noindex, nofollow">\n<title>${title}</title>\n<style>${START_CSS}</style>\n</head>\n<body>\n<div class="wrap">`;
 
 const pageFoot = '</div>\n</body>\n</html>';
-
-const MISSION_CHOICES = [
-  'Win new customers in a target segment',
-  'Close a specific target deal',
-  'Rebuild my sales pipeline and process',
-  'Launch a new product or service line',
-  'Rescue a stalled or at-risk deal',
-  'Other mission'
-];
 
 const REPORT_CSS = `
 :root{--bg:#0b0f14;--panel:#131a23;--border:#1f2a37;--text:#d7e1ea;--muted:#7c8a99;--gold:#d4af37;--green:#3fbf6f;--red:#e05656;--blue:#4aa3df;}

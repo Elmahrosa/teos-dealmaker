@@ -230,7 +230,7 @@ const menu = require('../bot/menu');
   equal(emergencyAfter.isEngaged(), true, 'emergency stop engaged while driven');
   await driveAndExpect('cc_fd_emergency_resume', FOUNDER, 'disengaged', 'resume marks the stop disengaged');
   equal(emergencyAfter.isEngaged(), false, 'emergency stop disengaged after resume');
-  await driveAndExpect('cc_fd_sentinel', FOUNDER, 'Sentinel Shield', 'sentinel console renders');
+  await driveAndExpect('cc_fd_sentinel', FOUNDER, 'Security Layers', 'security layers console renders');
 
   // ------------------------------------------------------------ 2. learn flow
   await driveAndExpect('cc_learn', FOUNDER, 'Question 1', 'learning interview starts on first question');

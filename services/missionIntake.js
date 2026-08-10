@@ -5,10 +5,13 @@
 // the mission context for a governed AI Revenue Team. Submission only records
 // the intake with status 'received' — it never claims execution happened.
 //
-// Contact is optional and only ever stored when the customer provided it.
-// Nothing here logs or returns secrets; the page is served by server/index.js
-// and the founder reviews intakes through the audit-gated /intakes console.
+// Contact is optional: when the customer provides none, the canonical
+// fallback string is stored so the founder console always shows a clear
+// channel state. Nothing here logs or returns secrets; the page is served by
+// server/index.js and the founder reviews intakes through the audit-gated
+// /intakes console.
 
+const CONTACT_FALLBACK = 'Contact channel not yet established';
 const ANSWER_KEYS = ['outcome', 'target_customer', 'market', 'budget', 'timeline', 'capabilities'];
 
 function normalize(payload) {
@@ -19,7 +22,9 @@ function normalize(payload) {
 
   const title = str(src.mission || src.title);
   const objective = str(src.objective || src.business);
-  const contact = str(src.contact);
+  // When the customer provides no email or phone number, store the canonical
+  // fallback instead of an empty string so the channel state is explicit.
+  const contact = str(src.contact) || CONTACT_FALLBACK;
 
   if (!title) errors.push('mission');
   if (!objective) errors.push('objective');
@@ -59,4 +64,4 @@ function sharedAdapter() {
   return shared;
 }
 
-module.exports = { normalize, ANSWER_KEYS, sharedAdapter };
+module.exports = { normalize, CONTACT_FALLBACK, ANSWER_KEYS, sharedAdapter };

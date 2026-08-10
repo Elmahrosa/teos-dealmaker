@@ -46,6 +46,15 @@ check(!missing.ok, 'empty intake rejected');
 check(missing.errors.indexOf('mission') !== -1 && missing.errors.indexOf('objective') !== -1,
   'missing mission + objective reported');
 
+const noContact = missionIntake.normalize({ mission: 'Win new customers', objective: 'Grow pipeline' });
+check(noContact.ok, 'intake without contact still normalizes ok');
+check(noContact.row.contact === missionIntake.CONTACT_FALLBACK,
+  'missing contact stores the canonical fallback string');
+check(noContact.row.contact === 'Contact channel not yet established',
+  'fallback string is the required canonical value');
+check(!Object.prototype.hasOwnProperty.call(noContact.row.answers, 'contact'),
+  'answers JSON does not carry contact');
+
 const ar = missionIntake.normalize({
   mission: 'مهمة واحدة',
   business: 'نبيع برمجيات تخطيط موارد المؤسسات'

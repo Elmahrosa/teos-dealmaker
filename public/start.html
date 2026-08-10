@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Start a Real Mission · TEOS DealMaker</title>
+<style>
+:root{--bg:#0b0f14;--panel:#131a23;--border:#1f2a37;--text:#d7e1ea;--muted:#7c8a99;--gold:#d4af37;--green:#3fbf6f;--red:#e05656;--blue:#4aa3df;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;padding:28px 18px;line-height:1.5;}
+.wrap{max-width:720px;margin:0 auto;}
+a{color:var(--blue);text-decoration:none;}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:26px;}
+.brand{font-size:15px;letter-spacing:2px;color:var(--gold);font-weight:700;}
+.back{margin-inline-start:auto;font-size:12px;}
+#lang-switch{background:none;border:1px solid var(--border);color:var(--gold);padding:2px 12px;border-radius:12px;cursor:pointer;font-family:inherit;font-size:12px;letter-spacing:1px;}
+#lang-switch:hover{color:#0b0f14;background:var(--gold);border-color:var(--gold);}
+h1{font-size:22px;letter-spacing:1px;color:var(--gold);}
+h2{font-size:14px;letter-spacing:1px;color:var(--gold);margin:22px 0 10px;}
+.sub{color:var(--muted);font-size:13px;margin-top:6px;}
+ol.steps{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0;list-style:none;padding:0;}
+ol.steps li{font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:14px;padding:4px 10px;}
+ol.steps li b{color:var(--gold);}
+label{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 6px;}
+input,select,textarea{width:100%;background:var(--panel);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:10px 12px;font-size:14px;font-family:inherit;}
+textarea{min-height:90px;}
+input:focus,textarea:focus{outline:none;border-color:var(--gold);}
+button[type="submit"]{background:var(--gold);color:#0b0f14;border:0;border-radius:6px;font-weight:700;letter-spacing:1px;font-size:14px;padding:12px 22px;cursor:pointer;margin-top:20px;}
+button[type="submit"]:hover{filter:brightness(1.1);}
+button.ghost{background:transparent;color:var(--blue);border:1px solid var(--blue);margin-top:20px;}
+button.ghost:hover{background:var(--panel);filter:none;}
+.hint{font-size:11px;color:var(--muted);margin-top:4px;}
+.check{display:flex;gap:8px;align-items:flex-start;margin-top:18px;font-size:12px;color:var(--muted);}
+.check input{width:auto;margin-top:2px;}
+.err{background:#2a1212;border:1px solid var(--red);color:#ffb0b0;border-radius:6px;padding:10px 12px;font-size:12px;margin-top:14px;display:none;}
+footer{margin-top:34px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);padding-top:14px;}
+html[dir="rtl"] label{letter-spacing:0;}
+html[dir="rtl"] ol.steps li{letter-spacing:0;}
+html[dir="rtl"] .back{margin-inline-start:auto;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="brand">TEOS DEALMAKER</span>
+    <button id="lang-switch" type="button" role="button" aria-label="Switch language">العربية</button>
+    <a class="back" href="/" data-i18n="back">← Back to the landing page</a>
+  </header>
+  <h1 data-i18n="title">Start a Real Mission</h1>
+  <p class="sub" data-i18n="sub">Mission-First: complete one real business mission, then decide whether to continue. No software to buy up front.</p>
+  <ol class="steps">
+    <li data-i18n="step1">One mission</li>
+    <li data-i18n="step2">One AI Revenue Team</li>
+    <li data-i18n="step3">One report</li>
+  </ol>
+  <form id="intake-form" novalidate>
+    <label for="mission" data-i18n="lbl_mission">What is the mission / business objective? *</label>
+    <textarea id="mission" name="mission" required maxlength="5000" data-i18n-ph="ph_mission" placeholder="Describe the whole mission in a few lines — e.g. Launch our new product line in the GCC market and generate 20 qualified meetings this quarter."></textarea>
+    <div class="hint" data-i18n="hint_mission">One goal, one AI Revenue Team, one report.</div>
+    <label for="business" data-i18n="lbl_business">Tell us about your business</label>
+    <textarea id="business" name="business" maxlength="5000" data-i18n-ph="ph_business" placeholder="Product or service, industry, what you sell, and who buys it — a few lines is enough (optional)."></textarea>
+    <label for="objective" data-i18n="lbl_objective">What does success look like?</label>
+    <textarea id="objective" name="objective" maxlength="5000" data-i18n-ph="ph_objective" placeholder="e.g. 5 qualified conversations with enterprise prospects this month. If blank, we use your business description."></textarea>
+    <label for="outcome" data-i18n="lbl_outcome">Desired outcome / deliverable</label>
+    <input id="outcome" name="outcome" maxlength="1000" data-i18n-ph="ph_outcome" placeholder="e.g. a qualified prospect list with outreach scripts">
+    <label for="target_customer" data-i18n="lbl_target_customer">Who is the target customer?</label>
+    <input id="target_customer" name="target_customer" maxlength="1000" data-i18n-ph="ph_target_customer" placeholder="Company size, segment, geography — or 'unsure'">
+    <label for="market" data-i18n="lbl_market">Market / geography</label>
+    <input id="market" name="market" maxlength="1000">
+    <label for="budget" data-i18n="lbl_budget">Budget range (optional)</label>
+    <input id="budget" name="budget" maxlength="1000" data-i18n-ph="ph_budget" placeholder="e.g. $5K–$50K MRR targets, or product price range">
+    <label for="timeline" data-i18n="lbl_timeline">Timeline</label>
+    <input id="timeline" name="timeline" maxlength="1000" data-i18n-ph="ph_timeline" placeholder="e.g. within 30 days">
+    <label for="capabilities" data-i18n="lbl_capabilities">Anything the team can use — data, docs, links</label>
+    <textarea id="capabilities" name="capabilities" maxlength="5000" data-i18n-ph="ph_capabilities" placeholder="Links to your website, product docs, previous outreach, a CRM export, a target list…"></textarea>
+    <label for="contact" data-i18n="lbl_contact">Contact (optional)</label>
+    <input id="contact" name="contact" maxlength="500" data-i18n-ph="ph_contact" placeholder="Email or Telegram handle — only if you want us to reply">
+    <div class="check">
+      <input type="checkbox" id="consent" required>
+      <label for="consent" style="margin:0;text-transform:none;letter-spacing:0;font-size:12px;" data-i18n="consent">I understand this brief starts a real revenue mission handled by a governed AI team, and that I am not buying software yet — I decide to continue after the mission.</label>
+    </div>
+    <div class="err" id="form-err"></div>
+    <div id="draft-note" class="okbox" style="display:none;" data-i18n="draftNote">Draft saved. You can continue later on this browser.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <button type="submit" data-i18n="submit">Submit Mission</button>
+      <button type="button" id="save-draft" class="ghost" data-i18n="saveDraft">Save &amp; continue later</button>
+    </div>
+  </form>
+  <footer data-i18n="foot">TEOS DealMaker · Elmahrosa International · <a href="mailto:info@elmahrosa.org">info@elmahrosa.org</a></footer>
+</div>
+<script>
+(function () {
+  var I18N = {
+    en: {
+      title: 'Start a Real Mission',
+      sub: 'Mission-First: complete one real business mission, then decide whether to continue. No software to buy up front.',
+      step1: 'One mission', step2: 'One AI Revenue Team', step3: 'One report',
+      lbl_mission: 'What is the mission / business objective? *', ph_mission: 'Describe the whole mission in a few lines — e.g. Launch our new product line in the GCC market and generate 20 qualified meetings this quarter.', hint_mission: 'One goal, one AI Revenue Team, one report.',
+      lbl_business: 'Tell us about your business', ph_business: 'Product or service, industry, what you sell, and who buys it — a few lines is enough (optional).',
+      lbl_objective: 'What does success look like?', ph_objective: 'e.g. 5 qualified conversations with enterprise prospects this month. If blank, we use your business description.',
+      lbl_outcome: 'Desired outcome / deliverable', ph_outcome: 'e.g. a qualified prospect list with outreach scripts',
+      lbl_target_customer: 'Who is the target customer?', ph_target_customer: "Company size, segment, geography — or 'unsure'",
+      lbl_market: 'Market / geography',
+      lbl_budget: 'Budget range (optional)', ph_budget: 'e.g. $5K–$50K MRR targets, or product price range',
+      lbl_timeline: 'Timeline', ph_timeline: 'e.g. within 30 days',
+      lbl_capabilities: 'Anything the team can use — data, docs, links', ph_capabilities: 'Links to your website, product docs, previous outreach, a CRM export, a target list…',
+      lbl_contact: 'Contact (optional)', ph_contact: 'Email or Telegram handle — only if you want us to reply',
+      consent: 'I understand this brief starts a real revenue mission handled by a governed AI team, and that I am not buying software yet — I decide to continue after the mission.',
+      submit: 'Submit Mission', saveDraft: 'Save & continue later', draftNote: 'Draft saved. You can continue later on this browser.',
+      back: '← Back to the landing page', foot: 'TEOS DealMaker · Elmahrosa International',
+      sw_ar: 'العربية'
+    },
+    ar: {
+      title: 'ابدأ مهمة حقيقية',
+      sub: 'المهمة أولاً: أكمل مهمة عمل حقيقية واحدة، ثم قرر ما إذا كنت تريد الاستمرار. لا حاجة لشراء برامج مسبقاً.',
+      step1: 'مهمة واحدة', step2: 'فريق ذكاء اصطناعي واحد للإيرادات', step3: 'تقرير واحد',
+      lbl_mission: 'ما هي المهمة / الهدف التجاري؟ *', ph_mission: 'صف المهمة كلها في بضعة أسطر — مثال: إطلاق خط منتجاتنا الجديد في السوق الخليجي وتحقيق 20 اجتماعاً مؤهلاً هذا الربع.', hint_mission: 'هدف واحد، فريق إيرادات واحد، تقرير واحد.',
+      lbl_business: 'أخبرنا عن أعمالك', ph_business: 'المنتج أو الخدمة، القطاع، ماذا تبيع، ومن يشتري — بضعة أسطر تكفي (اختياري).',
+      lbl_objective: 'كيف يبدو النجاح؟', ph_objective: 'مثال: 5 محادثات مؤهلة مع عملاء محتملين هذا الشهر. إذا تُرك فارغاً، نستخدم وصف أعمالك.',
+      lbl_outcome: 'النتيجة / المخرجات المطلوبة', ph_outcome: 'مثال: قائمة عملاء محتملين مؤهلين مع نصوص تواصل',
+      lbl_target_customer: 'من هو العميل المستهدف؟', ph_target_customer: "حجم الشركة، القطاع، الجغرافيا — أو «غير متأكد»",
+      lbl_market: 'السوق / الجغرافيا',
+      lbl_budget: 'نطاق الميزانية (اختياري)', ph_budget: 'مثال: أهداف إيرادات شهرية من 5K إلى 50K دولار، أو نطاق سعر المنتج',
+      lbl_timeline: 'الجدول الزمني', ph_timeline: 'مثال: خلال 30 يوماً',
+      lbl_capabilities: 'أي شيء يمكن للفريق استخدامه — بيانات، مستندات، روابط', ph_capabilities: 'روابط لموقعك، وثائق المنتج، تواصل سابق، تصدير CRM، قائمة أهداف…',
+      lbl_contact: 'وسيلة تواصل (اختياري)', ph_contact: 'بريد إلكتروني أو معرف تيليجرام — فقط إذا أردت أن نرد عليك',
+      consent: 'أتفهم أن هذا الموجز يبدأ مهمة إيرادات حقيقية يديرها فريق ذكاء اصطناعي مُحكَم، وأنني لست أشتري برنامجاً بعد — أنا من يقرر الاستمرار بعد المهمة.',
+      submit: 'أرسل المهمة', saveDraft: 'احفظ وأكمل لاحقاً', draftNote: 'تم حفظ المسودة. يمكنك الاستكمال لاحقاً على هذا المتصفح.',
+      back: '← العودة إلى الصفحة الرئيسية', foot: 'صانع الصفقات تيوس · إلمحروسة الدولية',
+      sw_en: 'English'
+    }
+  };
+
+  var DRAFT_KEY = 'teos_mission_draft';
+  var DRAFT_FIELDS = ['mission', 'business', 'objective', 'outcome', 'target_customer', 'market', 'budget', 'timeline', 'capabilities', 'contact'];
+
+  var lang = 'en';
+
+  function t(key) {
+    return (I18N[lang] && I18N[lang][key] !== undefined) ? I18N[lang][key] : (I18N.en[key] !== undefined ? I18N.en[key] : key);
+  }
+
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.title = t('title') + ' · TEOS DealMaker';
+    var sw = document.getElementById('lang-switch');
+    if (sw) sw.textContent = lang === 'en' ? t('sw_ar') : t('sw_en');
+    var els = document.querySelectorAll('[data-i18n]');
+    for (var i = 0; i < els.length; i++) {
+      var key = els[i].getAttribute('data-i18n');
+      if (I18N.en[key] !== undefined) els[i].textContent = t(key);
+    }
+    var phs = document.querySelectorAll('[data-i18n-ph]');
+    for (var j = 0; j < phs.length; j++) {
+      var pk = phs[j].getAttribute('data-i18n-ph');
+      if (I18N.en[pk] !== undefined) phs[j].setAttribute('placeholder', t(pk));
+    }
+  }
+
+  var sw = document.getElementById('lang-switch');
+  if (sw) {
+    sw.addEventListener('click', function () {
+      lang = lang === 'en' ? 'ar' : 'en';
+      applyLang();
+    });
+  }
+
+  var form = document.getElementById('intake-form');
+  var err = document.getElementById('form-err');
+  var draftNote = document.getElementById('draft-note');
+
+  function collectForm() {
+    var data = {};
+    DRAFT_FIELDS.forEach(function (k) {
+      var el = form.elements[k];
+      if (el) data[k] = el.value;
+    });
+    return data;
+  }
+
+  var saveBtn = document.getElementById('save-draft');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      var data = collectForm();
+      var filled = DRAFT_FIELDS.filter(function (k) { return data[k] && data[k].trim(); });
+      if (!filled.length) return;
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+        if (draftNote) { draftNote.style.display = 'block'; setTimeout(function () { draftNote.style.display = 'none'; }, 4000); }
+      } catch (_) { /* storage unavailable */ }
+    });
+  }
+
+  try {
+    var draft = localStorage.getItem(DRAFT_KEY);
+    if (draft) {
+      var saved = JSON.parse(draft) || {};
+      DRAFT_FIELDS.forEach(function (k) {
+        var el = form.elements[k];
+        if (el && saved[k]) el.value = saved[k];
+      });
+    }
+  } catch (_) { /* ignore */ }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    err.style.display = 'none';
+    var data = collectForm();
+    fetch('/api/intake', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(function (r) {
+      return r.json().then(function (j) { return { ok: r.ok, j: j }; });
+    }).then(function (res) {
+      if (res.ok && res.j.ok) {
+        try { localStorage.removeItem(DRAFT_KEY); } catch (_) { /* ignore */ }
+        window.location.href = res.j.thanksUrl || ('/start/thanks?id=' + res.j.intakeId);
+      } else {
+        var fields = (res.j.fields || []).join(', ');
+        err.textContent = (lang === 'ar'
+          ? 'الرجاء استكمال الحقول المطلوبة'
+          : 'Please complete the required fields') + (fields ? ' (' + fields + ').' : '.');
+        err.style.display = 'block';
+      }
+    }).catch(function () {
+      err.textContent = lang === 'ar' ? 'تعذر الوصول إلى الخادم. حاول مرة أخرى.' : 'Could not reach the server. Please try again.';
+      err.style.display = 'block';
+    });
+  });
+
+  applyLang();
+})();
+</script>
+</body>
+</html>

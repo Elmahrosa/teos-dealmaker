@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TEOS DealMaker — Governance Console</title>
+<title>TEOS DealMaker — Operations Console</title>
 <script>window.__PRICING__ = [{"tier":"🚀 Solo","tagline":"For founders and solo teams","custom":false,"features":["1 workspace","Mission Controller with a 13-agent AI workforce","Core agent capabilities","Community support"],"monthly":{"price":"$99.00","url":"https://dodo.pe/teos-dealmaker-solo-monthly-13644952"},"annual":{"price":"$950.00","url":"https://dodo.pe/teos-dealmaker-solo-annual-13644952"}},{"tier":"⚡ Growth","tagline":"For growing revenue teams","custom":false,"features":["10 seats","Civic Mixer free plugin","Enterprise Knowledge Intelligence","Email support"],"monthly":{"price":"$299.00","url":"https://dodo.pe/teos-dealmaker-growth-monthly-13644952"},"annual":{"price":"$2,990.00","url":"https://dodo.pe/teos-dealmaker-growth-annual-13644952"}},{"tier":"👑 Business","tagline":"For revenue organizations","custom":false,"features":["25 seats","Third-party plugin installs","All platform add-ons","Priority support"],"monthly":{"price":"$999.00","url":"https://dodo.pe/teos-dealmaker-business-monthly-13644952"},"annual":{"price":"$9,990.00","url":"https://dodo.pe/teos-dealmaker-business-annual-13644952"}},{"tier":"🏛️ Enterprise","tagline":"For large and sovereign organizations","custom":true,"features":["Unlimited workspaces","Unlimited missions","Custom deployment options","Policy governance at scale","Direct access to the founding team"],"monthly":{"price":"Custom","url":""},"annual":{"price":"Custom","url":""}}];</script>
 <style>
   :root {
@@ -40,33 +40,34 @@
   }
   .stat .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
   .stat .value { font-size: 22px; margin-top: 4px; }
-  table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-  th, td { text-align: left; padding: 8px 12px; font-size: 12px; border-bottom: 1px solid var(--border); }
-  th { color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-size: 11px; }
-  td.mono { font-family: Consolas, monospace; font-size: 11px; color: var(--blue); }
-  .status-success { color: var(--green); }
-  .status-error, .status-blocked, .status-denied { color: var(--red); }
-  .status-in_progress, .status-dry_run { color: var(--gold); }
-  #empty { color: var(--muted); padding: 20px; text-align: center; }
-  footer { margin-top: 20px; color: var(--muted); font-size: 11px; }
-  #lang-switch { margin-inline-start: auto; color: var(--gold); background: none; border: 1px solid var(--border); padding: 2px 12px; border-radius: 12px; cursor: pointer; font-family: inherit; font-size: 12px; letter-spacing: 1px; }
-  #lang-switch:hover { color: #0b0f14; background: var(--gold); border-color: var(--gold); }
   #ops-strip { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
   .pill { display: inline-flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 6px 16px; font-size: 13px; font-weight: 700; letter-spacing: 1px; }
   .pill.ok { color: var(--green); border-color: var(--green); }
   .pill.warn { color: var(--gold); border-color: var(--gold); }
   .pill.err { color: var(--red); border-color: var(--red); }
   .pill.off { color: var(--muted); border-color: var(--border); }
-  html[dir="rtl"] th, html[dir="rtl"] td { text-align: right; }
+  .audit-note {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  footer { margin-top: 20px; color: var(--muted); font-size: 11px; }
+  #lang-switch { margin-inline-start: auto; color: var(--gold); background: none; border: 1px solid var(--border); padding: 2px 12px; border-radius: 12px; cursor: pointer; font-family: inherit; font-size: 12px; letter-spacing: 1px; }
+  #lang-switch:hover { color: #0b0f14; background: var(--gold); border-color: var(--gold); }
   html[dir="rtl"] h1, html[dir="rtl"] h2 { letter-spacing: 0; }
 </style>
 </head>
 <body>
   <header>
-    <h1 data-i18n="header">🏛️ TEOS DEALMAKER — GOVERNANCE CONSOLE</h1>
-    <span class="sub" data-i18n="sub">TEOS DealMaker · Enterprise AI Governance Console</span>
+    <h1 data-i18n="header">🏛️ TEOS DEALMAKER</h1>
+    <span class="sub" data-i18n="sub">Operations Console · Enterprise AI Revenue Operating System</span>
     <span id="mode" class="dry">…</span>
-    <a href="/customer-0" style="color:var(--blue);text-decoration:none;font-size:13px;">Customer #0 →</a>
+    <a href="/customer-0" style="color:var(--blue);text-decoration:none;font-size:13px;margin-inline-start:auto;">Customer #0 →</a>
     <button id="lang-switch" type="button" role="button" aria-label="Switch language">العربية</button>
   </header>
 
@@ -79,7 +80,15 @@
     <div class="stat"><div class="label" data-i18n="mode">Mode</div><div class="value" id="stat-mode">—</div></div>
     <div class="stat"><div class="label" data-i18n="auditEntries">Audit Entries</div><div class="value" id="stat-total">—</div></div>
     <div class="stat"><div class="label" data-i18n="lastUpdate">Last Update</div><div class="value" id="stat-time" style="font-size:14px;">—</div></div>
+    <div class="stat"><div class="label" data-i18n="contactChannel">Contact Channel</div><div class="value" id="stat-contact">—</div></div>
   </div>
+
+  <section id="pricing">
+    <h2 style="color:var(--gold);font-size:16px;letter-spacing:1px;margin-bottom:12px;" data-i18n="pricing">💳 PRICING</h2>
+    <div id="pricing-cards" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
+      <div data-i18n="loadingPricing" style="color:var(--muted);padding:12px;">Loading pricing…</div>
+    </div>
+  </section>
 
   <section id="outreach" style="margin-bottom:24px;">
     <h2 style="color:var(--gold);font-size:16px;letter-spacing:1px;margin-bottom:12px;" data-i18n="outreachHeader">📧 OUTBOUND OPS</h2>
@@ -91,74 +100,48 @@
     </div>
   </section>
 
-  <section id="pricing">
-    <h2 style="color:var(--gold);font-size:16px;letter-spacing:1px;margin-bottom:12px;" data-i18n="pricing">💳 PRICING</h2>
-    <div id="pricing-cards" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
-      <div data-i18n="loadingPricing" style="color:var(--muted);padding:12px;">Loading pricing…</div>
-    </div>
+  <section id="audit-note">
+    <div class="audit-note" data-i18n="auditNote">The audit trail is founder-only and served over the protected audit API. Customers are never asked for an admin key.</div>
   </section>
-
-  <table>
-    <thead>
-      <tr>
-        <th data-i18n="colTime">Timestamp</th>
-        <th data-i18n="colAction">Action</th>
-        <th data-i18n="colTarget">Target</th>
-        <th data-i18n="colStatus">Status</th>
-        <th data-i18n="colDetails">Details</th>
-      </tr>
-    </thead>
-    <tbody id="rows">
-      <tr><td data-i18n="loadingAudit" id="empty" colspan="5">Loading audit trail…</td></tr>
-    </tbody>
-  </table>
 
   <footer data-i18n="footer">Fail-closed governance · every capability decision is policy-evaluated and written to the audit vault</footer>
 
 <script>
   var I18N = {
     en: {
-      header: '🏛️ TEOS DEALMAKER — GOVERNANCE CONSOLE',
-      sub: 'TEOS DealMaker · Enterprise AI Governance Console',
+      header: '🏛️ TEOS DEALMAKER',
+      sub: 'Operations Console · Enterprise AI Revenue Operating System',
       mode: 'Mode', auditEntries: 'Audit Entries', lastUpdate: 'Last Update',
+      contactChannel: 'Contact Channel', contactNone: 'Not yet established', contactEmail: 'Email', contactTelegram: 'Telegram', contactNoIntakes: 'No intakes yet', contactUnavailable: 'Unavailable',
       pricing: '💳 PRICING',
       loadingPricing: 'Loading pricing…', pricingUnavailable: 'Pricing unavailable.',
-      colTime: 'Timestamp', colAction: 'Action', colTarget: 'Target', colStatus: 'Status', colDetails: 'Details',
-      loadingAudit: 'Loading audit trail…', noAudit: 'No audit entries yet.',
+      outreachHeader: '📧 OUTBOUND OPS', workerState: 'Worker', outboundEmail: 'Outbound Email', queue: 'Queue', lastSent: 'Last Successful Send',
+      auditNote: 'The audit trail is founder-only and served over the protected audit API. Customers are never asked for an admin key.',
       footer: 'Fail-closed governance · every capability decision is policy-evaluated and written to the audit vault',
       monthly: 'Monthly', annual: 'Annual', checkout: 'checkout',
       offline: 'offline', staticPreview: 'OFFLINE',
       offlineMsg: 'Unable to reach DealMaker API.',
-      auditKeyRequired: 'Founder authentication required — enter the admin key (AUDIT_API_KEY).',
-      accessDenied: 'Access denied — you are not authorized to view the audit trail.',
-      auditUnavailable: 'Audit trail temporarily unavailable — check the backend.',
       stripServiceRunning: '🟢 SERVICE RUNNING', stripServiceOffline: '🔴 SERVICE OFFLINE',
       stripOutboundRunning: '🟢 OUTBOUND RUNNING', stripOutboundPaused: '🟡 OUTBOUND PAUSED',
       stripOutboundStopped: '🔴 OUTBOUND EMERGENCY STOPPED', stripOutboundUnknown: '⚪ OUTBOUND UNKNOWN',
-      outreachHeader: '📧 OUTBOUND OPS', workerState: 'Worker', outboundEmail: 'Outbound Email', queue: 'Queue', lastSent: 'Last Successful Send',
-      oNeedKey: 'Enter the admin API key (AUDIT_API_KEY):',
       sw_ar: 'العربية', sw_en: 'English'
     },
     ar: {
-      header: '🏛️ صانع الصفقات تيوس — لوحة الحوكمة',
-      sub: 'صانع الصفقات تيوس · لوحة تحكم الحوكمة المؤسسية للذكاء الاصطناعي',
+      header: '🏛️ تيوس صانع الصفقات',
+      sub: 'لوحة تحكم العمليات · نظام تشغيل إيرادات المؤسسات بالذكاء الاصطناعي',
       mode: 'الوضع', auditEntries: 'سجلات التدقيق', lastUpdate: 'آخر تحديث',
+      contactChannel: 'قناة التواصل', contactNone: 'لم تُحدد بعد', contactEmail: 'بريد إلكتروني', contactTelegram: 'تيليجرام', contactNoIntakes: 'لا توجد طلبات بعد', contactUnavailable: 'غير متاح',
       pricing: '💳 الأسعار',
       loadingPricing: 'جارٍ تحميل الأسعار…', pricingUnavailable: 'الأسعار غير متاحة.',
-      colTime: 'الوقت', colAction: 'الإجراء', colTarget: 'الهدف', colStatus: 'الحالة', colDetails: 'التفاصيل',
-      loadingAudit: 'جارٍ تحميل سجل التدقيق…', noAudit: 'لا توجد سجلات تدقيق بعد.',
+      outreachHeader: '📧 تشغيل المراسلات الصادرة', workerState: 'العامل', outboundEmail: 'البريد الصادر', queue: 'الطابور', lastSent: 'آخر إرسال ناجح',
+      auditNote: 'سجل التدقيق مخصص للمؤسس فقط ويُقدَّم عبر واجهة التدقيق المحمية. لا يُطلب من العملاء أي مفتاح إدارة.',
       footer: 'حوكمة تغلق عند الخطأ · كل قرار قدرة يُقيَّم حسب السياسات ويُسجَّل في خزنة التدقيق',
       monthly: 'شهرياً', annual: 'سنوياً', checkout: 'شراء',
       offline: 'غير متصل', staticPreview: 'غير متصل',
       offlineMsg: 'تعذر الوصول إلى واجهة DealMaker API.',
-      auditKeyRequired: 'مطلوب مصادقة المؤسس — أدخل مفتاح الإدارة (AUDIT_API_KEY).',
-      accessDenied: 'تم رفض الوصول — لست مخولاً لعرض سجل التدقيق.',
-      auditUnavailable: 'سجل التدقيق غير متاح مؤقتاً — تحقق من الخادم.',
       stripServiceRunning: '🟢 الخدمة قيد التشغيل', stripServiceOffline: '🔴 الخدمة غير متصلة',
       stripOutboundRunning: '🟢 المراسلات الصادرة تعمل', stripOutboundPaused: '🟡 المراسلات الصادرة متوقفة مؤقتاً',
       stripOutboundStopped: '🔴 إيقاف طارئ للمراسلات الصادرة', stripOutboundUnknown: '⚪ حالة المراسلات الصادرة غير معروفة',
-      outreachHeader: '📧 تشغيل المراسلات الصادرة', workerState: 'العامل', outboundEmail: 'البريد الصادر', queue: 'الطابور', lastSent: 'آخر إرسال ناجح',
-      oNeedKey: 'أدخل مفتاح واجهة الإدارة (AUDIT_API_KEY):',
       sw_ar: 'العربية', sw_en: 'English'
     }
   };
@@ -167,15 +150,13 @@
     '🚀 Solo': { features: ['مساحة عمل واحدة', 'وحدة تحكم المهام مع قوة عاملة من 13 وكيل ذكاء اصطناعي', 'إمكانات الوكلاء الأساسية', 'دعم المجتمع'] },
     '⚡ Growth': { features: ['10 مقاعد', 'إضافة Civic Mixer المجانية', 'ذكاء المعرفة المؤسسية', 'دعم عبر البريد الإلكتروني'] },
     '👑 Business': { features: ['25 مقعداً', 'تثبيت إضافات الطرف الثالث', 'جميع إضافات المنصة', 'دعم ذو أولوية'] },
-    '🏛️ Enterprise': { features: ['مساحات عمل غير محدودة', 'مهام غير محدودة', 'نشر خاص', 'حوكمة السياسات على نطاق واسع', 'مهندس نجاح مخصص'] }
+    '🏛️ Enterprise': { features: ['مساحات عمل غير محدودة', 'مهام غير محدودة', 'خيارات نشر مخصصة', 'حوكمة السياسات على نطاق واسع', 'وصول مباشر للفريق المؤسس'] }
   };
 
   var MODE_AR = { production: 'إنتاج', live: 'مباشر', dry: 'تجريبي', dry_run: 'تشغيل تجريبي', offline: 'غير متصل' };
-  var STATUS_AR = { success: 'ناجح', blocked: 'محظور', denied: 'مرفوض', failed: 'فشل', error: 'خطأ', in_progress: 'قيد التنفيذ', dry_run: 'تشغيل تجريبي', sent: 'مُرسَل', won: 'مكتمل', allow: 'سماح' };
 
   var lang = 'en';
   var currentTiers = [];
-  var currentAudit = [];
   var offline = false;
 
   function detectLang() {
@@ -197,17 +178,6 @@
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
-  }
-
-  function statusClass(s) {
-    if (/error|blocked|denied|failed/i.test(s)) return 'status-error';
-    if (/in_progress|dry_run/i.test(s)) return 'status-in_progress';
-    if (/success|sent|won/i.test(s)) return 'status-success';
-    return '';
-  }
-
-  function localStatus(s) {
-    return lang === 'ar' ? (STATUS_AR[s] || s) : s;
   }
 
   function localMode(s) {
@@ -254,58 +224,6 @@
         '<div class="label">' + esc(tier.tier) + '</div>' + monthly + annual +
         '<ul style="list-style:none;margin-top:8px;color:var(--muted);font-size:11px;">' + lis + '</ul></div>';
     }).join('');
-  }
-
-  function renderRows(audit) {
-    currentAudit = audit;
-    var rows = document.getElementById('rows');
-    if (audit === 'NETWORK') {
-      rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('offlineMsg')) + '</td></tr>';
-      return;
-    }
-    if (audit === 'ACCESS_DENIED') {
-      rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('accessDenied')) + '</td></tr>';
-      return;
-    }
-    if (offline) {
-      rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('offlineMsg')) + '</td></tr>';
-      return;
-    }
-    if (audit === 'AUTH_REQUIRED') {
-      rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('auditKeyRequired')) + '</td></tr>';
-      return;
-    }
-    if (audit === 'UNAVAILABLE') {
-      rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('auditUnavailable')) + '</td></tr>';
-      return;
-    }
-    if (!audit.length) {
-      rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('noAudit')) + '</td></tr>';
-      return;
-    }
-    rows.innerHTML = audit.map(function (e) {
-      var ts = (e.timestamp || '').replace('T', ' ').slice(0, 19);
-      var details = e.details ? JSON.stringify(e.details) : '';
-      return '<tr>' +
-        '<td class="mono">' + esc(ts) + '</td>' +
-        '<td>' + esc(e.action) + '</td>' +
-        '<td>' + esc(e.target) + '</td>' +
-        '<td class="' + statusClass(e.status) + '">' + esc(localStatus(e.status)) + '</td>' +
-        '<td class="mono">' + esc(details.length > 120 ? details.slice(0, 120) + '…' : details) + '</td></tr>';
-    }).join('');
-  }
-
-  async function loadPricing() {
-    try {
-      var res = await fetch('/api/pricing');
-      if (!res.ok) throw new Error('pricing unavailable');
-      var data = await res.json();
-      renderPricing(Array.isArray(data) ? data : (data.tiers || []));
-    } catch (_) {
-      var fallback = window.__PRICING__ || [];
-      if (fallback.length) renderPricing(fallback);
-      else renderPricing([]);
-    }
   }
 
   // Public health status only: no secrets, no message bodies, no admin key.
@@ -365,17 +283,6 @@
     }
   }
 
-  // Admin key stays in memory only (never persisted, never embedded in the
-  // page). It is used exclusively for the protected audit trail.
-  var adminKeyValue = '';
-
-  function getAdminKey() {
-    if (adminKeyValue) return adminKeyValue;
-    var k = window.prompt(t('oNeedKey'), '');
-    if (k) adminKeyValue = k;
-    return k;
-  }
-
   function fetchJson(path, opts) {
     return fetch(path, opts).then(function (r) {
       return { ok: r.ok, status: r.status, body: r.json().catch(function () { return null; }) };
@@ -384,26 +291,21 @@
     });
   }
 
-  async function loadAudit() {
-    var res = await fetchJson('/api/audit?limit=100', {
-      headers: adminKeyValue ? { 'x-api-key': adminKeyValue } : {}
-    });
-    if (res.ok) return res.body || [];
-    if (res.status === 401) {
-      var key = getAdminKey();
-      if (!key) return 'AUTH_REQUIRED';
-      var retry = await fetchJson('/api/audit?limit=100', { headers: { 'x-api-key': key } });
-      if (retry.ok) return retry.body || [];
-      if (retry.status === 403) return 'ACCESS_DENIED';
-      if (retry.status === 401) return 'AUTH_REQUIRED';
-      if (retry.status === 0) return 'NETWORK';
-      return 'UNAVAILABLE';
+  async function loadPricing() {
+    try {
+      var res = await fetch('/api/pricing');
+      if (!res.ok) throw new Error('pricing unavailable');
+      var data = await res.json();
+      renderPricing(Array.isArray(data) ? data : (data.tiers || []));
+    } catch (_) {
+      var fallback = window.__PRICING__ || [];
+      if (fallback.length) renderPricing(fallback);
+      else renderPricing([]);
     }
-    if (res.status === 403) return 'ACCESS_DENIED';
-    if (res.status === 0) return 'NETWORK';
-    return 'UNAVAILABLE';
   }
 
+  // Connectivity is judged by the PUBLIC /api/health endpoint only. The audit
+  // trail is auth-gated and never fetched from this customer-facing page.
   async function refresh() {
     var healthRes = await fetchJson('/api/health');
 
@@ -415,7 +317,6 @@
       var modeEl = document.getElementById('mode');
       modeEl.textContent = t('staticPreview');
       modeEl.className = 'dry';
-      renderRows(healthRes.status === 0 ? 'NETWORK' : 'UNAVAILABLE');
       updateStrip(false, null);
       renderOutreach(null);
       return;
@@ -432,18 +333,44 @@
     modeEl.textContent = publicMode(health.mode);
     modeEl.className = String(health.mode).toUpperCase() === 'LIVE' ? 'live' : 'dry';
 
-    renderRows(await loadAudit());
-
     var outRes = await fetchJson('/api/outreach/status');
     renderOutreach(outRes.ok ? outRes.body : null);
     updateStrip(true, outRes.ok ? outRes.body : null);
+
+    var contactRes = await fetchJson('/api/intakes/contact-channel');
+    renderContactChannel(contactRes.ok ? contactRes.body : null);
+  }
+
+  // Public sanitized contact channel row: shows only the channel type of the
+  // latest intake ('email' / 'telegram' / 'none'). The raw contact value is
+  // never fetched here — it stays inside the audit-gated consoles.
+  function renderContactChannel(h) {
+    var el = document.getElementById('stat-contact');
+    if (!el) return;
+    if (!h || !h.ok) {
+      el.textContent = t('contactUnavailable');
+      el.style.color = 'var(--muted)';
+      return;
+    }
+    var label = t('contactNone');
+    var color = 'var(--muted)';
+    if (!h.present) {
+      label = t('contactNoIntakes');
+    } else if (h.channel === 'email') {
+      label = t('contactEmail');
+      color = 'var(--green)';
+    } else if (h.channel === 'telegram') {
+      label = t('contactTelegram');
+      color = 'var(--green)';
+    }
+    el.textContent = label;
+    el.style.color = color;
   }
 
   function setLang(l) {
     lang = l;
     applyStatic();
     renderPricing(currentTiers);
-    renderRows(currentAudit);
     try { localStorage.setItem('teos_lang', l); } catch (_) { /* ignore */ }
   }
 

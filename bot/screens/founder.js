@@ -185,12 +185,14 @@ async function buildFounderRevenue(userId) {
   const closed = s.ctx ? s.ctx.deals.closed : 0;
   const open = s.ctx ? s.ctx.deals.open : 0;
   const total = s.ctx ? s.ctx.deals.total : 0;
+  const contactChannel = await latestIntakeContact();
   const text = design.compose([
     `📈 ${design.b(t('fd_revenue_title'))}`,
     design.divider(),
     design.row('Pipeline', String(total)),
     design.row(t('fd_open'), String(open)),
     design.row(t('fd_closed'), String(closed)),
+    design.row(t('fd_contact_channel'), contactChannel),
     design.divider()
   ]);
   return {
@@ -201,6 +203,22 @@ async function buildFounderRevenue(userId) {
       [design.textButton(t('fd_btn_back'), 'cc_home')]
     ])
   };
+}
+
+// Contact channel row for the founder Revenue panel: the latest mission
+// intake's contact (email/Telegram) or the canonical fallback string. This
+// is founder-only output — never surfaced on any public page.
+async function latestIntakeContact() {
+  try {
+    const adapter = getStoreAdapter();
+    const rows = await adapter.find('mission_intakes', {});
+    if (!rows || !rows.length) return '—';
+    const { CONTACT_FALLBACK } = require('../../services/missionIntake');
+    const latest = String(rows[rows.length - 1].contact || '');
+    return latest || CONTACT_FALLBACK;
+  } catch (_) {
+    return '—';
+  }
 }
 
 async function buildFounderDebug(userId) {
