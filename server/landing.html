@@ -58,7 +58,7 @@
   h1 { font-size: 20px; letter-spacing: 2px; color: var(--gold); }
   header nav a { color: var(--blue); text-decoration: none; margin-left: 16px; font-size: 14px; }
   header nav a:hover { color: var(--gold); }
-  .lang-switch { color: var(--gold); text-decoration: none; margin-left: 16px; font-size: 14px; background: none; border: 1px solid var(--border); padding: 2px 12px; border-radius: 12px; cursor: pointer; font-family: inherit; letter-spacing: 1px; }
+  .lang-switch { color: var(--gold); text-decoration: none; margin-left: 16px; font-size: 14px; background: none; border: 1px solid var(--border); padding: 2px 12px; border-radius: 12px; cursor: pointer; font-family: inherit; letter-spacing: 1px; -webkit-appearance: none; appearance: none; line-height: inherit; }
   .lang-switch:hover { color: #0b0f14; background: var(--gold); border-color: var(--gold); }
   .hero { text-align: center; padding: 48px 0 56px; }
   .hero .eyebrow { color: var(--muted); font-size: 13px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
@@ -179,7 +179,7 @@
       <a href="https://elmahrosa.org/trust" target="_blank" rel="noopener" data-i18n="nav_trust">Trust &amp; Security</a>
       <a href="/dashboard" data-i18n="nav_console">Console</a>
       <a href="/customer-0" data-i18n="nav_customer0">Customer #0</a>
-      <a href="#" class="lang-switch" id="lang-switch" role="button" aria-label="Switch language">العربية</a>
+      <button type="button" class="lang-switch" id="lang-switch" aria-label="Switch language">العربية</button>
     </nav>
   </header>
 
@@ -393,7 +393,7 @@
 
   <footer>
     <span data-i18n="footer_line1">TEOS DEALMAKER — Enterprise AI Revenue Operating System</span><br>
-    <span data-i18n="footer_contact">A product of Elmahrosa International · contact <a href="mailto:info@elmahrosa.com">info@elmahrosa.com</a> · <a href="/dashboard">system status</a> · <a href="/customer-0">Customer #0</a></span><br>
+    <span data-i18n="footer_contact">A product of Elmahrosa International · contact <a href="mailto:info@elmahrosa.org">info@elmahrosa.org</a> · <a href="/dashboard">system status</a> · <a href="/customer-0">Customer #0</a></span><br>
     <span data-i18n="footer_license">© 2026 Elmahrosa International — All rights reserved</span>
   </footer>
 </div>
@@ -460,7 +460,7 @@
       elmahrosa_view: 'View Sentinel →', elmahrosa_pricing: 'Pricing →',
       elmahrosa_cross_q: 'Need enterprise AI execution governance?', elmahrosa_cross_l: 'Explore TEOS Sentinel Shield →',
       footer_line1: 'TEOS DEALMAKER — Enterprise AI Revenue Operating System',
-      footer_contact: 'A product of Elmahrosa International · contact info@elmahrosa.com · system status',
+      footer_contact: 'A product of Elmahrosa International · contact info@elmahrosa.org · system status',
       footer_license: '© 2026 Elmahrosa International — All rights reserved',
       sw_en: 'English', sw_ar: 'العربية'
     },
@@ -523,7 +523,7 @@
       elmahrosa_view: 'عرض سنتينل ←', elmahrosa_pricing: 'الأسعار ←',
       elmahrosa_cross_q: 'تحتاج حوكمة تنفيذ مؤسسية للذكاء الاصطناعي؟', elmahrosa_cross_l: 'اكتشف درع سنتينل تيوس ←',
       footer_line1: 'صانع الصفقات تيوس — نظام تشغيل الإيرادات المؤسسي بالذكاء الاصطناعي',
-      footer_contact: 'منتج من المحروسة إنترناشيونال · تواصل عبر info@elmahrosa.com · حالة النظام',
+      footer_contact: 'منتج من المحروسة إنترناشيونال · تواصل عبر info@elmahrosa.org · حالة النظام',
       footer_license: '© 2026 المحروسة إنترناشيونال — جميع الحقوق محفوظة',
       sw_en: 'English', sw_ar: 'العربية'
     }

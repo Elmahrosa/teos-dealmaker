@@ -123,14 +123,12 @@ function words(lang) {
     ? {
       name: 'صانع الصفقات تيوس',
       tagline: 'نظام تشغيل الإيرادات المؤسسي بالذكاء الاصطناعي',
-      comingSoon: 'قريباً',
       plans: 'الأسعار',
       playground: 'التجربة'
     }
     : {
       name: 'TEOS DealMaker',
       tagline: 'Enterprise AI Revenue Operating System',
-      comingSoon: 'COMING SOON',
       plans: 'Plans',
       playground: 'Playground'
     };

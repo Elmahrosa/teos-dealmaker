@@ -23,7 +23,7 @@ function renderPlanRows(t) {
       <span class="cycle">Annual</span>
       <span class="amount">${t.annual.price}</span>
     </div>
-    <a class="buy" href="mailto:info@elmahrosa.com" data-period="custom">Contact Sales</a>`;
+    <a class="buy" href="mailto:info@elmahrosa.org" data-period="custom">Contact Sales</a>`;
   }
   const m = t.monthly;
   const a = t.annual;

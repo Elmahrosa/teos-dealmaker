@@ -156,7 +156,7 @@ const EN = {
   lang_ar: 'العربية',
 
   support_title: 'Support',
-  support_body: 'Contact: info@elmahrosa.com\nTelegram: @TeosEgypt_bot',
+  support_body: 'Contact: info@elmahrosa.org\nTelegram: @TeosEgypt_bot',
 
   cmd_title: 'Commands',
   cmd_general: 'General',
@@ -429,7 +429,7 @@ const AR = {
   lang_ar: 'العربية',
 
   support_title: 'الدعم',
-  support_body: 'التواصل: info@elmahrosa.com\nتيليجرام: @TeosEgypt_bot',
+  support_body: 'التواصل: info@elmahrosa.org\nتيليجرام: @TeosEgypt_bot',
 
   cmd_title: 'الأوامر',
   cmd_general: 'عام',

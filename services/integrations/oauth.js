@@ -1,7 +1,7 @@
 const { CONNECTORS } = require('./catalog');
 const { hash } = require('../providers');
 
-const REDIRECT_URI = process.env.OAUTH_REDIRECT_URI || 'https://app.teos.ai/integrations/callback';
+const REDIRECT_URI = process.env.OAUTH_REDIRECT_URI || 'https://dealmaker.elmahrosa.org/integrations/oauth/callback';
 
 function oauthProvider(connectorId) {
   const oauthBase = {

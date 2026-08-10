@@ -1,8 +1,8 @@
 # TEOS DealMaker — Final Production Verification Report
 
 - **Date:** 2026-08-10
-- **Release:** `4d1a120` (fix: await async adapter calls in outbound repos) on `origin/main`; prior `cccf9fb`, `57ce5c3`, `c77c659`
-- **Scope:** 24/7 governed worker + reporting + landing/bot consistency + production migration (applied) + PG-adapter fix + production verification
+- **Release:** `a27ead4` (fix: restore navigation and product boundaries) on `origin/main`; prior `4d1a120`, `cccf9fb`, `57ce5c3`, `c77c659`
+- **Scope:** 24/7 governed worker + reporting + landing/bot consistency + production migration (applied) + PG-adapter fix + navigation/product-boundary release + production verification
 - **Final state required and preserved:** PROCESS = RUNNING · GOVERNED = PAUSED · OUTBOUND = PAUSED · CUSTOMER_1 = NOT_ACQUIRED · REVENUE = NOT_CONFIRMED · **no email sent during QA**
 
 ---
@@ -24,7 +24,7 @@
 | LINT | **PASS** (eslint clean) |
 | BUILD | **PASS** (255 JS files pass `node --check`) |
 | DIFF_CHECK | **PASS** (`git diff --check` clean) |
-| DEPLOYED_SHA | **`4d1a120`** (verified live; report commit appended and re-verified after push) |
+| DEPLOYED_SHA | **`a27ead4`** (verified live; report commit appended and re-verified after push) |
 | REVENUE | **NOT_CONFIRMED** (no real payment has occurred) |
 | CUSTOMER_1 | **NOT_ACQUIRED** |
 
@@ -67,7 +67,7 @@
 
 - Sender: `info@elmahrosa.org` (`EMAIL_FROM` canonical; confirmed in config and live status payload).
 - Founder report destination: `teosegy@gmail.com` (`FOUNDER_REPORT_EMAIL` canonical; `FOUNDER_REPORT_TO` legacy fallback). `sendFounderOpsReport()` → only that address; sanitized aggregate, never secrets.
-- Wrong address `teosrgy@gmail.com`: **0 matches** repo-wide (source, deliverables, `data/`).
+- Wrong founder-report address (misspelled `teosrgy` variant): **0 matches** repo-wide (source, deliverables, `data/`).
 - `POST /webhook/resend` cannot process anything without the configured webhook secret (fail-closed, idempotent events stored only after verification).
 
 ## 5. Validation
@@ -83,3 +83,25 @@
 
 - No email was sent during verification; no payment or checkout was created; BI-Technologies was not contacted; no secret was exposed.
 - Observation (out of scope, flagged only): the Telegram bot on the deploy logged a `409 Conflict: terminated by other getUpdates request` polling error, indicating a second bot instance elsewhere; this does not affect the governed outbound email worker and was not touched.
+
+## 7. Navigation & product-boundary release (`a27ead4`) — verified
+
+Release `a27ead4` restores the DealMaker navigation and product boundaries on the public surface.
+
+| Invariant | Result |
+|---|---|
+| DealMaker standalone commercial product | CONFIRMED |
+| Civic Mixer = only active DealMaker plugin | CONFIRMED (registry = `civic-mixer` only; `integrations: []` advertised) |
+| Sentinel Shield NOT a DealMaker plugin / pricing / checkout | CONFIRMED (no add-on, no feature, no Dodo PID, no `#sentinel` section) |
+| Sentinel appears only as separate Elmahrosa product link | CONFIRMED (`https://sentinel.teosegypt.com` ×3, external, `target="_blank"`) |
+| "COMING SOON" claims | **0** (dead i18n keys removed; no cards render) |
+| "Sentinel governance at scale" claim | **0** |
+| "Sentinel Shield plugins" claim | **0** |
+| Wrong founder-report address (misspelled `teosrgy` variant) | **0** matches repo-wide |
+| Sender / founder destination | `info@elmahrosa.org` / `teosegy@gmail.com` (unchanged) |
+| Dashboard telemetry | real `/api/health` + `/api/outreach/status`; four distinct states — 401 = founder authentication required (`AUTH_REQUIRED`), 403 = access denied (`ACCESS_DENIED`), 5xx = service unavailable (`UNAVAILABLE`), network failure = "Unable to reach DealMaker API" (`NETWORK`); no false "backend offline" when auth is missing |
+| Navigation | every visible CTA resolves to a real route (`/`, `/dashboard`, `/reports`, `/customer-0`, `/report/:id`, external links); no dead anchors, no localhost/127.0.0.1, no obsolete URLs |
+| Outbound | PAUSED (worker running, governed PAUSED, `RESEND=UNAVAILABLE`, `enabled=false`, `sent_today=0`) |
+| Resend webhook | fail-closed: `POST /webhook/resend` → 503 `webhook_not_configured` |
+
+Live production verification after deploy: `/`, `/dashboard/`, `/reports`, `/health`, `/api/reports/latest`, `/api/outreach/status` all 200; `/api/audit`, `/api/outreach/queue`, `/api/deploy-verify` all 401 without credentials; landing HTML byte-identical to the local `a27ead4` render (only env-configured Dodo checkout URLs differ).

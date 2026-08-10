@@ -146,8 +146,9 @@
       footer: 'Fail-closed governance · every capability decision is policy-evaluated and written to the audit vault',
       monthly: 'Monthly', annual: 'Annual', checkout: 'checkout',
       offline: 'offline', staticPreview: 'OFFLINE',
-      offlineMsg: 'Backend unavailable — cannot reach the TEOS server.',
-      auditKeyRequired: 'Admin key required — enter the AUDIT_API_KEY to view the audit trail.',
+      offlineMsg: 'Unable to reach DealMaker API.',
+      auditKeyRequired: 'Founder authentication required — enter the admin key (AUDIT_API_KEY).',
+      accessDenied: 'Access denied — you are not authorized to view the audit trail.',
       auditUnavailable: 'Audit trail temporarily unavailable — check the backend.',
       sw_ar: 'العربية', sw_en: 'English'
     },
@@ -174,8 +175,9 @@
       footer: 'حوكمة تغلق عند الخطأ · كل قرار قدرة يُقيَّم حسب السياسات ويُسجَّل في خزنة التدقيق',
       monthly: 'شهرياً', annual: 'سنوياً', checkout: 'شراء',
       offline: 'غير متصل', staticPreview: 'غير متصل',
-      offlineMsg: 'الخادم غير متاح — تعذر الوصول إلى خادم TEOS.',
-      auditKeyRequired: 'مطلوب مفتاح الإدارة — أدخل AUDIT_API_KEY لعرض سجل التدقيق.',
+      offlineMsg: 'تعذر الوصول إلى واجهة DealMaker API.',
+      auditKeyRequired: 'مطلوب مصادقة المؤسس — أدخل مفتاح الإدارة (AUDIT_API_KEY).',
+      accessDenied: 'تم رفض الوصول — لست مخولاً لعرض سجل التدقيق.',
       auditUnavailable: 'سجل التدقيق غير متاح مؤقتاً — تحقق من الخادم.',
       sw_ar: 'العربية', sw_en: 'English'
     }
@@ -277,6 +279,14 @@
   function renderRows(audit) {
     currentAudit = audit;
     var rows = document.getElementById('rows');
+    if (audit === 'NETWORK') {
+      rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('offlineMsg')) + '</td></tr>';
+      return;
+    }
+    if (audit === 'ACCESS_DENIED') {
+      rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('accessDenied')) + '</td></tr>';
+      return;
+    }
     if (offline) {
       rows.innerHTML = '<tr><td id="empty" colspan="5">' + esc(t('offlineMsg')) + '</td></tr>';
       return;
@@ -429,6 +439,8 @@
   function fetchJson(path, opts) {
     return fetch(path, opts).then(function (r) {
       return { ok: r.ok, status: r.status, body: r.json().catch(function () { return null; }) };
+    }).catch(function () {
+      return { ok: false, status: 0, body: null };
     });
   }
 
@@ -437,19 +449,27 @@
       headers: adminKeyValue ? { 'x-api-key': adminKeyValue } : {}
     });
     if (res.ok) return res.body || [];
-    if (res.status === 401 || res.status === 503) {
+    if (res.status === 401) {
       var key = getAdminKey();
       if (!key) return 'AUTH_REQUIRED';
       var retry = await fetchJson('/api/audit?limit=100', { headers: { 'x-api-key': key } });
-      return retry.ok ? (retry.body || []) : 'AUTH_REQUIRED';
+      if (retry.ok) return retry.body || [];
+      if (retry.status === 403) return 'ACCESS_DENIED';
+      if (retry.status === 401) return 'AUTH_REQUIRED';
+      if (retry.status === 0) return 'NETWORK';
+      return 'UNAVAILABLE';
     }
+    if (res.status === 403) return 'ACCESS_DENIED';
+    if (res.status === 0) return 'NETWORK';
     return 'UNAVAILABLE';
   }
 
   // Connectivity is judged by the PUBLIC /api/health endpoint only. The audit
-  // trail is auth-gated (401/503 without the admin key) and must never mark the
-  // whole backend as offline. Outbound telemetry (/api/outreach/status) is
-  // public and rendered whenever the backend is reachable.
+  // trail is auth-gated (401 without the admin key; 403 access denied; 5xx
+  // service unavailable) and must never mark the whole backend as offline when
+  // the response is simply authentication-required. Outbound telemetry
+  // (/api/outreach/status) is public and rendered whenever the backend is
+  // reachable. A network failure surfaces as "Unable to reach DealMaker API".
   async function refresh() {
     var healthRes = await fetchJson('/api/health');
 
@@ -461,7 +481,7 @@
       var modeEl = document.getElementById('mode');
       modeEl.textContent = t('staticPreview');
       modeEl.className = 'dry';
-      renderRows([]);
+      renderRows(healthRes.status === 0 ? 'NETWORK' : 'UNAVAILABLE');
       updateStrip(false, null);
       renderOutreach(null);
       return;

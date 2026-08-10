@@ -83,7 +83,7 @@
 
 - `POST /api/outreach/pause` · `/resume` · `/emergency-stop` · `/founder-report` — all require `AUDIT_API_KEY`; `founder-report` → `503` when Resend not configured.
 - `GET /api/deploy-verify` (auth-gated): existence-only env booleans + `revenue_path` (`CONFIRMED`/`NOT_CONFIRMED`) + `outbound` (`CONFIGURED`/`BLOCKED`). Never returns secret values.
-- Ops dashboard (`/dashboard/`, `public/dashboard/index.html`) = **TEOS DealMaker — Operations Console**: SERVICE RUNNING / OUTBOUND PAUSED strip, founder controls, audit trail, live pricing (Enterprise "Custom deployment options (COMING SOON)" snapshot fixed).
+- Ops dashboard (`/dashboard/`, `public/dashboard/index.html`) = **TEOS DealMaker — Operations Console**: SERVICE RUNNING / OUTBOUND PAUSED strip, founder controls, audit trail, live pricing (Enterprise "Custom deployment options" snapshot corrected).
 
 ## SENTINEL_SEPARATION
 
