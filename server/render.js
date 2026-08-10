@@ -108,6 +108,23 @@ function renderElmahrosaProducts() {
   </section>`;
 }
 
+function renderIntegrations() {
+  const list = (PRODUCT.integrations || []);
+  if (!list.length) return '';
+  const cards = list.map(c => `
+    <div class="card integration-card">
+      <h3>${c.label}${c.free ? '<span class="badge" data-i18n="badge_free_installed">FREE · AVAILABLE</span>' : ''}</h3>
+      <p>${c.description}</p>
+      <span class="connector-note">${c.category} · ${c.auth === 'none' ? 'no key required' : 'key required'}</span>
+    </div>`).join('');
+  return `
+  <section id="integrations" class="integrations">
+    <h2 class="sect" data-i18n="sect_integrations">Integration Hub</h2>
+    <p class="sect-sub" data-i18n="sub_integrations">Every connector runs through the governed integration hub. Free connectors need no key.</p>
+    <div class="grid">${cards}</div>
+  </section>`;
+}
+
 function renderAddons() {
   return (PRICING.ADDONS || []).map(a => `
     <div class="card">
@@ -141,6 +158,7 @@ function renderLanding(template) {
     .replace('{{PRICING_CARDS}}', renderPricingCards())
     .replace('{{PLUGIN_CARDS}}', renderFreePlugins())
     .replace('{{ELMAHROSA_PRODUCTS}}', renderElmahrosaProducts())
+    .replace('{{INTEGRATIONS}}', renderIntegrations())
     .replace('{{ADDONS}}', renderAddons())
     .replace('{{ANALYTICS}}', analyticsSnippet())
     .replace(/\{\{SITE_URL\}\}/g, SITE_URL);
@@ -160,6 +178,69 @@ function renderDashboard(template) {
   }));
   return template.replace('{{PRICING_JSON}}', JSON.stringify(sanitized));
 }
+function renderStart() {
+  const steps = (PRODUCT.mission && PRODUCT.mission.steps) || [];
+  const stepList = steps.map(s => `<li><b>${s.n}</b> ${s.label}</li>`).join('\n      ');
+  const choices = MISSION_CHOICES.map(c => `<option value="${c}">${c}</option>`).join('');
+  return pageHead('Start a Mission · TEOS DealMaker') + `\n  <header>\n    <span class="brand">TEOS DEALMAKER</span>\n    <a class="back" href="/">← Back to the landing page</a>\n  </header>\n  <h1>Start a Real Mission</h1>\n  <p class="sub">Mission-First: complete one real business mission, then decide whether to continue. No software to buy up front.</p>\n  <ol class="steps">${stepList}</ol>\n  <form id="intake-form" novalidate>\n  <label for="mission">Your mission *</label>\n  <select id="mission" name="mission" required>\n    <option value="">Choose ONE mission to start</option>\n    ${choices}\n  </select>\n  <div class="hint">One goal, one AI Revenue Team, one report.</div>\n  <label for="business">Tell us about your business *</label>\n  <textarea id="business" name="business" required maxlength="5000" placeholder="Product or service, industry, what you sell, and who buys it — a few lines is enough."></textarea>\n  <label for="objective">What does success look like?</label>\n  <textarea id="objective" name="objective" maxlength="5000" placeholder="e.g. 5 qualified conversations with enterprise prospects this month. If blank, we use your business description."></textarea>\n  <label for="outcome">Desired outcome / deliverable</label>\n  <input id="outcome" name="outcome" maxlength="1000" placeholder="e.g. a qualified prospect list with outreach scripts">\n  <label for="target_customer">Who is the target customer?</label>\n  <input id="target_customer" name="target_customer" maxlength="1000" placeholder="Company size, segment, geography — or 'unsure'">\n  <label for="market">Market / geography</label>\n  <input id="market" name="market" maxlength="1000">\n  <label for="budget">Budget range (optional)</label>\n  <input id="budget" name="budget" maxlength="1000" placeholder="e.g. $5K–$50K MRR targets, or product price range">\n  <label for="timeline">Timeline</label>\n  <input id="timeline" name="timeline" maxlength="1000" placeholder="e.g. within 30 days">\n  <label for="capabilities">Anything the team can use — data, docs, links</label>\n  <textarea id="capabilities" name="capabilities" maxlength="5000" placeholder="Links to your website, product docs, previous outreach, a CRM export, a target list…"></textarea>\n  <label for="contact">Contact (optional)</label>\n  <input id="contact" name="contact" maxlength="500" placeholder="Email or Telegram handle — only if you want us to reply">\n  <div class="check">\n    <input type="checkbox" id="consent" required>\n    <label for="consent" style="margin:0;text-transform:none;letter-spacing:0;font-size:12px;">I understand this brief starts a real revenue mission handled by a governed AI team, and that I am not buying software yet — I decide to continue after the mission.</label>\n  </div>\n  <div class="err" id="form-err"></div>\n  <button type="submit">Start My Mission</button>\n  </form>\n  <script>\n  (function () {\n    var form = document.getElementById('intake-form');\n    var err = document.getElementById('form-err');\n    form.addEventListener('submit', function (e) {\n      e.preventDefault();\n      err.style.display = 'none';\n      var data = {};\n      ['mission', 'business', 'objective', 'outcome', 'target_customer', 'market', 'budget', 'timeline', 'capabilities', 'contact'].forEach(function (k) {\n        var el = form.elements[k];\n        if (el) data[k] = el.value;\n      });\n      fetch('/api/missions', {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify(data)\n      }).then(function (r) {\n        return r.json().then(function (j) { return { ok: r.ok, j: j }; });\n      }).then(function (res) {\n        if (res.ok && res.j.ok) {\n          window.location.href = res.j.thanksUrl || '/start/thanks?id=' + res.j.intakeId;\n        } else {\n          err.textContent = 'Please complete the required fields (' + (res.j.fields || []).join(', ') + ').';\n          err.style.display = 'block';\n        }\n      }).catch(function () {\n        err.textContent = 'Could not reach the server. Please try again.';\n        err.style.display = 'block';\n      });\n    });\n  })();\n  </script>\n` + pageFoot;
+}
+
+function renderStartThanks(intake) {
+  const i = intake || {};
+  return pageHead('Mission received · TEOS DealMaker') + `\n  <header>\n    <span class="brand">TEOS DEALMAKER</span>\n    <a class="back" href="/">← Back to the landing page</a>\n  </header>\n  <h1>Mission brief received</h1>\n  <div class="okbox"><b>✓ Received</b> — your brief is recorded as intake #${esc(i.id)} with status <span class="status">${esc(i.status)}</span>.</div>\n  <h2>Mission brief</h2>\n  <table>\n    <tbody>\n      <tr><th>Mission</th><td>${esc(i.title)}</td></tr>\n      <tr><th>Business</th><td>${esc(i.objective)}</td></tr>\n      ${i.outcome ? `<tr><th>Success</th><td>${esc(i.outcome)}</td></tr>` : ''}\n      ${i.contact ? '<tr><th>Contact</th><td>Provided — we can reply</td></tr>' : '<tr><th>Contact</th><td>None provided</td></tr>'}\n      <tr><th>Recorded</th><td>${esc(i.created_at)}</td></tr>\n    </tbody>\n  </table>\n  <h2>What happens next</h2>\n  <p class="muted">The founder reviews your brief and assigns your dedicated AI Revenue Team. You will receive the mission plan for approval — the mission only executes under policy governance, and you decide whether to continue after the first mission. While you wait, <a href="https://t.me/TeosEgypt_bot">open the Telegram app</a> or <a href="/#playground">run the demo</a>.</p>\n  <footer><span>TEOS DealMaker · Elmahrosa International · <a href="mailto:info@elmahrosa.org">info@elmahrosa.org</a></span></footer>\n` + pageFoot;
+}
+
+function renderIntakesAdmin(rows) {
+  const body = (rows || []).slice().reverse().map(i => `\n    <tr>\n      <td class="mono">#${esc(i.id)}</td>\n      <td>${esc(i.created_at)}</td>\n      <td>${esc(i.title)}</td>\n      <td>${esc((i.objective || '').slice(0, 90))}${(i.objective || '').length > 90 ? '…' : ''}</td>\n      <td>${esc(i.contact) || '—'}</td>\n      <td><span class="status">${esc(i.status)}</span></td>\n    </tr>`).join('');
+  return pageHead('Mission Intakes · TEOS DealMaker') + `\n  <header>\n    <span class="brand">TEOS DEALMAKER · INTAKES</span>\n    <a class="back" href="/">← Landing page</a>\n  </header>\n  <h1>Mission Intakes</h1>\n  <p class="sub">${rows.length} received. Contact is shown only here — this console is audit-gated.</p>\n  <table>\n    <thead><tr><th>ID</th><th>Received</th><th>Mission</th><th>Business</th><th>Contact</th><th>Status</th></tr></thead>\n    <tbody>${body || '<tr><td colspan="6" class="muted">No intakes yet.</td></tr>'}</tbody>\n  </table>\n  <footer><span>TEOS DealMaker · Elmahrosa International</span></footer>\n` + pageFoot;
+}
+
+const START_CSS = `:root{--bg:#0b0f14;--panel:#131a23;--border:#1f2a37;--text:#d7e1ea;--muted:#7c8a99;--gold:#d4af37;--green:#3fbf6f;--red:#e05656;--blue:#4aa3df;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;padding:28px 18px;line-height:1.5;}
+.wrap{max-width:720px;margin:0 auto;}
+a{color:var(--blue);text-decoration:none;}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:26px;}
+.brand{font-size:15px;letter-spacing:2px;color:var(--gold);font-weight:700;}
+.back{margin-inline-start:auto;font-size:12px;}
+h1{font-size:22px;letter-spacing:1px;color:var(--gold);}
+h2{font-size:14px;letter-spacing:1px;color:var(--gold);margin:22px 0 10px;}
+.sub{color:var(--muted);font-size:13px;margin-top:6px;}
+ol.steps{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0;list-style:none;padding:0;}
+ol.steps li{font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:14px;padding:4px 10px;}
+ol.steps li b{color:var(--gold);}
+label{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 6px;}
+input,select,textarea{width:100%;background:var(--panel);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:10px 12px;font-size:14px;font-family:inherit;}
+textarea{min-height:90px;}
+input:focus,textarea:focus{outline:none;border-color:var(--gold);}
+button{background:var(--gold);color:#0b0f14;border:0;border-radius:6px;font-weight:700;letter-spacing:1px;font-size:14px;padding:12px 22px;cursor:pointer;margin-top:20px;}
+button:hover{filter:brightness(1.1);}
+.hint{font-size:11px;color:var(--muted);margin-top:4px;}
+.check{display:flex;gap:8px;align-items:flex-start;margin-top:18px;font-size:12px;color:var(--muted);}
+.check input{width:auto;margin-top:2px;}
+.err{background:#2a1212;border:1px solid var(--red);color:#ffb0b0;border-radius:6px;padding:10px 12px;font-size:12px;margin-top:14px;display:none;}
+.okbox{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:6px;padding:14px 16px;margin:16px 0;}
+.okbox b{color:var(--green);}
+.muted{color:var(--muted);font-size:12px;}
+footer{margin-top:34px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);padding-top:14px;}
+table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+th,td{text-align:left;padding:8px 12px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:top;}
+th{color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-size:11px;}
+td.mono{font-family:Consolas,monospace;color:var(--blue);}
+.status{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;background:#241f10;color:var(--gold);}`;
+
+const pageHead = (title) => `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="robots" content="noindex, nofollow">\n<title>${title}</title>\n<style>${START_CSS}</style>\n</head>\n<body>\n<div class="wrap">`;
+
+const pageFoot = '</div>\n</body>\n</html>';
+
+const MISSION_CHOICES = [
+  'Win new customers in a target segment',
+  'Close a specific target deal',
+  'Rebuild my sales pipeline and process',
+  'Launch a new product or service line',
+  'Rescue a stalled or at-risk deal',
+  'Other mission'
+];
 
 const REPORT_CSS = `
 :root{--bg:#0b0f14;--panel:#131a23;--border:#1f2a37;--text:#d7e1ea;--muted:#7c8a99;--gold:#d4af37;--green:#3fbf6f;--red:#e05656;--blue:#4aa3df;}
@@ -342,7 +423,7 @@ function robotsTxt() {
 
 function sitemapXml() {
   const today = new Date().toISOString().slice(0, 10);
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>${SITE_URL}/</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>1.0</priority>\n  </url>\n</urlset>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>${SITE_URL}/</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>1.0</priority>\n  </url>\n  <url>\n    <loc>${SITE_URL}/start</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.9</priority>\n  </url>\n</urlset>\n`;
 }
 
 module.exports = {
@@ -355,6 +436,10 @@ module.exports = {
   analyticsSnippet,
   renderLanding,
   renderDashboard,
+  renderIntegrations,
+  renderStart,
+  renderStartThanks,
+  renderIntakesAdmin,
   renderMissionReport,
   renderCustomerZero,
   robotsTxt,

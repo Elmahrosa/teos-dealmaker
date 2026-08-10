@@ -82,6 +82,11 @@ const CONNECTORS = {
     baseUrl: 'https://{domain}',
     crawl: { method: 'GET', path: '/', auth: 'none', mode: 'crawl' }
   },
+  github: {
+    id: 'github', category: 'website', label: 'GitHub', auth: 'none', keyEnv: null,
+    baseUrl: 'https://api.github.com',
+    crawl: { method: 'GET', path: '/readme', auth: 'none', mode: 'crawl', headers: () => ({ Accept: 'application/vnd.github.raw+json', 'User-Agent': 'teos-dealmaker' }) }
+  },
   telegram: {
     id: 'telegram', category: 'communication', label: 'Telegram', auth: 'apikey', keyEnv: 'TELEGRAM_BOT_TOKEN',
     baseUrl: 'https://api.telegram.org/bot{token}',

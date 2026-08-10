@@ -102,6 +102,7 @@ function buildBundle() {
   const files = {
     'index.html': render.renderLanding(landing),
     'dashboard/index.html': render.renderDashboard(dashboard),
+    'start.html': render.renderStart(),
     'robots.txt': render.robotsTxt(),
     'sitemap.xml': render.sitemapXml()
   };

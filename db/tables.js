@@ -112,6 +112,11 @@ const TABLES = {
   simulation_runs: {
     columns: ['workspace_id', 'deal_scenario_id', 'status', 'started_at', 'completed_at', 'duration_ms', 'cost_cents', 'results'],
     timestamps: true
+  },
+
+  mission_intakes: {
+    columns: ['title', 'objective', 'outcome', 'target_customer', 'market', 'budget', 'timeline', 'capabilities', 'contact', 'status', 'answers'],
+    timestamps: true
   }
 };
 

@@ -10,7 +10,7 @@ const oauth = require('../services/integrations/oauth');
 const webhooks = require('../services/integrations/webhooks');
 const cache = require('../services/integrations/cache');
 
-const CATEGORY_COUNTS = { crm: 4, email: 4, calendar: 2, storage: 3, website: 1, communication: 3 };
+const CATEGORY_COUNTS = { crm: 4, email: 4, calendar: 2, storage: 3, website: 2, communication: 3 };
 
 (async () => {
   let n = 0;
@@ -18,7 +18,7 @@ const CATEGORY_COUNTS = { crm: 4, email: 4, calendar: 2, storage: 3, website: 1,
   const equal = (a, b, msg) => { assert.strictEqual(a, b, msg); n += 1; };
 
   const catalogIds = Object.keys(CONNECTORS);
-  equal(catalogIds.length, 17, 'catalog has 17 connectors');
+  equal(catalogIds.length, 18, 'catalog has 18 connectors');
   equal(Object.keys(CATEGORIES).length, 6, 'catalog has 6 categories');
   for (const [cat, count] of Object.entries(CATEGORY_COUNTS)) {
     equal(byCategory(cat).length, count, `${cat} has ${count} connectors`);
@@ -33,6 +33,10 @@ const CATEGORY_COUNTS = { crm: 4, email: 4, calendar: 2, storage: 3, website: 1,
     check(['apikey', 'oauth', 'none'].includes(CONNECTORS[id].auth), `connector ${id} has valid auth`);
   }
   check(isConfigured('website'), 'website needs no key → configured');
+  check(isConfigured('github'), 'github needs no key → configured');
+  check(adapterUtil.canDo('github', 'crawl'), 'github canDo crawl');
+  const ghReq = adapterUtil.buildRequest('github', 'crawl', { owner: 'Elmahrosa', repo: 'teos-dealmaker' });
+  check(ghReq.url.startsWith('https://api.github.com/repos/Elmahrosa/teos-dealmaker'), 'github crawl path resolves to real repo');
   check(!isConfigured('hubspot'), 'hubspot unconfigured without env key');
   check(adapterUtil.canDo('hubspot', 'searchContacts'), 'canDo true for supported op');
   check(!adapterUtil.canDo('hubspot', 'createMeeting'), 'canDo false for unsupported op');

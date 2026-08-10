@@ -76,10 +76,31 @@ const PRODUCT = {
   ],
 
   // Connectors advertised as AVAILABLE free plugins on the public surface.
-  // Empty: the internal workspace integration hub (services/integrations)
-  // exists but is not wired to live provider credentials in the default
-  // deployment, so no connector is advertised as an available plugin.
-  integrations: [],
+  // These come from the real integration hub (services/integrations) and are
+  // verified by tests/test-integrations.js. Only key-free connectors are
+  // advertised — everything else stays founder-configured in the workspace.
+  integrations: [
+    {
+      id: 'github',
+      category: 'website',
+      label: 'GitHub',
+      status: 'AVAILABLE',
+      free: true,
+      auth: 'none',
+      description: 'Read a public GitHub repository README as mission knowledge. No key required.',
+      url: '/start'
+    },
+    {
+      id: 'website',
+      category: 'website',
+      label: 'Website Crawl',
+      status: 'AVAILABLE',
+      free: true,
+      auth: 'none',
+      description: 'Fetch a public website as mission knowledge. No key required.',
+      url: '/start'
+    }
+  ],
 
   // Elmahrosa commercial products — INDEPENDENT products, never DealMaker
   // plugins. Cross-linked only; never priced or checked out inside DealMaker.
@@ -115,6 +136,23 @@ const PRODUCT = {
     label: 'DEMO MODE — SIMULATED DATA',
     runCta: 'Run a Demo Mission',
     anchor: '#playground'
+  },
+
+  // The one-shot customer funnel. The landing CTA points to mission.startUrl
+  // (the /start web intake). A submission stores a mission_intakes row via
+  // services/missionIntake.js; the Telegram bot remains the in-app path.
+  mission: {
+    startUrl: '/start',
+    cta: 'Start a Real Mission',
+    steps: [
+      { n: 1, key: 'company', label: 'Tell us about your business' },
+      { n: 2, key: 'choose', label: 'Choose ONE mission' },
+      { n: 3, key: 'define', label: 'Define the goal and success' },
+      { n: 4, key: 'data', label: 'Share what the team can use' },
+      { n: 5, key: 'govern', label: 'Governance and approval gates' },
+      { n: 6, key: 'deliver', label: 'Deliverable and mission report' },
+      { n: 7, key: 'upgrade', label: 'Upgrade when you are ready' }
+    ]
   }
 };
 

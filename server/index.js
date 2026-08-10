@@ -231,6 +231,104 @@ app.get('/', (req, res) => {
   res.type('html').send(render.renderLanding(template));
 });
 
+// ---------------------------------------------------------------------------
+// One-shot mission intake funnel (/start). The landing CTA sends a customer
+// here; a submission records a mission_intakes row (status 'received') via
+// services/missionIntake.js. Recording an intake never claims execution —
+// the mission plan still has to be approved under policy governance.
+// Founder review is audit-gated (/api/missions and /intakes).
+// ---------------------------------------------------------------------------
+app.get('/start', (_req, res) => {
+  res.type('html').send(render.renderStart());
+});
+
+app.get('/start/thanks', async (req, res) => {
+  const id = Number(req.query.id);
+  if (!Number.isFinite(id)) return res.status(400).type('html').send('Bad request');
+  try {
+    const { getAdapter } = require('../db');
+    const { createRepos } = require('../db/repos');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = require('../services/missionIntake').sharedAdapter();
+    }
+    const intake = await createRepos(adapter).intakes.get(id);
+    if (!intake) return res.status(404).type('html').send('Mission intake not found');
+    res.type('html').send(render.renderStartThanks(intake));
+  } catch (err) {
+    console.error('[intake] thanks render error:', err.message);
+    res.status(500).type('html').send('Intake confirmation unavailable');
+  }
+});
+
+app.post('/api/missions', express.json({ limit: '32kb' }), async (req, res) => {
+  try {
+    const missionIntake = require('../services/missionIntake');
+    const normalized = missionIntake.normalize(req.body || {});
+    if (!normalized.ok) {
+      return res.status(400).json({ ok: false, error: 'validation_failed', fields: normalized.errors });
+    }
+    const { getAdapter } = require('../db');
+    const { createRepos } = require('../db/repos');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = require('../services/missionIntake').sharedAdapter();
+    }
+    const row = await createRepos(adapter).intakes.create(normalized.row);
+    console.log('[intake] mission intake #' + row.id + ' received: ' + row.title);
+    res.status(202).json({ ok: true, intakeId: row.id, status: row.status, thanksUrl: '/start/thanks?id=' + row.id });
+  } catch (err) {
+    console.error('[intake] create error:', err.message);
+    res.status(500).json({ ok: false, error: 'internal_error' });
+  }
+});
+
+// Founder-only intake list (same key gate as /api/audit). Includes contact
+// because the founder acts on the intake.
+app.get('/api/missions', requireAuditAuth, async (req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    const { createRepos } = require('../db/repos');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = require('../services/missionIntake').sharedAdapter();
+    }
+    const rows = await createRepos(adapter).intakes.list();
+    const requested = parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(requested) && requested > 0 ? Math.min(requested, 500) : 200;
+    const list = rows.slice(-limit).reverse();
+    res.json({ ok: true, count: list.length, intakes: list });
+  } catch (err) {
+    console.error('[intake] list error:', err.message);
+    res.status(500).json({ ok: false, error: 'internal_error' });
+  }
+});
+
+// Founder-only intake console.
+app.get('/intakes', requireAuditAuth, async (req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    const { createRepos } = require('../db/repos');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = require('../services/missionIntake').sharedAdapter();
+    }
+    const rows = await createRepos(adapter).intakes.list();
+    res.type('html').send(render.renderIntakesAdmin(rows));
+  } catch (err) {
+    console.error('[intake] admin render error:', err.message);
+    res.status(500).type('html').send('Intake console unavailable');
+  }
+});
+
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain').send(render.robotsTxt());
 });

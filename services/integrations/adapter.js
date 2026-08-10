@@ -29,6 +29,11 @@ function buildRequest(connectorId, op, args) {
   let url;
   let body = null;
   let base = c.baseUrl;
+  if (connectorId === 'github') {
+    const owner = encodeURIComponent(String(a.owner || 'Elmahrosa'));
+    const repo = encodeURIComponent(String(a.repo || 'teos-dealmaker'));
+    base = `https://api.github.com/repos/${owner}/${repo}`;
+  }
   if (connectorId === 'website') {
     base = `https://${String(a.domain || 'example.com').replace(/^https?:\/\//, '')}`;
   }

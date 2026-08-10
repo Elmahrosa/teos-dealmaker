@@ -339,6 +339,21 @@ function createRepos(adapter) {
         return adapter.delete('integration_connections', { workspace_id, connector_id });
       }
     },
+
+    // Mission intakes: the one-shot customer funnel. Each intake is stored as
+    // the mission context (title, objective, and the raw answers) with an
+    // explicit status. Contact is only present when the customer provided it.
+    intakes: {
+      create(payload) {
+        return adapter.insert('mission_intakes', payload);
+      },
+      get(id) {
+        return adapter.findOne('mission_intakes', { id });
+      },
+      list() {
+        return adapter.find('mission_intakes', {});
+      }
+    },
     plans: {
       create({ workspace_id, title, goal, status = 'planned', priority = 'normal', metrics = null, version = null }) {
         return adapter.insert('plans', { workspace_id, title, goal, status, priority, metrics, version });
