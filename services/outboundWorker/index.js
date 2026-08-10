@@ -215,7 +215,7 @@ function createWorker(opts) {
       if (!prospect) return { ok: false, error: 'prospect_not_found' };
     }
 
-    if (r.emailSuppressions.isSuppressed(data.recipient)) {
+    if (await r.emailSuppressions.isSuppressed(data.recipient)) {
       return { ok: false, error: 'suppressed', reason: 'recipient is suppressed by policy' };
     }
 
@@ -333,7 +333,7 @@ function createWorker(opts) {
     if (c.requireVerifiedDomain && !fromBelongsToDomain(job.from_email, c.domain)) {
       return { ok: false, reason: 'sender_not_verified', detail: `sender ${job.from_email} is not verified for domain ${c.domain}` };
     }
-    if (r.emailSuppressions.isSuppressed(job.recipient)) {
+    if (await r.emailSuppressions.isSuppressed(job.recipient)) {
       return { ok: false, reason: 'suppressed', detail: 'recipient is suppressed by policy' };
     }
     if (!job.approved_at || !job.approved_by) {

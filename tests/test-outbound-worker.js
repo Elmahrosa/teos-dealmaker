@@ -489,7 +489,7 @@ const crypto = require('crypto');
     eq(sentJob.send_status, 'bounced', 'bounce send_status recorded');
     const queuedJob = repos.outboundJobs.get(queued.job.id);
     eq(queuedJob.status, JOB_STATES.SUPPRESSED, 'queued job to bounced address → SUPPRESSED');
-    eq(repos.emailSuppressions.isSuppressed('bounce@acme.com'), true, 'address suppressed');
+    eq(await repos.emailSuppressions.isSuppressed('bounce@acme.com'), true, 'address suppressed');
     const blocked = await worker.enqueue(adapter, baseJob(ws, { recipient: 'bounce@acme.com' }));
     eq(blocked.error, 'suppressed', 'future outreach to a suppressed address is refused');
     // gate also blocks at send time
@@ -508,7 +508,7 @@ const crypto = require('crypto');
     await worker.tick(adapter);
     const res = await worker.handleWebhook(adapter, { id: 'evt_cmp_1', type: 'email.complained', data: { email_id: 're_cmp_1', to: ['cmp@acme.com'] } });
     eq(res.suppress, 'complaint', 'complaint reports suppression');
-    eq(repos.emailSuppressions.isSuppressed('cmp@acme.com'), true, 'complained address suppressed');
+    eq(await repos.emailSuppressions.isSuppressed('cmp@acme.com'), true, 'complained address suppressed');
     const job = repos.outboundJobs.get(sent.job.id);
     eq(job.status, JOB_STATES.SEND_FAILED, 'complained job → SEND_FAILED');
   }

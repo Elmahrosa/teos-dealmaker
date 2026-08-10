@@ -457,23 +457,24 @@ function createRepos(adapter) {
       countByStatus(status) {
         return adapter.count('outbound_jobs', { status });
       },
-      countByStatusIn(statuses) {
-        return adapter.find('outbound_jobs', {}, { limit: 10000 }).filter(j => statuses.includes(j.status)).length;
+      async countByStatusIn(statuses) {
+        const rows = await adapter.find('outbound_jobs', {}, { limit: 10000 });
+        return rows.filter(j => statuses.includes(j.status)).length;
       },
-      countSentSince(since) {
-        return adapter.find('outbound_jobs', {}, { limit: 10000 })
-          .filter(j => ['SENT', 'PROVIDER_CONFIRMED'].includes(j.status) && j.sent_at && String(j.sent_at) >= String(since)).length;
+      async countSentSince(since) {
+        const rows = await adapter.find('outbound_jobs', {}, { limit: 10000 });
+        return rows.filter(j => ['SENT', 'PROVIDER_CONFIRMED'].includes(j.status) && j.sent_at && String(j.sent_at) >= String(since)).length;
       },
-      countSentToRecipientSince(recipient, since) {
-        return adapter.find('outbound_jobs', {}, { limit: 10000 })
-          .filter(j => j.recipient && String(j.recipient).toLowerCase() === String(recipient).toLowerCase()
-            && ['SENT', 'PROVIDER_CONFIRMED'].includes(j.status)
-            && j.sent_at && String(j.sent_at) >= String(since)).length;
+      async countSentToRecipientSince(recipient, since) {
+        const rows = await adapter.find('outbound_jobs', {}, { limit: 10000 });
+        return rows.filter(j => j.recipient && String(j.recipient).toLowerCase() === String(recipient).toLowerCase()
+          && ['SENT', 'PROVIDER_CONFIRMED'].includes(j.status)
+          && j.sent_at && String(j.sent_at) >= String(since)).length;
       },
-      cancelQueued(reason, _by) {
-        const rows = adapter.find('outbound_jobs', { status: 'QUEUED' }, {});
+      async cancelQueued(reason, _by) {
+        const rows = await adapter.find('outbound_jobs', { status: 'QUEUED' }, {});
         for (const row of rows) {
-          adapter.update('outbound_jobs', { id: row.id }, {
+          await adapter.update('outbound_jobs', { id: row.id }, {
             status: 'CANCELLED',
             failure_reason: reason,
             updated_at: new Date().toISOString()
@@ -484,12 +485,12 @@ function createRepos(adapter) {
     },
 
     emailSuppressions: {
-      _active(email) {
-        const rows = adapter.find('email_suppressions', { email: String(email).toLowerCase() }, {});
+      async _active(email) {
+        const rows = await adapter.find('email_suppressions', { email: String(email).toLowerCase() }, {});
         return rows.find(r => !r.cleared_at) || null;
       },
-      add({ workspace_id, email, reason, source_event = null, source_job_id = null }) {
-        const existing = this._active(email);
+      async add({ workspace_id, email, reason, source_event = null, source_job_id = null }) {
+        const existing = await this._active(email);
         if (existing) return existing;
         return adapter.insert('email_suppressions', {
           workspace_id,
@@ -499,14 +500,14 @@ function createRepos(adapter) {
           source_job_id
         });
       },
-      isSuppressed(email) {
-        return Boolean(this._active(email));
+      async isSuppressed(email) {
+        return Boolean(await this._active(email));
       },
       list() {
         return adapter.find('email_suppressions', {}, { orderBy: 'id', order: 'desc' });
       },
-      clear(email, by) {
-        const row = this._active(email);
+      async clear(email, by) {
+        const row = await this._active(email);
         if (!row) return null;
         return adapter.update('email_suppressions', { id: row.id }, {
           cleared_at: new Date().toISOString(),
