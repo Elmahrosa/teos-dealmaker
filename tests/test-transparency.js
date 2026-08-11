@@ -52,8 +52,11 @@ const tx = require('../services/transparency');
 
   // ------------------------------------------------------- wiring: bot (50(1))
   const botSource = fs.readFileSync(path.join(__dirname, '..', 'bot', 'index.js'), 'utf8');
-  check(/withAiDisclosure\(result\.text/.test(botSource), 'bot send path passes the reply through withAiDisclosure()');
-  check(/const \{ withAiDisclosure \} = require\('\.\.\/services\/transparency'\)/.test(botSource), 'bot imports withAiDisclosure from services/transparency');
+  check(/get\(userId\)/.test(botSource) && /update\(userId, \{ disclosureShown: true \}\)/.test(botSource), 'bot uses session memory to track disclosure state');
+  check(/DISCLOSURES\[lang\] || DISCLOSURES\.en/.test(botSource), 'bot selects language-specific AI disclosure');
+  check(/result\.__isAI && !session\.disclosureShown/.test(botSource), 'bot conditionally prepends disclosure for AI responses');
+  check(/const \{ get, update \} = require\('\.\.\/services\/router\/memory'\)/.test(botSource), 'bot imports session get/update from router memory');
+  check(/const \{ DISCLOSURES \} = require\('\.\.\/services\/transparency'\)/.test(botSource), 'bot imports DISCLOSURES from services/transparency');
   check(/i18n\.getLang\(/.test(botSource), 'bot resolves the user language for the disclosure');
 
   // ------------------------------------------- wiring: outbound (50(2))

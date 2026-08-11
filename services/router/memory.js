@@ -24,7 +24,8 @@ function defaultSession() {
     lastQuestion: null,
     missingInformation: [],
     recentConversation: [],
-    founderMode: false
+    founderMode: false,
+    disclosureShown: false
   };
 }
 
