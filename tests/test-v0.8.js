@@ -18,6 +18,11 @@ const memory = require('../services/memory');
     lang: 'en',
     plan: 'growth'
   });
+  const { createRepos } = require('../db/repos');
+  const repos = createRepos(adapter);
+  // Activate subscription for growth plan (simulate webhook)
+  const sub = await repos.subscriptions.get(ws.id);
+  await repos.subscriptions.update(sub.id, { status: 'active' });
 
   console.log('\n=== v0.8 · Learning wizard + Mission UX ===');
 
@@ -109,11 +114,9 @@ const memory = require('../services/memory');
   assert.strictEqual(presentAfter.status, 'completed', 'present step completed after approval');
 
   // 11. Budget mechanism halts when spend exceeds budget.
-  const { createRepos } = require('../db/repos');
   const budgeted = await runtime.runGoal(adapter, ws.id, 'Research our competitors and explain how we win', { title: 'Budget capped', budgetCents: 1 });
-  const brepos = createRepos(adapter);
-  const seeded = await brepos.agentRuns.start({ workspace_id: ws.id, plan_id: budgeted.plan.id, agent_name: 'market_intelligence', provider: 'openai', model: 'gpt-4o-mini' });
-  await brepos.agentRuns.complete(ws.id, seeded.id, { status: 'completed', cost_cents: 500 });
+  const seeded = await repos.agentRuns.start({ workspace_id: ws.id, plan_id: budgeted.plan.id, agent_name: 'market_intelligence', provider: 'openai', model: 'gpt-4o-mini' });
+  await repos.agentRuns.complete(ws.id, seeded.id, { status: 'completed', cost_cents: 500 });
   const halted = await runtime.resume(adapter, ws.id, budgeted.plan.id);
   assert.strictEqual(halted.status, 'budget_exceeded', 'budget exceeded halts mission');
 

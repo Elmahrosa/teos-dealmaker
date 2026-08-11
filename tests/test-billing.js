@@ -61,6 +61,7 @@ const crypto = require('crypto');
     customer_id: 'cust_abc123',
     product_id: 'pid_starter_m',
     billing_cycle: 'monthly',
+    status: 'active',
     metadata: { workspace_id: String(ws.id) }
   });
   ok(created.ok, 'subscription.created returns ok');
@@ -79,7 +80,8 @@ const crypto = require('crypto');
   // ------------------------------------------ 5. subscription.renewed
   const renewed = await billing.handleEvent(adapter, 'subscription.renewed', {
     customer_id: 'cust_abc123',
-    billing_cycle: 'monthly'
+    billing_cycle: 'monthly',
+    status: 'active'
   });
   ok(renewed.ok, 'subscription.renewed returns ok');
 
@@ -279,7 +281,7 @@ const crypto = require('crypto');
   // ------------------------------------------ 17. mission tracking: incrementMissionsUsed function
   // Test incrementing missions used
   const incrementWs = repos.workspaces.create({ name: 'IncrementInc', slug: 'incrementinc', plan: 'solo', status: 'active' });
-  const incrementSub = repos.subscriptions.create({
+  await repos.subscriptions.create({
     workspace_id: incrementWs.id,
     plan: 'solo',
     status: 'active',

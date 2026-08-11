@@ -127,7 +127,7 @@ async function onboardWorkspace(adapter, { ownerUserId, companyName, lang, plan 
   const subscription = await repos.subscriptions.create({
     workspace_id: workspace.id,
     plan: effectivePlan,
-    status: isFounder ? 'active' : 'pending',
+    status: isFounder || effectivePlan === 'trial' ? 'active' : 'pending',
     cycle: 'monthly',
     start_date: startDate,
     renewal_date: renewalDate,

@@ -32,6 +32,10 @@ const { EVENT_NAMES } = require('../services/workforce/events');
   const wsId = ws.id;
   const repos = createRepos(adapter);
 
+  // Activate subscription for growth plan (simulate webhook)
+  const sub = await repos.subscriptions.get(wsId);
+  await repos.subscriptions.update(sub.id, { status: 'active' });
+
   equal(typeof events.emit, 'function', 'events bus exposes emit');
   const heard = [];
   const off = events.on(EVENT_NAMES.TASK_COMPLETED, p => heard.push(p));

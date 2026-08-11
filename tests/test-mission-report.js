@@ -1,5 +1,6 @@
 const assert = require('assert');
 const { createMemoryAdapter } = require('../db/adapter');
+const { createRepos } = require('../db/repos');
 const identity = require('../services/identity');
 const runtime = require('../services/workforce/runtime');
 const { missionReport, executiveReportText } = require('../services/missionReport');
@@ -16,6 +17,10 @@ const founderSeed = require('../services/founderSeed');
     lang: 'en',
     plan: 'growth'
   });
+  // Activate subscription for growth plan (simulate webhook)
+  const repos = createRepos(adapter);
+  const sub = await repos.subscriptions.get(ws.id);
+  await repos.subscriptions.update(sub.id, { status: 'active' });
 
   const outcome = await runtime.runGoal(adapter, ws.id, 'Research Acme Corp and build a company profile', { title: 'Acme research' });
   equal(outcome.status, 'completed', 'research mission completes');
