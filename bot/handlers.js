@@ -37,7 +37,9 @@ async function routerResult(chatId, userId, rawText) {
       resize_keyboard: true
     };
   }
-  return { chatId, text: reply.text, replyMarkup };
+  const result = { chatId, text: reply.text, replyMarkup };
+  result.__isAI = (reply.action === 'knowledge');
+  return result;
 }
 
 async function handleStart(chatId, userId, displayName) {
@@ -151,7 +153,9 @@ async function handleMessage(msg) {
         knowledgeState.clear(userId);
         audit.writeEntry('BOT_INTEL_ASK', String(userId), 'success', { mode: getMode() });
         const result = await intelligence.ask(adapter, workspace.id, text);
-        return screenResult(chatId, buildAskResult(userId, text, result));
+        const screen = screenResult(chatId, buildAskResult(userId, text, result));
+        screen.__isAI = true;
+        return screen;
       }
       if (kgFlow === 'kg_add') {
         const payload = knowledgeState.payload(userId) || {};
@@ -215,7 +219,9 @@ async function handleMessage(msg) {
       const runtime = require('../services/workforce/runtime');
       const result = await runtime.runGoal(adapter, workspace.id, text, { title: text.slice(0, 120), priority: 'high' });
       audit.writeEntry('BOT_MISSION_GOAL', String(userId), 'success', { planId: result.plan.id, status: result.status });
-      return screenResult(chatId, await buildMissionRunResult(userId, result.plan.id, result));
+      const screen = screenResult(chatId, await buildMissionRunResult(userId, result.plan.id, result));
+      screen.__isAI = true;
+      return screen;
     } catch (err) {
       audit.writeEntry('BOT_MISSION_GOAL', String(userId), 'error', { error: err.message });
       return { chatId, text: `Mission failed: ${err.message}` };

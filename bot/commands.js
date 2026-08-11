@@ -131,7 +131,9 @@ function cmdSales(chatId, userId, prompt) {
       design.row('Route', result.routed ? result.routed.status : 'blocked'),
       design.divider()
     ]);
-    return { chatId, text };
+    const response = { chatId, text };
+    response.__isAI = true;
+    return response;
   } catch (error) {
     audit.writeEntry('BOT_COMMAND_SALES_ERROR', String(userId), 'error', {
       error: error.message,
@@ -219,7 +221,9 @@ async function cmdAsk(chatId, userId, remainder) {
     return { chatId, text: design.errorPanel('No workspace', 'Provision a workspace first with /start.').text };
   }
   const result = await intelligence.ask(adapter, workspace.id, remainder);
-  return screenResult(chatId, buildAskResult(userId, remainder, result));
+  const screen = screenResult(chatId, buildAskResult(userId, remainder, result));
+  screen.__isAI = true;
+  return screen;
 }
 
 async function cmdLearn(chatId, userId) {
@@ -243,7 +247,9 @@ async function cmdMission(chatId, userId, remainder) {
   if (!remainder) {
     return screenResult(chatId, await buildMissionGoalPrompt(userId));
   }
-  return screenResult(chatId, await launchGoalMission(userId, remainder));
+  const screen = screenResult(chatId, await launchGoalMission(userId, remainder));
+  screen.__isAI = true;
+  return screen;
 }
 
 function cmdAdmin(chatId, userId) {

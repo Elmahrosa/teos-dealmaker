@@ -39,9 +39,24 @@ check('withContentMarking is idempotent', tx.withContentMarking(marked) === mark
 check('hasContentMarking detects marker', tx.hasContentMarking(marked) === true && tx.hasContentMarking('Body') === false, 'detection inverted');
 
 const botSource = fs.readFileSync(path.join(root, 'bot', 'index.js'), 'utf8');
-check('bot identifies itself as AI in the send path',
-  /withAiDisclosure\(result\.text/.test(botSource),
-  'bot/index.js must pass the reply through withAiDisclosure() before sendMessage()');
+check('bot uses session memory to track disclosure state',
+  /get\(userId\)/.test(botSource) && /update\(userId, \{ disclosureShown: true \}\)/.test(botSource),
+  'bot must use session memory to track disclosure state');
+check('bot selects language-specific AI disclosure',
+  /DISCLOSURES\[lang\] || DISCLOSURES\.en/.test(botSource),
+  'bot must select language-specific AI disclosure');
+check('bot conditionally prepends disclosure for AI responses',
+  /result\.__isAI && !session\.disclosureShown/.test(botSource),
+  'bot must conditionally prepend disclosure for AI responses');
+check('bot imports session get/update from router memory',
+  /const \{ get, update \} = require\('\.\.\/services\/router\/memory'\)/.test(botSource),
+  'bot must import session get/update from router memory');
+check('bot imports DISCLOSURES from services/transparency',
+  /const \{ DISCLOSURES \} = require\('\.\.\/services\/transparency'\)/.test(botSource),
+  'bot must import DISCLOSURES from services/transparency');
+check('bot resolves the user language for the disclosure',
+  /i18n\.getLang\(/.test(botSource),
+  'bot must resolve user language for disclosure');
 
 const workerSource = fs.readFileSync(path.join(root, 'services', 'outboundWorker', 'index.js'), 'utf8');
 check('outbound worker marks AI-generated content in the send path',
@@ -53,7 +68,7 @@ check('TRANSPARENCY.md compliance mapping exists',
   'TRANSPARENCY.md must exist at the repository root');
 
 for (const c of checks) {
-  console.log(`${c.ok ? '\u2713' : '\u2717'} ${c.name}${c.detail ? ' — ' + c.detail : ''}`);
+  console.log(`${c.ok ? '✓' : '✗'} ${c.name}${c.detail ? ' — ' + c.detail : ''}`);
 }
 
 if (failures.length) {
