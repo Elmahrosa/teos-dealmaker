@@ -30,6 +30,10 @@ const approvals = require('../services/workforce/approvals');
   const wsId = ws.id;
   const repos = createRepos(adapter);
 
+  // Activate subscription for growth plan (simulate webhook)
+  const sub = await repos.subscriptions.get(wsId);
+  await repos.subscriptions.update(sub.id, { status: 'active' });
+
   const outcome = await runtime.runGoal(
     adapter,
     wsId,

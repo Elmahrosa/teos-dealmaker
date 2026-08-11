@@ -18,6 +18,7 @@ const assert = require('assert');
 const audit = require('../utils/auditLogger');
 const { getStoreAdapter } = require('../bot/store');
 const identity = require('../services/identity');
+const { createRepos } = require('../db/repos');
 const learning = require('../services/learning');
 const memory = require('../services/memory');
 const intelligence = require('../services/intelligence');
@@ -63,6 +64,8 @@ async function runWorkflow({ mode, founderId = FOUNDER, newcomerId = NEWCOMER } 
   audit.clearVault();
   const adapter = getStoreAdapter();
   check(Boolean(adapter), 'adapter resolved from bot/store');
+  let repos;
+  let sub;
 
   let qseq = 0;
   async function cb(action, userId) {
@@ -106,6 +109,10 @@ async function runWorkflow({ mode, founderId = FOUNDER, newcomerId = NEWCOMER } 
   check(Boolean(ncWorkspace), 'newcomer workspace provisioned');
   equal(ncWorkspace.plan, 'growth', 'onboarded plan is growth');
   equal(ncWorkspace.name, 'Stabilize Ventures', 'onboarded workspace name correct');
+  // Activate subscription for newcomer growth plan
+  repos = createRepos(adapter);
+  sub = await repos.subscriptions.get(ncWorkspace.id);
+  await repos.subscriptions.update(sub.id, { status: 'active' });
 
   // ----------------------------------------------------------- learning UI
   const founder = await identity.ensureUser(adapter, founderId, { display_name: 'Phase25 Founder' });
@@ -113,6 +120,10 @@ async function runWorkflow({ mode, founderId = FOUNDER, newcomerId = NEWCOMER } 
     ownerUserId: founder.id, companyName: 'Acme Stable', lang: 'en', plan: 'corporate'
   });
   check(Boolean(ws), 'founder workspace provisioned');
+  // Activate subscription for founder corporate plan
+  repos = createRepos(adapter);
+  sub = await repos.subscriptions.get(ws.id);
+  await repos.subscriptions.update(sub.id, { status: 'active' });
 
   await cb('cc_learn', newcomerId);
   for (let i = 0; i < learning.COMPANY_QUESTIONS.length; i++) {

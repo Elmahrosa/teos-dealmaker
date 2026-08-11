@@ -1,5 +1,6 @@
 const assert = require('assert');
 const { createMemoryAdapter } = require('../db/adapter');
+const { createRepos } = require('../db/repos');
 const identity = require('../services/identity');
 const mc = require('../services/mission-controller');
 const { schema, validate, planner, coordinator, state } = mc;
@@ -93,6 +94,10 @@ const { schema, validate, planner, coordinator, state } = mc;
     lang: 'en',
     plan: 'growth'
   });
+  // Activate subscription for growth plan (simulate webhook)
+  const repos = createRepos(adapter);
+  const sub = await repos.subscriptions.get(ws.id);
+  await repos.subscriptions.update(sub.id, { status: 'active' });
 
   const launched = await coordinator.launch(adapter, ws.id, 'Research our competitors and explain how we win');
   ok(launched.plan && launched.plan.id, 'launch returns a plan');

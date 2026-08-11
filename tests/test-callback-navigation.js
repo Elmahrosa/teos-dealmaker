@@ -53,6 +53,9 @@ const menu = require('../bot/menu');
     plan: 'growth'
   });
   const wsId = ws.id;
+  // Activate subscription for growth plan (simulate webhook)
+  const sub = await repos.subscriptions.get(wsId);
+  await repos.subscriptions.update(sub.id, { status: 'active' });
   await identity.ensureUser(adapter, MEMBER, { display_name: 'Char Member' });
   await identity.addMember(adapter, { workspaceId: wsId, userId: (await identity.getUserByTelegram(adapter, MEMBER)).id, role: 'operator' });
   await identity.ensureUser(adapter, STRANGER, { display_name: 'Char Stranger' });

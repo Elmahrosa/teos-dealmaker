@@ -111,7 +111,7 @@ app.post('/api/auth/signup', express.json({ limit: '32kb' }), async (req, res) =
     }
     const result = await auth.signup(adapter, req.body || {});
     // Remove sensitive data before sending response
-    const { password_hash: _, salt: _, ...safeUser } = result.user || {};
+    const { password_hash, salt, ...safeUser } = result.user || {}; // eslint-disable-line no-unused-vars
     res.status(201).json({
       ok: true,
       user: safeUser,

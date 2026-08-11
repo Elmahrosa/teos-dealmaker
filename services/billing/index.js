@@ -15,6 +15,9 @@ const PRODUCT_TO_PLAN_ENV = {
 let productMap = null;
 
 function getPlanForProduct(productId) {
+  if (!productId) return null;
+
+  // Build reverse mapping from product ID to plan if not cached
   if (!productMap) {
     productMap = {};
     for (const [envKey, plan] of Object.entries(PRODUCT_TO_PLAN_ENV)) {
@@ -22,7 +25,27 @@ function getPlanForProduct(productId) {
       if (pid) productMap[pid] = plan;
     }
   }
-  return productMap[productId] || null;
+
+  const plan = productMap[productId] || null;
+
+  // Additional security: validate that the product ID matches expected format for the plan
+  if (plan) {
+    // Determine if this is likely a monthly or annual product based on ID patterns
+    // This is a basic check - in production, you might want more robust validation
+    const isLikelyMonthly = productId.toLowerCase().includes('monthly') ||
+                           productId.toLowerCase().includes('_m') ||
+                           productId.length > 15; // Heuristic: monthly IDs tend to be longer
+
+    const cycle = isLikelyMonthly ? 'monthly' : 'annual';
+
+    // Verify this product ID is actually valid for the purported plan
+    if (!isValidProductForTier(productId, plan, cycle)) {
+      console.warn(`[billing] Security: Product ID ${productId} does not match expected mapping for ${plan} ${cycle}`);
+      return null; // Treat as invalid product
+    }
+  }
+
+  return plan;
 }
 
 // Mission limits per plan
@@ -33,6 +56,40 @@ const MISSION_LIMITS = {
   trial: 1,
   founder: Infinity
 };
+
+// Strict product-to-tier mapping for security
+// Founder/free tiers map to null (no Dodo required)
+// Paid tiers must have valid Dodo product IDs configured
+let VALID_PRODUCT_MAPPING = null;
+
+function getValidProductMapping() {
+  if (!VALID_PRODUCT_MAPPING) {
+    VALID_PRODUCT_MAPPING = {
+      // Paid tiers - must have corresponding Dodo product IDs
+      solo: {
+        monthly: process.env.DODO_STARTER_MONTHLY_PID,
+        annual: process.env.DODO_STARTER_ANNUAL_PID
+      },
+      growth: {
+        monthly: process.env.DODO_GROWTH_MONTHLY_PID,
+        annual: process.env.DODO_GROWTH_ANNUAL_PID
+      },
+      corporate: {
+        monthly: process.env.DODO_BUSINESS_MONTHLY_PID,
+        annual: process.env.DODO_BUSINESS_ANNUAL_PID
+      }
+      // Founder and trial tiers intentionally omitted - no Dodo required
+    };
+  }
+  return VALID_PRODUCT_MAPPING;
+}
+
+// Validate that a product ID is valid for the given tier and cycle
+function isValidProductForTier(productId, tier, cycle) {
+  const mapping = getValidProductMapping();
+  const validProduct = mapping[tier]?.[cycle];
+  return validProduct && productId === validProduct;
+}
 
 function getMissionLimitForPlan(plan) {
   return MISSION_LIMITS[plan] || null;
@@ -118,8 +175,28 @@ async function handleSubscriptionCreated(adapter, data) {
   const repos = createRepos(adapter);
   const productId = data.product_id || data.plan_id || null;
   const customerId = data.customer_id || data.subscription_id || null;
-  const plan = getPlanForProduct(productId) || 'solo';
-  const status = 'active';
+
+  // Validate product ID is present and not empty
+  if (!productId) {
+    console.warn('[billing] subscription.created: missing product_id');
+    return { ok: false, reason: 'missing_product_id' };
+  }
+
+  // Get plan from product ID with strict validation
+  const plan = getPlanForProduct(productId);
+  if (!plan) {
+    console.warn(`[billing] subscription.created: invalid product ID ${productId}`);
+    return { ok: false, reason: 'invalid_product_id' };
+  }
+
+  // Determine subscription status from webhook data
+  const rawStatus = data.status;
+  const allowedActivatingStatuses = ['active', 'renewed'];
+  let status = rawStatus;
+  if (!rawStatus || !allowedActivatingStatuses.includes(rawStatus)) {
+    console.warn(`[billing] subscription.created: invalid or missing status '${rawStatus}', defaulting to 'pending'`);
+    status = 'pending';
+  }
   const cycle = data.billing_cycle || 'monthly';
   const startDate = today();
   const renewalDate = addMonths(startDate, cycle === 'annual' ? 12 : 1);
@@ -170,7 +247,7 @@ async function handleSubscriptionCreated(adapter, data) {
     });
   }
 
-  await repos.workspaces.update(workspaceId, { plan, status: 'active' });
+  await repos.workspaces.update(workspaceId, { plan, status });
 
   if (customerId) {
     await repos.dodoCustomers.create({ workspace_id: workspaceId, dodo_customer_id: customerId, email: data.customer_email || null });
@@ -192,6 +269,14 @@ async function handleSubscriptionCreated(adapter, data) {
 async function handleSubscriptionRenewed(adapter, data) {
   const repos = createRepos(adapter);
   const customerId = data.customer_id || null;
+  // Determine subscription status from webhook data
+  const rawStatus = data.status;
+  const allowedActivatingStatuses = ['active', 'renewed'];
+  let status = rawStatus;
+  if (!rawStatus || !allowedActivatingStatuses.includes(rawStatus)) {
+    console.warn(`[billing] subscription.renewed: invalid or missing status '${rawStatus}', defaulting to 'pending'`);
+    status = 'pending';
+  }
   const cycle = data.billing_cycle || 'monthly';
   const renewalDate = addMonths(today(), cycle === 'annual' ? 12 : 1);
 
@@ -215,7 +300,7 @@ async function handleSubscriptionRenewed(adapter, data) {
   const sub = await repos.subscriptions.get(workspaceId);
   if (sub) {
     await repos.subscriptions.update(sub.id, {
-      status: 'active',
+      status,
       renewal_date: renewalDate,
       missions_used: 0 // Reset missions used on renewal
     });
@@ -255,9 +340,12 @@ async function handleSubscriptionCancelled(adapter, data) {
     return { ok: true, workspaceId, founderProtected: true };
   }
 
+  // Use status from webhook data, default to 'cancelled' for cancellation events
+  const status = data.status || 'cancelled';
+
   const sub = await repos.subscriptions.get(workspaceId);
   if (sub) {
-    await repos.subscriptions.update(sub.id, { status: 'cancelled' });
+    await repos.subscriptions.update(sub.id, { status });
   }
 
   await repos.audit.add({
