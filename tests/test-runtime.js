@@ -202,3 +202,4 @@ const { EVENT_NAMES } = require('../services/workforce/events');
   console.error('TEST FAILURE:', err);
   process.exit(1);
 });
+

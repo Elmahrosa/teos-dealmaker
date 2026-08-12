@@ -14,3 +14,4 @@ console.log(`Hook: ${positioning.hook}`);
 console.log(`Value props: ${positioning.valueProps.length}`);
 
 console.log('\nVerification complete. Inspect data/vault/audit.log for MARKETER_AGENT_* entries.');
+

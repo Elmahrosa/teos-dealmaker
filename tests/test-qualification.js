@@ -22,3 +22,4 @@ testLeads.forEach((lead) => {
 
 console.log('\nQualification pipeline simulation complete.');
 console.log('Inspect data/vault/audit.log to verify QUALIFICATION_AGENT_* entries.');
+

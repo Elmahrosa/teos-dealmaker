@@ -178,3 +178,4 @@ if (!ok) process.exit(1);
 
 PRICING.forEach(t => console.log(`${t.tier}: monthly ${t.monthly.price} | annual ${t.annual.price}`));
 console.log(`Sentinel: external cross-link ${PRICING.SENTINEL_URL}`);
+

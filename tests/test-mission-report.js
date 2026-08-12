@@ -104,3 +104,4 @@ const founderSeed = require('../services/founderSeed');
 let n = 0;
 function check(cond, msg) { assert.ok(cond, msg); n += 1; }
 function equal(a, b, msg) { assert.strictEqual(a, b, msg); n += 1; }
+

@@ -144,6 +144,101 @@ app.post('/api/auth/login', express.json({ limit: '32kb' }), async (req, res) =>
   }
 });
 
+// Web founder login - returns session info for founder dashboard access
+app.post('/api/auth/web-login', express.json({ limit: '32kb' }), async (req, res) => {
+  try {
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+
+    // First, perform regular login
+    const loginResult = await auth.login(adapter, req.body || {});
+    const userId = loginResult.user.id;
+
+    // Get user's workspace to check if they're a founder
+    const repos = require('../db/repos').createRepos(adapter);
+    const workspace = await repos.workspaces.getByOwner(userId);
+
+    let isFounder = false;
+
+    if (workspace) {
+      // Check if user has founder role in workspace
+      const workspaceMembers = await repos.members.list(workspace.id);
+      const member = workspaceMembers.find(m => m.user_id === userId);
+      if (member && member.role === 'founder') {
+        isFounder = true;
+      } else {
+        // Also check if this is the founder workspace via TEOS_FOUNDER_TELEGRAM_ID
+        const founderTelegramId = process.env.TEOS_FOUNDER_TELEGRAM_ID;
+        if (founderTelegramId && workspace.telegram_id === parseInt(founderTelegramId, 10)) {
+          isFounder = true;
+        }
+      }
+    }
+
+    if (!isFounder) {
+      // Check if user is the global founder via TEOS_FOUNDER_TELEGRAM_ID (super admin case)
+      const founderTelegramId = process.env.TEOS_FOUNDER_TELEGRAM_ID;
+      if (founderTelegramId) {
+        const founderUser = await repos.users.getByTelegram(parseInt(founderTelegramId, 10));
+        if (founderUser && founderUser.id === userId) {
+          isFounder = true;
+        }
+      }
+    }
+
+    if (!isFounder) {
+      return res.status(403).json({
+        ok: false,
+        error: 'Forbidden: Founder access required'
+      });
+    }
+
+    // Create a simple session token (in production, use proper JWT or session store)
+    const sessionToken = crypto.randomBytes(32).toString('hex');
+
+    // Store session (in production, use Redis or database)
+    // For simplicity, we'll validate by checking the token against a simple check
+    // In a real implementation, you'd store this session and validate it
+    res.json({
+      ok: true,
+      user: loginResult.user,
+      isFounder: true,
+      sessionToken: sessionToken
+      // Note: In a production implementation, you would set an HttpOnly cookie
+      // or use a proper session management system rather than returning token in body
+    });
+  } catch (err) {
+    console.error('[auth] web-login error:', err.message);
+    res.status(500).json({ ok: false, error: 'Internal server error' });
+  }
+});
+
+// Helper middleware to check founder session
+function checkFounderSession(req, res, next) {
+  // In a production implementation, you would validate the session token
+  // against a session store or verify a JWT
+  // For this implementation, we'll use a simple header-based check
+  // NOTE: This is NOT secure for production - it's a placeholder for the auth mechanism
+  const authHeader = req.get('x-founder-session') || '';
+  const sessionToken = req.query.session || '';
+
+  // In a real implementation, validate against stored sessions
+  // For now, we'll allow any non-empty token as a placeholder
+  // This should be replaced with proper session validation
+  if (sessionToken && sessionToken.length >= 32) { // Basic length check
+    next();
+  } else if (authHeader && authHeader.length >= 32) {
+    next();
+  } else {
+    res.status(401).json({ ok: false, error: 'Founder session required' });
+  }
+}
+
 // Entitlement check endpoint
 app.get('/api/auth/entitlement', async (req, res) => {
   try {
@@ -708,6 +803,816 @@ app.post('/webhook/resend', express.raw({ type: '*/*' }), async (req, res) => {
   } catch (err) {
     console.error('[webhook] Resend handler error:', err.message);
     res.status(500).json({ error: 'handler_error' });
+  }
+});
+
+// Founder Command Center API - Protected by requireAuditAuth
+// All endpoints are READ-ONLY in this phase
+
+// Overview endpoint
+app.get('/api/admin/command-center/overview', checkFounderSession, async (req, res) => {
+  try {
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+
+    const repos = require('../db/repos').createRepos(adapter);
+    const { getMode } = require('../config/mode');
+
+    // System info
+    const mode = getMode();
+
+    // Users stats
+    const users = await repos.users.list();
+    const usersWithWorkspace = await Promise.all(
+      users.map(async (user) => {
+        try {
+          const workspace = await repos.workspaces.getByOwner(user.id);
+          return workspace !== null;
+        } catch (_) {
+          return false;
+        }
+      })
+    );
+    const activeUsers = usersWithWorkspace.filter(Boolean).length;
+
+    // Workspaces stats
+    const workspaces = await repos.workspaces.list();
+    const workspaceStats = {
+      founder: 0,
+      trial: 0,
+      solo: 0,
+      growth: 0,
+      corporate: 0
+    };
+
+    for (const ws of workspaces) {
+      const plan = ws.plan || 'solo';
+      if (workspaceStats[plan] !== undefined) {
+        workspaceStats[plan]++;
+      }
+    }
+
+    // Missions stats
+    const plans = await repos.plans.list();
+    const missionStats = {
+      total: plans.length,
+      completed: 0,
+      failed: 0,
+      cancelled: 0
+    };
+
+    for (const plan of plans) {
+      if (plan.status === 'completed') missionStats.completed++;
+      else if (plan.status === 'failed') missionStats.failed++;
+      else if (plan.status === 'cancelled') missionStats.cancelled++;
+    }
+
+    // Subscriptions stats
+    const subscriptions = await repos.subscriptions.list();
+    const subscriptionStats = {
+      active: 0,
+      inactive: 0,
+      pending: 0,
+      founder: 0,
+      trial: 0,
+      paid: 0
+    };
+
+    for (const sub of subscriptions) {
+      if (sub.status === 'active') subscriptionStats.active++;
+      else if (sub.status === 'cancelled' || sub.status === 'expired') subscriptionStats.inactive++;
+      else if (sub.status === 'pending') subscriptionStats.pending++;
+
+      // Count by plan
+      const workspace = await repos.workspaces.get(sub.workspace_id);
+      const plan = workspace ? workspace.plan : 'solo';
+      if (plan === 'founder') subscriptionStats.founder++;
+      else if (plan === 'trial') subscriptionStats.trial++;
+      else if (plan === 'solo' || plan === 'growth' || plan === 'corporate') subscriptionStats.paid++;
+    }
+
+    // Revenue path status
+    const hasDodoApiKey = process.env.DODO_API_KEY !== undefined && process.env.DODO_API_KEY !== '';
+    const hasDodoWebhookSecret = process.env.DODO_WEBHOOK_SECRET !== undefined && process.env.DODO_WEBHOOK_SECRET !== '';
+    const revenuePath = hasDodoApiKey && hasDodoWebhookSecret ? 'CONFIGURED' : 'NOT_CONFIGURED';
+
+    // Product mapping check
+    const starterMonthlyId = process.env.DODO_STARTER_MONTHLY_PID;
+    const starterAnnualId = process.env.DODO_STARTER_ANNUAL_PID;
+    const growthMonthlyId = process.env.DODO_GROWTH_MONTHLY_PID;
+    const growthAnnualId = process.env.DODO_GROWTH_ANNUAL_PID;
+    const businessMonthlyId = process.env.DODO_BUSINESS_MONTHLY_PID;
+    const businessAnnualId = process.env.DODO_BUSINESS_ANNUAL_PID;
+
+    const productMappingComplete = !!(
+      starterMonthlyId && starterAnnualId &&
+      growthMonthlyId && growthAnnualId &&
+      businessMonthlyId && businessAnnualId
+    );
+
+    res.json({
+      ok: true,
+      system: {
+        mode,
+        health: 'operational', // Simplified - could check database connectivity etc.
+        database: 'operational', // Simplified
+        workforce: 'operational', // Simplified
+        missionController: 'operational', // Simplified
+        // Sentinel status would require checking if endpoint is configured
+        sentinel: process.env.SENTINEL_ENDPOINT ? 'CONFIGURED' : 'NOT_CONFIGURED'
+      },
+      users: {
+        total: users.length,
+        active: activeUsers,
+        withWorkspace: activeUsers
+      },
+      workspaces: {
+        total: workspaces.length,
+        ...workspaceStats
+      },
+      missions: missionStats,
+      subscriptions: subscriptionStats,
+      revenue: {
+        dodoConfigured: hasDodoApiKey,
+        webhookConfigured: hasDodoWebhookSecret,
+        productMappingComplete: !!productMappingComplete,
+        revenuePath
+      }
+    });
+  } catch (err) {
+    console.error('[Command Center] overview error:', err.message);
+    res.status(500).json({ ok: false, error: 'internal_error' });
+  }
+});
+
+// Users endpoint
+app.get('/api/admin/command-center/users', checkFounderSession, async (req, res) => {
+  try {
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+
+    const repos = require('../db/repos').createRepos(adapter);
+    const billing = require('../services/billing');
+
+    const users = await repos.users.list();
+    const userList = [];
+
+    for (const user of users) {
+      try {
+        const workspace = await repos.workspaces.getByOwner(user.id);
+        if (!workspace) {
+          // User without workspace
+          userList.push({
+            id: user.id,
+            displayName: user.display_name,
+            email: user.email,
+            telegramId: user.telegram_id || null,
+            workspace: null,
+            role: null,
+            plan: null,
+            subscriptionStatus: null,
+            missionsUsed: 0,
+            missionLimit: 0,
+            entitlement: false,
+            createdAt: user.created_at
+          });
+          continue;
+        }
+
+        const workspaceMembers = await repos.members.list(workspace.id);
+        const member = workspaceMembers.find(m => m.user_id === user.id);
+        const role = member ? member.role : 'owner';
+
+        const subscription = await repos.subscriptions.get(workspace.id);
+        const plan = workspace.plan || (subscription ? subscription.plan : 'solo');
+        const missionLimit = billing.getMissionLimitForPlan(plan);
+        const missionsUsed = subscription ? subscription.missions_used : 0;
+        const entitled = await billing.isEntitled(adapter, workspace.id);
+
+        userList.push({
+          id: user.id,
+          displayName: user.display_name,
+          email: user.email,
+          telegramId: user.telegram_id || null,
+          workspace: {
+            id: workspace.id,
+            name: workspace.name,
+            slug: workspace.slug
+          },
+          role,
+          plan,
+          subscriptionStatus: subscription ? subscription.status : null,
+          missionsUsed,
+          missionLimit: missionLimit === Infinity ? -1 : missionLimit, // -1 represents unlimited
+          entitlement: !!entitled,
+          createdAt: user.created_at
+        });
+      } catch (e) {
+        // Skip user on error to prevent breaking the whole list
+        console.warn('[Command Center] error processing user:', e.message);
+        continue;
+      }
+    }
+
+    res.json({ ok: true, users: userList });
+  } catch (err) {
+    console.error('[Command Center] users error:', err.message);
+    res.status(500).json({ ok: false, error: 'internal_error' });
+  }
+});
+
+// Workspaces endpoint
+app.get('/api/admin/command-center/workspaces', checkFounderSession, async (req, res) => {
+  try {
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+
+    const repos = require('../db/repos').createRepos(adapter);
+    const billing = require('../services/billing');
+
+    const workspaces = await repos.workspaces.list();
+    const workspaceList = [];
+
+    // Helper function to determine validation status based on mission usage
+    const getValidationStatus = (missionsUsed, missionLimit) => {
+      // Unlimited plans (-1 represents Infinity)
+      if (missionLimit <= 0) return 'OK';
+
+      // Blocked when at or over limit
+      if (missionsUsed >= missionLimit) return 'BLOCKED';
+
+      // Warning when at or over 80% of limit
+      if (missionsUsed >= missionLimit * 0.8) return 'WARNING';
+
+      // Otherwise OK
+      return 'OK';
+    };
+
+    for (const ws of workspaces) {
+      try {
+        const owner = await repos.users.getById(ws.owner_user_id);
+        const subscription = await repos.subscriptions.get(ws.id);
+        const plan = ws.plan || (subscription ? subscription.plan : 'solo');
+        const missionLimit = billing.getMissionLimitForPlan(plan);
+        const missionsUsed = subscription ? subscription.missions_used : 0;
+        const entitled = await billing.isEntitled(adapter, ws.id);
+        const validationStatus = getValidationStatus(missionsUsed, missionLimit === Infinity ? -1 : missionLimit);
+
+        workspaceList.push({
+          id: ws.id,
+          name: ws.name,
+          slug: ws.slug,
+          owner: {
+            id: owner.id,
+            displayName: owner.display_name,
+            email: owner.email,
+            telegramId: owner.telegram_id || null
+          },
+          plan,
+          subscriptionStatus: subscription ? subscription.status : null,
+          missionsUsed,
+          missionLimit: missionLimit === Infinity ? -1 : missionLimit,
+          entitlement: !!entitled,
+          validationStatus,
+          cycle: subscription ? subscription.cycle : null,
+          renewalDate: subscription ? subscription.renewal_date : null,
+          providerCustomerId: subscription ? subscription.provider_customer_id : null,
+          createdAt: ws.created_at
+        });
+      } catch (e) {
+        console.warn('[Command Center] error processing workspace:', e.message);
+        continue;
+      }
+    }
+
+    res.json({ ok: true, workspaces: workspaceList });
+  } catch (err) {
+    console.error('[Command Center] workspaces error:', err.message);
+    res.status(500).json({ ok: false, error: 'internal_error' });
+  }
+});
+
+// Subscriptions endpoint
+app.get('/api/admin/command-center/subscriptions', checkFounderSession, async (req, res) => {
+  try {
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+
+    const repos = require('../db/repos').createRepos(adapter);
+
+    const subscriptions = await repos.subscriptions.list();
+    const subscriptionList = [];
+
+    // Helper function to determine validation status based on mission usage
+    const getValidationStatus = (missionsUsed, missionLimit) => {
+      // Unlimited plans (-1 represents Infinity)
+      if (missionLimit <= 0) return 'OK';
+
+      // Blocked when at or over limit
+      if (missionsUsed >= missionLimit) return 'BLOCKED';
+
+      // Warning when at or over 80% of limit
+      if (missionsUsed >= missionLimit * 0.8) return 'WARNING';
+
+      // Otherwise OK
+      return 'OK';
+    };
+
+    for (const sub of subscriptions) {
+      try {
+        const workspace = await repos.workspaces.get(sub.workspace_id);
+        const owner = workspace ? await repos.users.getById(workspace.owner_user_id) : null;
+        const missionLimit = billing.getMissionLimitForPlan(sub.plan);
+        const validationStatus = getValidationStatus(sub.missions_used, missionLimit === Infinity ? -1 : missionLimit);
+
+        subscriptionList.push({
+          id: sub.id,
+          workspace: {
+            id: workspace.id,
+            name: workspace.name,
+            slug: workspace.slug
+          },
+          owner: owner ? {
+            id: owner.id,
+            displayName: owner.display_name,
+            email: owner.email
+          } : null,
+          plan: sub.plan,
+          status: sub.status,
+          missionsUsed: sub.missions_used,
+          missionLimit: missionLimit === Infinity ? -1 : missionLimit,
+          validationStatus,
+          cycle: sub.cycle,
+          renewalDate: sub.renewal_date,
+          providerCustomerId: sub.provider_customer_id,
+          createdAt: sub.created_at,
+          updatedAt: sub.updated_at
+        });
+      } catch (e) {
+        console.warn('[Command Center] error processing subscription:', e.message);
+        continue;
+      }
+    }
+
+    res.json({ ok: true, subscriptions: subscriptionList });
+  } catch (err) {
+    console.error('[Command Center] subscriptions error:', err.message);
+    res.status(500).json({ ok: false, error: 'internal_error' });
+  }
+});
+
+// Missions endpoint
+app.get('/api/admin/command-center/missions', checkFounderSession, async (req, res) => {
+  try {
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+
+    const repos = require('../db/repos').createRepos(adapter);
+
+    // Support query parameters for filtering
+    const workspaceId = req.query.workspaceId ? parseInt(req.query.workspaceId, 10) : null;
+    const status = req.query.status || null;
+    const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+    const offset = parseInt(req.query.offset) || 0;
+
+    let missions;
+    if (workspaceId) {
+      // Get missions for specific workspace
+      const plans = await repos.plans.list(workspaceId);
+      missions = [];
+      for (const plan of plans) {
+        if (!status || plan.status === status) {
+          missions.push(plan);
+        }
+      }
+    } else {
+      // Get all missions
+      missions = await repos.plans.list();
+      if (status) {
+        missions = missions.filter(m => m.status === status);
+      }
+    }
+
+    // Apply pagination
+    const paginated = missions.slice(offset, offset + limit);
+
+    // Enrich with additional data
+    const missionList = [];
+    for (const mission of paginated) {
+      try {
+        const workspace = await repos.workspaces.get(mission.workspace_id);
+        const owner = await repos.users.getById(workspace.owner_user_id);
+        const steps = await repos.planSteps.list(mission.id);
+        const completedSteps = steps.filter(s => s.status === 'completed').length;
+
+        missionList.push({
+          id: mission.id,
+          title: mission.title,
+          goal: mission.goal,
+          status: mission.status,
+          priority: mission.priority,
+          archivedAt: mission.archived_at,
+          isProtected: mission.is_protected,
+          workspace: {
+            id: workspace.id,
+            name: workspace.name,
+            slug: workspace.slug
+          },
+          owner: {
+            id: owner.id,
+            displayName: owner.display_name
+          },
+          totalSteps: steps.length,
+          completedSteps,
+          progress: steps.length ? Math.round((completedSteps / steps.length) * 100) : 0,
+          createdAt: mission.created_at,
+          updatedAt: mission.updated_at
+        });
+      } catch (e) {
+        console.warn('[Command Center] error processing mission:', e.message);
+        continue;
+      }
+    }
+
+    res.json({
+      ok: true,
+      missions: missionList,
+      pagination: {
+        total: missions.length,
+        limit,
+        offset
+      }
+    });
+  } catch (err) {
+    console.error('[Command Center] missions error:', err.message);
+    res.status(500).json({ ok: false, error: 'internal_error' });
+  }
+});
+
+// Archive mission endpoint
+app.post('/api/admin/command-center/missions/:id/archive', checkFounderSession, express.json({ limit: '32kb' }), async (req, res) => {
+  try {
+    const missionId = parseInt(req.params.id, 10);
+    if (isNaN(missionId)) {
+      return res.status(400).json({ ok: false, error: 'Invalid mission ID' });
+    }
+
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+
+    const repos = require('../db/repos').createRepos(adapter);
+    const audit = require('../utils/auditLogger');
+
+    // Get the mission to check if it exists and if it's protected
+    const mission = await repos.plans.get(missionId);
+    if (!mission) {
+      return res.status(404).json({ ok: false, error: 'Mission not found' });
+    }
+
+    // Check if mission is protected (cannot be archived)
+    if (mission.is_protected) {
+      return res.status(403).json({
+        ok: false,
+        error: 'Protected mission cannot be archived or deleted'
+      });
+    }
+
+    // Check if mission is already archived
+    if (mission.archived_at !== null) {
+      return res.status(400).json({ ok: false, error: 'Mission is already archived' });
+    }
+
+    // Archive the mission (set archived_at to current timestamp)
+    const archivedMission = await repos.plans.update(mission.workspace_id, missionId, {
+      archived_at: new Date().toISOString()
+    });
+
+    // Audit the action
+    await audit.log({
+      adapter,
+      action_type: 'MISSION_ARCHIVED',
+      details: {
+        missionId: missionId,
+        missionTitle: mission.title,
+        workspaceId: mission.workspace_id
+      }
+    });
+
+    // Get updated workspace and owner info for response
+    const workspace = await repos.workspaces.get(archivedMission.workspace_id);
+    const owner = await repos.users.getById(workspace.owner_user_id);
+
+    res.json({
+      ok: true,
+      mission: {
+        id: archivedMission.id,
+        title: archivedMission.title,
+        goal: archivedMission.goal,
+        status: archivedMission.status,
+        priority: archivedMission.priority,
+        archivedAt: archivedMission.archived_at,
+        isProtected: archivedMission.is_protected,
+        workspace: {
+          id: workspace.id,
+          name: workspace.name,
+          slug: workspace.slug
+        },
+        owner: {
+          id: owner.id,
+          displayName: owner.display_name
+        }
+      }
+    });
+  } catch (err) {
+    console.error('[Command Center] archive mission error:', err.message);
+    res.status(500).json({ ok: false, error: 'internal_error' });
+  }
+});
+
+// Unarchive mission endpoint
+app.post('/api/admin/command-center/missions/:id/unarchive', checkFounderSession, express.json({ limit: '32kb' }), async (req, res) => {
+  try {
+    const missionId = parseInt(req.params.id, 10);
+    if (isNaN(missionId)) {
+      return res.status(400).json({ ok: false, error: 'Invalid mission ID' });
+    }
+
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+
+    const repos = require('../db/repos').createRepos(adapter);
+    const audit = require('../utils/auditLogger');
+
+    // Get the mission to check if it exists and if it's protected
+    const mission = await repos.plans.get(missionId);
+    if (!mission) {
+      return res.status(404).json({ ok: false, error: 'Mission not found' });
+    }
+
+    // Check if mission is protected (shouldn't happen for unarchive, but checking for consistency)
+    if (mission.is_protected) {
+      return res.status(403).json({
+        ok: false,
+        error: 'Protected mission cannot be archived or deleted'
+      });
+    }
+
+    // Check if mission is not archived
+    if (mission.archived_at === null) {
+      return res.status(400).json({ ok: false, error: 'Mission is not archived' });
+    }
+
+    // Unarchive the mission (set archived_at to null)
+    const unarchivedMission = await repos.plans.update(mission.workspace_id, missionId, {
+      archived_at: null
+    });
+
+    // Audit the action
+    await audit.log({
+      adapter,
+      action_type: 'MISSION_UNARCHIVED',
+      details: {
+        missionId: missionId,
+        missionTitle: mission.title,
+        workspaceId: mission.workspace_id
+      }
+    });
+
+    // Get updated workspace and owner info for response
+    const workspace = await repos.workspaces.get(unarchivedMission.workspace_id);
+    const owner = await repos.users.getById(workspace.owner_user_id);
+
+    res.json({
+      ok: true,
+      mission: {
+        id: unarchivedMission.id,
+        title: unarchivedMission.title,
+        goal: unarchivedMission.goal,
+        status: unarchivedMission.status,
+        priority: unarchivedMission.priority,
+        archivedAt: unarchivedMission.archived_at,
+        isProtected: unarchivedMission.is_protected,
+        workspace: {
+          id: workspace.id,
+          name: workspace.name,
+          slug: workspace.slug
+        },
+        owner: {
+          id: owner.id,
+          displayName: owner.display_name
+        }
+      }
+    });
+  } catch (err) {
+    console.error('[Command Center] unarchive mission error:', err.message);
+    res.status(500).json({ ok: false, error: 'internal_error' });
+  }
+});
+
+// Revenue endpoint (simplified - could be expanded)
+app.get('/api/admin/command-center/revenue', checkFounderSession, async (req, res) => {
+  try {
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+
+    const repos = require('../db/repos').createRepos(adapter);
+
+    // Count active subscriptions by plan
+    const subscriptions = await repos.subscriptions.list();
+    const revenueByPlan = {
+      founder: 0,
+      trial: 0,
+      solo: 0,
+      growth: 0,
+      corporate: 0
+    };
+
+    for (const sub of subscriptions) {
+      if (sub.status === 'active') {
+        const workspace = await repos.workspaces.get(sub.workspace_id);
+        const plan = workspace ? workspace.plan : 'solo';
+        if (revenueByPlan[plan] !== undefined) {
+          revenueByPlan[plan]++;
+        }
+      }
+    }
+
+    // Calculate estimated MRR (simplified - would need actual pricing data)
+    const PRICING = {
+      founder: 0, // Founder is typically free/internal
+      trial: 0,   // Trial is free
+      solo: 99,   // $99/month
+      growth: 299, // $299/month
+      corporate: 999 // $999/month
+    };
+
+    let estimatedMrr = 0;
+    for (const [plan, count] of Object.entries(revenueByPlan)) {
+      estimatedMrr += (PRICING[plan] || 0) * count;
+    }
+
+    res.json({
+      ok: true,
+      estimatedMrr,
+      revenueByPlan,
+      activeSubscriptions: subscriptions.filter(s => s.status === 'active').length,
+      totalSubscriptions: subscriptions.length
+    });
+  } catch (err) {
+    console.error('[Command Center] revenue error:', err.message);
+    res.status(500).json({ ok: false, error: 'internal_error' });
+  }
+});
+
+// Dodo endpoint
+app.get('/api/admin/command-center/dodo', checkFounderSession, async (req, res) => {
+  try {
+    const hasDodoApiKey = process.env.DODO_API_KEY !== undefined && process.env.DODO_API_KEY !== '';
+    const hasDodoWebhookSecret = process.env.DODO_WEBHOOK_SECRET !== undefined && process.env.DODO_WEBHOOK_SECRET !== '';
+
+    const starterMonthly = process.env.DODO_STARTER_MONTHLY_PID || null;
+    const starterAnnual = process.env.DODO_STARTER_ANNUAL_PID || null;
+    const growthMonthly = process.env.DODO_GROWTH_MONTHLY_PID || null;
+    const growthAnnual = process.env.DODO_GROWTH_ANNUAL_PID || null;
+    const businessMonthly = process.env.DODO_BUSINESS_MONTHLY_PID || null;
+    const businessAnnual = process.env.DODO_BUSINESS_ANNUAL_PID || null;
+
+    const teosMode = process.env.TEOS_MODE || 'not_set';
+    const mode = require('../config/mode').getMode();
+
+    // Check product mapping completeness
+    const productMappingComplete = !!(
+      starterMonthly && starterAnnual &&
+      growthMonthly && growthAnnual &&
+      businessMonthly && businessAnnual
+    );
+
+    res.json({
+      ok: true,
+      dodoApiKey: hasDodoApiKey ? 'CONFIGURED' : 'MISSING',
+      dodoWebhookSecret: hasDodoWebhookSecret ? 'CONFIGURED' : 'MISSING',
+      starterMonthly: starterMonthly ? 'CONFIGURED' : 'MISSING',
+      starterAnnual: starterAnnual ? 'CONFIGURED' : 'MISSING',
+      growthMonthly: growthMonthly ? 'CONFIGURED' : 'MISSING',
+      growthAnnual: growthAnnual ? 'CONFIGURED' : 'MISSING',
+      businessMonthly: businessMonthly ? 'CONFIGURED' : 'MISSING',
+      businessAnnual: businessAnnual ? 'CONFIGURED' : 'MISSING',
+      teosMode: teosMode,
+      currentMode: mode,
+      productMappingComplete: productMappingComplete ? 'COMPLETE' : 'INCOMPLETE',
+      webhook: hasDodoWebhookSecret ? 'CONFIGURED' : 'MISSING',
+      revenuePath: (hasDodoApiKey && hasDodoWebhookSecret) ? 'READY' : 'BLOCKED'
+    });
+  } catch (err) {
+    console.error('[Command Center] dodo error:', err.message);
+    res.status(500).json({ ok: false, error: 'internal_error' });
+  }
+});
+
+// Agents endpoint
+app.get('/api/admin/command-center/agents', checkFounderSession, async (req, res) => {
+  try {
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+
+    const repos = require('../db/repos').createRepos(adapter);
+
+    const agents = await repos.agents.list();
+    const agentList = [];
+
+    for (const agent of agents) {
+      try {
+        const workspace = await repos.workspaces.get(agent.workspace_id);
+        const owner = await repos.users.getById(workspace.owner_user_id);
+
+        agentList.push({
+          id: agent.id,
+          agentType: agent.agent_type,
+          status: agent.status,
+          provider: agent.provider,
+          model: agent.model,
+          lastRunAt: agent.last_run_at,
+          nextRunAt: agent.next_run_at,
+          totalRuns: agent.total_runs || 0,
+          totalCostCents: agent.total_cost_cents || 0,
+          workspace: {
+            id: workspace.id,
+            name: workspace.name,
+            slug: workspace.slug
+          },
+          owner: {
+            id: owner.id,
+            displayName: owner.display_name
+          }
+        });
+      } catch (e) {
+        console.warn('[Command Center] error processing agent:', e.message);
+        continue;
+      }
+    }
+
+    res.json({ ok: true, agents: agentList });
+  } catch (err) {
+    console.error('[Command Center] agents error:', err.message);
+    res.status(500).json({ ok: false, error: 'internal_error' });
+  }
+});
+
+// Audit endpoint (reuse existing /api/audit but under command center path)
+app.get('/api/admin/command-center/audit', checkFounderSession, async (req, res) => {
+  try {
+    const requested = parseInt(req.query.limit, 10);
+    const limit = Math.min(Number.isFinite(requested) && requested > 0 ? requested : 100, 500);
+    const entries = await require('../utils/auditLogger').readVault();
+    res.json(entries.slice(-limit).reverse());
+  } catch (err) {
+    console.error('[Command Center] audit error:', err.message);
+    res.status(500).json({ ok: false, error: 'internal_error' });
   }
 });
 

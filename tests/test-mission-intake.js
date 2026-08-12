@@ -88,3 +88,4 @@ check(ar.ok && ar.row.title === 'مهمة واحدة', 'Arabic title accepted');
   console.error(err);
   process.exit(1);
 });
+

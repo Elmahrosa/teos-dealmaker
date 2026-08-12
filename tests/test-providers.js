@@ -87,3 +87,4 @@ const providers = require('../services/providers');
   console.error('✗ provider test failed:', err);
   process.exit(1);
 });
+

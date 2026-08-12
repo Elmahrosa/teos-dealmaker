@@ -142,3 +142,4 @@ const menu = require('../bot/menu');
   console.error('\u2717 bot boot smoke failed:', err);
   process.exit(1);
 });
+

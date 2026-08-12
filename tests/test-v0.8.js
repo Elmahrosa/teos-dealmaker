@@ -133,3 +133,4 @@ const memory = require('../services/memory');
   console.error('✗ v0.8 test failed:', err);
   process.exit(1);
 });
+

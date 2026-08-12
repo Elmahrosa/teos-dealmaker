@@ -111,3 +111,4 @@ const queue = require('../services/queue');
   console.error('✗ console test failed:', err);
   process.exit(1);
 });
+

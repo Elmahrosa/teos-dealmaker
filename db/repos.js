@@ -139,7 +139,8 @@ function createRepos(adapter) {
       },
       list(workspace_id, opts) {
         const o = opts || {};
-        return adapter.find('audit_trail', { workspace_id }, {
+        const where = workspace_id !== undefined && workspace_id !== null ? { workspace_id } : {};
+        return adapter.find('audit_trail', where, {
           orderBy: o.orderBy || 'timestamp',
           order: o.order || 'desc',
           limit: o.limit,
@@ -147,7 +148,8 @@ function createRepos(adapter) {
         });
       },
       count(workspace_id) {
-        return adapter.count('audit_trail', { workspace_id });
+        const where = workspace_id !== undefined && workspace_id !== null ? { workspace_id } : {};
+        return adapter.count('audit_trail', where);
       }
     },
 
@@ -355,14 +357,15 @@ function createRepos(adapter) {
       }
     },
     plans: {
-      create({ workspace_id, title, goal, status = 'planned', priority = 'normal', metrics = null, version = null }) {
-        return adapter.insert('plans', { workspace_id, title, goal, status, priority, metrics, version });
+      create({ workspace_id, title, goal, status = 'planned', priority = 'normal', metrics = null, version = null, archived_at = null, is_protected = false }) {
+        return adapter.insert('plans', { workspace_id, title, goal, status, priority, metrics, version, archived_at, is_protected });
       },
       get(workspace_id, id) {
         return adapter.findOne('plans', { workspace_id, id });
       },
       list(workspace_id) {
-        return adapter.find('plans', { workspace_id }, { orderBy: 'id', order: 'desc' });
+        const where = workspace_id !== undefined && workspace_id !== null ? { workspace_id } : {};
+        return adapter.find('plans', where, { orderBy: 'id', order: 'desc' });
       },
       update(workspace_id, id, changes) {
         return adapter.update('plans', { workspace_id, id }, changes);
