@@ -208,3 +208,4 @@ audit.clearVault();
   console.error('✗ MCP client layer test failed:', err);
   process.exit(1);
 });
+

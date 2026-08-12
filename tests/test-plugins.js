@@ -244,3 +244,4 @@ audit.clearVault();
   console.error('✗ Plugin platform test failed:', err);
   process.exit(1);
 });
+

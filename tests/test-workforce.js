@@ -141,3 +141,4 @@ const workforce = require('../services/workforce');
   console.error('✗ workforce test failed:', err);
   process.exit(1);
 });
+

@@ -15,3 +15,4 @@ testCases.forEach((prospect, index) => {
 });
 
 console.log('\nVerification complete. Inspect data/vault/audit.log for MARKET_INTELLIGENCE_* entries.');
+

@@ -134,3 +134,4 @@ const { schema, validate, planner, coordinator, state } = mc;
   console.error('✗ mission-controller test failed:', err);
   process.exit(1);
 });
+

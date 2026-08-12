@@ -73,3 +73,4 @@ const tx = require('../services/transparency');
   console.error(err && err.stack ? err.stack : err);
   process.exit(1);
 });
+

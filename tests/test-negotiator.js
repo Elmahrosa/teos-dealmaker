@@ -15,3 +15,4 @@ cases.forEach(c => {
 });
 
 console.log('\nVerification complete. Inspect data/vault/audit.log for NEGOTIATOR_AGENT_* entries.');
+

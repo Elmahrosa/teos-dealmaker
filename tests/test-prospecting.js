@@ -29,3 +29,4 @@ if (hot) {
 }
 
 console.log('\nVerification complete. Inspect data/vault/audit.log for PROSPECTING_AGENT_* and QUALIFICATION_AGENT_* entries.');
+

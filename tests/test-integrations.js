@@ -215,3 +215,4 @@ const CATEGORY_COUNTS = { crm: 4, email: 4, calendar: 2, storage: 3, website: 2,
   console.error('✗ integration test failed:', err);
   process.exit(1);
 });
+

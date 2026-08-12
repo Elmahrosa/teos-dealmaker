@@ -82,3 +82,4 @@ runTests().catch(err => {
   console.error('����������������✗ Negotiator simulation test failed:', err);
   process.exit(1);
 });
+

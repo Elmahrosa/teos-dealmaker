@@ -56,3 +56,4 @@ const events = require('../services/workforce/events');
   console.error('test-notify FAILED:', err && err.stack || err);
   process.exit(1);
 });
+

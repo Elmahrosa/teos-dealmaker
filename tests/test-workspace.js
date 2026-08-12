@@ -92,3 +92,4 @@ const { getWorkspaceContext, setWorkspaceLang, subscriptionLabel, isFounder } = 
   console.error('✗ workspace test failed:', err);
   process.exit(1);
 });
+

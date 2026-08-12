@@ -104,3 +104,4 @@ global.fetch = async (url, options) => {
   console.error('✗ MCP integration test failed:', err);
   process.exit(1);
 });
+

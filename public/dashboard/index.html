@@ -71,6 +71,44 @@
     <button id="lang-switch" type="button" role="button" aria-label="Switch language">العربية</button>
   </header>
 
+  <!-- Founder Authentication -->
+  <div id="founder-auth" style="display: none;">
+    <div class="panel" style="background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin-bottom: 20px;">
+      <h2 style="color: var(--gold); margin-top: 0;">Founder Login</h2>
+      <form id="founder-login-form">
+        <div style="margin-bottom: 16px;">
+          <label for="founder-email" style="display: block; margin-bottom: 4px; color: var(--muted);">Email</label>
+          <input type="email" id="founder-email" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label for="founder-password" style="display: block; margin-bottom: 4px; color: var(--muted);">Password</label>
+          <input type="password" id="founder-password" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);">
+        </div>
+        <button type="submit" style="background: var(--gold); color: var(--bg); border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Login</button>
+        <div id="founder-login-error" style="margin-top: 12px; color: var(--red); font-size: 14px; min-height: 20px;"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Founder Navigation (hidden by default) -->
+  <nav id="founder-nav" style="display: none; margin-bottom: 20px;">
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <a href="#" data-view="overview" class="nav-link" style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; color: var(--text); text-decoration: none; font-size: 14px;">Overview</a>
+      <a href="#" data-view="users" class="nav-link" style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; color: var(--text); text-decoration: none; font-size: 14px;">Users</a>
+      <a href="#" data-view="workspaces" class="nav-link" style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; color: var(--text); text-decoration: none; font-size: 14px;">Workspaces</a>
+      <a href="#" data-view="subscriptions" class="nav-link" style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; color: var(--text); text-decoration: none; font-size: 14px;">Subscriptions</a>
+      <a href="#" data-view="missions" class="nav-link" style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; color: var(--text); text-decoration: none; font-size: 14px;">Missions</a>
+      <a href="#" data-view="dodo" class="nav-link" style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; color: var(--text); text-decoration: none; font-size: 14px;">Dodo</a>
+      <a href="#" data-view="agents" class="nav-link" style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; color: var(--text); text-decoration: none; font-size: 14px;">Agents</a>
+      <a href="#" data-view="audit" class="nav-link" style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; color: var(--text); text-decoration: none; font-size: 14px;">Audit</a>
+    </div>
+  </div>
+
+  <!-- Founder Content Area -->
+  <div id="founder-content" style="display: none;">
+    <!-- Content will be dynamically loaded here -->
+  </div>
+
   <div id="ops-strip">
     <span class="pill" id="strip-service">🟢 SERVICE RUNNING</span>
     <span class="pill" id="strip-outbound">🟡 OUTBOUND PAUSED</span>
@@ -388,6 +426,480 @@
   refresh();
   loadPricing();
   setInterval(refresh, 5000);
+</script>
+<script>
+// Founder Dashboard Functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const founderAuth = document.getElementById('founder-auth');
+  const founderNav = document.getElementById('founder-nav');
+  const founderContent = document.getElementById('founder-content');
+  const founderLoginForm = document.getElementById('founder-login-form');
+  const founderLoginError = document.getElementById('founder-login-error');
+  const publicStats = document.querySelector('.stats');
+  const pricingSection = document.getElementById('pricing');
+  const outreachSection = document.getElementById('outreach');
+  const auditNote = document.getElementById('audit-note');
+
+  // Check if we have a session (for simplicity, we'll check for a token in localStorage)
+  // In a real app, we would validate the token with the server.
+  function checkSession() {
+    const token = localStorage.getItem('teos_founder_token');
+    const user = localStorage.getItem('teos_founder_user');
+    return token && user;
+  }
+
+  function showFounderView() {
+    founderAuth.style.display = 'none';
+    founderNav.style.display = 'flex';
+    founderContent.style.display = 'block';
+    // Hide public sections when in founder view
+    publicStats.style.display = 'none';
+    pricingSection.style.display = 'none';
+    outreachSection.style.display = 'none';
+    auditNote.style.display = 'none';
+    loadFounderView('overview');
+  }
+
+  function showPublicView() {
+    localStorage.removeItem('teos_founder_token');
+    localStorage.removeItem('teos_founder_user');
+    founderAuth.style.display = 'block';
+    founderNav.style.display = 'none';
+    founderContent.style.display = 'none';
+    founderLoginForm.reset();
+    founderLoginError.textContent = '';
+    // Show public sections if we hid them
+    // publicStats.style.display = 'flex';
+    // pricingSection.style.display = 'block';
+    // outreachSection.style.display = 'block';
+    // auditNote.style.display = 'block';
+  }
+
+  // Handle login
+  founderLoginForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    founderLoginError.textContent = '';
+
+    const email = document.getElementById('founder-email').value.trim();
+    const password = document.getElementById('founder-password').value;
+
+    if (!email || !password) {
+      founderLoginError.textContent = 'Please enter both email and password';
+      return;
+    }
+
+    fetch('/api/auth/web-login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.ok && data.isFounder) {
+        // Store user and token (in real app, use secure storage)
+        localStorage.setItem('teos_founder_token', data.sessionToken);
+        localStorage.setItem('teos_founder_user', JSON.stringify(data.user));
+        showFounderView();
+      } else {
+        founderLoginError.textContent = data.error || 'Login failed';
+      }
+    })
+    .catch(err => {
+      console.error('Founder login error:', err);
+      founderLoginError.textContent = 'Network error. Please try again.';
+    });
+  });
+
+  // Handle navigation
+  founderNav.addEventListener('click', function(e) {
+    if (e.target.classList.contains('nav-link')) {
+      e.preventDefault();
+      const view = e.target.getAttribute('data-view');
+      loadFounderView(view);
+
+      // Update active link
+      const links = founderNav.querySelectorAll('.nav-link');
+      links.forEach(link => link.classList.remove('active'));
+      e.target.classList.add('active');
+    }
+  });
+
+  // Load founder view content
+  function loadFounderView(view) {
+    // Show loading state
+    founderContent.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--muted);">Loading...</div>';
+
+    // Fetch data from the appropriate endpoint
+    let endpoint = '';
+    switch(view) {
+      case 'overview':
+        endpoint = '/api/admin/command-center/overview';
+        break;
+      case 'users':
+        endpoint = '/api/admin/command-center/users';
+        break;
+      case 'workspaces':
+        endpoint = '/api/admin/command-center/workspaces';
+        break;
+      case 'subscriptions':
+        endpoint = '/api/admin/command-center/subscriptions';
+        break;
+      case 'missions':
+        endpoint = '/api/admin/command-center/missions';
+        break;
+      case 'dodo':
+        endpoint = '/api/admin/command-center/dodo';
+        break;
+      case 'agents':
+        endpoint = '/api/admin/command-center/agents';
+        break;
+      case 'audit':
+        endpoint = '/api/admin/command-center/audit';
+        break;
+      default:
+        endpoint = '/api/admin/command-center/overview';
+    }
+
+    // Add session token to headers if we have one (for simplicity, we're using localStorage)
+    const token = localStorage.getItem('teos_founder_token');
+    const headers = {};
+    if (token) {
+      // In our current implementation, we are using a query param or header? We set x-founder-session or query.session
+      // We'll use the header for simplicity in this example.
+      headers['x-founder-session'] = token;
+    }
+
+    fetch(endpoint, { headers })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (!data.ok) {
+          throw new Error(data.error || 'Failed to load data');
+        }
+        renderFounderView(view, data);
+      })
+      .catch(err => {
+        console.error(`Error loading ${view}:`, err);
+        founderContent.innerHTML = `<div style="color: var(--red); padding: 20px;">Error loading ${view}: ${err.message}</div>`;
+      });
+  }
+
+  // Render the founder view based on the view type and data
+  function renderFounderView(view, data) {
+    let html = `<h2 style="color: var(--gold); margin-top: 0;">${view.charAt(0).toUpperCase() + view.slice(1)}</h2>`;
+
+    switch(view) {
+      case 'overview':
+        html += renderOverview(data);
+        break;
+      case 'users':
+        html += renderUsers(data);
+        break;
+      case 'workspaces':
+        html += renderWorkspaces(data);
+        break;
+      case 'subscriptions':
+        html += renderSubscriptions(data);
+        break;
+      case 'missions':
+        html += renderMissions(data);
+        break;
+      case 'dodo':
+        html += renderDodo(data);
+        break;
+      case 'agents':
+        html += renderAgents(data);
+        break;
+      case 'audit':
+        html += renderAudit(data);
+        break;
+      default:
+        html += '<p>No data available</p>';
+    }
+
+    founderContent.innerHTML = html;
+  }
+
+  // Render functions for each view
+  function renderOverview(data) {
+    const { system, users, workspaces, missions, subscriptions, revenue } = data;
+    return `
+      <div class="stats" style="margin-bottom: 20px;">
+        <div class="stat"><div class="label">System Mode</div><div class="value">${system.mode}</div></div>
+        <div class="stat"><div class="label">Audit Entries</div><div class="value">${system.auditEntries || 'N/A'}</div></div>
+        <div class="stat"><div class="label">Total Users</div><div class="value">${users.total}</div></div>
+        <div class="stat"><div class="label">Active Users</div><div class="value">${users.active}</div></div>
+        <div class="stat"><div class="label">Total Workspaces</div><div class="value">${workspaces.total}</div></div>
+        <div class="stat"><div class="label">Total Missions</div><div class="value">${missions.total}</div></div>
+        <div class="stat"><div class="label">Completed Missions</div><div class="value">${missions.completed}</div></div>
+        <div class="stat"><div class="label">Active Subscriptions</div><div class="value">${subscriptions.active}</div></div>
+        <div class="stat"><div class="label">Estimated MRR</div><div class="value">$${revenue.estimatedMrr || 0}</div></div>
+      </div>
+    `;
+  }
+
+  function renderUsers(data) {
+    const users = data.users || [];
+    if (users.length === 0) {
+      return '<p>No users found</p>';
+    }
+
+    return `
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Name</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Email</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Workspace</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Role</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Plan</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Missions Used</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Entitled</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${users.map(user => `
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${user.displayName || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${user.email || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">
+                ${user.workspace ? user.workspace.name : 'None'}
+              </td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${user.role || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${user.plan || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${user.missionsUsed}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${user.entitlement ? 'Yes' : 'No'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderWorkspaces(data) {
+    const workspaces = data.workspaces || [];
+    if (workspaces.length === 0) {
+      return '<p>No workspaces found</p>';
+    }
+
+    return `
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Name</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Slug</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Owner</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Plan</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Subscription Status</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Missions Used</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Entitled</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${workspaces.map(ws => `
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${ws.name || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${ws.slug || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">
+                ${ws.owner ? ws.owner.displayName : 'N/A'}
+              </td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${ws.plan || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${ws.subscriptionStatus || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${ws.missionsUsed}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${ws.entitlement ? 'Yes' : 'No'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderSubscriptions(data) {
+    const subscriptions = data.subscriptions || [];
+    if (subscriptions.length === 0) {
+      return '<p>No subscriptions found</p>';
+    }
+
+    return `
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Workspace</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Owner</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Plan</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Status</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Missions Used</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Cycle</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Renewal Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${subscriptions.map(sub => `
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">
+                ${sub.workspace ? sub.workspace.name : 'N/A'}
+              </td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">
+                ${sub.owner ? sub.owner.displayName : 'N/A'}
+              </td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${sub.plan || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${sub.status || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${sub.missionsUsed}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${sub.cycle || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${sub.renewalDate || 'N/A'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderMissions(data) {
+    const missions = data.missions || [];
+    if (missions.length === 0) {
+      return '<p>No missions found</p>';
+    }
+
+    return `
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Title</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Title</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Workspace</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Owner</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Status</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Priority</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Progress</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Total Steps</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Completed Steps</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${missions.map(m => `
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${m.title || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">
+                ${m.workspace ? m.workspace.name : 'N/A'}
+              </td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">
+                ${m.owner ? m.owner.displayName : 'N/A'}
+              </td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${m.status || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${m.priority || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${m.progress}%</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${m.totalSteps}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${m.completedSteps}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderDodo(data) {
+    return `
+      <div style="background: var(--panel); padding: 16px; border-radius: 8px;">
+        <div style="margin-bottom: 12px;"><strong>Dodo API Key:</strong> <span style="color: ${data.dodoApiKey === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.dodoApiKey}</span></div>
+        <div style="margin-bottom: 12px;"><strong>Dodo Webhook Secret:</strong> <span style="color: ${data.dodoWebhookSecret === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.dodoWebhookSecret}</span></div>
+        <div style="margin-bottom: 12px;"><strong>Starter Monthly:</strong> <span style="color: ${data.starterMonthly === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.starterMonthly}</span></div>
+        <div style="margin-bottom: 12px;"><strong>Starter Annual:</strong> <span style="color: ${data.starterAnnual === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.starterAnnual}</span></div>
+        <div style="margin-bottom: 12px;"><strong>Growth Monthly:</strong> <span style="color: ${data.growthMonthly === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.growthMonthly}</span></div>
+        <div style="margin-bottom: 12px;"><strong>Growth Annual:</strong> <span style="color: ${data.growthAnnual === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.growthAnnual}</span></div>
+        <div style="margin-bottom: 12px;"><strong>Business Monthly:</strong> <span style="color: ${data.businessMonthly === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.businessMonthly}</span></div>
+        <div style="margin-bottom: 12px;"><strong>Business Annual:</strong> <span style="color: ${data.businessAnnual === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.businessAnnual}</span></div>
+        <div style="margin-bottom: 12px;"><strong>TEOS Mode:</strong> <span style="color: var(--gold);">${data.teosMode}</span></div>
+        <div style="margin-bottom: 12px;"><strong>Current Mode:</strong> <span style="color: var(--gold);">${data.currentMode}</span></div>
+        <div style="margin-bottom: 12px;"><strong>Product Mapping:</strong> <span style="color: ${data.productMappingComplete === 'COMPLETE' ? 'var(--green)' : 'var(--red)'};">${data.productMappingComplete}</span></div>
+        <div style="margin-bottom: 12px;"><strong>Webhook:</strong> <span style="color: ${data.webhook === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.webhook}</span></div>
+        <div style="margin-bottom: 12px;"><strong>Revenue Path:</strong> <span style="color: ${data.revenuePath === 'READY' ? 'var(--green)' : 'var(--red)'};">${data.revenuePath}</span></div>
+      </div>
+    `;
+  }
+
+  function renderAgents(data) {
+    const agents = data.agents || [];
+    if (agents.length === 0) {
+      return '<p>No agents found</p>';
+    }
+
+    return `
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Agent Type</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Status</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Provider</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Model</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Last Run At</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Total Runs</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Workspace</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Owner</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${agents.map(agent => `
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${agent.agentType || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${agent.status || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${agent.provider || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${agent.model || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${agent.lastRunAt || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${agent.totalRuns || 0}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">
+                ${agent.workspace ? agent.workspace.name : 'N/A'}
+              </td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">
+                ${agent.owner ? agent.owner.displayName : 'N/A'}
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderAudit(data) {
+    const entries = data || [];
+    if (entries.length === 0) {
+      return '<p>No audit entries found</p>';
+    }
+
+    return `
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Timestamp</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Event</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">Outcome</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border);">By</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${entries.map(entry => `
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${new Date(entry.timestamp).toLocaleString()}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${entry.event || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${entry.outcome || 'N/A'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--border);">${entry.by || 'N/A'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // Initialize: check if we have a session and show the appropriate view
+  if (checkSession()) {
+    showFounderView();
+  }
+});
 </script>
 </body>
 </html>

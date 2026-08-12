@@ -28,3 +28,4 @@ const blocked = closeDeal(incomplete);
 console.log(`   Result: ${blocked.status} | missing: ${blocked.missing.join(', ')}`);
 
 console.log('\nVerification complete. Inspect data/vault/audit.log for CLOSING_AGENT_* entries.');
+

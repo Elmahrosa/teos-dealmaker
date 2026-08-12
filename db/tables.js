@@ -70,7 +70,7 @@ const TABLES = {
     timestamps: true
   },
   plans: {
-    columns: ['workspace_id', 'title', 'goal', 'status', 'priority', 'metrics', 'version'],
+    columns: ['workspace_id', 'title', 'goal', 'status', 'priority', 'metrics', 'version', 'archived_at', 'is_protected'],
     timestamps: true
   },
   plan_steps: {

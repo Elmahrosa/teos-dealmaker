@@ -89,3 +89,4 @@ if (failures.length) {
 }
 
 console.log(`\u2713 schema FK ordering valid (${passed} ordering checks passed)`);
+

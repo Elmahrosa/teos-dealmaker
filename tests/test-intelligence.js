@@ -144,3 +144,4 @@ const intelligence = require('../services/intelligence');
   console.error('✗ intelligence test failed:', err);
   process.exit(1);
 });
+

@@ -124,3 +124,4 @@ const queue = require('../services/queue');
   console.error('✗ operations test failed:', err);
   process.exit(1);
 });
+

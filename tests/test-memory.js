@@ -89,3 +89,4 @@ const memory = require('../services/memory');
   console.error('✗ memory test failed:', err);
   process.exit(1);
 });
+

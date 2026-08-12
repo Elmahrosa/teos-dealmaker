@@ -84,3 +84,4 @@ const identity = require('../services/identity');
   console.error('✗ identity test failed:', err);
   process.exit(1);
 });
+

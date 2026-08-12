@@ -78,3 +78,4 @@ runTests().catch(err => {
   console.error('����������������������������������������������������✗ Negotiation rehearsal test failed:', err);
   process.exit(1);
 });
+

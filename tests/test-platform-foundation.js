@@ -191,3 +191,4 @@ const assert = require('assert');
   console.error('✗ platform foundation test failed:', err);
   process.exit(1);
 });
+

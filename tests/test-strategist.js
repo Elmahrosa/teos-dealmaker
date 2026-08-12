@@ -16,3 +16,4 @@ leads.forEach(lead => {
 });
 
 console.log('\nVerification complete. Inspect data/vault/audit.log for STRATEGIST_AGENT_* entries.');
+

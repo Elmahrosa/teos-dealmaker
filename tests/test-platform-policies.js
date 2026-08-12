@@ -120,3 +120,4 @@ const assert = require('assert');
   console.error('✗ policy engine test failed:', err);
   process.exit(1);
 });
+
