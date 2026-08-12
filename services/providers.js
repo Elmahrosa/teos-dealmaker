@@ -187,6 +187,7 @@ function simulate(agentType, prompt, providerKey, model) {
 async function realCall(providerKey, model, prompt, opts) {
   const p = PROVIDERS[providerKey];
   const o = opts || {};
+  const timeoutMs = Number(o.timeoutMs || process.env.PROVIDER_TIMEOUT_MS || 60000) || 60000;
   const headers = { 'Content-Type': 'application/json' };
   let url;
   let body;
@@ -203,29 +204,40 @@ async function realCall(providerKey, model, prompt, opts) {
     if (p.keyEnv) headers['Authorization'] = `Bearer ${process.env[p.keyEnv]}`;
     body = { model, messages: [{ role: 'user', content: prompt }], temperature: o.temperature || 0.7, max_tokens: o.maxTokens || 512 };
   }
-  const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '');
-    throw new Error(`Provider ${providerKey} HTTP ${res.status}: ${detail.slice(0, 200)}`);
+  const controller = typeof AbortController === 'function' ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+  try {
+    const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal: controller ? controller.signal : undefined });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      throw new Error(`Provider ${providerKey} HTTP ${res.status}: ${detail.slice(0, 200)}`);
+    }
+    const data = await res.json();
+    let text;
+    let inputTokens;
+    let outputTokens;
+    if (p.api === 'anthropic') {
+      text = (data.content || []).map(c => c.text || '').join('');
+      inputTokens = data.usage ? data.usage.input_tokens || 0 : 0;
+      outputTokens = data.usage ? data.usage.output_tokens || 0 : 0;
+    } else if (p.api === 'gemini') {
+      text = (data.candidates && data.candidates[0] && data.candidates[0].content.parts || []).map(part => part.text || '').join('');
+      inputTokens = data.usageMetadata ? data.usageMetadata.promptTokenCount || 0 : 0;
+      outputTokens = data.usageMetadata ? data.usageMetadata.candidatesTokenCount || 0 : 0;
+    } else {
+      text = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content || '' : '';
+      inputTokens = data.usage ? data.usage.prompt_tokens || 0 : 0;
+      outputTokens = data.usage ? data.usage.completion_tokens || 0 : 0;
+    }
+    return { text, input_tokens: inputTokens, output_tokens: outputTokens, simulated: false };
+  } catch (err) {
+    if (controller && err && err.name === 'AbortError') {
+      throw new Error(`Provider ${providerKey} ${model} timeout after ${timeoutMs}ms`);
+    }
+    throw err;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
-  const data = await res.json();
-  let text;
-  let inputTokens;
-  let outputTokens;
-  if (p.api === 'anthropic') {
-    text = (data.content || []).map(c => c.text || '').join('');
-    inputTokens = data.usage ? data.usage.input_tokens || 0 : 0;
-    outputTokens = data.usage ? data.usage.output_tokens || 0 : 0;
-  } else if (p.api === 'gemini') {
-    text = (data.candidates && data.candidates[0] && data.candidates[0].content.parts || []).map(part => part.text || '').join('');
-    inputTokens = data.usageMetadata ? data.usageMetadata.promptTokenCount || 0 : 0;
-    outputTokens = data.usageMetadata ? data.usageMetadata.candidatesTokenCount || 0 : 0;
-  } else {
-    text = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content || '' : '';
-    inputTokens = data.usage ? data.usage.prompt_tokens || 0 : 0;
-    outputTokens = data.usage ? data.usage.completion_tokens || 0 : 0;
-  }
-  return { text, input_tokens: inputTokens, output_tokens: outputTokens, simulated: false };
 }
 
 function costFromTokens(providerKey, model, inputTokens, outputTokens) {

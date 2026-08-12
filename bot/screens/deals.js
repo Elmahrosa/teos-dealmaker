@@ -6,10 +6,9 @@ const { getCtx, titleCase } = require('./lib');
 
 async function buildDeals(userId) {
   const ctx = await getCtx(userId);
-  const entries = audit.readVault();
   const closed = ctx
     ? ctx.deals.closed
-    : entries.filter(e => e.action === 'CLOSING_AGENT_DEAL_CLOSED').length;
+    : audit.readVault().filter(e => e.action === 'CLOSING_AGENT_DEAL_CLOSED').length;
   const dbConfigured = Boolean(process.env.DATABASE_URL);
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b('Deals')}`,

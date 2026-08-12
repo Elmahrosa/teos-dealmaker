@@ -8,7 +8,7 @@ const { BOT_CONFIG } = require('../config');
 const identity = require('../../services/identity');
 const memory = require('../../services/memory');
 const runtime = require('../../services/workforce/runtime');
-const { getCtx, recentErrors } = require('./lib');
+const { getCtx, recentErrors, lastEntry } = require('./lib');
 
 function approvalBadge(mode) {
   if (mode === 'automatic') return `🟢 ${design.b('Automatic')}`;
@@ -34,10 +34,9 @@ async function stats(userId) {
 async function buildFounderHome(userId) {
   const t = key => i18n.t(userId, key);
   const s = await stats(userId);
-  const entries = audit.readVault();
   const closed = s.ctx
     ? s.ctx.deals.closed
-    : entries.filter(e => e.action === 'CLOSING_AGENT_DEAL_CLOSED').length;
+    : audit.readVault().filter(e => e.action === 'CLOSING_AGENT_DEAL_CLOSED').length;
   const open = s.ctx ? s.ctx.deals.open : 0;
   const text = design.compose([
     `👑 ${design.b(t('fd_welcome'))}`,
@@ -225,7 +224,7 @@ async function buildFounderDebug(userId) {
   const t = key => i18n.t(userId, key);
   const s = await stats(userId);
   const adapter = getStoreAdapter();
-  const entries = audit.readVault();
+  const entryCount = audit.countEntries();
   let running = 0;
   let memoryLines = [];
   let usage = null;
@@ -243,12 +242,12 @@ async function buildFounderDebug(userId) {
       usage = await repos.usage.sum(s.ctx.workspace.id);
     } catch (_) { /* ignore */ }
   }
-  const last = entries[entries.length - 1];
+  const last = lastEntry();
   const blocks = [
     `🐞 ${design.b(t('fd_debug_title'))}`,
     design.row(t('fd_agents'), String(s.agentCount)),
     design.row(t('fd_running'), String(running)),
-    design.row(t('fd_audit_events'), String(entries.length)),
+    design.row(t('fd_audit_events'), String(entryCount)),
     design.row(t('fd_recent_errors'), String(recentErrors())),
     usage ? design.row(t('fd_cost'), `$${((usage.cost_cents || 0) / 100).toFixed(2)}`) : null,
     usage ? design.row(t('fd_tokens'), `${usage.input_tokens || 0}/${usage.output_tokens || 0} in/out`) : null,
@@ -340,9 +339,9 @@ function buildFounderPolicy(userId) {
 async function buildFounderAnalytics(userId) {
   const t = key => i18n.t(userId, key);
   const s = await stats(userId);
-  const entries = audit.readVault();
   const closed = s.ctx ? s.ctx.deals.closed : 0;
   const open = s.ctx ? s.ctx.deals.open : 0;
+  const entryCount = audit.countEntries();
   let usage = null;
   if (s.ctx) {
     try {
@@ -357,7 +356,7 @@ async function buildFounderAnalytics(userId) {
     design.row(t('fd_analytics_total'), String(s.workspaces.length)),
     design.row(t('fd_analytics_customers'), String(s.members.length)),
     design.row(t('fd_analytics_revenue'), `${open} open · ${closed} closed`),
-    design.row(t('fd_analytics_audit'), String(entries.length)),
+    design.row(t('fd_analytics_audit'), String(entryCount)),
     usage ? design.row(t('fd_analytics_cost'), `$${((usage.cost_cents || 0) / 100).toFixed(2)}`) : null,
     usage ? design.row(t('fd_analytics_tokens'), `${usage.input_tokens || 0}/${usage.output_tokens || 0}`) : null,
     design.divider()
