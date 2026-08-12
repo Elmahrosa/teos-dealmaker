@@ -23,14 +23,14 @@ async function buildHome(userId) {
   const ctx = await getCtx(userId);
   const isAdminOrFounder = isAdmin(userId) || isFounder(userId);
   if (!ctx) {
-    const entries = audit.readVault();
+    const entryCount = audit.countEntries();
     const text = design.compose([
       `${design.EMOJI.ai} ${design.b('TEOS DEALMAKER')}`,
       design.it(t('home_sub_mission_control')),
       design.divider(),
       `${design.row(t('home_row_platform'), t('home_val_production'))}`,
       `${design.row(t('home_row_revenue_team'), t('home_val_13_spec'))}`,
-      `${design.row(t('home_row_audit'), i18n.sprintf(t('home_val_entries'), entries.length))}\n${design.divider()}`,
+      `${design.row(t('home_row_audit'), i18n.sprintf(t('home_val_entries'), entryCount))}\n${design.divider()}`,
       `${design.it(t('home_help_select'))}`
     ]);
     const row1 = [design.textButton(t('btn_dashboard'), 'cc_dashboard'), design.textButton(t('btn_revenue_team'), 'cc_workforce')];
@@ -116,12 +116,12 @@ async function buildHome(userId) {
 async function buildDashboard(userId) {
   const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
-  const entries = audit.readVault();
+  const entryCount = audit.countEntries();
   const last = lastEntry();
   const closed = ctx
     ? ctx.deals.closed
-    : entries.filter(e => e.action === 'CLOSING_AGENT_DEAL_CLOSED').length;
-  const recent = entries.slice(-3).reverse().map(e =>
+    : audit.readVault().filter(e => e.action === 'CLOSING_AGENT_DEAL_CLOSED').length;
+  const recent = audit.readTail(3).reverse().map(e =>
     `${design.code((e.timestamp || '').slice(11, 19))} ${e.action} → ${e.target}`
   );
   const text = design.compose([
@@ -134,7 +134,7 @@ async function buildDashboard(userId) {
     ctx ? design.row(t('dash_members'), String(ctx.membersCount)) : null,
     ctx ? design.row(t('dash_agents'), i18n.sprintf(t('dash_agents_active'), ctx.agents.active)) : null,
     ctx ? design.row(t('dash_sub_status'), ctx.subscriptionLabel) : null,
-    design.row(t('home_row_audit'), i18n.sprintf(t('home_val_entries'), entries.length)),
+    design.row(t('home_row_audit'), i18n.sprintf(t('home_val_entries'), entryCount)),
     design.row(t('home_row_closed_deals'), `${closed}`),
     design.row(t('health_last'), last ? `${last.action} · ${(last.timestamp || '').slice(11, 19)}` : '—'),
     design.section(t('home_sect_recent')),

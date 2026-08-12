@@ -381,8 +381,8 @@ app.get('/api/diagnostics', async (req, res) => {
 app.get('/api/audit', requireAuditAuth, (req, res) => {
   const requested = parseInt(req.query.limit, 10);
   const limit = Math.min(Number.isFinite(requested) && requested > 0 ? requested : 100, 500);
-  const entries = audit.readVault();
-  res.json(entries.slice(-limit).reverse());
+  const entries = audit.readTail(limit);
+  res.json(entries.reverse());
 });
 
 app.post('/webhook/dodo', express.raw({ type: 'application/json' }), async (req, res) => {
@@ -1608,8 +1608,8 @@ app.get('/api/admin/command-center/audit', checkFounderSession, async (req, res)
   try {
     const requested = parseInt(req.query.limit, 10);
     const limit = Math.min(Number.isFinite(requested) && requested > 0 ? requested : 100, 500);
-    const entries = await require('../utils/auditLogger').readVault();
-    res.json(entries.slice(-limit).reverse());
+    const entries = require('../utils/auditLogger').readTail(limit);
+    res.json(entries.reverse());
   } catch (err) {
     console.error('[Command Center] audit error:', err.message);
     res.status(500).json({ ok: false, error: 'internal_error' });
