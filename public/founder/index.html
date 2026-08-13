@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>TEOS DealMaker · Founder Command Center</title>
+<style>
+  :root {
+    --bg:#0b0e13; --panel:#12161d; --panel2:#171c24; --line:#232a34;
+    --text:#d7dde6; --muted:#8b96a5; --accent:#4f8cff; --ok:#2ecc71; --warn:#f39c12; --bad:#e74c3c;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { padding:18px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  header h1 { font-size:18px; margin:0; }
+  header .sub { color:var(--muted); font-size:12px; }
+  main { padding:20px 24px; max-width:1100px; margin:0 auto; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px,1fr)); gap:16px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px; }
+  .panel h2 { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 12px; }
+  .row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px dashed var(--line); }
+  .row:last-child { border-bottom:0; }
+  .row .k { color:var(--muted); }
+  .pill { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600; }
+  .pill.run { background:rgba(46,204,113,.15); color:var(--ok); }
+  .pill.pause { background:rgba(243,156,18,.15); color:var(--warn); }
+  .pill.stop { background:rgba(231,76,60,.18); color:var(--bad); }
+  .pill.guard { background:rgba(79,140,255,.15); color:var(--accent); }
+  .controls { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
+  button { border:1px solid var(--line); background:var(--panel2); color:var(--text); border-radius:8px; padding:8px 16px; font-size:13px; cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.danger { background:rgba(231,76,60,.9); color:#fff; border-color:#e74c3c; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .alert { border-left:3px solid var(--line); background:var(--panel2); padding:8px 12px; border-radius:0 8px 8px 0; margin:6px 0; font-size:13px; }
+  .alert.attention { border-color:var(--warn); }
+  .alert.action { border-color:var(--bad); }
+  .alert.ok { border-color:var(--ok); }
+  .muted { color:var(--muted); }
+  .mono { font-family:Consolas, monospace; font-size:12px; }
+  ul { margin:6px 0 0; padding-left:18px; }
+  li { font-size:13px; margin:3px 0; }
+  .bar { height:6px; background:#1c222c; border-radius:4px; overflow:hidden; }
+  .bar > i { display:block; height:100%; background:var(--accent); }
+  .footer { margin-top:20px; color:var(--muted); font-size:11px; text-align:center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Founder Command Center</h1>
+  <span class="sub">TEOS DealMaker · 24/7 Revenue Operations — evidence over claims</span>
+</header>
+<main>
+  <div class="grid">
+    <section class="panel">
+      <h2>Operating State</h2>
+      <div id="mode-row" class="row"><span class="k">Mode</span><span id="mode" class="pill pause">—</span></div>
+      <div class="row"><span class="k">Live guard</span><span id="guard" class="pill guard">—</span></div>
+      <div class="row"><span class="k">Enabled (SOR)</span><span id="enabled" class="muted">—</span></div>
+      <div class="row"><span class="k">Emergency</span><span id="emergency" class="muted">none</span></div>
+      <div class="row"><span class="k">Last window</span><span id="lastWindow" class="mono muted">—</span></div>
+      <div class="row"><span class="k">Heartbeat</span><span id="heartbeat" class="mono muted">—</span></div>
+      <div class="row"><span class="k">Resend</span><span id="resend" class="muted">—</span></div>
+      <div class="controls">
+        <button id="btn-pause" class="primary">Pause</button>
+        <button id="btn-resume" class="primary">Resume</button>
+        <button id="btn-stop" class="danger">Emergency Stop</button>
+        <button id="btn-trigger">Trigger report now</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Approvals &amp; Alerts</h2>
+      <div id="approvals"><span class="muted">loading…</span></div>
+      <div id="alerts" style="margin-top:10px"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Prospects &amp; Reports</h2>
+      <div class="row"><span class="k">Prospects recorded</span><span id="prospectsTotal">—</span></div>
+      <div class="row"><span class="k">Founder reports</span><span id="reportsTotal">—</span></div>
+      <div id="lastReport"><span class="muted">no report yet</span></div>
+      <div class="controls">
+        <button id="btn-discover">Run discovery scoring</button>
+        <button id="btn-notify">Notify founder</button>
+      </div>
+    </section>
+  </div>
+  <div class="footer">Law over Code — القانون فوق الكود</div>
+</main>
+
+<script>
+(function () {
+  var KEY = 'sor_founder_key';
+  var getKey = function () {
+    var k = sessionStorage.getItem(KEY);
+    if (!k) { k = window.prompt('Enter AUDIT_API_KEY for the Command Center:'); if (k) sessionStorage.setItem(KEY, k); }
+    return k || '';
+  };
+  var api = function (path, opts) {
+    var o = opts || {};
+    return fetch('/api' + path, {
+      method: o.method || 'GET',
+      headers: { 'x-api-key': getKey(), 'content-type': 'application/json' },
+      body: o.body ? JSON.stringify(o.body) : undefined
+    }).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; }); });
+  };
+
+  function el(id) { return document.getElementById(id); }
+
+  function renderStatus(s) {
+    var mode = el('mode'), guard = el('guard');
+    mode.textContent = s.mode || 'PAUSED';
+    mode.className = 'pill ' + (s.mode === 'RUNNING' ? 'run' : (s.mode === 'EMERGENCY_STOPPED' ? 'stop' : 'pause'));
+    var live = !!(s.guard && s.guard.live);
+    guard.textContent = live ? 'LIVE' : (s.guard ? (s.guard.reason || 'BLOCKED') : '—');
+    guard.className = 'pill ' + (live ? 'run' : 'guard');
+    el('enabled').textContent = s.enabled ? 'enabled' : 'disabled';
+    el('enabled').className = s.enabled ? 'muted' : 'muted';
+    el('emergency').textContent = s.emergency ? (s.emergency.reason || 'active') : 'none';
+    el('emergency').className = s.emergency ? 'muted' : 'muted';
+    el('lastWindow').textContent = s.lastWindowEnd || '—';
+    el('heartbeat').textContent = s.heartbeat || '—';
+    el('resend').textContent = s.resendConfigured ? 'configured' : 'not configured';
+    el('prospectsTotal').textContent = s.prospectsTotal != null ? s.prospectsTotal : '—';
+    el('reportsTotal').textContent = s.reportsTotal != null ? s.reportsTotal : '—';
+    if (s.lastReport) {
+      el('lastReport').innerHTML = '<div class="mono muted" style="margin-top:8px">' + (s.lastReport.report_id || '') +
+        ' · ' + (s.lastReport.delivery_status || '') + '</div><div class="muted" style="font-size:12px">' + (s.lastReport.window_end || '') + '</div>';
+    } else {
+      el('lastReport').innerHTML = '<span class="muted">no report yet</span>';
+    }
+    el('btn-pause').disabled = s.mode === 'PAUSED';
+    el('btn-resume').disabled = s.mode === 'RUNNING';
+    el('btn-stop').disabled = s.mode === 'EMERGENCY_STOPPED';
+  }
+
+  function renderApprovals(a) {
+    var box = el('approvals');
+    if (!a || !a.approvals || !a.approvals.length) { box.innerHTML = '<span class="muted">no pending revenue approvals</span>'; }
+    else {
+      box.innerHTML = '<ul>' + a.approvals.slice(0, 10).map(function (x) {
+        return '<li><b>#' + x.id + '</b> ' + (x.agent_type || '') + ' — ' + (x.reason || '') + ' <span class="muted">(' + (x.requested_at || '').slice(0, 16) + ')</span></li>';
+      }).join('') + '</ul>';
+    }
+    var alertsBox = el('alerts');
+    if (a && a.alerts && a.alerts.length) {
+      alertsBox.innerHTML = a.alerts.map(function (al) {
+        return '<div class="alert ' + (al.level || 'action') + '">' + al.message + '</div>';
+      }).join('');
+    } else {
+      alertsBox.innerHTML = '<div class="alert ok">all quiet — no alerts</div>';
+    }
+  }
+
+  function refresh() {
+    return Promise.all([api('/revenue-ops/status'), api('/revenue-ops/approvals')])
+      .then(function (r) { renderStatus(r[0]); renderApprovals(r[1]); })
+      .catch(function (e) {
+        el('guard').textContent = 'error';
+        el('guard').className = 'pill stop';
+        el('lastWindow').textContent = e.message;
+      });
+  }
+
+  function act(path, body, confirmMsg) {
+    if (confirmMsg && !window.confirm(confirmMsg)) return Promise.resolve();
+    return api(path, { method: 'POST', body: body || {} }).then(refresh).catch(function (e) { window.alert(e.message); });
+  }
+
+  el('btn-pause').addEventListener('click', function () { act('/revenue-ops/pause', { by: 'founder' }); });
+  el('btn-resume').addEventListener('click', function () { act('/revenue-ops/resume', { by: 'founder' }); });
+  el('btn-stop').addEventListener('click', function () {
+    var reason = window.prompt('Reason for emergency stop:') || 'founder emergency stop';
+    act('/revenue-ops/emergency-stop', { by: 'founder', reason: reason }, 'Confirm EMERGENCY STOP? This hard-blocks all revenue operations until you clear it.');
+  });
+  el('btn-trigger').addEventListener('click', function () {
+    act('/revenue-ops/trigger', { by: 'founder' }).then(function () { window.alert('Report window processed (check Command Center status).'); });
+  });
+  el('btn-discover').addEventListener('click', function () {
+    act('/revenue-ops/discover', { by: 'founder', limit: 200 }).then(function () { window.alert('Discovery scoring run complete.'); });
+  });
+  el('btn-notify').addEventListener('click', function () {
+    act('/revenue-ops/notify', {}).then(function () { window.alert('Founder notification attempted.'); });
+  });
+
+  refresh();
+  setInterval(refresh, 15000);
+})();
+</script>
+</body>
+</html>

@@ -14,7 +14,10 @@ const JSONB_COLUMNS = new Set([
   'integration_connections.config',
   'plans.metrics',
   'resend_events.payload',
-  'mission_intakes.answers'
+  'mission_intakes.answers',
+  'prospects.metadata',
+  'founder_reports.metrics',
+  'revenue_ops_state.payload'
 ]);
 
 function sanitize(table, row) {

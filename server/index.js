@@ -78,6 +78,13 @@ app.use('/dashboard', (req, res, next) => {
 });
 app.use('/dashboard', express.static(publicDashboard));
 
+const publicFounder = path.join(__dirname, '..', 'public', 'founder');
+app.use('/founder', (req, res, next) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
+app.use('/founder', requireAuditAuth, express.static(publicFounder));
+
 app.use((req, res, next) => {
   res.set({
     'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
@@ -336,10 +343,14 @@ app.get('/api/deploy-verify', requireAuditAuth, (req, res) => {
       RESEND_API_KEY: has('RESEND_API_KEY'),
       EMAIL_FROM: has('EMAIL_FROM'),
       FOUNDER_REPORT_TO: has('FOUNDER_REPORT_TO'),
+      FOUNDER_REPORT_EMAIL: has('FOUNDER_REPORT_EMAIL'),
+      SOR_ENABLED: has('SOR_ENABLED'),
+      SOR_REPORT_INTERVAL_HOURS: has('SOR_REPORT_INTERVAL_HOURS'),
       RESEND_TIMEOUT_MS: has('RESEND_TIMEOUT_MS')
     },
     revenue_path: has('DODO_API_KEY') && has('DODO_WEBHOOK_SECRET') ? 'CONFIRMED' : 'NOT_CONFIRMED',
     outbound: has('RESEND_API_KEY') ? 'CONFIGURED' : 'BLOCKED',
+    revenue_ops: has('SOR_ENABLED') ? (String(process.env.SOR_ENABLED).toLowerCase() === 'true' ? 'ENABLED' : 'DISABLED') : 'UNSET',
     timestamp: new Date().toISOString()
   };
   res.json(result);
@@ -769,6 +780,104 @@ app.post('/api/outreach/founder-report', requireAuditAuth, express.json(), async
     res.json(result);
   } catch (err) {
     console.error('[outboundWorker] founder-report error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// 24/7 Revenue Operations — founder-controlled. Enabled only when the founder
+// opts in via SOR_ENABLED=true. Automatic reports follow the configured window
+// (default 3h); every delivery and mode change is audited. Fails closed when
+// Resend or a founder destination is not configured.
+const revenueOps = require('../services/revenueOps');
+
+app.get('/api/revenue-ops/status', requireAuditAuth, async (_req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    res.json(await revenueOps.status(getAdapter()));
+  } catch (err) {
+    console.error('[revenue-ops] status error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.post('/api/revenue-ops/trigger', requireAuditAuth, express.json(), async (req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    const result = await revenueOps.triggerNow(getAdapter(), (req.body && req.body.by) || 'founder');
+    if (!result.ok) return res.status(result.reason === 'sor_disabled' ? 409 : 400).json(result);
+    res.json(result);
+  } catch (err) {
+    console.error('[revenue-ops] trigger error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.post('/api/revenue-ops/pause', requireAuditAuth, express.json(), async (req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    const result = await revenueOps.pause(getAdapter(), (req.body && req.body.by) || 'founder', (req.body && req.body.reason) || null);
+    if (!result.ok) return res.status(400).json(result);
+    res.json(result);
+  } catch (err) {
+    console.error('[revenue-ops] pause error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.post('/api/revenue-ops/resume', requireAuditAuth, express.json(), async (req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    const result = await revenueOps.resume(getAdapter(), (req.body && req.body.by) || 'founder', (req.body && req.body.reason) || null);
+    if (!result.ok) return res.status(result.error === 'emergency_stop_env_active' || result.error === 'sor_disabled' ? 409 : 403).json(result);
+    res.json(result);
+  } catch (err) {
+    console.error('[revenue-ops] resume error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.post('/api/revenue-ops/emergency-stop', requireAuditAuth, express.json(), async (req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    const result = await revenueOps.emergencyStop(getAdapter(), (req.body && req.body.by) || 'founder', (req.body && req.body.reason) || null);
+    if (!result.ok) return res.status(400).json(result);
+    res.json(result);
+  } catch (err) {
+    console.error('[revenue-ops] emergency-stop error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.post('/api/revenue-ops/discover', requireAuditAuth, express.json(), async (req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    const result = await revenueOps.discover(getAdapter(), (req.body && req.body.limit) ? { limit: req.body.limit } : {});
+    if (!result.ok) return res.status(400).json(result);
+    res.json(result);
+  } catch (err) {
+    console.error('[revenue-ops] discover error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.get('/api/revenue-ops/approvals', requireAuditAuth, async (_req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    res.json(await revenueOps.approvalSummary(getAdapter()));
+  } catch (err) {
+    console.error('[revenue-ops] approvals error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.post('/api/revenue-ops/notify', requireAuditAuth, express.json(), async (req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    const result = await revenueOps.notifyFounder(getAdapter(), (req.body && req.body.to) ? { to: req.body.to } : {});
+    if (!result.ok) return res.status(result.reason === 'resend_not_configured' ? 503 : 400).json(result);
+    res.json(result);
+  } catch (err) {
+    console.error('[revenue-ops] notify error:', err.message);
     res.status(500).json({ error: 'internal_error' });
   }
 });
@@ -1649,6 +1758,20 @@ const server = app.listen(PORT, () => {
     console.log('[Sentinel] governed outbound worker started (24/7, defaults to PAUSED; resume requires founder action)');
   } catch (err) {
     console.error('[Sentinel] outbound worker failed to start:', err.message);
+  }
+  try {
+    const { isSorEnabled } = require('../db');
+    if (isSorEnabled()) {
+      const revenueOps = require('../services/revenueOps');
+      revenueOps.start().then(result => {
+        if (result.ok) console.log(`[Sentinel] revenue ops clock started (interval ${result.intervalMs / 3600000}h; live guard gated — founder must resume before anything runs)`);
+        else console.error('[Sentinel] revenue ops scheduler not started:', result.reason || 'unknown');
+      }).catch(err => console.error('[Sentinel] revenue ops scheduler start failed:', err.message));
+    } else {
+      console.log('[Sentinel] revenue ops scheduler disabled (set SOR_ENABLED=true to enable 24/7 founder reports)');
+    }
+  } catch (err) {
+    console.error('[Sentinel] revenue ops scheduler setup error:', err.message);
   }
 });
 
