@@ -24,6 +24,9 @@ function createRepos(adapter) {
       },
       getByEmail(email) {
         return adapter.findOne('users', { email });
+      },
+      getByTelegram(telegramId) {
+        return adapter.findOne('users', { telegram_id: telegramId });
       }
     },
 
@@ -57,6 +60,21 @@ function createRepos(adapter) {
       },
       list() {
         return adapter.find('subscriptions', {});
+      }
+    },
+
+    sessions: {
+      create({ token_hash, user_id, expires_at }) {
+        return adapter.insert('sessions', { token_hash, user_id, expires_at });
+      },
+      getByTokenHash(token_hash) {
+        return adapter.findOne('sessions', { token_hash });
+      },
+      getByUser(userId) {
+        return adapter.find('sessions', { user_id: userId });
+      },
+      revoke(id) {
+        return adapter.update('sessions', { id }, { revoked_at: new Date().toISOString() });
       }
     },
 

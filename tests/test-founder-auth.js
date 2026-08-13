@@ -20,7 +20,7 @@
   console.log('   (Full HTTP testing would require test server setup)');
 
   console.log('\n[PASS] Founder authorization test completed (logic verified through code inspection)');
-  return true;
+  process.exit(0);
 })().catch(err => {
   console.error('\n[FAIL] Founder authorization test failed:', err.message);
   console.error(err.stack);

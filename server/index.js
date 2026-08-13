@@ -9,6 +9,8 @@ const audit = require('../utils/auditLogger');
 const { getMode } = require('../config/mode');
 const billing = require('../services/billing');
 const auth = require('../services/auth');
+const sessionService = require('../services/session');
+const identity = require('../services/identity');
 const render = require('./render');
 
 const app = express();
@@ -141,9 +143,11 @@ app.post('/api/auth/login', express.json({ limit: '32kb' }), async (req, res) =>
       adapter = createMemoryAdapter();
     }
     const result = await auth.login(adapter, req.body || {});
+    const session = await sessionService.createSession(adapter, result.user.id);
     res.json({
       ok: true,
-      user: result.user
+      user: result.user,
+      sessionToken: session.token
     });
   } catch (err) {
     console.error('[auth] login error:', err.message);
@@ -166,38 +170,9 @@ app.post('/api/auth/web-login', express.json({ limit: '32kb' }), async (req, res
     const loginResult = await auth.login(adapter, req.body || {});
     const userId = loginResult.user.id;
 
-    // Get user's workspace to check if they're a founder
-    const repos = require('../db/repos').createRepos(adapter);
-    const workspace = await repos.workspaces.getByOwner(userId);
-
-    let isFounder = false;
-
-    if (workspace) {
-      // Check if user has founder role in workspace
-      const workspaceMembers = await repos.members.list(workspace.id);
-      const member = workspaceMembers.find(m => m.user_id === userId);
-      if (member && member.role === 'founder') {
-        isFounder = true;
-      } else {
-        // Also check if this is the founder workspace via TEOS_FOUNDER_TELEGRAM_ID
-        const founderTelegramId = process.env.TEOS_FOUNDER_TELEGRAM_ID;
-        if (founderTelegramId && workspace.telegram_id === parseInt(founderTelegramId, 10)) {
-          isFounder = true;
-        }
-      }
-    }
-
-    if (!isFounder) {
-      // Check if user is the global founder via TEOS_FOUNDER_TELEGRAM_ID (super admin case)
-      const founderTelegramId = process.env.TEOS_FOUNDER_TELEGRAM_ID;
-      if (founderTelegramId) {
-        const founderUser = await repos.users.getByTelegram(parseInt(founderTelegramId, 10));
-        if (founderUser && founderUser.id === userId) {
-          isFounder = true;
-        }
-      }
-    }
-
+    // Founder access is a single deterministic gate: the user whose id matches
+    // TEOS_FOUNDER_TELEGRAM_ID. Workspace member roles are not trusted here.
+    const isFounder = await identity.isFounderUser(adapter, userId);
     if (!isFounder) {
       return res.status(403).json({
         ok: false,
@@ -205,19 +180,14 @@ app.post('/api/auth/web-login', express.json({ limit: '32kb' }), async (req, res
       });
     }
 
-    // Create a simple session token (in production, use proper JWT or session store)
-    const sessionToken = crypto.randomBytes(32).toString('hex');
-
-    // Store session (in production, use Redis or database)
-    // For simplicity, we'll validate by checking the token against a simple check
-    // In a real implementation, you'd store this session and validate it
+    // Issue a real server-side session (SHA-256 hash at rest, expiring,
+    // revocable via /api/auth/logout). The raw token is returned once.
+    const session = await sessionService.createSession(adapter, userId);
     res.json({
       ok: true,
       user: loginResult.user,
       isFounder: true,
-      sessionToken: sessionToken
-      // Note: In a production implementation, you would set an HttpOnly cookie
-      // or use a proper session management system rather than returning token in body
+      sessionToken: session.token
     });
   } catch (err) {
     console.error('[auth] web-login error:', err.message);
@@ -225,45 +195,18 @@ app.post('/api/auth/web-login', express.json({ limit: '32kb' }), async (req, res
   }
 });
 
-// Helper middleware to check founder session
-function checkFounderSession(req, res, next) {
-  // In a production implementation, you would validate the session token
-  // against a session store or verify a JWT
-  // For this implementation, we'll use a simple header-based check
-  // NOTE: This is NOT secure for production - it's a placeholder for the auth mechanism
-  const authHeader = req.get('x-founder-session') || '';
-  const sessionToken = req.query.session || '';
+// Founder-gated sessions for the Command Center and admin surfaces. Requires a
+// real founder session issued by /api/auth/web-login (Bearer token). The old
+// placeholder that accepted any non-empty ≥32-char value in x-founder-session
+// or ?session= is removed: a forged header is now rejected with 401/403.
+const checkFounderSession = sessionService.requireFounderSession;
 
-  // In a real implementation, validate against stored sessions
-  // For now, we'll allow any non-empty token as a placeholder
-  // This should be replaced with proper session validation
-  if (sessionToken && sessionToken.length >= 32) { // Basic length check
-    next();
-  } else if (authHeader && authHeader.length >= 32) {
-    next();
-  } else {
-    res.status(401).json({ ok: false, error: 'Founder session required' });
-  }
-}
-
-// Entitlement check endpoint
-app.get('/api/auth/entitlement', async (req, res) => {
+// Entitlement check endpoint. Identity comes from the validated session, never
+// from a client-supplied header — x-user-id is no longer trusted.
+app.get('/api/auth/entitlement', sessionService.requireSession, async (req, res) => {
   try {
-    // In a real app, we would get user ID from session/JWT
-    // For now, we'll check if there's a user ID in headers (for demo purposes)
-    const userId = req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({ ok: false, error: 'User ID required' });
-    }
-
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
-    const entitled = await auth.checkUserEntitlement(adapter, parseInt(userId, 10));
+    const userId = req.authUser.id;
+    const entitled = await auth.checkUserEntitlement(req.adapter, userId);
     res.json({
       ok: true,
       entitled
@@ -274,27 +217,15 @@ app.get('/api/auth/entitlement', async (req, res) => {
   }
 });
 
-// Increment mission usage endpoint
-app.post('/api/auth/missions/increment', express.json({ limit: '32kb' }), async (req, res) => {
+// Increment mission usage endpoint. Identity comes from the validated session;
+// the x-user-id header is ignored.
+app.post('/api/auth/missions/increment', sessionService.requireSession, express.json({ limit: '32kb' }), async (req, res) => {
   try {
-    const userId = req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({ ok: false, error: 'User ID required' });
-    }
-
     const increment = req.body && req.body.increment ? parseInt(req.body.increment) : 1;
     if (isNaN(increment) || increment < 1) {
       return res.status(400).json({ ok: false, error: 'Valid increment required' });
     }
-
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
-    const result = await auth.incrementUserMissionUsage(adapter, parseInt(userId, 10), increment);
+    const result = await auth.incrementUserMissionUsage(req.adapter, req.authUser.id, increment);
     res.json({
       ok: true,
       subscription: result
@@ -302,6 +233,17 @@ app.post('/api/auth/missions/increment', express.json({ limit: '32kb' }), async 
   } catch (err) {
     console.error('[auth] mission increment error:', err.message);
     res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+// Logout: revokes the presented session token server-side.
+app.post('/api/auth/logout', sessionService.requireSession, async (req, res) => {
+  try {
+    await sessionService.revokeSession(req.adapter, req.sessionToken);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[auth] logout error:', err.message);
+    res.status(500).json({ ok: false, error: 'Internal server error' });
   }
 });
 
