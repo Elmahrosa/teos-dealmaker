@@ -28,6 +28,21 @@ function getAdapter() {
   return adapter;
 }
 
+function isSorEnabled() {
+  const raw = process.env.SOR_ENABLED !== undefined ? process.env.SOR_ENABLED : process.env.SOR_GATE;
+  return raw !== undefined && raw !== '' && String(raw).toLowerCase() === 'true';
+}
+
+function getDb() {
+  const a = getAdapter();
+  return {
+    adapter: a,
+    pg: getPool(),
+    repos: createRepos(a),
+    mode: isSorEnabled() ? 'SOR' : 'LEGACY'
+  };
+}
+
 async function createTables() {
   const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
   return getPool().query(schema);
@@ -36,6 +51,8 @@ async function createTables() {
 module.exports = {
   getPool,
   getAdapter,
+  getDb,
+  isSorEnabled,
   createTables,
   createPgAdapter,
   createMemoryAdapter,

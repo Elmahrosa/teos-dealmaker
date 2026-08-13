@@ -117,6 +117,21 @@ const TABLES = {
   mission_intakes: {
     columns: ['title', 'objective', 'outcome', 'target_customer', 'market', 'budget', 'timeline', 'capabilities', 'contact', 'status', 'answers'],
     timestamps: true
+  },
+
+  prospects: {
+    columns: ['company_name', 'person_name', 'website', 'source', 'category', 'offer', 'pain_point', 'score', 'score_reason', 'score_source', 'score_timestamp', 'confidence', 'contact_email', 'contact_channel', 'status', 'stage', 'qualification', 'sentinel_verdict', 'mission_id', 'audit_ref', 'last_action', 'next_action', 'suppressed_at', 'suppressed_reason', 'metadata'],
+    timestamps: true
+  },
+
+  founder_reports: {
+    columns: ['report_id', 'window_start', 'window_end', 'period_label', 'generated_at', 'recipient', 'sender', 'subject', 'delivery_status', 'provider', 'provider_message_id', 'failure_reason', 'resend_count', 'last_attempt_at', 'metrics', 'audit_ref'],
+    timestamps: true
+  },
+
+  revenue_ops_state: {
+    columns: ['key', 'value', 'payload', 'heartbeat_at'],
+    timestamps: true
   }
 };
 

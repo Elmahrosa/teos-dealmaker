@@ -541,6 +541,68 @@ function createRepos(adapter) {
       getByEventId(eventId) {
         return adapter.findOne('resend_events', { event_id: eventId });
       }
+    },
+
+    prospects: {
+      create(data) {
+        return adapter.insert('prospects', data);
+      },
+      get(id) {
+        return adapter.findOne('prospects', { id: Number(id) });
+      },
+      list(opts) {
+        const o = opts || {};
+        return adapter.find('prospects', o.where || {}, { orderBy: o.orderBy || 'id', order: o.order || 'desc', limit: o.limit });
+      },
+      listAll(opts) {
+        const o = opts || {};
+        return adapter.find('prospects', {}, { orderBy: o.orderBy || 'score', order: o.order || 'desc', limit: o.limit });
+      },
+      update(id, changes) {
+        return adapter.update('prospects', { id: Number(id) }, changes);
+      },
+      count(where) {
+        return adapter.count('prospects', where || {});
+      }
+    },
+
+    founderReports: {
+      create(data) {
+        return adapter.insert('founder_reports', data);
+      },
+      get(reportId) {
+        return adapter.findOne('founder_reports', { report_id: reportId });
+      },
+      getByWindow(windowEnd) {
+        return adapter.findOne('founder_reports', { window_end: windowEnd });
+      },
+      update(reportId, changes) {
+        return adapter.update('founder_reports', { report_id: reportId }, changes);
+      },
+      list(opts) {
+        const o = opts || {};
+        return adapter.find('founder_reports', {}, { orderBy: o.orderBy || 'window_end', order: o.order || 'desc', limit: o.limit });
+      }
+    },
+
+    revenueOps: {
+      get(key) {
+        return adapter.findOne('revenue_ops_state', { key });
+      },
+      set(key, value, payload) {
+        const existing = adapter.findOne('revenue_ops_state', { key });
+        const row = {
+          key,
+          value: value == null ? null : String(value),
+          payload: payload || null,
+          heartbeat_at: new Date().toISOString()
+        };
+        if (existing) return adapter.update('revenue_ops_state', { key }, row);
+        return adapter.insert('revenue_ops_state', row);
+      },
+      touch(key, value) {
+        return this.set(key, value == null ? null : String(value));
+      }
     }
   };
 }
