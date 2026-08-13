@@ -47,8 +47,28 @@ async function tick(db, opts) {
     missed.push(end);
   }
 
+  const cap = Math.max(1, Number(c.maxBackfillWindows) || 8);
+  const skippedCount = missed.length > cap ? missed.length - cap : 0;
+  const backfill = skippedCount > 0 ? missed.slice(missed.length - cap) : missed;
+  if (skippedCount > 0) {
+    const ra = await repos(db);
+    ra.audit.add({
+      workspace_id: null,
+      agent_name: 'revenue-ops',
+      action_type: 'REVENUE_OPS_WINDOWS_SKIPPED',
+      timestamp: now(),
+      details: {
+        skipped: skippedCount,
+        cap,
+        reason: 'backfill cap reached',
+        from: new Date(missed[0] - c.intervalMs).toISOString(),
+        to: new Date(missed[skippedCount - 1]).toISOString()
+      }
+    });
+  }
+
   const processed = [];
-  for (const end of missed) {
+  for (const end of backfill) {
     const start = end - c.intervalMs;
     const claimCheck = await r.revenueOps.get('sor_current_window_end');
     if (claimCheck && claimCheck.value && Number(new Date(claimCheck.value).getTime()) === end && !o.force) {
@@ -60,7 +80,7 @@ async function tick(db, opts) {
     processed.push(done);
   }
 
-  return { ok: true, processed, currentWindowEnd: new Date(currentWindowEnd).toISOString(), upToDate: false };
+  return { ok: true, processed, backfilled: backfill.length, skippedMissedWindows: skippedCount, currentWindowEnd: new Date(currentWindowEnd).toISOString(), upToDate: false };
 }
 
 function createScheduler(opts) {
@@ -79,7 +99,7 @@ function createScheduler(opts) {
     }
     running = true;
     tick(db).then(res => {
-      if (res && res.ok) log('startup catch-up complete', { processed: res.processed ? res.processed.length : 0, upToDate: res.upToDate });
+      if (res && res.ok) log('startup catch-up complete', { processed: res.processed ? res.processed.length : 0, skippedMissedWindows: res.skippedMissedWindows || 0, upToDate: res.upToDate });
       else log('startup catch-up:', res);
     }).catch(err => log('startup catch-up error:', err.message));
     timer = setInterval(() => {

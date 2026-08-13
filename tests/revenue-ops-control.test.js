@@ -78,20 +78,31 @@ async function main() {
   t = await revenueOps._scheduler.tick(db, {});
   assert.strictEqual(t.ok, false, 'automatic tick still denied after restart');
 
-  // ---- 7. founder clears the flag, then resume re-arms ----
+  // ---- 7. restart simulation: env cleared but persisted state remains => resume still refused ----
   delete process.env[ENV_EMERGENCY];
+  const persistedMode = (await r.revenueOps.get('sor_mode')).value;
+  assert.strictEqual(persistedMode, 'EMERGENCY_STOPPED', 'persisted mode must still be EMERGENCY_STOPPED after restart');
+  const restartEmergencyRow = await db.adapter.findOne('revenue_ops_state', { key: 'sor_emergency' });
+  assert.strictEqual(restartEmergencyRow.value, 'true', 'sor_emergency row must still be set after restart');
   res = await revenueOps.resume(adapter, 'founder-test', 'cleared hold');
-  assert.strictEqual(res.ok, true, 'resume after clearing flag must succeed');
-  assert.strictEqual(res.state, 'RUNNING', 'mode RUNNING again');
-  const emergRow = await db.adapter.findOne('revenue_ops_state', { key: 'sor_emergency' });
-  assert.strictEqual(emergRow.value, null, 'emergency record cleared on resume');
-  g = await revenueOps._control.live(db);
-  assert.strictEqual(g.ok, true, 'live guard passes after final resume');
+  assert.strictEqual(res.ok, false, 'resume must refuse after restart — persisted emergency, no acknowledgment');
+  assert.strictEqual(res.error, 'emergency_stopped', 'resume error code for persisted emergency');
+  assert.strictEqual((await r.revenueOps.get('sor_mode')).value, 'EMERGENCY_STOPPED', 'mode must remain EMERGENCY_STOPPED after refused resume');
 
-  // ---- 8. audit evidence emitted for each control action, in the SAME chain ----
+  // ---- 8. deliberate acknowledgment clears the persisted emergency and re-arms ----
+  res = await revenueOps.resume(adapter, 'founder-test', 'cleared hold', { acknowledgeEmergency: true });
+  assert.strictEqual(res.ok, true, 'resume with explicit acknowledgment must succeed');
+  assert.strictEqual(res.state, 'RUNNING', 'mode RUNNING again');
+  assert.strictEqual(res.acknowledged, true, 'resume must report acknowledged clear');
+  const emergRow = await db.adapter.findOne('revenue_ops_state', { key: 'sor_emergency' });
+  assert.strictEqual(emergRow.value, null, 'emergency record cleared on acknowledged resume');
+  g = await revenueOps._control.live(db);
+  assert.strictEqual(g.ok, true, 'live guard passes after acknowledged resume');
+
+  // ---- 9. audit evidence emitted for each control action, in the SAME chain ----
   const audits = await r.audit.list(null, {});
   const types = audits.map(a => a.action_type);
-  for (const expected of ['REVENUE_OPS_RESUMED', 'REVENUE_OPS_PAUSED', 'REVENUE_OPS_EMERGENCY_STOP']) {
+  for (const expected of ['REVENUE_OPS_RESUMED', 'REVENUE_OPS_PAUSED', 'REVENUE_OPS_EMERGENCY_STOP', 'REVENUE_OPS_EMERGENCY_CLEARED']) {
     assert.ok(types.includes(expected), `audit entry ${expected} present`);
   }
   const emergencyAudit = audits.find(a => a.action_type === 'REVENUE_OPS_EMERGENCY_STOP');
@@ -101,7 +112,7 @@ async function main() {
   const modeAudits = audits.filter(a => a.action_type === 'REVENUE_OPS_MODE' && a.details && a.details.mode === 'EMERGENCY_STOPPED');
   assert.ok(modeAudits.length >= 1 && modeAudits[0].timestamp, 'mode-change audit entry also timestamped');
 
-  // ---- 9. disabled feature => fail closed regardless of mode ----
+  // ---- 10. disabled feature => fail closed regardless of mode ----
   process.env.SOR_ENABLED = 'false';
   g = await revenueOps._control.live(db);
   assert.strictEqual(g.ok, false, 'disabled => guard denies');

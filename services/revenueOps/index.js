@@ -95,9 +95,9 @@ async function pause(adapter, by, reason) {
   return controlHandle.pause(db, by, reason);
 }
 
-async function resume(adapter, by, reason) {
+async function resume(adapter, by, reason, opts) {
   const db = await getDb(adapter);
-  return controlHandle.resume(db, by, reason);
+  return controlHandle.resume(db, by, reason, opts);
 }
 
 async function emergencyStop(adapter, by, reason) {

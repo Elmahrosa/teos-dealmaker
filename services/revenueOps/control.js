@@ -55,20 +55,34 @@ function createControl(opts) {
     return { ok: true, state: MODES.PAUSED, prior_state: prev };
   }
 
-  async function resume(db, by, reason) {
+  async function emergencyPersisted(db) {
+    const r = await repos(db);
+    const row = await r.revenueOps.get(KEY_EMERGENCY);
+    return Boolean(row && row.value !== null && row.value !== undefined);
+  }
+
+  async function resume(db, by, reason, opts) {
+    const o = opts || {};
     const c = config();
     if (!c.enabled) return { ok: false, error: 'sor_disabled', reason: 'SOR_ENABLED must be true before the founder can resume' };
     if (envEmergencyActive()) {
       return { ok: false, error: 'emergency_stop_env_active', reason: `${ENV_EMERGENCY_STOP} is set; clear it before resuming` };
     }
     const s = await getState(db);
-    const prev = s.mode || MODES.PAUSED;
-    await setMode(db, MODES.RUNNING, by || 'founder', reason || 'founder resume');
+    const persistedEmergency = s.mode === MODES.EMERGENCY_STOPPED || await emergencyPersisted(db);
+    if (persistedEmergency && !o.acknowledgeEmergency) {
+      return { ok: false, error: 'emergency_stopped', reason: 'A persisted emergency stop is active; resume() requires acknowledgeEmergency:true so the founder deliberately clears it' };
+    }
     const r = await repos(db);
-    await r.revenueOps.set(KEY_EMERGENCY, null);
+    const prev = s.mode || MODES.PAUSED;
+    if (persistedEmergency) {
+      await audit(db, 'REVENUE_OPS_EMERGENCY_CLEARED', 'success', { by: by || 'founder', reason: reason || 'emergency stop cleared', prior_state: prev });
+      await r.revenueOps.set(KEY_EMERGENCY, null);
+    }
+    await setMode(db, MODES.RUNNING, by || 'founder', reason || 'founder resume');
     await audit(db, 'REVENUE_OPS_RESUMED', 'success', { by: by || 'founder', prior_state: prev });
     if (hooks.onResume) await hooks.onResume(db);
-    return { ok: true, state: MODES.RUNNING, prior_state: prev };
+    return { ok: true, state: MODES.RUNNING, prior_state: prev, acknowledged: persistedEmergency };
   }
 
   async function emergencyStop(db, by, reason) {

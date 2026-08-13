@@ -20,6 +20,7 @@ function config() {
     founderEmail: process.env.FOUNDER_REPORT_EMAIL || process.env.FOUNDER_REPORT_TO || 'teosegy@gmail.com',
     from: process.env.EMAIL_FROM || process.env.RESEND_FROM_EMAIL || 'info@elmahrosa.org',
     resendConfigured: Boolean(process.env.RESEND_API_KEY),
+    maxBackfillWindows: num('SOR_MAX_BACKFILL_WINDOWS', 8),
     auditKey: process.env.AUDIT_API_KEY ? 'configured' : 'not_configured'
   };
 }

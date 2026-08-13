@@ -827,8 +827,8 @@ app.post('/api/revenue-ops/pause', requireAuditAuth, express.json(), async (req,
 app.post('/api/revenue-ops/resume', requireAuditAuth, express.json(), async (req, res) => {
   try {
     const { getAdapter } = require('../db');
-    const result = await revenueOps.resume(getAdapter(), (req.body && req.body.by) || 'founder', (req.body && req.body.reason) || null);
-    if (!result.ok) return res.status(result.error === 'emergency_stop_env_active' || result.error === 'sor_disabled' ? 409 : 403).json(result);
+    const result = await revenueOps.resume(getAdapter(), (req.body && req.body.by) || 'founder', (req.body && req.body.reason) || null, { acknowledgeEmergency: Boolean(req.body && req.body.acknowledgeEmergency) });
+    if (!result.ok) return res.status(result.error === 'emergency_stop_env_active' || result.error === 'emergency_stopped' || result.error === 'sor_disabled' ? 409 : 403).json(result);
     res.json(result);
   } catch (err) {
     console.error('[revenue-ops] resume error:', err.message);

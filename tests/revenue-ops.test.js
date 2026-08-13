@@ -106,6 +106,24 @@ async function main() {
   assert.strictEqual(autoTick2.ok, true, 'automatic tick allowed when RUNNING');
   assert.strictEqual(autoTick2.upToDate, true, 'running tick still idempotent');
 
+  // ---- backfill cap: no unbounded replay after a long pause ----
+  process.env.SOR_MAX_BACKFILL_WINDOWS = '3';
+  const cfg = revenueOps._core.config();
+  const capNow = Date.now();
+  const currentEnd = revenueOps._report.windowEndOf(capNow, cfg.intervalMs);
+  await r.revenueOps.set(revenueOps._core.KEY_LAST_WINDOW, new Date(currentEnd - 10 * cfg.intervalMs).toISOString());
+  const bf = await revenueOps._scheduler.tick(dbR, {});
+  assert.strictEqual(bf.ok, true, 'backfill tick must succeed');
+  assert.strictEqual(bf.backfilled, 3, 'only cap windows backfilled');
+  assert.strictEqual(bf.processed.length, 3, 'exactly cap reports generated');
+  assert.ok(bf.skippedMissedWindows >= 7, 'older missed windows must be skipped, not replayed');
+  assert.strictEqual(bf.processed[bf.processed.length - 1].windowEnd, bf.currentWindowEnd, 'most recent window backfilled last');
+  const skippedAudits = (await r.audit.list(null, {})).filter(a => a.action_type === 'REVENUE_OPS_WINDOWS_SKIPPED');
+  assert.strictEqual(skippedAudits.length, 1, 'skip-gap audit emitted');
+  assert.ok(skippedAudits[0].details.skipped >= 7, 'skip audit records gap size');
+  assert.ok(skippedAudits[0].details.from && skippedAudits[0].details.to, 'skip audit records gap range');
+  delete process.env.SOR_MAX_BACKFILL_WINDOWS;
+
   console.log('✅ Revenue Operations: gate, persistence, sync, scheduler, audit — all passing');
 }
 
