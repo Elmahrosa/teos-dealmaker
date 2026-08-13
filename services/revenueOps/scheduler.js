@@ -52,18 +52,20 @@ async function tick(db, opts) {
   const backfill = skippedCount > 0 ? missed.slice(missed.length - cap) : missed;
   if (skippedCount > 0) {
     const ra = await repos(db);
+    const skipInfo = {
+      skipped: skippedCount,
+      cap,
+      reason: 'backfill cap reached',
+      from: new Date(missed[0] - c.intervalMs).toISOString(),
+      to: new Date(missed[skippedCount - 1]).toISOString()
+    };
+    await ra.revenueOps.set('sor_last_window_skip', 'true', Object.assign({ at: now() }, skipInfo));
     ra.audit.add({
       workspace_id: null,
       agent_name: 'revenue-ops',
       action_type: 'REVENUE_OPS_WINDOWS_SKIPPED',
       timestamp: now(),
-      details: {
-        skipped: skippedCount,
-        cap,
-        reason: 'backfill cap reached',
-        from: new Date(missed[0] - c.intervalMs).toISOString(),
-        to: new Date(missed[skippedCount - 1]).toISOString()
-      }
+      details: skipInfo
     });
   }
 

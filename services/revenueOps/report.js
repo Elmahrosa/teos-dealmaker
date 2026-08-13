@@ -54,6 +54,8 @@ async function collectMetrics(db, windowStartMs, windowEndMs) {
   (deals || []).forEach(d => {
     stageCounts[d.stage || d.status || 'unknown'] = (stageCounts[d.stage || d.status || 'unknown'] || 0) + 1;
   });
+  const skipRow = await db.adapter.findOne('revenue_ops_state', { key: 'sor_last_window_skip' });
+  const skippedWindows = skipRow && skipRow.payload ? Object.assign({}, skipRow.payload) : null;
   return {
     windowStart: startIso,
     windowEnd: endIso,
@@ -66,7 +68,8 @@ async function collectMetrics(db, windowStartMs, windowEndMs) {
     prospectsAdded: c.prospectsAdded,
     reportsTotal: await db.adapter.count('founder_reports', {}),
     deals: (deals || []).length,
-    dealStages: stageCounts
+    dealStages: stageCounts,
+    skippedWindows
   };
 }
 
@@ -85,6 +88,12 @@ function renderText(m) {
     `  Sent in window     : ${m.sent}`,
     `  Failed in window   : ${m.failed}`,
     `  Queued now         : ${m.queued}`,
+    '',
+    'Coverage',
+    m.skippedWindows && m.skippedWindows.skipped
+      ? `  Windows skipped    : ${m.skippedWindows.skipped} (backfill cap ${m.skippedWindows.cap})`
+      : '  Windows skipped    : 0',
+    `  Skipped range      : ${m.skippedWindows && m.skippedWindows.skipped ? `${m.skippedWindows.from.replace('T', ' ').slice(0, 16)} → ${m.skippedWindows.to.replace('T', ' ').slice(0, 16)} UTC` : '—'}`,
     '',
     'Governance',
     `  Audit entries      : ${m.auditEntries}`,
@@ -134,6 +143,7 @@ async function generateAndSend(db, windowStartMs, windowEndMs) {
   const c = config();
   const r = require('../../db/repos').createRepos(db.adapter);
   const metrics = await collectMetrics(db, windowStartMs, windowEndMs);
+  await r.revenueOps.set('sor_last_window_skip', null);
   const reportId = `fr_${uuid().slice(0, 8)}_${Math.round(windowEndMs / 1000)}`;
   const subject = `TEOS DealMaker Revenue Ops · ${windowLabel(windowEndMs)} UTC`;
   const row = await r.founderReports.create({

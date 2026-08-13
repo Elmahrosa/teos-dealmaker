@@ -122,6 +122,14 @@ async function main() {
   assert.strictEqual(skippedAudits.length, 1, 'skip-gap audit emitted');
   assert.ok(skippedAudits[0].details.skipped >= 7, 'skip audit records gap size');
   assert.ok(skippedAudits[0].details.from && skippedAudits[0].details.to, 'skip audit records gap range');
+
+  // skipped gap must surface in the next founder report output, then be consumed
+  const allReports = await r.founderReports.list({});
+  const surfacing = allReports.find(x => x.metrics && x.metrics.skippedWindows && x.metrics.skippedWindows.skipped >= 7);
+  assert.ok(surfacing, 'a report after the gap must surface skipped-window info in its metrics');
+  assert.ok(revenueOps._report.renderText(surfacing.metrics).includes('Windows skipped'), 'report text includes skipped-window line');
+  const consumed = await db.adapter.findOne('revenue_ops_state', { key: 'sor_last_window_skip' });
+  assert.ok(!consumed || !consumed.payload, 'skip marker consumed once surfaced in a report');
   delete process.env.SOR_MAX_BACKFILL_WINDOWS;
 
   console.log('✅ Revenue Operations: gate, persistence, sync, scheduler, audit — all passing');
