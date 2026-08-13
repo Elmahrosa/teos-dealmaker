@@ -34,16 +34,44 @@ function hashOf(entry) {
   return sha256(payload);
 }
 
+// Reads only the trailing window of the vault to recover the last line's hash.
+// The chain requires the previous entry's hash, but reading the whole file on
+// every write is O(n) and dominates cost as the vault grows. The tail read is
+// O(1) and always reflects the last persisted line, keeping chain-of-custody
+// correct across the multiple processes that share the vault (bot + web).
+const TAIL_WINDOW = 8192;
+
 function lastLineHash() {
   if (!fs.existsSync(AUDIT_LOG)) return null;
-  const content = fs.readFileSync(AUDIT_LOG, 'utf8');
-  const lines = content.split('\n').filter(line => line.trim());
-  if (!lines.length) return null;
+  let fd;
   try {
-    const last = JSON.parse(lines[lines.length - 1]);
-    return last.hash || null;
+    fd = fs.openSync(AUDIT_LOG, 'r');
+    const size = fs.fstatSync(fd).size;
+    if (!size) return null;
+    const start = Math.max(0, size - TAIL_WINDOW);
+    const len = size - start;
+    const buffer = Buffer.alloc(len);
+    fs.readSync(fd, buffer, 0, len, start);
+    const content = buffer.toString('utf8');
+    // The vault ends with a trailing newline; trim trailing whitespace so the
+    // final real line is selected, not an empty tail.
+    const trimmed = content.replace(/\s+$/, '');
+    const newline = trimmed.lastIndexOf('\n');
+    const lastLine = newline >= 0 ? trimmed.slice(newline + 1) : trimmed;
+    // A last line as large as the window is almost certainly truncated;
+    // fall back to the full read in that (never-happens-in-practice) case.
+    if (lastLine.length >= TAIL_WINDOW) {
+      const full = fs.readFileSync(AUDIT_LOG, 'utf8');
+      const lines = full.split('\n').filter(line => line.trim());
+      return lines.length ? (JSON.parse(lines[lines.length - 1]).hash || null) : null;
+    }
+    if (!lastLine.trim()) return null;
+    const parsed = JSON.parse(lastLine.trim());
+    return parsed.hash || null;
   } catch (_err) {
     return null;
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
   }
 }
 
@@ -157,6 +185,92 @@ function readVault() {
     .map(line => JSON.parse(line));
 }
 
+// Returns the most recent `maxEntries` vault entries without reading the whole
+// file. Reads backwards from the tail in bounded chunks, so cost scales with
+// the entries actually returned, not the vault size. Used by dashboard and
+// audit screens that previously did a full-file read on every render.
+const TAIL_CHUNK = 64 * 1024;
+
+function readTail(maxEntries) {
+  if (!fs.existsSync(AUDIT_LOG)) return [];
+  const maxLines = Math.max(1, Math.floor(Number(maxEntries)) || 1);
+  let fd;
+  try {
+    fd = fs.openSync(AUDIT_LOG, 'r');
+    const size = fs.fstatSync(fd).size;
+    if (!size) return [];
+    let end = size;
+    let raw = '';
+    let reachedStart = false;
+    let lines = [];
+    while (end > 0) {
+      const start = Math.max(0, end - TAIL_CHUNK);
+      const buf = Buffer.alloc(end - start);
+      fs.readSync(fd, buf, 0, buf.length, start);
+      raw = buf.toString('utf8') + raw;
+      reachedStart = start === 0;
+      end = start;
+      lines = raw.split('\n').filter(line => line.trim());
+      // The first line is partial unless we reached the start of the file.
+      if (!reachedStart) lines.shift();
+      if (lines.length >= maxLines || reachedStart) break;
+    }
+    const last = lines.slice(-maxLines);
+    const parsed = [];
+    for (const line of last) {
+      try { parsed.push(JSON.parse(line)); } catch (_err) { /* skip */ }
+    }
+    return parsed;
+  } catch (_err) {
+    return [];
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
+  }
+}
+
+// Returns vault entries whose timestamp starts with the given prefix
+// (e.g. "2026-08-13" for today). Entries are appended chronologically, so the
+// tail is scanned backwards until an older entry is found, making this
+// proportional to the matched entries rather than the vault size.
+function readTailSince(timestampPrefix) {
+  if (!fs.existsSync(AUDIT_LOG)) return [];
+  const prefix = String(timestampPrefix || '');
+  let fd;
+  try {
+    fd = fs.openSync(AUDIT_LOG, 'r');
+    const size = fs.fstatSync(fd).size;
+    if (!size) return [];
+    let end = size;
+    let raw = '';
+    while (end > 0) {
+      const start = Math.max(0, end - TAIL_CHUNK);
+      const buf = Buffer.alloc(end - start);
+      fs.readSync(fd, buf, 0, buf.length, start);
+      raw = buf.toString('utf8') + raw;
+      const reachedStart = start === 0;
+      end = start;
+      const lines = raw.split('\n').filter(line => line.trim());
+      const complete = reachedStart ? lines : lines.slice(1);
+      if (!complete.length) continue;
+      const parsed = [];
+      for (const line of complete) {
+        try { parsed.push(JSON.parse(line)); } catch (_err) { /* skip */ }
+      }
+      if (!parsed.length) continue;
+      const oldest = parsed[0];
+      if (!prefix || String(oldest.timestamp || '').localeCompare(prefix) < 0) {
+        return parsed.filter(e => String(e.timestamp || '').startsWith(prefix));
+      }
+      if (reachedStart) return parsed;
+    }
+    return [];
+  } catch (_err) {
+    return [];
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
+  }
+}
+
 function countEntries() {
   if (!fs.existsSync(AUDIT_LOG)) return 0;
   const content = fs.readFileSync(AUDIT_LOG, 'utf8');
@@ -176,6 +290,8 @@ function clearVault() {
 module.exports = {
   writeEntry,
   readVault,
+  readTail,
+  readTailSince,
   clearVault,
   syncVaultToDb,
   verifyVault,

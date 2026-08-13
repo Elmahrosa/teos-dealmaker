@@ -4,9 +4,9 @@ const { statusEmoji } = require('./lib');
 
 function buildAudit(offset) {
   const size = 8;
-  const entries = audit.readVault();
-  const start = Math.max(0, entries.length - size - (offset || 0));
-  const page = entries.slice(start, start + size).reverse();
+  const total = audit.countEntries();
+  const tail = audit.readTail(size + (offset || 0));
+  const page = tail.slice(-size).reverse();
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b('Audit Log')}`,
     design.it('Immutable activity feed'),
@@ -17,6 +17,7 @@ function buildAudit(offset) {
     design.divider()
   ]);
   const rows = [];
+  const start = Math.max(0, total - size - (offset || 0));
   if (start > 0) rows.push([design.textButton('Earlier', `cc_audit:${(offset || 0) + size}`)]);
   rows.push([design.textButton('Back to Home', 'cc_home')]);
   return { text, keyboard: design.keyboard(rows) };

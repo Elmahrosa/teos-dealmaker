@@ -50,7 +50,7 @@ function learnScreen(res) {
 }
 
 function lastEntry() {
-  const entries = audit.readVault();
+  const entries = audit.readTail(1);
   if (entries.length === 0) return null;
   return entries[entries.length - 1];
 }
@@ -76,14 +76,14 @@ function greetingFor(timezone) {
 
 function outreachToday() {
   const today = new Date().toISOString().slice(0, 10);
-  return audit.readVault().filter(e =>
+  return audit.readTailSince(today).filter(e =>
     e.action.startsWith('OUTREACH') && (e.timestamp || '').startsWith(today)
   ).length;
 }
 
 function recentErrors() {
-  const entries = audit.readVault();
-  return entries.slice(-50).filter(e => e.status === 'error').length;
+  const entries = audit.readTail(50);
+  return entries.filter(e => e.status === 'error').length;
 }
 
 function nextRecommendation(ctx) {
