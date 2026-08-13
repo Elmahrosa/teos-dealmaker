@@ -29,7 +29,7 @@ function normalize(payload) {
   if (!title) errors.push('mission');
   if (!objective) errors.push('objective');
   if (contact.length > 500) errors.push('contact');
-  if (title.length > 300) errors.push('mission');
+  if (title.length > 5000) errors.push('mission');
   if (objective.length > 5000) errors.push('objective');
 
   const answers = {};

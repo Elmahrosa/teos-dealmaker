@@ -61,6 +61,12 @@ const ar = missionIntake.normalize({
 });
 check(ar.ok && ar.row.title === 'مهمة واحدة', 'Arabic title accepted');
 
+const atLimit = missionIntake.normalize({ mission: 'a'.repeat(5000), objective: 'obj' });
+check(atLimit.ok, '5000-char mission accepted (matches client maxlength)');
+const overLimit = missionIntake.normalize({ mission: 'a'.repeat(5001), objective: 'obj' });
+check(!overLimit.ok && overLimit.errors.indexOf('mission') !== -1,
+  '5001-char mission still rejected (server cap not weakened)');
+
 (async () => {
   // --- repos round-trip on the memory adapter ---
   const adapter = createMemoryAdapter();
