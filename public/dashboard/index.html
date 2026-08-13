@@ -562,13 +562,13 @@ document.addEventListener('DOMContentLoaded', function() {
         endpoint = '/api/admin/command-center/overview';
     }
 
-    // Add session token to headers if we have one (for simplicity, we're using localStorage)
+    // Authenticate every Command Center request with the session token issued
+    // by /api/auth/web-login via the Authorization: Bearer header. The legacy
+    // x-founder-session header and ?session= query param are not accepted.
     const token = localStorage.getItem('teos_founder_token');
     const headers = {};
     if (token) {
-      // In our current implementation, we are using a query param or header? We set x-founder-session or query.session
-      // We'll use the header for simplicity in this example.
-      headers['x-founder-session'] = token;
+      headers['Authorization'] = 'Bearer ' + token;
     }
 
     fetch(endpoint, { headers })
