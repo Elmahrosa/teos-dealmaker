@@ -824,6 +824,125 @@ app.post('/api/revenue-ops/notify', requireAuditAuth, express.json(), async (req
   }
 });
 
+// Customer #0 (TEOS DealMaker sells to DealMaker) — governed review surface.
+// The review pages are read-only and gated by the audit key. Decisions are
+// POSTs gated by the founder session and go through the existing governed
+// email lifecycle (services/emailChannel). Nothing sends from here.
+app.get('/api/customer-0/report/latest', requireAuditAuth, async (_req, res) => {
+  try {
+    const customer0 = require('../services/customer0');
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+    const report = await customer0.latestReport({ adapter });
+    if (!report) return res.status(404).json({ ok: false, error: 'no_report_yet' });
+    res.json({ ok: true, report });
+  } catch (err) {
+    console.error('[customer0] report error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.get('/api/customer-0/approvals', requireAuditAuth, async (_req, res) => {
+  try {
+    const customer0 = require('../services/customer0');
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+    const queue = await customer0.pendingOutreach({ adapter }, {});
+    res.json({ ok: true, queue });
+  } catch (err) {
+    console.error('[customer0] approvals error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.post('/api/customer-0/approvals/:id/approve', checkFounderSession, express.json({ limit: '32kb' }), async (req, res) => {
+  try {
+    const customer0 = require('../services/customer0');
+    const result = await customer0.decide({ adapter: req.adapter }, {
+      id: req.params.id,
+      decision: 'approve',
+      founder: req.authUser
+    });
+    if (!result.ok) {
+      const code = result.error === 'not_found' ? 404 : result.error === 'already_decided' ? 409 : result.error === 'expired' ? 410 : 400;
+      return res.status(code).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('[customer0] approve error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.post('/api/customer-0/approvals/:id/reject', checkFounderSession, express.json({ limit: '32kb' }), async (req, res) => {
+  try {
+    const customer0 = require('../services/customer0');
+    const result = await customer0.decide({ adapter: req.adapter }, {
+      id: req.params.id,
+      decision: 'reject',
+      founder: req.authUser,
+      reason: req.body && req.body.reason ? req.body.reason : null
+    });
+    if (!result.ok) {
+      const code = result.error === 'not_found' ? 404 : result.error === 'already_decided' ? 409 : result.error === 'expired' ? 410 : 400;
+      return res.status(code).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('[customer0] reject error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.post('/api/customer-0/approvals/batch', checkFounderSession, express.json({ limit: '256kb' }), async (req, res) => {
+  try {
+    const customer0 = require('../services/customer0');
+    const body = req.body || {};
+    if (!Array.isArray(body.ids) || !body.ids.length) {
+      return res.status(400).json({ ok: false, error: 'ids_required' });
+    }
+    const result = await customer0.batchDecide({ adapter: req.adapter }, {
+      ids: body.ids,
+      decision: body.decision || 'approve',
+      founder: req.authUser,
+      reason: body.reason || null
+    });
+    res.json(result);
+  } catch (err) {
+    console.error('[customer0] batch error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.get('/approvals/customer0', requireAuditAuth, async (_req, res) => {
+  try {
+    const customer0 = require('../services/customer0');
+    const render = require('./render');
+    const { getAdapter, createMemoryAdapter } = require('../db');
+    let adapter;
+    try {
+      adapter = getAdapter();
+    } catch (_err) {
+      adapter = createMemoryAdapter();
+    }
+    const queue = await customer0.pendingOutreach({ adapter }, {});
+    res.type('html').send(render.renderCustomer0ReviewPage(queue, {}));
+  } catch (err) {
+    console.error('[customer0] page error:', err.message);
+    res.status(500).send('customer0 review page failed');
+  }
+});
+
 // Resend webhooks: Svix-style signature verification, idempotent processing,
 // provider events stored against the originating job. Bounces and complaints
 // suppress the address until explicitly cleared by policy.

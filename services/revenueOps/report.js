@@ -1,4 +1,5 @@
 const { config, now, KEY_LAST_REPORT, KEY_LAST_WINDOW } = require('./core');
+const customer0 = require('../customer0');
 
 function windowEndOf(ts, intervalMs) {
   return Math.floor(new Date(ts).getTime() / intervalMs) * intervalMs;
@@ -104,9 +105,10 @@ function renderText(m) {
   ].join('\n');
 }
 
-async function sendReport(db, row, metrics) {
+async function sendReport(db, row, metrics, text) {
   const { sendRaw } = require('../emailChannel');
   const c = config();
+  const bodyText = typeof text === 'string' ? text : renderText(metrics);
   if (!c.resendConfigured) {
     await db.adapter.update('founder_reports', { report_id: row.report_id }, { delivery_status: 'failed', failure_reason: 'resend_not_configured', last_attempt_at: now() });
     return { ok: false, reason: 'resend_not_configured' };
@@ -116,7 +118,7 @@ async function sendReport(db, row, metrics) {
     from: c.from,
     to: row.recipient,
     subject: row.subject,
-    text: renderText(metrics),
+    text: bodyText,
     timeoutMs: Number(process.env.RESEND_TIMEOUT_MS || 15000)
   });
   if (res.ok) {
@@ -143,9 +145,17 @@ async function generateAndSend(db, windowStartMs, windowEndMs) {
   const c = config();
   const r = require('../../db/repos').createRepos(db.adapter);
   const metrics = await collectMetrics(db, windowStartMs, windowEndMs);
+  const section = await customer0.buildReportSection(db, metrics);
+  metrics.customer0 = {
+    materialChange: section.changed,
+    topOpportunity: section.topOpportunity ? section.topOpportunity.company : null,
+    pendingApprovals: section.pendingApprovals,
+    fingerprint: section.fingerprint
+  };
+  const fullText = renderText(metrics) + '\n\n' + customer0.renderCustomer0Text(section);
   await r.revenueOps.set('sor_last_window_skip', null);
   const reportId = `fr_${uuid().slice(0, 8)}_${Math.round(windowEndMs / 1000)}`;
-  const subject = `TEOS DealMaker Revenue Ops · ${windowLabel(windowEndMs)} UTC`;
+  const subject = `TEOS DealMaker — Customer #0 Revenue Report — ${windowLabel(windowEndMs)} UTC`;
   const row = await r.founderReports.create({
     report_id: reportId,
     window_start: new Date(windowStartMs).toISOString(),
@@ -163,9 +173,9 @@ async function generateAndSend(db, windowStartMs, windowEndMs) {
     agent_name: 'revenue-ops',
     action_type: 'FOUNDER_REPORT_GENERATED',
     timestamp: now(),
-    details: { report_id: reportId, window_end: metrics.windowEnd }
+    details: { report_id: reportId, window_end: metrics.windowEnd, customer0: metrics.customer0 }
   });
-  const sent = await sendReport(db, row, metrics);
+  const sent = await sendReport(db, row, metrics, fullText);
   r.audit.add({
     workspace_id: null,
     agent_name: 'revenue-ops',

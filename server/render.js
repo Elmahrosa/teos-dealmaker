@@ -410,6 +410,33 @@ function renderCustomerZero(report) {
 `);
 }
 
+function renderCustomer0ReviewPage(queue, opts) {
+  const o = opts || {};
+  const rows = (queue || []).map(q => `
+  <div class="review-item">
+    <h2>#${q.id} · ${esc(q.company || q.to)} <span class="badge ${q.expired ? 'err' : 'warn'}">${q.expired ? 'EXPIRED' : esc(q.status)}</span></h2>
+    <table>
+      <tr><td>WHO</td><td>${esc(q.buyer || 'not identified')}${q.buyer_role ? ' — ' + esc(q.buyer_role) : ''} @ ${esc(q.company)} (${esc(q.country || '—')})</td></tr>
+      <tr><td>WHY</td><td>${esc(q.pain_hypothesis || '—')} ${q.evidence && q.evidence.length ? '<br><span class="muted">' + esc(q.evidence.map(e => e.source + ': ' + e.summary).join(' · ')) + '</span>' : ''}</td></tr>
+      <tr><td>WHAT</td><td class="mono">${esc(q.subject)}</td></tr>
+      <tr><td>MESSAGE</td><td class="out"><pre>${esc(q.body)}</pre></td></tr>
+      <tr><td>CHANNEL</td><td>${esc(q.channel)} → ${esc(q.to)} · version ${esc(q.draft_version)} · hash ${esc(q.draft_hash)}</td></tr>
+      <tr><td>OUTCOME</td><td>${esc(q.expected_outcome)}</td></tr>
+      <tr><td>DECISION</td><td><span class="muted">POST ${esc(o.approveBase || '/api/customer-0/approvals')}/${q.id}/approve (or /reject with {"reason":"..."}) with <code>Authorization: Bearer &lt;founder session token&gt;</code>. Decisions are recorded in the audit vault. Nothing sends until the outbound worker is RUNNING.</span></td></tr>
+    </table>
+  </div>`).join('');
+
+  return renderReportPage('Customer #0 · Governed Outreach Review', `
+  <header>
+    <h1>CUSTOMER #0 · GOVERNED OUTREACH REVIEW</h1>
+    <span class="sub">TEOS DealMaker sells to DealMaker · decisions require the authenticated founder session</span>
+    <span style="margin-inline-start:auto;">${rows.length ? '<span class="badge warn">' + rows.length + ' PENDING</span>' : '<span class="badge ok">QUEUE CLEAR</span>'}</span>
+  </header>
+  <p class="goal">Every row is a governed outbound draft. Approving stamps approved_by/approved_at on the draft and records the decision in the audit vault; it does not send anything. Sending only happens when the outbound worker is RUNNING with the Resend key configured.</p>
+  ${rows || '<p class="muted">No pending Customer #0 outreach drafts.</p>'}
+`);
+}
+
 function robotsTxt() {
   return `User-agent: *\nAllow: /\nDisallow: /dashboard\nDisallow: /report\nDisallow: /reports\nDisallow: /customer-0\nSitemap: ${SITE_URL}/sitemap.xml\n`;
 }
@@ -435,6 +462,7 @@ module.exports = {
   renderIntakesAdmin,
   renderMissionReport,
   renderCustomerZero,
+  renderCustomer0ReviewPage,
   robotsTxt,
   sitemapXml
 };
