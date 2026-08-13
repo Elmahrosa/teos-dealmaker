@@ -7,6 +7,10 @@ const TABLES = {
     columns: ['email', 'display_name', 'telegram_id', 'password_hash', 'salt'],
     timestamps: true
   },
+  sessions: {
+    columns: ['token_hash', 'user_id', 'expires_at', 'revoked_at'],
+    timestamps: true
+  },
   workspace_members: {
     columns: ['workspace_id', 'user_id', 'role']
   },

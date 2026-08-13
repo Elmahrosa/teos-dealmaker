@@ -147,6 +147,20 @@ async function addMember(adapter, { workspaceId, userId, role = 'operator' }) {
   return repos.members.add({ workspace_id: workspaceId, user_id: userId, role });
 }
 
+// Founder determination is a single deterministic gate: the user whose telegram
+// id equals TEOS_FOUNDER_TELEGRAM_ID. Workspace member roles are never trusted
+// for founder authorization — seeding, plan and role assignments can vary and
+// role strings are not an identity proof.
+async function isFounderUser(adapter, userId) {
+  const fid = process.env.TEOS_FOUNDER_TELEGRAM_ID;
+  if (!fid) return false;
+  const fidNum = Number(fid);
+  if (!Number.isFinite(fidNum)) return false;
+  const user = await adapter.findOne('users', { id: Number(userId) });
+  if (!user) return false;
+  return Number(user.telegram_id) === fidNum || Number(user.id) === fidNum;
+}
+
 module.exports = {
   AGENT_TYPES,
   ensureUser,
@@ -156,6 +170,7 @@ module.exports = {
   onboardWorkspace,
   provisionWorkspace,
   addMember,
+  isFounderUser,
   today,
   addMonths
 };
