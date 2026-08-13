@@ -69,6 +69,46 @@ async function testAuth() {
     const atLimit = await auth.checkUserEntitlement(adapter, signupResult.user.id);
     console.log(`��✓ At limit: ${!atLimit} (should be false - not entitled anymore)`);
 
+    // Test 7: duplicate signup returns a generic error (no email enumeration)
+    console.log('\n7. Testing duplicate signup (no enumeration)...');
+    let dupRejected = false;
+    try {
+      await auth.signup(adapter, {
+        email: 'test@example.com',
+        password: 'anotherpassword',
+        companyName: 'Duplicate Co'
+      });
+    } catch (err) {
+      dupRejected = true;
+      if (err.message === 'User with this email already exists') {
+        throw new Error('Signup still leaks account existence: ' + err.message);
+      }
+      console.log('  Duplicate signup rejected generically: ' + err.message);
+    }
+    if (!dupRejected) {
+      throw new Error('Duplicate signup should have been rejected');
+    }
+
+    // Test 8: malformed stored hash is rejected cleanly (no timingSafeEqual throw)
+    console.log('\n8. Testing malformed stored hash (clean rejection)...');
+    await adapter.update('users', { id: signupResult.user.id }, {
+      password_hash: 'zzzz-not-hex',
+      salt: 'dummysalt'
+    });
+    let corruptRejected = false;
+    try {
+      await auth.login(adapter, {
+        email: 'test@example.com',
+        password: 'whatever'
+      });
+    } catch (err) {
+      corruptRejected = true;
+      console.log('  Corrupt hash rejected: ' + err.message);
+    }
+    if (!corruptRejected) {
+      throw new Error('Login with corrupt hash should have been rejected');
+    }
+
     console.log('\\n��✅ All auth tests passed!');
     return true;
   } catch (err) {

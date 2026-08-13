@@ -52,7 +52,7 @@ async function signup(adapter, userData) {
   // Check if user already exists
   const existingUser = await repos.users.getByEmail(email);
   if (existingUser) {
-    throw new Error('User with this email already exists');
+    throw new Error('Unable to complete signup with the provided details');
   }
 
   // Generate salt and hash password
@@ -123,10 +123,13 @@ async function login(adapter, loginData) {
   const passwordHash = await hashPassword(password, user.salt);
 
   // Constant-time comparison to prevent timing attacks
-  const isValid = crypto.timingSafeEqual(
-    Buffer.from(passwordHash, 'hex'),
-    Buffer.from(user.password_hash, 'hex')
-  );
+  const candidate = Buffer.from(passwordHash, 'hex');
+  const stored = Buffer.from(user.password_hash, 'hex');
+
+  let isValid = false;
+  if (candidate.length === stored.length && candidate.length > 0) {
+    isValid = crypto.timingSafeEqual(candidate, stored);
+  }
 
   if (!isValid) {
     throw new Error('Invalid email or password');
