@@ -1,7 +1,89 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" font-family="'Segoe UI',Arial,sans-serif">
   <rect width="1200" height="630" fill="#0b0f14"/>
   <rect x="60" y="60" width="1080" height="510" rx="24" fill="none" stroke="#1f2a37" stroke-width="2"/>
-  <path d="M580 150l40 18v30c0 26-18 44-40 58-22-14-40-32-40-58v-30z" fill="#131a23" stroke="#d4af37" stroke-width="4"/>
-  <text x="600" y="330" font-family="Segoe UI, Arial, sans-serif" font-size="76" font-weight="700" fill="#d4af37" text-anchor="middle" letter-spacing="6">TEOS DEALMAKER</text>
-  <text x="600" y="410" font-family="Segoe UI, Arial, sans-serif" font-size="32" fill="#7c8a99" text-anchor="middle" letter-spacing="4">Policy-Governed AI Revenue Operating System</text>
+
+  <!-- workforce nodes feeding the DealMaker engine -->
+  <g stroke="#263243" stroke-width="2">
+    <path d="M430 140 415 175 430 210"/>
+    <path d="M415 175 505 175"/>
+    <path d="M770 140 785 175 770 210"/>
+    <path d="M785 175 695 175"/>
+  </g>
+  <g fill="#d4af37" opacity="0.55">
+    <circle cx="430" cy="140" r="3.5"/>
+    <circle cx="415" cy="175" r="3.5"/>
+    <circle cx="430" cy="210" r="3.5"/>
+    <circle cx="770" cy="140" r="3.5"/>
+    <circle cx="785" cy="175" r="3.5"/>
+    <circle cx="770" cy="210" r="3.5"/>
+  </g>
+
+  <!-- emblem: shield + TD + governance check + revenue arrow -->
+  <g transform="translate(459.2 46.8) scale(4.4)">
+    <rect x="0" y="0" width="64" height="64" rx="14" fill="#0b0f14"/>
+    <rect x="2.5" y="2.5" width="59" height="59" rx="11.5" fill="none" stroke="#182230" stroke-width="1"/>
+    <path d="M32 9L51 17c0 11-5.5 21.5-19 30C18.5 38.5 13 28 13 17z" fill="#131a23" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M32 12.5L47 18.8c0 9.8-4.4 19.4-15 27.2C21.4 38.2 17 28.6 17 18.8z" fill="none" stroke="#273345" stroke-width="1"/>
+    <g stroke-linecap="round" fill="none">
+      <path d="M23 23.5H35" stroke="#f4f6f9" stroke-width="3"/>
+      <path d="M29 23.5V40" stroke="#f4f6f9" stroke-width="3"/>
+      <path d="M38 24v16" stroke="#f4f6f9" stroke-width="3"/>
+      <path d="M38 24a8 8 0 0 1 0 16" stroke="#d4af37" stroke-width="3"/>
+    </g>
+    <path d="M30.5 43.5l3 3 6.5-5" fill="none" stroke="#d4af37" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M47.5 40.5L54.8 33.2" fill="none" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/>
+    <polygon points="54.8,33.2 50.3,33.4 52.9,37.3" fill="#d4af37"/>
+  </g>
+
+  <text x="600" y="300" font-size="42" font-weight="700" fill="#d4af37" text-anchor="middle" letter-spacing="16">TEOS</text>
+  <text x="600" y="352" font-size="42" font-weight="700" fill="#d4af37" text-anchor="middle" letter-spacing="12">DEALMAKER</text>
+
+  <g stroke="#d4af37" stroke-width="2">
+    <path d="M440 384 588 384"/>
+    <path d="M612 384 760 384"/>
+  </g>
+  <polygon points="600,376 608,384 600,392 592,384" fill="#d4af37"/>
+
+  <text x="600" y="424" font-size="24" font-weight="600" fill="#eef1f6" text-anchor="middle" letter-spacing="7">AI REVENUE OPERATING SYSTEM</text>
+
+  <g stroke-linecap="round" fill="none" stroke-linejoin="round">
+    <!-- autonomous AI workforce -->
+    <circle cx="200" cy="490" r="9" stroke="#d4af37" stroke-width="2"/>
+    <circle cx="200" cy="490" r="3.2" fill="#d4af37" stroke="none"/>
+    <path d="M192 486 184 483" stroke="#f4f6f9" stroke-width="1.6"/>
+    <path d="M192 494 184 497" stroke="#f4f6f9" stroke-width="1.6"/>
+    <circle cx="184" cy="483" r="2.2" fill="#f4f6f9" stroke="none"/>
+    <circle cx="184" cy="497" r="2.2" fill="#f4f6f9" stroke="none"/>
+
+    <!-- mission control -->
+    <circle cx="400" cy="490" r="9" stroke="#d4af37" stroke-width="2"/>
+    <circle cx="400" cy="490" r="2.6" fill="#d4af37" stroke="none"/>
+    <path d="M394 484A9 9 0 0 1 406 484" stroke="#f4f6f9" stroke-width="2"/>
+
+    <!-- MCP & plugins -->
+    <polygon points="600,479 611,490 600,501 589,490" stroke="#d4af37" stroke-width="2" fill="#131a23"/>
+    <polygon points="600,484.5 604.5,490 600,495.5 595.5,490" fill="#d4af37" stroke="none"/>
+
+    <!-- governance & security -->
+    <path d="M800 479 809 483.5v5.5c0 7-5 10.5-9 14.5-4-4-9-7.5-9-14.5v-5.5z" stroke="#d4af37" stroke-width="2" fill="#131a23"/>
+    <path d="M795 488.5l3.5 4 6.5-7.5" stroke="#d4af37" stroke-width="2.2"/>
+
+    <!-- revenue growth -->
+    <path d="M992 497h16" stroke="#f4f6f9" stroke-width="2"/>
+    <path d="M994 492 1006.5 479.5" stroke="#d4af37" stroke-width="2.5"/>
+    <polygon points="1006.5,479.5 1001.9,479.7 1004.2,484" fill="#d4af37" stroke="none"/>
+  </g>
+
+  <text x="200" y="518" font-size="19" font-weight="600" fill="#f0f3f7" text-anchor="middle" letter-spacing="3">AUTONOMOUS</text>
+  <text x="200" y="544" font-size="19" font-weight="500" fill="#9fb0c2" text-anchor="middle" letter-spacing="3">AI WORKFORCE</text>
+  <text x="400" y="518" font-size="19" font-weight="600" fill="#f0f3f7" text-anchor="middle" letter-spacing="3">MISSION</text>
+  <text x="400" y="544" font-size="19" font-weight="500" fill="#9fb0c2" text-anchor="middle" letter-spacing="3">CONTROL</text>
+  <text x="600" y="518" font-size="19" font-weight="600" fill="#f0f3f7" text-anchor="middle" letter-spacing="3">MCP &amp;</text>
+  <text x="600" y="544" font-size="19" font-weight="500" fill="#9fb0c2" text-anchor="middle" letter-spacing="3">PLUGINS</text>
+  <text x="800" y="518" font-size="19" font-weight="600" fill="#f0f3f7" text-anchor="middle" letter-spacing="3">GOVERNANCE</text>
+  <text x="800" y="544" font-size="19" font-weight="500" fill="#9fb0c2" text-anchor="middle" letter-spacing="3">&amp; SECURITY</text>
+  <text x="1000" y="518" font-size="19" font-weight="600" fill="#f0f3f7" text-anchor="middle" letter-spacing="3">REVENUE</text>
+  <text x="1000" y="544" font-size="19" font-weight="500" fill="#9fb0c2" text-anchor="middle" letter-spacing="3">GROWTH</text>
+
+  <text x="600" y="568" font-size="15" font-weight="500" fill="#7c8a99" text-anchor="middle" letter-spacing="3">DEALMAKER.ELMAHROSA.ORG · © ELMAHROSA INTERNATIONAL — ALL RIGHTS RESERVED</text>
 </svg>
