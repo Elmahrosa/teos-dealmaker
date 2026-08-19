@@ -1,6 +1,6 @@
 const TABLES = {
   workspaces: {
-    columns: ['name', 'slug', 'plan', 'status', 'owner_user_id', 'subscription_id'],
+    columns: ['name', 'slug', 'plan', 'status', 'dry_mode', 'owner_user_id', 'subscription_id'],
     timestamps: true
   },
   users: {

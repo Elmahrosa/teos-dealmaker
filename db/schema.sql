@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS workspaces (
     slug VARCHAR(80) NOT NULL UNIQUE,
     plan VARCHAR(50) NOT NULL DEFAULT 'solo',
     status VARCHAR(50) NOT NULL DEFAULT 'active',
+    dry_mode VARCHAR(10) NOT NULL DEFAULT 'dry',
     owner_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     subscription_id INTEGER,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

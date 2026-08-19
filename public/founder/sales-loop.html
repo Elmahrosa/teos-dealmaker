@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>TEOS DealMaker · 24/7 Sales Engine</title>
+<style>
+  :root {
+    --bg:#0b0e13; --panel:#12161d; --panel2:#171c24; --line:#232a34;
+    --text:#d7dde6; --muted:#8b96a5; --accent:#4f8cff; --ok:#2ecc71; --warn:#f39c12; --bad:#e74c3c;
+    --dry:#f39c12; --live:#2ecc71;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { padding:18px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  header h1 { font-size:18px; margin:0; }
+  header .sub { color:var(--muted); font-size:12px; }
+  .badge { display:inline-block; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:600; letter-spacing:.04em; }
+  .badge.dry { background:rgba(243,156,18,.15); color:var(--dry); }
+  .badge.live { background:rgba(46,204,113,.15); color:var(--live); }
+  .lang-btn { border:1px solid var(--line); background:var(--panel2); color:var(--muted); border-radius:6px; padding:4px 12px; font-size:12px; cursor:pointer; margin-left:auto; }
+  .lang-btn:hover { border-color:var(--accent); color:var(--text); }
+  main { padding:20px 24px; max-width:1200px; margin:0 auto; }
+  .section-title { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:20px 0 10px; border-bottom:1px solid var(--line); padding-bottom:6px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:16px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px; }
+  .panel h2 { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 12px; }
+  .row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px dashed var(--line); }
+  .row:last-child { border-bottom:0; }
+  .row .k { color:var(--muted); }
+  .pill { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600; }
+  .pill.run { background:rgba(46,204,113,.15); color:var(--ok); }
+  .pill.pause { background:rgba(243,156,18,.15); color:var(--warn); }
+  .pill.stop { background:rgba(231,76,60,.18); color:var(--bad); }
+  .pill.guard { background:rgba(79,140,255,.15); color:var(--accent); }
+  .pill.dry { background:rgba(243,156,18,.15); color:var(--dry); }
+  .pill.live { background:rgba(46,204,113,.15); color:var(--live); }
+  .controls { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
+  button { border:1px solid var(--line); background:var(--panel2); color:var(--text); border-radius:8px; padding:8px 16px; font-size:13px; cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.danger { background:rgba(231,76,60,.9); color:#fff; border-color:#e74c3c; }
+  button.success { background:rgba(46,204,113,.9); color:#fff; border-color:#2ecc71; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .muted { color:var(--muted); }
+  .mono { font-family:Consolas, monospace; font-size:12px; }
+  ul { margin:6px 0 0; padding-left:18px; }
+  li { font-size:13px; margin:3px 0; }
+  .stat-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:12px; margin:12px 0; }
+  .stat { text-align:center; padding:12px 8px; background:var(--panel2); border-radius:8px; }
+  .stat .num { font-size:28px; font-weight:700; color:var(--accent); }
+  .stat .label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-top:4px; }
+  .stat.ok .num { color:var(--ok); }
+  .stat.warn .num { color:var(--warn); }
+  .stat.bad .num { color:var(--bad); }
+  .bar { height:6px; background:#1c222c; border-radius:4px; overflow:hidden; margin:6px 0; }
+  .bar > i { display:block; height:100%; background:var(--accent); transition:width .3s; }
+  .bar.ok > i { background:var(--ok); }
+  .bar.warn > i { background:var(--warn); }
+  .bar.bad > i { background:var(--bad); }
+  .footer { margin-top:24px; color:var(--muted); font-size:11px; text-align:center; padding:12px; border-top:1px solid var(--line); }
+  .timeline { list-style:none; padding:0; margin:8px 0 0; }
+  .timeline li { padding:6px 0; border-bottom:1px dashed var(--line); font-size:12px; }
+  .timeline li:last-child { border-bottom:0; }
+  .timeline .ts { color:var(--muted); font-family:Consolas, monospace; font-size:11px; }
+  html[dir="rtl"] body { direction:rtl; text-align:right; }
+  html[dir="rtl"] .row { flex-direction:row-reverse; }
+  html[dir="rtl"] .lang-btn { margin-left:0; margin-right:auto; }
+  html[dir="rtl"] header { flex-direction:row-reverse; }
+  html[dir="rtl"] ul { padding-left:0; padding-right:18px; }
+</style>
+</head>
+<body>
+<header>
+  <h1 data-i18n="sl_title">24/7 Sales Engine</h1>
+  <span class="sub" data-i18n="sl_sub">Founder Control Panel · Autonomous Revenue Loop</span>
+  <span id="engineBadge" class="badge dry">INIT</span>
+  <button class="lang-btn" id="langSwitch">العربية</button>
+</header>
+<main>
+
+<div class="stat-grid" id="stats">
+  <div class="stat" id="stat-tick"><div class="num">—</div><div class="label" data-i18n="sl_ticks">Ticks</div></div>
+  <div class="stat" id="stat-open"><div class="num">—</div><div class="label" data-i18n="sl_open_deals">Open Deals</div></div>
+  <div class="stat" id="stat-pending"><div class="num">—</div><div class="label" data-i18n="sl_pending">Pending Approvals</div></div>
+  <div class="stat" id="stat-sent"><div class="num">—</div><div class="label" data-i18n="sl_sent">Emails Sent</div></div>
+  <div class="stat" id="stat-stuck"><div class="num">—</div><div class="label" data-i18n="sl_stuck">Stuck Deals</div></div>
+  <div class="stat" id="stat-modes"><div class="num">—</div><div class="label" data-i18n="sl_workspaces">Workspaces</div></div>
+</div>
+
+<div class="section-title" data-i18n="sl_sect_scheduler">Mission Scheduler</div>
+<div class="grid">
+  <section class="panel">
+    <h2 data-i18n="sl_sched_control">Scheduler Control</h2>
+    <div class="row"><span class="k" data-i18n="sl_running">Running</span><span id="sched-running" class="pill pause">—</span></div>
+    <div class="row"><span class="k" data-i18n="sl_interval">Interval</span><span id="sched-interval" class="mono muted">—</span></div>
+    <div class="row"><span class="k" data-i18n="sl_ticks_exec">Ticks executed</span><span id="sched-ticks" class="mono">—</span></div>
+    <div class="row"><span class="k" data-i18n="sl_last_tick">Last tick</span><span id="sched-last" class="mono muted">—</span></div>
+    <div class="row"><span class="k" data-i18n="sl_next_tick">Next tick</span><span id="sched-next" class="mono muted">—</span></div>
+    <div class="controls">
+      <button id="btn-start" class="success" data-i18n="sl_btn_start">Start Loop</button>
+      <button id="btn-stop" data-i18n="sl_btn_stop">Stop Loop</button>
+      <button id="btn-trigger" class="primary" data-i18n="sl_btn_trigger">Trigger Now</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 data-i18n="sl_auto_approval">Auto-Approval Gates</h2>
+    <div class="row"><span class="k" data-i18n="sl_ap_auto">Auto-approve ≥</span><span id="ap-threshold" class="mono">—</span></div>
+    <div class="row"><span class="k" data-i18n="sl_ap_review">Founder review ≥</span><span id="ap-review" class="mono">—</span></div>
+    <div class="row"><span class="k" data-i18n="sl_ap_reject">Auto-reject &lt;</span><span id="ap-reject" class="mono">—</span></div>
+    <div class="row"><span class="k" data-i18n="sl_ap_limit">Max / day</span><span id="ap-limit" class="mono">—</span></div>
+    <div class="row"><span class="k" data-i18n="sl_ap_cooldown">Cooldown</span><span id="ap-cooldown" class="mono muted">—</span></div>
+    <div class="row"><span class="k" data-i18n="sl_ap_hv">High-value gate</span><span id="ap-hv" class="mono muted">—</span></div>
+  </section>
+</div>
+
+<div class="section-title" data-i18n="sl_sect_pipeline">Pipeline</div>
+<div class="grid">
+  <section class="panel">
+    <h2 data-i18n="sl_pipeline_health">Pipeline Health</h2>
+    <div id="pipeline-stats"><span class="muted" data-i18n="sl_loading">loading…</span></div>
+    <div id="pipeline-bar" style="margin-top:8px"></div>
+  </section>
+
+  <section class="panel">
+    <h2 data-i18n="sl_followup">Follow-Up Loop</h2>
+    <div class="row"><span class="k" data-i18n="sl_fu_enabled">Enabled</span><span id="fu-enabled" class="muted">—</span></div>
+    <div class="row"><span class="k" data-i18n="sl_fu_delay">Follow-up delay</span><span id="fu-delay" class="mono muted">—</span></div>
+    <div class="row"><span class="k" data-i18n="sl_fu_max">Max follow-ups</span><span id="fu-max" class="mono muted">—</span></div>
+    <div class="row"><span class="k" data-i18n="sl_fu_hot">Hot threshold</span><span id="fu-hot" class="mono muted">—</span></div>
+    <div class="controls">
+      <button id="btn-followup-eval" class="primary" data-i18n="sl_btn_eval">Evaluate Follow-Ups</button>
+    </div>
+  </section>
+</div>
+
+<div class="section-title" data-i18n="sl_sect_workspaces">Workspaces</div>
+<div class="panel">
+  <h2 data-i18n="sl_ws_modes">Workspace Modes</h2>
+  <div id="workspace-list"><span class="muted" data-i18n="sl_loading">loading…</span></div>
+</div>
+
+<div class="section-title" data-i18n="sl_sect_activity">Recent Activity</div>
+<div class="panel">
+  <h2 data-i18n="sl_events">Sales Loop Events</h2>
+  <ul class="timeline" id="activity"><li class="muted" data-i18n="sl_loading">loading…</li></ul>
+</div>
+
+<div class="footer">Law over Code — القانون فوق الكود · TEOS DealMaker 24/7 Sales Engine</div>
+</main>
+
+<script>
+(function () {
+  var I18N = {
+    en: {
+      sl_title: '24/7 Sales Engine',
+      sl_sub: 'Founder Control Panel · Autonomous Revenue Loop',
+      sl_ticks: 'Ticks', sl_open_deals: 'Open Deals', sl_pending: 'Pending Approvals',
+      sl_sent: 'Emails Sent', sl_stuck: 'Stuck Deals', sl_workspaces: 'Workspaces',
+      sl_sect_scheduler: 'Mission Scheduler', sl_sched_control: 'Scheduler Control',
+      sl_running: 'Running', sl_interval: 'Interval', sl_ticks_exec: 'Ticks executed',
+      sl_last_tick: 'Last tick', sl_next_tick: 'Next tick',
+      sl_btn_start: 'Start Loop', sl_btn_stop: 'Stop Loop', sl_btn_trigger: 'Trigger Now',
+      sl_auto_approval: 'Auto-Approval Gates',
+      sl_ap_auto: 'Auto-approve ≥', sl_ap_review: 'Founder review ≥', sl_ap_reject: 'Auto-reject <',
+      sl_ap_limit: 'Max / day', sl_ap_cooldown: 'Cooldown', sl_ap_hv: 'High-value gate',
+      sl_sect_pipeline: 'Pipeline', sl_pipeline_health: 'Pipeline Health',
+      sl_followup: 'Follow-Up Loop', sl_fu_enabled: 'Enabled', sl_fu_delay: 'Follow-up delay',
+      sl_fu_max: 'Max follow-ups', sl_fu_hot: 'Hot threshold', sl_btn_eval: 'Evaluate Follow-Ups',
+      sl_sect_workspaces: 'Workspaces', sl_ws_modes: 'Workspace Modes',
+      sl_sect_activity: 'Recent Activity', sl_events: 'Sales Loop Events',
+      sl_loading: 'loading…', sl_no_ws: 'no workspaces', sl_no_activity: 'no recent activity',
+      sl_total: 'Total deals', sl_open: 'Open', sl_won: 'Won', sl_lost: 'Lost',
+      sl_win_rate: 'Win rate', sl_value: 'Open value',
+      sl_running_txt: 'RUNNING', sl_stopped_txt: 'STOPPED', sl_enabled: 'enabled', sl_disabled: 'disabled',
+      sl_stop_confirm: 'Stop the 24/7 sales loop?', sl_tick_done: 'Tick executed — check status.',
+      sl_fu_note: 'Follow-up evaluation requires prospect data from the loop tick.',
+      sl_err: 'Error: ', sl_minutes: ' min', sl_days: ' days'
+    },
+    ar: {
+      sl_title: 'محرك المبيعات 24/7',
+      sl_sub: 'لوحة تحكم المؤسس · حلقة إيرادات مستقلة',
+      sl_ticks: 'الدورات', sl_open_deals: 'صفقات مفتوحة', sl_pending: 'موافقات معلقة',
+      sl_sent: 'رسائل مُرسلة', sl_stuck: 'صفقات عالقة', sl_workspaces: 'مساحات العمل',
+      sl_sect_scheduler: 'جدولة المهام', sl_sched_control: 'تحكم الجدولة',
+      sl_running: 'يعمل', sl_interval: 'الفترة', sl_ticks_exec: 'الدورات المنفذة',
+      sl_last_tick: 'آخر دورة', sl_next_tick: 'التالية',
+      sl_btn_start: 'تشغيل الحلقة', sl_btn_stop: 'إيقاف الحلقة', sl_btn_trigger: 'تنفيذ الآن',
+      sl_auto_approval: 'بوابات الاعتماد التلقائي',
+      sl_ap_auto: 'اعتماد تلقائي ≥', sl_ap_review: 'مراجعة المؤسس ≥', sl_ap_reject: 'رفض تلقائي <',
+      sl_ap_limit: 'الحد الأقصى / يوم', sl_ap_cooldown: 'فترة الراحة', sl_ap_hv: 'بوابة القيمة العالية',
+      sl_sect_pipeline: 'الخط الإنتاجي', sl_pipeline_health: 'صحة الخط الإنتاجي',
+      sl_followup: 'حلقة المتابعة', sl_fu_enabled: 'مفعّل', sl_fu_delay: 'تأخير المتابعة',
+      sl_fu_max: 'حد المتابعة', sl_fu_hot: 'عتبة السخونة', sl_btn_eval: 'تقييم المتابعات',
+      sl_sect_workspaces: 'مساحات العمل', sl_ws_modes: 'أوضاع مساحات العمل',
+      sl_sect_activity: 'النشاط الأخير', sl_events: 'أحداث حلقة المبيعات',
+      sl_loading: 'جارٍ التحميل…', sl_no_ws: 'لا توجد مساحات عمل', sl_no_activity: 'لا نشاط حديث',
+      sl_total: 'إجمالي الصفقات', sl_open: 'مفتوحة', sl_won: 'مكسوبة', sl_lost: 'خاسرة',
+      sl_win_rate: 'نسبة الفوز', sl_value: 'قيمة مفتوحة',
+      sl_running_txt: 'يعمل', sl_stopped_txt: 'متوقف', sl_enabled: 'مفعّل', sl_disabled: 'معطّل',
+      sl_stop_confirm: 'إيقاف حلقة المبيعات 24/7؟', sl_tick_done: 'تم التنفيذ — تحقق من الحالة.',
+      sl_fu_note: 'تقييم المتابعة يحتاج بيانات من دورات الحلقة.',
+      sl_err: 'خطأ: ', sl_minutes: ' دقيقة', sl_days: ' أيام'
+    }
+  };
+
+  var LANG_KEY = 'teos_founder_lang';
+  var lang = localStorage.getItem(LANG_KEY) || 'en';
+  var t = function (key) { return (I18N[lang] || I18N.en)[key] || I18N.en[key] || key; };
+
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n');
+      el.textContent = t(key);
+    });
+    var btn = document.getElementById('langSwitch');
+    if (btn) btn.textContent = lang === 'ar' ? 'English' : 'العربية';
+  }
+
+  document.getElementById('langSwitch').addEventListener('click', function () {
+    lang = lang === 'ar' ? 'en' : 'ar';
+    localStorage.setItem(LANG_KEY, lang);
+    applyLang();
+    refresh();
+    refreshConfig();
+  });
+
+  applyLang();
+
+  var KEY = 'sor_founder_key';
+  var getToken = function () {
+    var k = sessionStorage.getItem(KEY);
+    if (!k) { k = window.prompt('Enter founder session token:'); if (k) sessionStorage.setItem(KEY, k); }
+    return k || '';
+  };
+  var api = function (path, opts) {
+    var o = opts || {};
+    return fetch('/api/founder/sales-loop' + path, {
+      method: o.method || 'GET',
+      headers: { 'Authorization': 'Bearer ' + getToken(), 'content-type': 'application/json' },
+      body: o.body ? JSON.stringify(o.body) : undefined
+    }).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || j.message || ('HTTP ' + r.status)); return j; }); });
+  };
+  function el(id) { return document.getElementById(id); }
+  function ts(d) { if (!d) return '—'; try { return new Date(d).toLocaleString(); } catch (_e) { return String(d); } }
+
+  function renderStats(h) {
+    if (!h) return;
+    var p = h.pipeline || {}; var s = h.scheduler || {}; var o = h.outbound || {}; var w = h.workspaces || {};
+    setStat('stat-tick', s.tickCount || 0, s.tickCount > 0 ? 'ok' : '');
+    setStat('stat-open', p.openDeals || 0, '');
+    setStat('stat-pending', o.pending || 0, o.pending > 0 ? 'warn' : 'ok');
+    setStat('stat-sent', o.sent || 0, '');
+    setStat('stat-stuck', p.stuckDeals || 0, p.stuckDeals > 0 ? 'bad' : 'ok');
+    setStat('stat-modes', w.total || 0, '');
+  }
+  function setStat(id, val, cls) {
+    var e = el(id); if (!e) return;
+    e.querySelector('.num').textContent = val;
+    e.className = 'stat' + (cls ? ' ' + cls : '');
+  }
+
+  function renderScheduler(s) {
+    if (!s) return;
+    var running = s.running;
+    el('sched-running').textContent = running ? t('sl_running_txt') : t('sl_stopped_txt');
+    el('sched-running').className = 'pill ' + (running ? 'run' : 'stop');
+    el('sched-interval').textContent = s.intervalMinutes ? s.intervalMinutes + t('sl_minutes') : '—';
+    el('sched-ticks').textContent = s.tickCount != null ? s.tickCount : '—';
+    el('sched-last').textContent = ts(s.lastTickAt);
+    el('sched-next').textContent = ts(s.nextTickAt);
+    el('btn-start').disabled = running;
+    el('btn-stop').disabled = !running;
+  }
+
+  function renderApproval(a) {
+    if (!a) return;
+    var th = a.thresholds || {};
+    el('ap-threshold').textContent = (th.autoApprove || 80) + ' pts';
+    el('ap-review').textContent = (th.founderReview || 60) + ' pts';
+    el('ap-reject').textContent = (th.autoReject || 30) + ' pts';
+    var l = a.limits || {};
+    el('ap-limit').textContent = l.maxPerDay || 5;
+    el('ap-cooldown').textContent = (l.cooldownHours || 24) + 'h';
+    el('ap-hv').textContent = '$' + (l.highValueThreshold || 10000);
+  }
+
+  function renderFollowUp(f) {
+    if (!f) return;
+    var c = f.config || {};
+    el('fu-enabled').textContent = f.enabled ? t('sl_enabled') : t('sl_disabled');
+    el('fu-delay').textContent = (c.followUpDelayDays || 3) + t('sl_days');
+    el('fu-max').textContent = c.maxFollowUps || 3;
+    el('fu-hot').textContent = (c.hotScoreThreshold || 75) + ' pts';
+  }
+
+  function renderPipeline(p) {
+    if (!p) return;
+    var box = el('pipeline-stats');
+    var winRate = p.winRate || 0;
+    box.innerHTML =
+      '<div class="row"><span class="k">' + t('sl_total') + '</span><span>' + (p.totalDeals || 0) + '</span></div>' +
+      '<div class="row"><span class="k">' + t('sl_open') + '</span><span>' + (p.openDeals || 0) + '</span></div>' +
+      '<div class="row"><span class="k">' + t('sl_won') + '</span><span style="color:var(--ok)">' + (p.wonDeals || 0) + '</span></div>' +
+      '<div class="row"><span class="k">' + t('sl_lost') + '</span><span style="color:var(--bad)">' + (p.lostDeals || 0) + '</span></div>' +
+      '<div class="row"><span class="k">' + t('sl_win_rate') + '</span><span>' + winRate + '%</span></div>' +
+      '<div class="row"><span class="k">' + t('sl_value') + '</span><span class="mono">$' + (p.openValue || 0).toLocaleString() + '</span></div>';
+    var barEl = el('pipeline-bar');
+    var stuckPct = p.stuckDeals > 0 && p.openDeals > 0 ? Math.round((p.stuckDeals / p.openDeals) * 100) : 0;
+    barEl.innerHTML = '<div class="bar ' + (stuckPct > 50 ? 'bad' : stuckPct > 20 ? 'warn' : 'ok') + '"><i style="width:' + Math.min(stuckPct, 100) + '%"></i></div>' +
+      '<div class="mono muted" style="font-size:11px">' + (p.stuckDeals || 0) + ' stuck / ' + (p.openDeals || 0) + ' open (' + stuckPct + '%)</div>';
+  }
+
+  function renderWorkspaces(ws) {
+    var box = el('workspace-list');
+    if (!ws || !ws.length) { box.innerHTML = '<span class="muted">' + t('sl_no_ws') + '</span>'; return; }
+    box.innerHTML = '<ul>' + ws.map(function (w) {
+      var modeClass = w.mode === 'live' ? 'live' : 'dry';
+      return '<li><b>' + (w.name || w.slug) + '</b> · <span class="pill ' + modeClass + '">' + (w.mode || 'dry').toUpperCase() + '</span> · <span class="muted">' + (w.plan || 'solo') + '</span></li>';
+    }).join('') + '</ul>';
+  }
+
+  function renderActivity(events) {
+    var box = el('activity');
+    if (!events || !events.length) { box.innerHTML = '<li class="muted">' + t('sl_no_activity') + '</li>'; return; }
+    box.innerHTML = events.map(function (e) {
+      return '<li><span class="ts">' + ts(e.timestamp) + '</span> <b>' + (e.action || '') + '</b> <span class="muted">' + (e.agent || '') + '</span></li>';
+    }).join('');
+  }
+
+  function refresh() {
+    return api('/health').then(function (r) {
+      var h = r.health || {};
+      renderStats(h);
+      renderScheduler(h.scheduler || {});
+      renderPipeline(h.pipeline || {});
+      renderWorkspaces(h.workspaces && h.workspaces.modes ? Object.keys(h.workspaces.modes).map(function (m) { return { mode: m, name: m }; }) : []);
+      renderActivity(h.recentActivity || []);
+      var badge = el('engineBadge');
+      var running = h.scheduler && h.scheduler.running;
+      badge.textContent = running ? t('sl_running_txt') : t('sl_stopped_txt');
+      badge.className = 'badge ' + (running ? 'live' : 'dry');
+    }).catch(function () {
+      el('engineBadge').textContent = 'ERROR';
+      el('engineBadge').className = 'badge dry';
+    });
+  }
+
+  function refreshConfig() {
+    return Promise.all([api('/status'), api('/follow-up/status'), api('/auto-approval/status')]).then(function (r) {
+      var status = r[0] && r[0].salesLoop ? r[0].salesLoop : {};
+      renderScheduler(status.scheduler || {});
+      renderApproval(status.autoApproval || {});
+      renderFollowUp(r[2] || {});
+    }).catch(function () {});
+  }
+
+  function act(path, body, confirmMsg) {
+    if (confirmMsg && !window.confirm(confirmMsg)) return Promise.resolve();
+    return api(path, { method: 'POST', body: body || {} }).then(function () { refresh(); refreshConfig(); }).catch(function (e) { window.alert(t('sl_err') + e.message); });
+  }
+
+  el('btn-start').addEventListener('click', function () { act('/start', { by: 'founder' }); });
+  el('btn-stop').addEventListener('click', function () { act('/stop', { by: 'founder' }, t('sl_stop_confirm')); });
+  el('btn-trigger').addEventListener('click', function () { act('/trigger', { by: 'founder' }).then(function () { window.alert(t('sl_tick_done')); }); });
+  el('btn-followup-eval').addEventListener('click', function () { window.alert(t('sl_fu_note')); });
+
+  refresh();
+  refreshConfig();
+  setInterval(function () { refresh(); }, 15000);
+  setInterval(function () { refreshConfig(); }, 30000);
+})();
+</script>
+</body>
+</html>

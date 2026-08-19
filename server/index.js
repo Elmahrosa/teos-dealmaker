@@ -87,6 +87,13 @@ app.use('/founder', (req, res, next) => {
 });
 app.use('/founder', requireAuditAuth, express.static(publicFounder));
 
+// 24/7 Sales Engine control panel — served from the founder directory, same
+// audit-key gate. The page communicates with /api/founder/sales-loop/* via
+// the founder session (Bearer token).
+app.get('/founder/sales-loop', requireAuditAuth, (req, res) => {
+  res.sendFile(path.join(publicFounder, 'sales-loop.html'));
+});
+
 app.use((req, res, next) => {
   res.set({
     'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
@@ -923,6 +930,16 @@ app.post('/api/customer-0/approvals/batch', checkFounderSession, express.json({ 
     res.status(500).json({ error: 'internal_error' });
   }
 });
+
+// ---------------------------------------------------------------------------
+// 24/7 Autonomous Sales Loop — Founder Command API. All routes require a
+// validated founder session (Bearer token from /api/auth/web-login). The
+// router handles DRY/LIVE mode switching, prospect discovery, auto-approval
+// evaluation, follow-up escalation, pipeline health, and mission scheduler
+// control. Every mutation is audit-logged.
+// ---------------------------------------------------------------------------
+const founderSalesLoop = require('./founderSalesLoop');
+app.use('/api/founder/sales-loop', checkFounderSession, founderSalesLoop);
 
 app.get('/approvals/customer0', requireAuditAuth, async (_req, res) => {
   try {
@@ -1833,6 +1850,17 @@ const server = app.listen(PORT, () => {
     }
   } catch (err) {
     console.error('[Sentinel] revenue ops scheduler setup error:', err.message);
+  }
+  try {
+    const missionScheduler = require('../services/missionScheduler');
+    const { getAdapter: _getAdapter, createMemoryAdapter: _createMemoryAdapter } = require('../db');
+    let msAdapter;
+    try { msAdapter = _getAdapter(); } catch (_e) { msAdapter = _createMemoryAdapter(); }
+    const msResult = missionScheduler.start(msAdapter);
+    if (msResult.ok) console.log(`[Sentinel] mission scheduler started (interval ${msResult.intervalMs / 3600000}h)`);
+    else console.log('[Sentinel] mission scheduler not started:', msResult.reason || 'unknown');
+  } catch (err) {
+    console.error('[Sentinel] mission scheduler setup error:', err.message);
   }
 });
 

@@ -44,46 +44,54 @@
   .bar { height:6px; background:#1c222c; border-radius:4px; overflow:hidden; }
   .bar > i { display:block; height:100%; background:var(--accent); }
   .footer { margin-top:20px; color:var(--muted); font-size:11px; text-align:center; }
+  .lang-btn { border:1px solid var(--line); background:var(--panel2); color:var(--muted); border-radius:6px; padding:4px 12px; font-size:12px; cursor:pointer; margin-left:auto; }
+  .lang-btn:hover { border-color:var(--accent); color:var(--text); }
+  html[dir="rtl"] body { direction:rtl; text-align:right; }
+  html[dir="rtl"] .row { flex-direction:row-reverse; }
+  html[dir="rtl"] .lang-btn { margin-left:0; margin-right:auto; }
+  html[dir="rtl"] header { flex-direction:row-reverse; }
+  html[dir="rtl"] ul { padding-left:0; padding-right:18px; }
 </style>
 </head>
 <body>
 <header>
-  <h1>Founder Command Center</h1>
-  <span class="sub">TEOS DealMaker · 24/7 Revenue Operations — evidence over claims</span>
+  <h1 data-i18n="cc_title">Founder Command Center</h1>
+  <span class="sub" data-i18n="cc_sub">TEOS DealMaker · 24/7 Revenue Operations — evidence over claims</span>
+  <button class="lang-btn" id="langSwitch">العربية</button>
 </header>
 <main>
   <div class="grid">
     <section class="panel">
-      <h2>Operating State</h2>
-      <div id="mode-row" class="row"><span class="k">Mode</span><span id="mode" class="pill pause">—</span></div>
-      <div class="row"><span class="k">Live guard</span><span id="guard" class="pill guard">—</span></div>
-      <div class="row"><span class="k">Enabled (SOR)</span><span id="enabled" class="muted">—</span></div>
-      <div class="row"><span class="k">Emergency</span><span id="emergency" class="muted">none</span></div>
-      <div class="row"><span class="k">Last window</span><span id="lastWindow" class="mono muted">—</span></div>
-      <div class="row"><span class="k">Heartbeat</span><span id="heartbeat" class="mono muted">—</span></div>
+      <h2 data-i18n="cc_state">Operating State</h2>
+      <div id="mode-row" class="row"><span class="k" data-i18n="cc_mode">Mode</span><span id="mode" class="pill pause">—</span></div>
+      <div class="row"><span class="k" data-i18n="cc_guard">Live guard</span><span id="guard" class="pill guard">—</span></div>
+      <div class="row"><span class="k" data-i18n="cc_enabled">Enabled (SOR)</span><span id="enabled" class="muted">—</span></div>
+      <div class="row"><span class="k" data-i18n="cc_emergency">Emergency</span><span id="emergency" class="muted">none</span></div>
+      <div class="row"><span class="k" data-i18n="cc_last_window">Last window</span><span id="lastWindow" class="mono muted">—</span></div>
+      <div class="row"><span class="k" data-i18n="cc_heartbeat">Heartbeat</span><span id="heartbeat" class="mono muted">—</span></div>
       <div class="row"><span class="k">Resend</span><span id="resend" class="muted">—</span></div>
       <div class="controls">
-        <button id="btn-pause" class="primary">Pause</button>
-        <button id="btn-resume" class="primary">Resume</button>
-        <button id="btn-stop" class="danger">Emergency Stop</button>
-        <button id="btn-trigger">Trigger report now</button>
+        <button id="btn-pause" class="primary" data-i18n="cc_btn_pause">Pause</button>
+        <button id="btn-resume" class="primary" data-i18n="cc_btn_resume">Resume</button>
+        <button id="btn-stop" class="danger" data-i18n="cc_btn_stop">Emergency Stop</button>
+        <button id="btn-trigger" data-i18n="cc_btn_trigger">Trigger report now</button>
       </div>
     </section>
 
     <section class="panel">
-      <h2>Approvals &amp; Alerts</h2>
-      <div id="approvals"><span class="muted">loading…</span></div>
+      <h2 data-i18n="cc_approvals">Approvals &amp; Alerts</h2>
+      <div id="approvals"><span class="muted" data-i18n="cc_loading">loading…</span></div>
       <div id="alerts" style="margin-top:10px"></div>
     </section>
 
     <section class="panel">
-      <h2>Prospects &amp; Reports</h2>
-      <div class="row"><span class="k">Prospects recorded</span><span id="prospectsTotal">—</span></div>
-      <div class="row"><span class="k">Founder reports</span><span id="reportsTotal">—</span></div>
-      <div id="lastReport"><span class="muted">no report yet</span></div>
+      <h2 data-i18n="cc_prospects">Prospects &amp; Reports</h2>
+      <div class="row"><span class="k" data-i18n="cc_prospects_recorded">Prospects recorded</span><span id="prospectsTotal">—</span></div>
+      <div class="row"><span class="k" data-i18n="cc_reports">Founder reports</span><span id="reportsTotal">—</span></div>
+      <div id="lastReport"><span class="muted" data-i18n="cc_no_report">no report yet</span></div>
       <div class="controls">
-        <button id="btn-discover">Run discovery scoring</button>
-        <button id="btn-notify">Notify founder</button>
+        <button id="btn-discover" data-i18n="cc_btn_discover">Run discovery scoring</button>
+        <button id="btn-notify" data-i18n="cc_btn_notify">Notify founder</button>
       </div>
     </section>
   </div>
@@ -92,6 +100,58 @@
 
 <script>
 (function () {
+  var I18N = {
+    en: {
+      cc_title: 'Founder Command Center', cc_sub: 'TEOS DealMaker · 24/7 Revenue Operations — evidence over claims',
+      cc_state: 'Operating State', cc_mode: 'Mode', cc_guard: 'Live guard', cc_enabled: 'Enabled (SOR)',
+      cc_emergency: 'Emergency', cc_last_window: 'Last window', cc_heartbeat: 'Heartbeat',
+      cc_btn_pause: 'Pause', cc_btn_resume: 'Resume', cc_btn_stop: 'Emergency Stop', cc_btn_trigger: 'Trigger report now',
+      cc_approvals: 'Approvals & Alerts', cc_loading: 'loading…', cc_no_approvals: 'no pending revenue approvals',
+      cc_all_quiet: 'all quiet — no alerts',
+      cc_prospects: 'Prospects & Reports', cc_prospects_recorded: 'Prospects recorded', cc_reports: 'Founder reports',
+      cc_no_report: 'no report yet', cc_btn_discover: 'Run discovery scoring', cc_btn_notify: 'Notify founder',
+      cc_stop_reason: 'Reason for emergency stop:', cc_stop_confirm: 'Confirm EMERGENCY STOP? This hard-blocks all revenue operations until you clear it.',
+      cc_trigger_done: 'Report window processed (check Command Center status).',
+      cc_discover_done: 'Discovery scoring run complete.', cc_notify_done: 'Founder notification attempted.'
+    },
+    ar: {
+      cc_title: 'مركز تحكم المؤسس', cc_sub: 'تيوس ديلماكر · عمليات إيرادات 24/7 — الأدلة فوق الادعاءات',
+      cc_state: 'حالة التشغيل', cc_mode: 'الوضع', cc_guard: 'حارس مباشر', cc_enabled: 'مفعّل (SOR)',
+      cc_emergency: 'طوارئ', cc_last_window: 'آخر نافذة', cc_heartbeat: 'نبض',
+      cc_btn_pause: 'إيقاف مؤقت', cc_btn_resume: 'استئناف', cc_btn_stop: 'إيقاف طوارئ', cc_btn_trigger: 'تنفيذ التقرير الآن',
+      cc_approvals: 'الموافقات والتنبيهات', cc_loading: 'جارٍ التحميل…', cc_no_approvals: 'لا موافقات إيرادات معلقة',
+      cc_all_quiet: 'كل شيء هادئ — لا تنبيهات',
+      cc_prospects: 'العملاء المحتملون والتقارير', cc_prospects_recorded: 'العملاء المسجلون', cc_reports: 'تقارير المؤسس',
+      cc_no_report: 'لا تقرير بعد', cc_btn_discover: 'تشغيل تقييم الاكتشاف', cc_btn_notify: 'إشعار المؤسس',
+      cc_stop_reason: 'سبب الإيقاف الطارئ:', cc_stop_confirm: 'تأكيد الإيقاف الطارئ؟ هذا يحظر جميع عمليات الإيرادات حتى تلغيه.',
+      cc_trigger_done: 'تم معالجة نافذة التقرير (تحقق من حالة مركز التحكم).',
+      cc_discover_done: 'اكتمل تقييم الاكتشاف.', cc_notify_done: 'تم محاولة إشعار المؤسس.'
+    }
+  };
+
+  var LANG_KEY = 'teos_founder_lang';
+  var lang = localStorage.getItem(LANG_KEY) || 'en';
+  var t = function (key) { return (I18N[lang] || I18N.en)[key] || I18N.en[key] || key; };
+
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      el.textContent = t(el.getAttribute('data-i18n'));
+    });
+    var btn = document.getElementById('langSwitch');
+    if (btn) btn.textContent = lang === 'ar' ? 'English' : 'العربية';
+  }
+
+  document.getElementById('langSwitch').addEventListener('click', function () {
+    lang = lang === 'ar' ? 'en' : 'ar';
+    localStorage.setItem(LANG_KEY, lang);
+    applyLang();
+    refresh();
+  });
+
+  applyLang();
+
   var KEY = 'sor_founder_key';
   var getKey = function () {
     var k = sessionStorage.getItem(KEY);
@@ -117,9 +177,7 @@
     guard.textContent = live ? 'LIVE' : (s.guard ? (s.guard.reason || 'BLOCKED') : '—');
     guard.className = 'pill ' + (live ? 'run' : 'guard');
     el('enabled').textContent = s.enabled ? 'enabled' : 'disabled';
-    el('enabled').className = s.enabled ? 'muted' : 'muted';
     el('emergency').textContent = s.emergency ? (s.emergency.reason || 'active') : 'none';
-    el('emergency').className = s.emergency ? 'muted' : 'muted';
     el('lastWindow').textContent = s.lastWindowEnd || '—';
     el('heartbeat').textContent = s.heartbeat || '—';
     el('resend').textContent = s.resendConfigured ? 'configured' : 'not configured';
@@ -129,7 +187,7 @@
       el('lastReport').innerHTML = '<div class="mono muted" style="margin-top:8px">' + (s.lastReport.report_id || '') +
         ' · ' + (s.lastReport.delivery_status || '') + '</div><div class="muted" style="font-size:12px">' + (s.lastReport.window_end || '') + '</div>';
     } else {
-      el('lastReport').innerHTML = '<span class="muted">no report yet</span>';
+      el('lastReport').innerHTML = '<span class="muted">' + t('cc_no_report') + '</span>';
     }
     el('btn-pause').disabled = s.mode === 'PAUSED';
     el('btn-resume').disabled = s.mode === 'RUNNING';
@@ -138,7 +196,7 @@
 
   function renderApprovals(a) {
     var box = el('approvals');
-    if (!a || !a.approvals || !a.approvals.length) { box.innerHTML = '<span class="muted">no pending revenue approvals</span>'; }
+    if (!a || !a.approvals || !a.approvals.length) { box.innerHTML = '<span class="muted">' + t('cc_no_approvals') + '</span>'; }
     else {
       box.innerHTML = '<ul>' + a.approvals.slice(0, 10).map(function (x) {
         return '<li><b>#' + x.id + '</b> ' + (x.agent_type || '') + ' — ' + (x.reason || '') + ' <span class="muted">(' + (x.requested_at || '').slice(0, 16) + ')</span></li>';
@@ -150,7 +208,7 @@
         return '<div class="alert ' + (al.level || 'action') + '">' + al.message + '</div>';
       }).join('');
     } else {
-      alertsBox.innerHTML = '<div class="alert ok">all quiet — no alerts</div>';
+      alertsBox.innerHTML = '<div class="alert ok">' + t('cc_all_quiet') + '</div>';
     }
   }
 
@@ -172,17 +230,17 @@
   el('btn-pause').addEventListener('click', function () { act('/revenue-ops/pause', { by: 'founder' }); });
   el('btn-resume').addEventListener('click', function () { act('/revenue-ops/resume', { by: 'founder' }); });
   el('btn-stop').addEventListener('click', function () {
-    var reason = window.prompt('Reason for emergency stop:') || 'founder emergency stop';
-    act('/revenue-ops/emergency-stop', { by: 'founder', reason: reason }, 'Confirm EMERGENCY STOP? This hard-blocks all revenue operations until you clear it.');
+    var reason = window.prompt(t('cc_stop_reason')) || 'founder emergency stop';
+    act('/revenue-ops/emergency-stop', { by: 'founder', reason: reason }, t('cc_stop_confirm'));
   });
   el('btn-trigger').addEventListener('click', function () {
-    act('/revenue-ops/trigger', { by: 'founder' }).then(function () { window.alert('Report window processed (check Command Center status).'); });
+    act('/revenue-ops/trigger', { by: 'founder' }).then(function () { window.alert(t('cc_trigger_done')); });
   });
   el('btn-discover').addEventListener('click', function () {
-    act('/revenue-ops/discover', { by: 'founder', limit: 200 }).then(function () { window.alert('Discovery scoring run complete.'); });
+    act('/revenue-ops/discover', { by: 'founder', limit: 200 }).then(function () { window.alert(t('cc_discover_done')); });
   });
   el('btn-notify').addEventListener('click', function () {
-    act('/revenue-ops/notify', {}).then(function () { window.alert('Founder notification attempted.'); });
+    act('/revenue-ops/notify', {}).then(function () { window.alert(t('cc_notify_done')); });
   });
 
   refresh();

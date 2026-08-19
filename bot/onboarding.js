@@ -47,6 +47,7 @@ function nameScreen(userId) {
     !isPersistent() ? design.it(i18n.t(userId, 'onb_ephemeral')) : null,
     design.divider()
   ], design.keyboard([
+    [design.textButton(i18n.t(userId, 'qs_btn'), 'cc_onb_quickstart')],
     [design.textButton(i18n.t(userId, 'onb_cancel'), 'cc_onb_cancel')]
   ]));
 }
@@ -158,6 +159,64 @@ async function complete(query, bot) {
   }
 }
 
+async function quickStart(query, bot) {
+  const userId = query.from ? query.from.id : null;
+  const displayName = query.from ? query.from.first_name : null;
+  const lang = i18n.getLang(userId) || 'en';
+  const companyName = (displayName || 'My') + ' Workspace';
+
+  await bot.answerCallbackQuery(query.id, { text: i18n.t(userId, 'qs_progress') }).catch(() => {});
+
+  const adapter = getStoreAdapter();
+  try {
+    const user = await identity.ensureUser(adapter, userId, {
+      display_name: displayName || null
+    });
+    const workspace = await identity.onboardWorkspace(adapter, {
+      ownerUserId: user.id,
+      companyName,
+      lang,
+      plan: 'solo'
+    });
+    i18n.setLang(userId, lang);
+    const agentCount = identity.AGENT_TYPES.length;
+    reset(userId);
+    audit.writeEntry('BOT_QUICK_START', String(userId), 'success', {
+      workspaceId: workspace.id,
+      plan: 'solo',
+      lang,
+      agents: agentCount
+    });
+    const sc = screen(userId, [
+      `${design.EMOJI.success} ${design.b(i18n.t(userId, 'qs_done'))}`,
+      design.it(i18n.t(userId, 'qs_done_sub')),
+      design.divider(),
+      design.row(i18n.t(userId, 'qs_workspace'), companyName),
+      design.row(i18n.t(userId, 'qs_plan'), i18n.t(userId, 'plan_solo')),
+      design.row(i18n.t(userId, 'qs_agents'), String(agentCount)),
+      design.row('Subscription', design.badge('warning')),
+      design.divider(),
+      design.it(i18n.t(userId, 'qs_next')),
+      !isPersistent() ? design.it(i18n.t(userId, 'onb_ephemeral')) : null,
+      design.divider()
+    ], design.keyboard([
+      [design.textButton(i18n.t(userId, 'qs_start_mission'), 'cc_learn')],
+      [design.textButton(i18n.t(userId, 'qs_skip'), 'cc_home')]
+    ]));
+    await safeEditMessageText(bot, query, sc.text, { reply_markup: sc.keyboard });
+    return true;
+  } catch (err) {
+    audit.writeEntry('BOT_QUICK_START_ERROR', String(userId), 'error', { error: err.message });
+    await bot.answerCallbackQuery(query.id, { text: 'Setup failed — retry' }).catch(() => {});
+    await bot.editMessageText(design.errorPanel('Setup failed', String(err.message)).text, {
+      chat_id: query.message.chat.id,
+      message_id: query.message.message_id,
+      parse_mode: 'HTML'
+    }).catch(() => {});
+    return true;
+  }
+}
+
 async function handleCallback(query, bot) {
   const userId = query.from ? query.from.id : null;
   const action = query.data || '';
@@ -168,6 +227,10 @@ async function handleCallback(query, bot) {
     await bot.answerCallbackQuery(query.id, { text: 'Setup cancelled' }).catch(() => {});
     await safeEditMessageText(bot, query, sc.text, { reply_markup: sc.keyboard });
     return true;
+  }
+
+  if (action === 'cc_onb_quickstart') {
+    return quickStart(query, bot);
   }
 
   if (action.startsWith('cc_onb_lang:')) {
