@@ -296,6 +296,37 @@ function createRepos(adapter) {
       }
     },
 
+    // Manual pilot activations for billing entitlement in manual_pilot mode
+    manualPilotActivations: {
+      create({ workspace_id, activated_by, plan = 'manual_pilot', notes = null }) {
+        return adapter.insert('manual_pilot_activations', {
+          workspace_id,
+          activated_by,
+          plan,
+          notes,
+          activated_at: new Date().toISOString(),
+          status: 'active'
+        });
+      },
+      getByWorkspace(workspace_id) {
+        return adapter.findOne('manual_pilot_activations', { workspace_id, status: 'active' });
+      },
+      getActiveByWorkspace(workspace_id) {
+        return adapter.findOne('manual_pilot_activations', { workspace_id, status: 'active' });
+      },
+      deactivate(workspace_id) {
+        return adapter.update('manual_pilot_activations', { workspace_id, status: 'active' }, {
+          status: 'deactivated',
+          deactivated_at: new Date().toISOString()
+        });
+      },
+      list(workspace_id) {
+        return adapter.find('manual_pilot_activations', { workspace_id });
+      }
+    },
+
+    // Mission intakes: the one-shot customer funnel. Each intake is stored as
+
     deal_scenarios: {
       add({ workspace_id, deal_id, name, description = null, scenario_type = null, parameters = null }) {
         return adapter.insert('deal_scenarios', { workspace_id, deal_id, name, description, scenario_type, parameters });
@@ -715,6 +746,14 @@ function forWorkspace(adapter, workspaceId) {
       list: source_type => repos.intelligence.list(workspaceId, source_type),
       update: (id, changes) => repos.intelligence.update(workspaceId, id, changes),
       remove: id => repos.intelligence.remove(workspaceId, id)
+    },
+
+    manualPilotActivations: {
+      create: data => repos.manualPilotActivations.create({ ...data, workspace_id: workspaceId }),
+      getByWorkspace: () => repos.manualPilotActivations.getByWorkspace(workspaceId),
+      getActiveByWorkspace: () => repos.manualPilotActivations.getActiveByWorkspace(workspaceId),
+      deactivate: () => repos.manualPilotActivations.deactivate(workspaceId),
+      list: () => repos.manualPilotActivations.list(workspaceId)
     },
     dealScenarios: {
       add: data => repos.deal_scenarios.add({ ...data, workspace_id: workspaceId }),

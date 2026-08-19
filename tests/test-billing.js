@@ -185,7 +185,7 @@ const crypto = require('crypto');
 
   // ------------------------------------------ 15. webhook handler count
   const handlerCount = Object.keys(billing.EVENT_HANDLERS).length;
-  eq(handlerCount, 8, 'EVENT_HANDLERS has 8 registered event types');
+  eq(handlerCount, 9, 'EVENT_HANDLERS has 9 registered event types (including manual_pilot.activated)');
 
   // ------------------------------------------ 16. mission tracking: isEntitled function
   // Founder plan should always be entitled (unlimited missions)

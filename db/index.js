@@ -5,7 +5,6 @@ const { createRepos, forWorkspace } = require('./repos');
 const { buildPoolConfig } = require('./pool-config');
 
 let pool = null;
-let adapter = null;
 
 function getPool() {
   if (!pool) {
@@ -22,10 +21,11 @@ function getPool() {
 }
 
 function getAdapter() {
-  if (!adapter) {
-    adapter = createPgAdapter();
+  if (process.env.DATABASE_URL) {
+    return createPgAdapter();
+  } else {
+    throw new Error('DATABASE_URL environment variable is not set. Cannot connect to PostgreSQL.');
   }
-  return adapter;
 }
 
 function isSorEnabled() {

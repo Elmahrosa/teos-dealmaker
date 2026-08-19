@@ -44,17 +44,56 @@ function scoreLead(lead) {
   else if (classification === 'Warm') nextStep = 'follow_up';
   else nextStep = 'archive';
 
+  // Structured prospect data for ICP scoring and downstream processing
+  const structuredData = {
+    company: lead.company,
+    domain: extractDomain(lead.website),
+    contact: lead.contact_email || null,
+    employeeCount: lead.employeeCount,
+    industry: lead.industry,
+    hasWebsite: lead.hasWebsite,
+    budget: lead.budget || null,
+    isDecisionMaker: lead.isDecisionMaker || false,
+    hasClearNeed: lead.hasClearNeed || false,
+    timelineInMonths: lead.timelineInMonths || null,
+    painPoint: lead.pain_point || null,
+    category: lead.category || null,
+    source: lead.source || 'PROSPECTING_AGENT'
+  };
+
   const result = {
     leadId: lead.id,
     company: lead.company,
     fitScore: score,
     classification,
     nextStep,
-    reasons
+    reasons,
+    structuredData: structuredData // For ICP qualification and deal creation
   };
 
   audit.writeEntry('PROSPECTING_AGENT_LEAD_SCORED', lead.id, classification, result);
   return result;
+}
+
+// Helper function to extract domain from website or email
+function extractDomain(input) {
+  if (!input) return null;
+
+  const url = String(input).trim().toLowerCase();
+  if (!url) return null;
+
+  // Handle email addresses
+  if (url.includes('@')) {
+    const parts = url.split('@');
+    if (parts.length === 2) return parts[1];
+  }
+
+  // Handle websites
+  let domain = url.replace(/^https?:\/\//, '').replace(/^www\./, '');
+  domain = domain.split('/')[0]; // Remove path
+  domain = domain.split(':')[0]; // Remove port
+
+  return domain || null;
 }
 
 function runProspectingCycle(leads) {

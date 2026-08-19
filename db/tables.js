@@ -133,6 +133,12 @@ const TABLES = {
     timestamps: true
   },
 
+  // Manual pilot activations for billing entitlement in manual_pilot mode
+  manual_pilot_activations: {
+    columns: ['workspace_id', 'activated_by', 'plan', 'notes', 'activated_at', 'deactivated_at', 'status'],
+    timestamps: true
+  },
+
   revenue_ops_state: {
     columns: ['key', 'value', 'payload', 'heartbeat_at'],
     timestamps: true

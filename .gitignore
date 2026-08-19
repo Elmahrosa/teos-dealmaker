@@ -4,3 +4,19 @@ dist/
 *.log
 data/
 supabase/.temp/
+
+# Debug & temporary files
+debug_auth.js
+debug_auth2.js
+test_audit_logger.js
+test_membership_audit.js
+
+# Report artifacts
+*_REPORT*.txt
+*_report*.txt
+CUSTOMER_*_EVIDENCE.md
+CUSTOMER_*_LAUNCH_READINESS.md
+CUSTOMER_*_VALIDATION_SUMMARY.md
+
+# Memory scratch
+memory/

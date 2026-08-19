@@ -76,23 +76,25 @@ function lastLineHash() {
 }
 
 function mirrorToDb(entry) {
-  if (!process.env.DATABASE_URL) return;
   try {
     const { getAdapter } = require('../db');
+    const adapter = getAdapter();
     const agentName = (entry.action.split('_')[0] || 'system').toLowerCase();
-    getAdapter()
-      .insert('audit_trail', {
-        workspace_id: null,
-        deal_id: null,
-        timestamp: entry.timestamp,
-        agent_name: agentName,
-        action_type: entry.action,
-        details: entry.details,
-        version: 'v0.1.0'
-      })
-      .catch(err => console.error('[auditLogger] Postgres mirror failed:', err.message));
+    const result = adapter.insert('audit_trail', {
+      workspace_id: null,
+      deal_id: null,
+      timestamp: entry.timestamp,
+      agent_name: agentName,
+      action_type: entry.action,
+      details: entry.details,
+      version: 'v0.1.0'
+    });
+    // Handle both promise-based (PostgreSQL) and synchronous (memory) adapters
+    if (result && typeof result.catch === 'function') {
+      result.catch(err => console.error('[auditLogger] mirror failed:', err.message));
+    }
   } catch (err) {
-    console.error('[auditLogger] Postgres mirror init failed:', err.message);
+    console.error('[auditLogger] mirror init failed:', err.message);
   }
 }
 

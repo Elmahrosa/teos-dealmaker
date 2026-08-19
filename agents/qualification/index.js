@@ -16,7 +16,7 @@ function processResponse(response) {
   return { classification, routing };
 }
 
-function classifyLead(leadData) {
+function classifyLead(leadData, icpCriteria = DEFAULT_ICP_CRITERIA) {
   audit.writeEntry('QUALIFICATION_AGENT_START', 'lead_classification', 'in_progress', {
     leadId: leadData.id,
     company: leadData.company
@@ -25,10 +25,37 @@ function classifyLead(leadData) {
   let score = 0;
   const missingFields = [];
 
-  if (leadData.budget >= 5000) score += 25; else missingFields.push('Budget below minimum');
+  // Use ICP criteria for scoring
+  if (leadData.budget >= (icpCriteria.minBudget || 5000)) score += 25; else missingFields.push(`Budget below minimum (${icpCriteria.minBudget || 5000})`);
   if (leadData.isDecisionMaker) score += 25; else missingFields.push('Lacks authority');
   if (leadData.hasClearNeed) score += 25; else missingFields.push('Unclear business need');
-  if (leadData.timelineInMonths <= 3) score += 25; else missingFields.push('Timeline too extended');
+  if (leadData.timelineInMonths <= (icpCriteria.maxTimelineMonths || 3)) score += 25; else missingFields.push(`Timeline too extended (>${icpCriteria.maxTimelineMonths || 3} months)`);
+
+  // Additional ICP criteria
+  if (icpCriteria.targetIndustries && icpCriteria.targetIndustries.length > 0) {
+    if (icpCriteria.targetIndustries.includes(leadData.industry)) {
+      score += 10;
+    } else {
+      missingFields.push(`Industry not in target list: ${leadData.industry}`);
+    }
+  }
+
+  if (icpCriteria.minEmployeeCount && leadData.employeeCount >= icpCriteria.minEmployeeCount) {
+    score += 10;
+  } else if (icpCriteria.minEmployeeCount) {
+    missingFields.push(`Employee count below minimum (${icpCriteria.minEmployeeCount})`);
+  }
+
+  if (icpCriteria.requiredTechnologies && icpCriteria.requiredTechnologies.length > 0) {
+    const hasRequiredTech = icpCriteria.requiredTechnologies.some(tech =>
+      leadData.technologies && leadData.technologies.includes(tech)
+    );
+    if (hasRequiredTech) {
+      score += 5;
+    } else {
+      missingFields.push('Missing required technologies');
+    }
+  }
 
   let classification = 'DISQUALIFIED';
   let nextStep = 'ARCHIVE';
@@ -45,11 +72,22 @@ function classifyLead(leadData) {
     classification: classification,
     score: score,
     missingCriteria: missingFields,
-    nextStep: nextStep
+    nextStep: nextStep,
+    icpScore: score,
+    maxPossibleScore: 100
   };
 
   audit.writeEntry('QUALIFICATION_AGENT_COMPLETE', 'lead_classification', 'success', result);
   return result;
 }
 
-module.exports = { processResponse, classifyLead };
+// Default ICP criteria for TEOS DealMaker
+const DEFAULT_ICP_CRITERIA = {
+  minBudget: 5000,
+  maxTimelineMonths: 3,
+  targetIndustries: ['Technology', 'Finance', 'Healthcare', 'Professional Services'],
+  minEmployeeCount: 10,
+  requiredTechnologies: [] // Can be configured per workspace
+};
+
+module.exports = { processResponse, classifyLead, DEFAULT_ICP_CRITERIA };

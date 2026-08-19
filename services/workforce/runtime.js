@@ -6,6 +6,7 @@ const approvals = require('./approvals');
 const telemetry = require('./telemetry');
 const { emit, EVENT_NAMES } = require('./events');
 const billing = require('../billing');
+const audit = require('../../utils/auditLogger');
 
 function buildBriefing(plan, steps) {
   const lines = [`Executive briefing — ${plan.title}`, ''];
@@ -162,6 +163,65 @@ async function runPlan(adapter, workspaceId, opts) {
       content: briefing,
       metadata: { plan_id: plan.id, status: finalPlan.status }
     });
+
+    // Convert qualified opportunities to deals with pipeline value
+    // Look for completed steps that represent successful opportunities
+    const opportunitySteps = finalSteps.filter(step =>
+      step.status === 'completed' &&
+      (step.agent_type === 'revenue_strategist' || step.agent_type === 'closing' || step.agent_type === 'negotiator') &&
+      step.output &&
+      typeof step.output === 'string' &&
+      (step.output.includes('opportunity') || step.output.includes('pipeline') || step.output.includes('deal value'))
+    );
+
+    for (const step of opportunitySteps) {
+      // Extract deal value from step output if available
+      let dealValue = null;
+      const valueMatch = step.output.match(/\$?([\d,]+(?:\.\d{2})?)/);
+      if (valueMatch) {
+        dealValue = parseFloat(valueMatch[1].replace(/,/g, ''));
+      }
+
+      // Create a deal for qualified opportunities
+      if (dealValue && dealValue > 0) {
+        try {
+          const dealData = {
+            workspace_id: workspaceId,
+            company_name: extractCompanyFromStep(step) || 'Qualified Opportunity',
+            stage: 'qualified',
+            status: 'open',
+            deal_value: dealValue,
+            currency: 'USD',
+            current_agent: step.agent_type
+          };
+
+          const deal = await repos.deals.create(dealData);
+
+          // Record pipeline event
+          await repos.pipeline.record({
+            workspace_id: workspaceId,
+            deal_id: deal.id,
+            to_stage: 'qualified',
+            from_stage: 'prospect'
+          });
+
+          audit.writeEntry('WORKFORCE_DEAL_CREATED', workspaceId, 'success', {
+            dealId: deal.id,
+            companyName: dealData.company_name,
+            dealValue: dealValue,
+            sourceStep: step.step_key,
+            agentType: step.agent_type
+          });
+        } catch (error) {
+          console.error('[Workforce] Failed to create deal from opportunity:', error);
+          audit.writeEntry('WORKFORCE_DEAL_CREATION_FAILED', workspaceId, 'error', {
+            error: error.message,
+            sourceStep: step.step_key,
+            agentType: step.agent_type
+          });
+        }
+      }
+    }
   }
   emit(failed ? EVENT_NAMES.PLAN_FAILED : halted ? EVENT_NAMES.PLAN_STARTED : EVENT_NAMES.PLAN_COMPLETED, {
     planId: plan.id,
@@ -173,6 +233,52 @@ async function runPlan(adapter, workspaceId, opts) {
 
   const snapshot = await telemetry.snapshot(adapter, workspaceId);
   return { plan: finalPlan, steps: finalSteps, briefing, pendingApprovals, status: finalStatus, telemetry: snapshot };
+}
+
+// Helper function to extract company name from step output
+function extractCompanyFromStep(step) {
+  if (!step || !step.output) return null;
+
+  const output = String(step.output);
+
+  // Look for company patterns in the output
+  const companyPatterns = [
+    /company[:\s]+([^\n.,;]+)/i,
+    /organization[:\s]+([^\n.,;]+)/i,
+    /customer[:\s]+([^\n.,;]+)/i,
+    /client[:\s]+([^\n.,;]+)/i,
+    /prospect[:\s]+([^\n.,;]+)/i,
+    /target[:\s]+([^\n.,;]+)/i
+  ];
+
+  for (const pattern of companyPatterns) {
+    const match = output.match(pattern);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  }
+
+  // If no pattern match, try to extract from common sentence structures
+  const sentences = output.split(/[.!?]+/);
+  for (const sentence of sentences) {
+    const lower = sentence.toLowerCase();
+    if (lower.includes('company') || lower.includes('organization') || lower.includes('customer')) {
+      // Extract words after keywords
+      const words = sentence.split(/\s+/);
+      for (let i = 0; i < words.length; i++) {
+        const word = words[i].toLowerCase();
+        if (['company', 'organization', 'customer', 'client', 'prospect', 'target'].includes(word)) {
+          // Return next few words as company name
+          const companyWords = words.slice(i + 1, i + 4).filter(w => w.length > 1);
+          if (companyWords.length > 0) {
+            return companyWords.join(' ');
+          }
+        }
+      }
+    }
+  }
+
+  return null;
 }
 
 async function runGoal(adapter, workspaceId, goal, opts) {
@@ -278,4 +384,4 @@ async function approveAndResume(adapter, workspaceId, requestId, userId) {
   return { decision, resumed: true, ...outcome };
 }
 
-module.exports = { runPlan, runGoal, runSalesStrategy, resume, pause, listMissions, approveAndResume, buildBriefing };
+module.exports = { runPlan, runGoal, runSalesStrategy, resume, pause, listMissions, approveAndResume, buildBriefing, extractCompanyFromStep };

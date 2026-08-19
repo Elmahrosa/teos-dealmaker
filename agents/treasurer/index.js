@@ -1,6 +1,7 @@
 const audit = require('../../utils/auditLogger');
 const mode = require('../../config/mode');
 const dodoPayments = require('../../utils/dodoPayments');
+const billingConfig = require('../../config/billing');
 
 function draftContract(deal) {
   audit.writeEntry('TREASURER_AGENT_CONTRACT_DRAFT_STARTED', deal.id, 'in_progress', {
@@ -44,12 +45,42 @@ function draftContract(deal) {
 }
 
 async function createCheckout(deal, contract) {
-  if (mode.isLIVE() && !process.env.DODO_API_KEY) {
+  // In manual_pilot mode, we don't require Dodo credentials for checkout creation
+  // as this is for manual billing validation
+  if (mode.isLIVE() && !process.env.DODO_API_KEY && !billingConfig.isManualPilot()) {
     audit.writeEntry('TREASURER_AGENT_CHECKOUT_BLOCKED', contract.contractId, 'blocked', {
       reason: 'LIVE mode requires DODO_API_KEY; none configured (fail-closed)',
       mode: mode.getMode()
     });
     return null;
+  }
+
+  // For manual_pilot mode, create a mock checkout link
+  if (billingConfig.isManualPilot()) {
+    const mockLink = {
+      checkoutId: `manual_pilot_${Date.now()}`,
+      amount: contract.amount,
+      currency: contract.currency,
+      url: `https://manual-pilot.example.com/checkout/${contract.contractId}`,
+      dryRun: true
+    };
+
+    const checkout = {
+      checkoutId: mockLink.checkoutId,
+      amount: mockLink.amount,
+      currency: mockLink.currency,
+      paymentMethod: contract.paymentMethod,
+      url: mockLink.url,
+      dryRun: mockLink.dryRun
+    };
+
+    audit.writeEntry(
+      'TREASURER_AGENT_CHECKOUT_CREATED',
+      mockLink.checkoutId,
+      'manual_pilot',
+      checkout
+    );
+    return checkout;
   }
 
   const link = await dodoPayments.createCheckoutLink(contract.contractId, contract.amount, {

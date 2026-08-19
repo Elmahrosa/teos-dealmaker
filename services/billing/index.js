@@ -54,7 +54,8 @@ const MISSION_LIMITS = {
   growth: 20,
   corporate: 100,
   trial: 1,
-  founder: Infinity
+  founder: Infinity,
+  manual_pilot: Infinity // Manual pilot mode has no mission limits for validation
 };
 
 // Strict product-to-tier mapping for security
@@ -152,7 +153,18 @@ async function isEntitled(adapter, workspaceId) {
   const repos = createRepos(adapter);
   const workspace = await repos.workspaces.get(workspaceId);
   if (!workspace) return false;
+
+  // Founder plan is always entitled
   if (workspace.plan === 'founder') return true;
+
+  // Manual pilot mode entitlement - check for manual pilot activation
+  if (workspace.plan === 'manual_pilot') {
+    // Check if there's an active manual pilot activation
+    const activation = await repos.manualPilotActivations.getActiveByWorkspace(workspaceId);
+    return activation !== null && activation.status === 'active';
+  }
+
+  // Regular subscription-based entitlement
   const subscription = await repos.subscriptions.get(workspaceId);
   if (!subscription) return false;
   if (subscription.status !== 'active') return false;
@@ -512,6 +524,63 @@ async function handlePlanChange(adapter, data, direction) {
   return { ok: true, workspaceId, plan: newPlan };
 }
 
+async function handleManualPilotActivated(adapter, data) {
+  const repos = createRepos(adapter);
+  const workspaceId = data.workspace_id || null;
+  const activatedBy = data.activated_by || null;
+  const plan = data.plan || 'manual_pilot';
+  const notes = data.notes || null;
+
+  if (!workspaceId) {
+    console.warn('[billing] manual_pilot.activated: missing workspace_id');
+    return { ok: false, reason: 'missing_workspace_id' };
+  }
+
+  // Verify workspace exists
+  const workspace = await repos.workspaces.get(workspaceId);
+  if (!workspace) {
+    console.warn('[billing] manual_pilot.activated: workspace not found', workspaceId);
+    return { ok: false, reason: 'workspace_not_found' };
+  }
+
+  // Check if founder protection applies
+  if (await founderProtected(repos, workspaceId)) {
+    console.warn('[billing] manual_pilot.activated: founder workspace protected');
+    return { ok: true, workspaceId, founderProtected: true };
+  }
+
+  // Deactivate any existing manual pilot activation for this workspace
+  const existingActivation = await repos.manualPilotActivations.getActiveByWorkspace(workspaceId);
+  if (existingActivation) {
+    await repos.manualPilotActivations.deactivate(workspaceId);
+  }
+
+  // Create new manual pilot activation
+  await repos.manualPilotActivations.create({
+    workspace_id: workspaceId,
+    activated_by: activatedBy,
+    plan: plan,
+    notes: notes
+  });
+
+  // Update workspace plan to manual_pilot
+  await repos.workspaces.update(workspaceId, { plan: 'manual_pilot' });
+
+  // Record audit event
+  await repos.audit.add({
+    workspace_id: workspaceId,
+    agent_name: 'billing',
+    action_type: 'MANUAL_PILOT_ACTIVATED',
+    details: { workspaceId, activatedBy, plan, notes, activationTimestamp: new Date().toISOString() },
+    version: 'v1.1.0'
+  });
+
+  // Send telegram notification
+  await sendTelegramNotification(`���🎯 <b>Manual Pilot Activated</b>\nWorkspace: ${workspaceId}\nPlan: ${plan}\nActivated by: ${activatedBy || 'system'}`);
+
+  return { ok: true, workspaceId, plan };
+}
+
 const EVENT_HANDLERS = {
   'subscription.created': (adapter, data) => handleSubscriptionCreated(adapter, data),
   'subscription.renewed': (adapter, data) => handleSubscriptionRenewed(adapter, data),
@@ -520,7 +589,8 @@ const EVENT_HANDLERS = {
   'payment.failed': (adapter, data) => handlePaymentFailed(adapter, data),
   'refund.success': (adapter, data) => handleRefund(adapter, data),
   'subscription.upgraded': (adapter, data) => handlePlanChange(adapter, data, 'upgraded'),
-  'subscription.downgraded': (adapter, data) => handlePlanChange(adapter, data, 'downgraded')
+  'subscription.downgraded': (adapter, data) => handlePlanChange(adapter, data, 'downgraded'),
+  'manual_pilot.activated': (adapter, data) => handleManualPilotActivated(adapter, data)
 };
 
 async function handleEvent(adapter, eventType, data) {
