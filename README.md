@@ -1,432 +1,334 @@
-﻿
-# TEOS DEALMAKER
+ # TEOS DealMaker
 
-## Enterprise AI Revenue Operating System
+### The Enterprise AI Revenue Operating System — production, governed, MCP-native.
 
-### Powered by an Extensible AI Workforce Platform
+> A policy-governed AI workforce that plans, approves, executes, and audits your entire revenue pipeline.
+> 13 specialized agents. A Mission Controller. A plugin platform. Real governance — not a chatbot with a prompt.
 
-> **A policy-governed AI workforce platform that orchestrates the complete revenue lifecycle—from prospect identification to deal closure—through policy-governed AI agents, an extensible plugin platform, and enterprise governance.**
+**Live now** at [dealmaker.elmahrosa.org](https://dealmaker.elmahrosa.org) · **v1.1.0** · 59/59 test suites passing · 0 lint errors · 0 dependency vulnerabilities.
 
-## Vision
+---
 
-TEOS DEALMAKER transforms revenue operations by deploying a coordinated fleet of specialized AI agents that function as a unified Revenue Operating System (Revenue OS). Unlike traditional AI assistants or point solutions, TEOS is a **platform**: agents collaborate, share context, execute policy-governed revenue workflows under human oversight at every critical juncture, and are extended through plugins and enterprise governance rather than core code changes.
+## The 30-second pitch
 
-## Governance Commitment
+If you've ever tried to ship an "AI sales agent" and ended up with a chat window that hallucinates pricing — this is for you.
 
-TEOS DEALMAKER operates as a policy-governed platform. The architecture enforces:
+**TEOS DealMaker is a revenue operating system, not a chatbot.** A real, governed fleet of 13 specialized AI agents runs your pipeline end-to-end:
 
-- **Human oversight**: AI agents assist in decision preparation and workflow execution but do not perform irreversible actions without explicit authorization where required by organizational policy.
-- **Policy enforcement**: Every capability invocation passes through a deny-wins policy evaluator before execution when platform governance is enabled (`TEOS_ENTERPRISE=true` and/or `MCP_ENABLED=true`).
-- **Approval workflows**: Mission-critical steps require explicit human approval through the Mission Center.
-- **Hash-chained audit trails**: Every decision, allowance, and denial is recorded in a tamper-detectable, hash-chained audit log.
-- **Role-based authorization**: Agent actions are scoped to tenant roles and plan entitlements when `TEOS_ENTERPRISE=true` is enabled.
+- It finds and qualifies prospects.
+- It drafts outreach (and waits for your approval before sending).
+- It negotiates terms — within the caps you set.
+- It drafts contracts, prepares payment requests, and routes every consequential action through a human gate.
+- It writes everything to a tamper-evident, hash-chained audit log.
+- It learns from outcomes — under governance, not on its own.
 
-Policy-governed AI that operates under enterprise governance, not outside it.
+You can run it from **Telegram** (the bot is live at [@TeosEgypt_bot](https://t.me/TeosEgypt_bot)) or the **web dashboard**. The same Mission Controller drives both.
 
-## Platform Architecture
+---
+
+## Why now: the 2026 market context
+
+If you're evaluating this, here's the landscape we built against:
+
+- **MCP became the default agent contract in 2026.** The Model Context Protocol moved from Anthropic-original to Linux Foundation governance (Dec 2025) and now ships with first-party support from OpenAI, Microsoft, AWS, Google, and Cloudflare. Combined SDK downloads hit 97M/month by March 2026. **TEOS is already MCP-native** — every external action flows through our MCP gateway (Civic Mixer) or stays simulated when MCP is off. You don't need a six-month integration project.
+- **Pricing is shifting to outcome-based.** Salesforce ships Flex Credits at ~$0.10/action; HubSpot Breeze moved to $0.50/resolution in April 2026. We're keeping per-seat pricing because the full revenue OS — including the control plane, audit, and policy — isn't a per-action product. But the *direction* matters: we're watching usage, not logins.
+- **Governance is the 2026 procurement gap.** Per Futurum's H1 2026 report, "the gap between MCP adoption and governance readiness" is the defining work of 2026. The big CRMs (Salesforce, HubSpot, Microsoft) are now racing to close it. **TEOS shipped with governance from day one** — policy engine, RBAC, entitlements, capability gate, hash-chained audit, founder emergency stop.
+- **Drift shut down in March 2026.** A reminder that undifferentiated AI agents without a control plane don't survive. We have the control plane.
+- **Agentforce is the scale benchmark.** Salesforce reports 18,500+ Agentforce customers running 3B+ agent workflows/month. That's the bar for "real production AI." TEOS is much smaller — but it is genuinely governed, not just gated.
+
+In other words: the platform is real, the agents are real, the governance is real, and the only thing that's small is the customer count — which is exactly the point of going to market.
+
+---
+
+## What you actually get
+
+| Capability | What it does |
+|---|---|
+| **Mission Controller** | Plan → Analyze → Simulate → Approve → Execute → Report. A single lifecycle that turns a goal into a reviewable mission. |
+| **13-agent AI workforce** | Prospector, Researcher, Qualifier, Revenue Strategist, Strategist, Marketer, Sales, Negotiator, Treasurer, Gatekeeper, Orchestrator, Closer, Intelligence. |
+| **Deal Brief → Stakeholder Map → Simulation** | Real stakeholder analysis and a simulated deal outcome before you commit time or money. |
+| **Governed email** | Outreach worker is fail-closed, approval-required, provider-confirmed. Default: paused. You flip it on when ready. |
+| **24/7 outbound worker** | Persistent queue with daily/hourly/per-recipient limits. Nothing ships without founder approval. |
+| **Mission Reports** | Executive report on the web (`/report/:planId`) and Customer #0 reference showcase (`/customer-0`). |
+| **Dodo checkout** | Solo $99 · Growth $299 · Business $999 · Enterprise custom. HMAC-signed webhooks. |
+| **Hash-chained audit vault** | SHA-256 chained. Verifiable. Append-only. Founder has read access via the `/api/audit` endpoint (gated by `AUDIT_API_KEY`). |
+| **Policy engine** | Every capability invocation passes `executeCapability()` — tenant resolution → license/entitlement → plan scope → RBAC → audit. Deny-wins. Fail-closed. |
+| **Multi-tenant by default** | Workspace isolation enforced at the DB layer. SQL column whitelisting. PostgreSQL TLS on. |
+| **MCP gateway** | Real MCP support (Civic Mixer) or simulated when disabled. Same agent code, same governance — only the transport changes. |
+| **Plugin platform** | A transport-agnostic plugin manager. Plugins expose adapters, capabilities, policies, schemas, audits, permissions. MCP is one transport; REST, gRPC, and webhook transports fit the same contract. |
+| **Operations console** | Live service status, founder controls, audit trail, pricing — at `/dashboard`. |
+| **EN + AR** | Full bilingual support in the bot and the landing page. |
+
+---
+
+## The 2-minute start
+
+You don't need to deploy anything to try it.
+
+1. **Open the bot** → https://t.me/TeosEgypt_bot → `/start`
+2. **Pick a mission** (e.g. "Sell TEOS DealMaker") and watch the 13-agent workforce plan it.
+3. **Approve, simulate, execute** — every consequential step waits for you.
+4. **Read the report** at `/report/:planId` when the mission completes.
+5. **Or just play with the playground** at https://dealmaker.elmahrosa.org — the demo is a simulated walkthrough, no checkout, no real contact.
+
+If you want to wire it into your stack, the bot speaks to the same Mission Controller that the web dashboard, REST API, and MCP gateway do. One product, every surface.
+
+---
+
+## Who this is for
+
+- **Founders and GTM leads** who want a real revenue engine, not a Slack channel.
+- **Agencies and consultancies** that need to deliver client work with an audit trail.
+- **Regulated industries** (finance, healthcare, public sector) where every AI action needs to be policy-evaluated, role-scoped, and logged.
+- **AI-curious enterprises** evaluating a controlled runtime before letting agents touch customers, contracts, or money.
+
+If you're a startup that just wants a ChatGPT wrapper, this is overkill. If you want the control plane that the big CRMs are racing to build, you're in the right place.
+
+---
+
+## The architecture, in one screen
 
 ```
-Applications (Telegram, Web UI, REST API)
-    │
-Mission Controller
-    │
-Workforce Runtime
-    │
-Plugin Platform
-    │
-MCP Layer
-    │
-Providers
-    │
-Enterprise Platform
-    │
-Persistence (PostgreSQL)
+Telegram / Web UI / REST API
+        │
+   Mission Controller         → plans missions, holds approval gates, enforces budgets
+        │
+   Workforce Runtime          → scheduler, dispatcher, executor, reviewer, recovery
+        │
+   Plugin Platform            → capabilities, policies, schemas, audits, permissions
+        │
+   MCP Layer                  → external actions via TEOS Civic Mixer (MCP gateway)
+        │
+   Providers                  → 8+ LLM providers with automatic fallback chains
+        │
+   Enterprise Platform        → tenants, entitlements, plans, RBAC, capability gate
+        │
+   Intelligence (RAG)         → company-specific knowledge grounding
+        │
+   Integration Hub            → connector catalog (CRM, email, calendar, storage)
+        │
+   Persistence                → multi-tenant PostgreSQL, workspace isolation
 ```
 
-## Core Philosophy
-
-**This is not a chatbot.** It is a sovereign AI workforce platform operating under strict governance frameworks, designed for enterprises that require:
-
-- **Policy-governed execution**: Agents that execute complex multi-stage sales processes under policy control and human oversight
-- **Enterprise governance**: Role-based access, entitlements, audit trails, and policy controls
-- **Revenue predictability**: Consistent pipeline generation and forecast accuracy
-- **Extensibility**: New capabilities ship as plugins, never as core changes
-- **Seamless integration**: Native connectivity through a single MCP gateway abstraction
-- **Operational transparency**: Full visibility into AI decision-making and performance
-
-## Architecture Overview
-
-TEOS DEALMAKER implements a modular, platform-oriented architecture for AI agent orchestration:
-
-### Core Layers
-1. **Mission Controller** - Orchestration layer for missions: planning, approval workflows, lifecycle management, human checkpoints, budget enforcement, and workforce delegation. It never executes work directly.
-2. **Workforce Runtime** - Executes missions through the policy-governed workforce: scheduler, dispatcher, executor, reviewer, approvals, confidence, optimizer, recovery, and telemetry.
-3. **Plugin Platform** - A transport-agnostic plugin manager. Plugins expose adapters, capabilities, policies, schemas, audits, and permissions. MCP is one transport; the same manager will serve REST, gRPC, and webhook transports.
-4. **MCP Layer** - The Model Context Protocol client through which every external enterprise action flows. The platform consumes **TEOS Civic Mixer** as its MCP gateway and never implements enterprise connectors directly.
-5. **Providers** - Pluggable AI provider abstraction: 8+ LLM providers with automatic fallback chains.
-6. **Enterprise Platform** - Platform governance: tenant resolution, entitlements (license, plan, limits, quotas), and RBAC capability authorization.
-7. **Intelligence Layer** - Retrieval-augmented generation (RAG) system for company-specific knowledge grounding.
-8. **Integration Hub** - Unified connector catalog (CRM, email, calendar, storage). Most connectors are catalog definitions pending configuration; none are wired to live credentials in the default deployment.
-9. **Persistence Layer** - Multi-tenant PostgreSQL with workspace isolation and audit trails.
-
-### Key Architectural Principles
-- **Multi-tenancy**: Complete data isolation via workspace_id scoping
-- **Pluggable AI Providers**: 8+ LLM providers with automatic fallback chains
-- **Transport-agnostic plugins**: Capabilities are not coupled to any single protocol
-- **Governance-first**: Authorization, entitlements, and policy are enforced at the capability execution gate
-- **Backward compatibility**: Every new layer is opt-in and inert until enabled
-- **Event-driven Communication**: Loose coupling between services via message queues
-- **Observability-first**: Built-in metrics, tracing, and structured logging
-- **Security by Design**: Defense-in-depth with encryption, authentication, and least-privilege access
-
-### Execution Path
-
-Every capability invocation flows through the policy-governed execution chain:
+Every capability invocation is governed **before** execution:
 
 ```
-Mission
-  → Policy Evaluation
-    → Authorization
-      → Entitlements
-        → Plugin Resolution
-          → Workforce Runtime
-            → Agent
-              → Provider
-                → Memory + Audit
+Mission → Policy → Authorization → Entitlements → Plugin → Workforce → Agent → Provider → Memory + Audit
 ```
 
-Governance happens **before** any agent executes.
+Governance happens **first**. That's the difference.
 
-## Extensible AI Workforce
+---
 
-TEOS ships with **thirteen production agents**. Additional agents can be installed through the Plugin Platform without modifying core runtime.
+## The 13-agent workforce
 
-| Agent | Role | Primary Functions |
-|-------|------|-------------------|
-| **Prospector** | Lead Discovery | Identifies and scores new company prospects using multiple data sources |
-| **Researcher** | Market Intelligence | Analyzes companies, competitors, and market signals for strategic insights |
-| **Qualifier** | Lead Assessment | Evaluates leads against BANT/MedPICC frameworks and recommends next steps |
-| **Revenue Strategist** | Revenue Strategy | Designs revenue strategy, monetization, and pricing architecture |
-| **Strategist** | Deal Planning | Creates tactical playbooks tailored to specific opportunities |
-| **Marketer** | Value Proposition | Develops compelling positioning and messaging for each deal |
-| **Sales** | Objection Handling | Counters common sales objections with data-driven responses |
-| **Negotiator** | Terms Optimization | Structures pricing, discounts, and payment terms for maximum value |
-| **Treasurer** | Contract & Payment | Drafts agreements, prepares payment requests, and submits transactions for human approval per enterprise governance policies |
-| **Gatekeeper** | Safety & Compliance | Reviews all communications for policy adherence and risk |
-| **Orchestrator** | Workflow Coordination | Routes work between agents based on context and priority |
-| **Closing** | Deal Finalization | Confirms commitment completeness and manages won/lost outcomes |
-| **Intelligence** | Knowledge Assistant | Answers complex questions using company-specific data and documents |
+| Agent | Job |
+|---|---|
+| **Prospector** | Lead discovery. Identifies and scores new company prospects. |
+| **Researcher** | Market intelligence. Analyzes companies, competitors, signals. |
+| **Qualifier** | Lead assessment. BANT/MedPICC evaluation, recommends next steps. |
+| **Revenue Strategist** | Revenue strategy. Designs monetization, pricing architecture. |
+| **Strategist** | Deal planning. Tactical playbooks for specific opportunities. |
+| **Marketer** | Value proposition. Compelling positioning and messaging. |
+| **Sales** | Objection handling. Data-driven counters to common objections. |
+| **Negotiator** | Terms optimization. Pricing, discounts, payment terms — within caps. |
+| **Treasurer** | Contract & payment. Drafts agreements and prepares payment requests, **submitted for human approval** per policy. |
+| **Gatekeeper** | Safety & compliance. Reviews every communication for policy and risk. |
+| **Orchestrator** | Workflow coordination. Routes work between agents. |
+| **Closer** | Deal finalization. Manages won/lost outcomes. |
+| **Intelligence** | Knowledge assistant. Answers complex questions using company-specific data. |
 
-## Mission Controller
+**Adding a new agent?** Create a folder under `agents/`, register it in the universal agent registry, and ship tests. The Mission Controller picks it up.
 
-Mission Controller is the orchestration layer at the top of the platform stack.
+---
 
-Responsibilities:
+## Governance and safety — what we actually mean
 
-- **Mission planning** - Decomposes a goal into a validated, ordered plan
-- **Approval workflows** - Human gates before a mission runs or resumes
-- **Lifecycle management** - Launch, pause, resume, and complete mission states
-- **Human checkpoints** - Review steps embedded in plans
-- **Budget enforcement** - Automatic halts when limits are reached
-- **Workforce delegation** - Hands execution to the Workforce Runtime
+This is the part most AI platforms either skip or hand-wave. We mean it concretely.
 
-**Mission Controller does not execute work directly.** Execution is delegated to the Workforce Runtime, which schedules and dispatches agents and steps.
+- **Deny-wins policy evaluator.** Every capability call passes through `executeCapability()`. If the policy can't be evaluated, the call is denied. Fail-closed is the default.
+- **Human approval gates.** Anything consequential (sending real email, processing real payment, modifying a contract) requires explicit founder approval. The 24/7 outbound worker is paused by default and only runs after founder flip-on.
+- **RBAC and entitlements.** Plan-based capability scope. Tenant isolation. License, plan, limits, quotas — all enforced at the gate, not in the UI.
+- **Hash-chained audit trail.** Every decision, allowance, denial is recorded with SHA-256 chaining. `verifyVault()` confirms integrity. The audit log is the source of truth.
+- **Emergency Stop.** One toggle, founder-only, halts every agent and pipeline run platform-wide.
+- **Feature Flags.** Founder can disable capability families (Missions, Sales flow, Pipeline run, Intelligence, Integrations) at the executor level.
+- **Prompt-injection treated as data.** Hostile inputs in the simulation layer were tested explicitly (see `tests/promptInjectionTest.js`); the platform treats them as data, never as instructions.
+- **Webhooks are signed and fail-closed.** Dodo HMAC. Resend svix. Unset secret = no requests accepted.
+- **Founder bypass is explicit and auditable.** The founder's `TEOS_FOUNDER_TELEGRAM_ID` skips billing/seat/workspace gates — and every bypass is in the audit log.
 
-## MCP Integration
+### Honest compliance posture
 
-DealMaker includes an optional Model Context Protocol layer. Capabilities can be executed through:
+We don't have certifications we don't have. Here's the real state:
 
-- **local adapters**
-- **remote MCP servers**
-- **TEOS Civic Mixer**
+- ✅ RBAC, audit, tenant isolation, TLS, CSP, rate limits, signed webhooks
+- ✅ Hash-chained tamper-detectable audit vault
+- ⚠️ No SOC 2 or ISO 27001 yet (planned, not yet certified)
+- ⚠️ GDPR/CCPA tooling — partial (data export/deletion tooling is in the roadmap)
+- ⚠️ No third-party penetration test yet
+- ⚠️ Single-instance deployment, no published uptime SLA
 
-...without changing mission or workforce logic. MCP is disabled by default (tool calls are simulated); when disabled the platform behaves exactly as before. Enable it with `MCP_ENABLED=true` and a real gateway endpoint via `MCP_ENDPOINT`. Config: `MCP_ENABLED`, `MCP_ENDPOINT`, `MCP_API_KEY`, `MCP_TIMEOUT`. See [docs/MCP_ARCHITECTURE.md](docs/MCP_ARCHITECTURE.md) for the call pipeline, sequence diagrams, and security model.
+We're honest about this because procurement teams need to know what's real. See [docs/SECURITY_REPORT.md](docs/SECURITY_REPORT.md) for the full posture and [docs/ENTERPRISE_READINESS.md](docs/ENTERPRISE_READINESS.md) for the maturity matrix.
 
-## Plugin Platform
+---
 
-The Plugin Platform allows new enterprise capabilities to be added without changing the core runtime. Plugins expose:
+## Pricing
 
-- **adapters**
-- **capabilities**
-- **policies**
-- **schemas**
-- **audits**
-- **permissions**
+| Tier | Monthly | Annual | What you get |
+|---|---|---|---|
+| **Solo** | $99 | $950 (save ~20%) | 1 workspace, Mission Controller, 13-agent workforce, core agent capabilities, community support. |
+| **Growth** | $299 | $2,990 (save ~17%) | 10 seats, Civic Mixer plugin, Enterprise Knowledge Intelligence (RAG), email support. |
+| **Business** | $999 | $9,990 (save ~17%) | 25 seats, third-party plugin installs, all platform add-ons, priority support. |
+| **Enterprise** | Custom | Custom | Unlimited workspaces/missions, custom deployment, policy governance at scale, direct access to the founding team. |
 
-Current plugins:
+Pricing is **per-seat SaaS** — not outcome-based. We're watching the outcome-pricing trend (HubSpot Breeze, Salesforce Flex Credits) and may add a usage component in v1.3, but the full control plane is a subscription product, not a per-action one. **Source of truth:** [`config/pricing.config.js`](config/pricing.config.js) — single-sourced, no placeholder links.
 
-- **Civic Mixer** - MCP gateway transport adapter + civic capabilities
+Checkout URLs are wired to Dodo Payments with HMAC webhook verification. **Sentinel** is a separate product (`https://sentinel.teosegypt.com`) and is never sold from this surface.
 
-> **TEOS Sentinel Shield** is an **independent Elmahrosa product** (`https://sentinel.teosegypt.com`) — it is cross-linked from the DealMaker surface only, never sold through the DealMaker plugin platform. Its internal plugin implementation lives in `plugins/sentinel` (see [TEOS Sentinel Shield](#teos-sentinel-shield)).
+---
 
-Future plugins:
+## Get started
 
-- **GitHub**
-- **Slack**
-- **Jira**
-- **Salesforce**
-- **HubSpot**
-- **Microsoft 365**
-- **Google Workspace**
+### Try it first (no install)
+- **Live site:** https://dealmaker.elmahrosa.org
+- **Telegram bot:** https://t.me/TeosEgypt_bot
+- **Demo report:** https://dealmaker.elmahrosa.org/customer-0
 
-See [docs/PLUGIN_CONTRACT.md](docs/PLUGIN_CONTRACT.md) for the plugin contract, manifest schema, lifecycle, permissions, and compatibility rules.
+### Self-host (Node 18+)
 
-## Key Capabilities
-
-### Policy-Governed Revenue Execution
-- Policy-governed execution with human approval at every critical juncture
-- Mission checkpoints and budget enforcement with automatic halts
-- Role-based access control and enterprise entitlements (enforced when `TEOS_ENTERPRISE=true`)
-- Complete auditability of every AI action and decision
-- Self-directed learning from outcomes to improve future performance under governance constraints
-
-### Mission Center
-- Learn-first onboarding that orients new operators before missions unlock
-- Guided missions (Sell TEOS Dealmaker, Revenue Pipeline, and goal-driven missions) with step-by-step planning and approval gates
-- Progress tracking, agent handoffs, and budget-aware execution with automatic halts when limits are reached
-
-### Enterprise Integration Hub
-- Connector catalog definitions for Salesforce, HubSpot, Microsoft 365, Google Workspace and more (not wired to live credentials in the default deployment)
-- Sync scaffolding for bidirectional CRM synchronization (requires configured credentials and an enabled MCP gateway)
-- Automated data enrichment from external sources (requires configured connectors)
-- Webhook ingestion scaffolding for real-time event processing
-
-### Advanced Intelligence Layer
-- Retrieval-Augmented Generation (RAG) with company-specific knowledge
-- Multi-source document processing (PDF, DOCX, CSV, web pages)
-- Semantic search with intent-aware ranking
-- Source-attributed answers to prevent hallucination
-
-### Observability & Governance
-- Real-time workforce performance dashboard
-- Detailed audit trails for all AI actions and decisions
-- Cost tracking and optimization recommendations
-- Health monitoring for all system components
-- Configurable alerting for anomalies
-
-### TEOS Sentinel Shield
-
-TEOS Sentinel Shield is delivered as an enterprise governance plugin. It provides:
-
-- AI security scanning
-- Prompt inspection
-- Code review
-- Smart contract analysis
-- Policy enforcement
-- Audit logging
-
-Mission Controller invokes Sentinel through the Plugin Platform rather than direct integration. Sentinel is a governance plugin: code audit, smart-contract review, and CI/CD security scanning are enforced when the plugin is active and the MCP gateway is enabled. It ships alongside a public landing page and governance console.
-
-### Deployment Flexibility
-- Multi-tenant architecture for SaaS (private/self-hosted instance deployment is planned, not yet supported)
-- Docker containerization — planned
-- Kubernetes deployment and horizontal scaling — planned
-- API-first design for extensive customization and extension
-
-## Enterprise Platform
-
-Current foundation:
-
-- ✓ Multi-workspace architecture
-- ✓ Subscription model
-- ✓ Usage tracking
-- ✓ RBAC foundation
-- ✓ Tenant isolation
-- ✓ Capability permissions
-- ✓ Entitlements (license, plan, limits, quotas)
-- ✓ executeCapability() governance gate (opt-in via `TEOS_ENTERPRISE`)
-
-Roadmap:
-
-- Billing
-- Marketplace
-- Plugin signing
-- OpenTelemetry
-- Distributed tracing
-
-## Getting Started
-
-### Prerequisites
-- Node.js 18+
-- PostgreSQL 13+ (for production) or in-memory store (for development)
-- Telegram Bot Token (for the conversational interface)
-- API keys for desired LLM providers (OpenAI, Anthropic, etc.)
-
-### Installation
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/teos-dealmaker.git
+git clone https://github.com/Elmahrosa/teos-dealmaker.git
 cd teos-dealmaker
-
-# Install dependencies
 npm install
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your Telegram bot token, database URL, and LLM API keys
-
-# Initialize database (requires PostgreSQL)
-npm run db:migrate
-
-# Start the bot (Telegram interface)
-npm start
-
-# Start the web server (landing page + dashboard)
-npm run server
+cp .env.example .env       # fill in TELEGRAM_BOT_TOKEN, DATABASE_URL, and the keys you need
+npm run db:migrate         # PostgreSQL (Supabase-compatible)
+npm start                  # bot (Telegram)
+npm run server             # web (landing + dashboard + API)
+npm run start:all          # both
 ```
 
-### Enterprise Mode
-Enable platform governance at the capability execution gate:
-
+### Enable governance mode
 ```bash
 TEOS_ENTERPRISE=true
 ```
+That single flag turns on the `executeCapability()` gate: tenant resolution, license/entitlement validity, plan capability scope, and RBAC authorization — enforced before any tool or plugin runs. Off by default; runtime behavior is unchanged otherwise.
 
-The gate enforces tenant resolution, license/entitlement validity, plan capability scope, and RBAC authorization before any tool or plugin runs. Off by default — runtime behavior is unchanged.
+### Verify it
+```bash
+npm test         # 59 suites, 59 passed, 0 failed
+npm run lint     # 0 errors
+npm run build    # syntax gate (node --check on every JS file)
+npm audit --omit=dev   # 0 vulnerabilities
+```
 
-### Production Deployment
-The current production deployment runs as a single Railway service (web server, Telegram bot, PostgreSQL). For teams running their own instances, the following are recommended practices — they are not yet automated in this repository:
-1. Configuring external secrets management (HashiCorp Vault, AWS Secrets Manager)
-2. Setting up monitoring and alerting (Prometheus/Grafana)
-3. Implementing regular backup and disaster recovery procedures
-4. Establishing CI/CD pipelines for automated testing and deployment
+---
 
-## API Reference
+## Public API surface
 
-TEOS exposes a small set of public HTTP endpoints (no authentication required — public marketing/ops endpoints):
+| Endpoint | What it does |
+|---|---|
+| `GET /` | Landing page (EN/AR) |
+| `GET /api/health` | Health check, returns `{"status":"ok",...}` |
+| `GET /health` | Service probe |
+| `GET /api/pricing` | Live pricing tiers with Dodo checkout URLs |
+| `GET /api/reports/latest` | Latest mission report (public) |
+| `GET /api/outreach/status` | Governed outbound worker status (public, sanitized) |
+| `GET /api/audit` | Audit log (gated by `AUDIT_API_KEY` in `X-API-Key`; 503 until configured) |
+| `POST /webhook/dodo` | Dodo payment webhook (HMAC-signed, fail-closed) |
+| `POST /webhook/resend` | Resend delivery webhook (svix-signed, fail-closed) |
+| `GET /dashboard` | Operations console (noindex) |
+| `GET /report/:planId` | Executive mission report |
+| `GET /customer-0` | Customer #0 reference |
 
-### Endpoints
-- GET /api/pricing - Returns live pricing tiers with Dodo checkout URLs
-- GET /api/health - Health check (`{"status":"ok",...}`); used by uptime monitors
-- GET /health - Service health probe (`{"status":"ok","service":"TEOS DealMaker","timestamp":...}`)
-- GET /api/audit - Audit-log entries from the file-backed audit store. Protected: requires the `AUDIT_API_KEY` in the `X-API-Key` header; returns `503` until that key is configured and `401` for missing/invalid keys
-- GET /api/reports/latest - Latest mission report (public)
-- GET /api/outreach/status - Governed outbound worker status (public, sanitized)
-- POST /api/outreach/pause · POST /api/outreach/resume · POST /api/outreach/emergency-stop - Founder controls for the 24/7 outbound worker (require `AUDIT_API_KEY`)
-- POST /api/outreach/founder-report - Sends the founder operations report to `FOUNDER_REPORT_EMAIL` (requires `AUDIT_API_KEY`; returns `503` when Resend is not configured)
-- GET /api/outreach/queue - Governed outbound worker queue view (requires `AUDIT_API_KEY`; sanitized — job ids, statuses, provider ids, timestamps, recipient domains; never bodies or full addresses)
-- GET /api/revenue-ops/status - 24/7 Revenue Operations status: mode, live guard, emergency state, last report window, heartbeat, founder destination, Resend readiness (requires `AUDIT_API_KEY`)
-- POST /api/revenue-ops/trigger - Run the founder report for the current window now (requires `AUDIT_API_KEY`; idempotent, audited, blocked while emergency-stopped)
-- POST /api/revenue-ops/pause · POST /api/revenue-ops/resume · POST /api/revenue-ops/emergency-stop - Founder control of the 24/7 scheduler (require `AUDIT_API_KEY`; audited; resume refused while an emergency stop is active — clear `SOR_EMERGENCY_STOP` first)
-- POST /api/revenue-ops/discover - Run deterministic discovery scoring over the prospect population (requires `AUDIT_API_KEY`; idempotent, `PROSPECT_SCORED` audits)
-- GET /api/revenue-ops/approvals - Pending revenue-gate approvals and active founder alerts (requires `AUDIT_API_KEY`)
-- POST /api/revenue-ops/notify - Send the founder the current Revenue Ops alert digest via Resend (requires `AUDIT_API_KEY`; returns `503` when Resend is not configured)
-- GET /api/deploy-verify - Deploy verification: existence-only checks of required environment variables plus revenue-path and outbound status (requires `AUDIT_API_KEY`; never returns secret values)
-- POST /webhook/dodo - Dodo payment webhook (HMAC-signed, validated with `DODO_WEBHOOK_SECRET`; rejects all requests when the secret is unset)
-- POST /webhook/resend - Resend delivery webhook (svix-signed, fail-closed without `RESEND_WEBHOOK_SECRET`)
+Founder controls (`/api/outreach/pause`, `/resume`, `/emergency-stop`, `/queue`, `/deploy-verify`) all require `AUDIT_API_KEY`. Internal agent/workforce/mission execution is not exposed via public REST.
 
-Other routes serve the landing page (`/`), static assets (`/robots.txt`, `/sitemap.xml`, `/favicon.svg`, `/og-image.*`), and the ops dashboard (`/dashboard`, `X-Robots-Tag: noindex`).
+---
 
-### Security
-- The `/webhook/dodo` endpoint is validated with an HMAC signature (`X-Dodo-Signature`); invalid signatures return `401 invalid_signature`, and all requests are rejected when `DODO_WEBHOOK_SECRET` is unset (fail-closed)
-- The `/api/audit` endpoint requires `AUDIT_API_KEY` in the `X-API-Key` header
-- Rate limiting via express-rate-limit: 120 requests/min per IP on `/api/`, 30 requests/min on `/webhook/`
-- Security headers (HSTS, CSP, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy) are set on all responses
+## What's verified today
 
-Internal agent, workforce, and mission execution is driven by the Telegram bot and internal modules, not by public REST endpoints.
+Last verification (2026-08-08, post-v1.1.0 freeze):
 
-### Landing Page, Playground & Telegram Bot Parity
+| Check | Result |
+|---|---|
+| `npm test` | 59 suites, 59 passed, 0 failed |
+| `npm run lint` | 0 errors |
+| `npm run build` | PASS (node --check on 265 JS files) |
+| `npm audit --omit=dev` | 0 vulnerabilities |
+| `GET /api/health` | 200, `status=ok`, `mode=live` |
+| `GET /` landing | 200 |
+| `GET /customer-0` | 200 |
+| `GET /report/:planId` | 200 |
+| `GET /api/pricing` | 200 with Dodo checkout URLs for Solo/Growth/Business |
+| `GET /api/audit` | 503 (fail-closed until `AUDIT_API_KEY` is configured) |
+| Bot trust/security intents (EN + AR) | PASS — no `/start` fallback |
+| Customer-facing honesty | No "Coming Soon"/"Demo" placeholders, no simulated branding in reports |
 
-The product description is single-sourced in `config/product.config.js` (name, tagline, site URL, Telegram bot, contact, capabilities, mission lifecycle, governance, integrations, Sentinel separation, and demo behavior) and shared by the landing page (`server/landing.html`), the web server, and the Telegram bot (`bot/screens/playground.js`).
+See `BUILD_STATE.md` and `FINAL_VALIDATION_REPORT.md` for the full evidence.
 
-- **Playground** (`#playground` on the landing page): an interactive, client-side walkthrough of the DealMaker workflow — Deal Brief, Stakeholder Analysis, Deal Simulation, Mission Controller lifecycle (PLAN → ANALYZE → SIMULATE → APPROVE → EXECUTE → REPORT), Governance (ALLOW · WARN · REVIEW · BLOCK), and a Mission Report preview. Everything is **DEMO MODE — SIMULATED DATA**: no external email, no Dodo checkout, no prospect contact, no real customer result.
-- **Bot Playground** (`🎮 Playground / Demo` in the bot menu): the same demo is linked from the bot, which also serves the canonical pricing via `config/pricing.config.js` — the bot and the website describe the identical product.
-- **Provider wording** is deliberately provider-agnostic (multi-provider AI, includes Anthropic Claude) — the platform is not "built on" a single vendor.
-- **Sentinel** is a separate product (`https://sentinel.teosegypt.com`) cross-linked from the DealMaker surface; it is never sold through DealMaker checkout.
+---
 
-The operations dashboard (`/dashboard`, `public/dashboard/index.html`) is the TEOS DealMaker Operations Console: SERVICE RUNNING / OUTBOUND PAUSED status strip, founder controls (PAUSE OUTBOUND, RESUME OUTBOUND, EMERGENCY STOP), audit trail, and live pricing.
+## Extending the platform
 
-## Enterprise Readiness
+### Add an agent
+1. Create `agents/<name>/` with a single entrypoint.
+2. Register in the universal agent registry (`agents/registry.js`).
+3. Add a test file under `agents/<name>/test.js` — picked up by the aggregate runner.
+4. The Mission Controller picks it up automatically.
 
-### Security & Compliance
-- Role-based authorization module (enforced only when `TEOS_ENTERPRISE=true` is enabled)
-- Transport encryption via TLS (HTTPS) on public endpoints; encryption at rest is not implemented
-- No SOC 2 or ISO 27001 certification
-- GDPR/CCPA compliance tooling (data export, deletion, consent management) — planned, not yet implemented
-- No third-party penetration testing conducted to date
+### Add a plugin
+1. Create a leaf package under `plugins/` with a `manifest.json` (capabilities, tools, permissions, entries).
+2. Implement adapter, policy, schema, and (optionally) audit modules.
+3. Ship a plugin-local test suite.
+4. Configure via environment variables — never hardcode URLs or credentials.
+5. Load through the Plugin Platform; MCP consumes it as one transport.
 
-### Reliability & Performance
-- No uptime SLA; single-instance deployment
-- Horizontal autoscaling — not implemented
-- Automated failover and disaster recovery — not implemented; no backup/restore automation
-- No published performance benchmarks; latency is observable via `/api/diagnostics` and `/api/health`
+### Add a connector
+1. Implement the integration interface (`services/integrations`).
+2. Add a configuration schema for credentials and settings.
+3. Register in the Integration Hub catalog.
+4. Implement sync logic for bi-directional data flow.
+5. Add monitoring and error handling.
 
-### Operations & Support
-- Structured console logging plus ops endpoints (`/api/health`, `/api/diagnostics`); no metrics/tracing stack
-- Health checks available; no self-healing mechanisms
-- Operational runbooks — planned
-- Support from the founding team via the Telegram console; no 24/7 SLA
-- Regular security patches and feature updates
+See [`docs/PLUGIN_CONTRACT.md`](docs/PLUGIN_CONTRACT.md) for the full plugin contract and [`docs/MCP_ARCHITECTURE.md`](docs/MCP_ARCHITECTURE.md) for the MCP call pipeline.
 
-## Customization & Extension
+---
 
-### Adding New Agents
-1. Create agent implementation in agents/
-2. Register in the agent registry with metadata (role, cadence, queue)
-3. Define any required data models and database migrations
-4. Add unit and integration tests
-5. Expose via workforce API and control center UI
+## Trust, credentials, and the wider product family
 
-### Adding New Plugins
-1. Create a leaf package under plugins/ with a manifest.json declaring capabilities, tools, permissions, and entries
-2. Implement adapter, policy, schema, and (optionally) audit modules
-3. Ship a plugin-local test suite (auto-discovered by the aggregate runner)
-4. Configure entirely through environment variables — never hardcode URLs or credentials
-5. Load through the Plugin Platform; MCP consumes it as one transport
+- **Trust Center:** https://elmahrosa.org/trust — the canonical source for security, compliance, and credentials.
+- **Verified Credly credential:** Claude Partner Network — Claude Code (link on the landing page).
+- **TEOS Sentinel Shield:** `https://sentinel.teosegypt.com` — a **separate** Elmahrosa product for AI security scanning, prompt inspection, code review, and policy enforcement. Not sold through DealMaker checkout. Cross-linked only.
+- **TEOS Civic Mixer:** the MCP gateway plugin that ships with DealMaker. Free, open, civic-governance oriented.
 
-### Integrating New Systems
-1. Implement adapter following the integration interface contract
-2. Add configuration schema for credentials and settings
-3. Register connector in the Integration Hub catalog
-4. Implement sync logic for bi-directional data flow
-5. Add monitoring and error handling specific to the system
+**Honest claims:** DealMaker does not claim guaranteed revenue, autonomous financial/legal/clinical authority, or certifications that don't exist. What you see is what you get.
 
-## Major Milestones
+---
 
-**v1.0.2 — Production SaaS Release**
-- Commercial plans only: `free`/`trial` migrated to `solo`, `trial`/`trialing` statuses to `pending` (`scripts/migrate-production.js`)
-- Founder permanent bypass: billing, seats, agents, workspace and quota gates never apply to `TEOS_FOUNDER_TELEGRAM_ID`
-- Founder Control Center consoles: Policy Engine, Analytics, Feature Flags, Emergency Stop, plus existing Mode/Approval/Billing/Workspaces/Customers/Revenue/Debug/Ops/Sentinel
-- Emergency Stop halts all agent execution; Feature Flags gate capability families at the executor
-- Enterprise readiness: CSP, rate limits, HMAC webhook verification
-- Live-product messaging: internal execution modes never exposed publicly
+## Roadmap (post-v1.1.0 freeze)
 
-**v1.0.0 — Public Launch**
-- TEOS DEALMAKER rebrand: Enterprise AI Revenue Operating System
-- Env-driven Dodo production catalog (Solo, Growth, Business, Enterprise + add-ons)
-- Production landing page + Sentinel governance console (SEO, robots, sitemap, analytics hooks)
-- Plugin engine contract frozen at `^1.0.0`
+The v1.1.0 release is **frozen** on `main`. Only reproducible bug fixes, security fixes, broken-link fixes, and broken-routing fixes are accepted. The roadmap lives in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
-**v0.8.1 — Recovery Release**
-- Repository restored
-- Runtime stabilized
-- Enterprise documentation
+- **v1.2.0** — Proactive Telegram notifications (preserved on the `v1.2.0-notifications` branch)
+- **v1.3.x** — Outcome-based usage pricing component, per-action telemetry export
+- **v1.4+** — SOC 2 readiness, GDPR/CCPA tooling, third-party pentest, multi-region
+- **Long-term** — OpenTelemetry, plugin signing, distributed tracing, public marketplace
 
-**v0.9 — Architecture Foundation**
-- Modular Workforce
-- Mission Controller
-- MCP Layer
-- Plugin Platform
-- Sentinel Plugin
-- Civic Mixer Plugin
-- Enterprise Platform (tenants, entitlements, RBAC authorization)
-
-**Current Status**
-v1.0.2 Production SaaS Release — commercial plans live, founder controls active, release tagged
+---
 
 ## License
 
 Proprietary. © 2026 Elmahrosa International. All rights reserved.
-
-See [LICENSE](LICENSE) for full details.
-
-## Enterprise Support
-
-For production deployments and custom implementation services, please contact:
-**Enterprise Sales**: enterprise@elmahrosa.org
-**Technical Support**: support@elmahrosa.org
-**Security Reporting**: security@elmahrosa.org
+See [`LICENSE`](LICENSE) for full details.
 
 ---
 
-*TEOS DEALMAKER is continuously evolving. For the latest features, roadmap, and release notes, visit our [documentation portal](https://docs.elmahrosa.org/teos-dealmaker).
+## Support
+
+- **Enterprise sales:** enterprise@elmahrosa.org
+- **Technical support:** support@elmahrosa.org
+- **Security reporting:** security@elmahrosa.org
+- **Live ops console:** https://dealmaker.elmahrosa.org/dashboard
+
+---
+
+*TEOS DealMaker v1.1.0 — production, governed, MCP-native.*
+*Maintained by the Elmahrosa International team.*
