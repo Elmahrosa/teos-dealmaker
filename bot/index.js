@@ -22,12 +22,28 @@ const bot = new TelegramBot(BOT_CONFIG.token, { polling: false });
 
 let pollingActive = false;
 let pollingRetryCount = 0;
-const MAX_POLLING_RETRIES = 10;
+let retryScheduled = false;
+const MAX_POLLING_RETRIES = 15;
+const RETRY_BASE_DELAY = 30000;
+const RETRY_MAX_DELAY = 300000;
 
 function schedulePollingRetry(delayMs) {
+  if (retryScheduled) {
+    console.log('[bot] Retry already scheduled — skipping duplicate');
+    return;
+  }
+  if (pollingRetryCount >= MAX_POLLING_RETRIES) {
+    console.error(`[bot] Exceeded max retries (${MAX_POLLING_RETRIES}). Giving up on polling. Restart required.`);
+    return;
+  }
+  retryScheduled = true;
   pollingRetryCount++;
-  console.log(`[bot] Retry #${pollingRetryCount} in ${Math.round(delayMs / 1000)}s (max ${MAX_POLLING_RETRIES})`);
+  console.log(`[bot] Retry #${pollingRetryCount} scheduled in ${Math.round(delayMs / 1000)}s (max ${MAX_POLLING_RETRIES})`);
   setTimeout(async () => {
+    retryScheduled = false;
+    try {
+      await bot.stopPolling({ cancel: true });
+    } catch (_) { /* ignore — may already be stopped */ }
     try {
       await bot.startPolling({ restart: true });
       pollingActive = true;
@@ -35,7 +51,7 @@ function schedulePollingRetry(delayMs) {
       console.log('[bot] Polling restarted successfully after conflict resolution');
     } catch (retryErr) {
       if (String(retryErr.message).includes('409') && pollingRetryCount < MAX_POLLING_RETRIES) {
-        const nextDelay = Math.min(delayMs * 2, 120000);
+        const nextDelay = Math.min(delayMs * 2, RETRY_MAX_DELAY);
         console.error(`[bot] 409 persists after retry #${pollingRetryCount}, backing off to ${Math.round(nextDelay / 1000)}s`);
         schedulePollingRetry(nextDelay);
       } else {
@@ -50,10 +66,10 @@ bot.on('polling_error', (err) => {
   console.error(`[bot] polling_error: ${code}`);
 
   if (String(code).includes('409')) {
-    console.error('[bot] 409 Conflict — another instance is polling. Initiating backoff retry.');
-    bot.stopPolling({ cancel: true }).catch(() => {});
+    console.error('[bot] 409 Conflict — another instance is polling.');
     pollingActive = false;
-    schedulePollingRetry(10000);
+    try { bot.stopPolling({ cancel: true }); } catch (_) { /* ignore */ }
+    schedulePollingRetry(RETRY_BASE_DELAY);
   } else if (String(code).includes('502')) {
     console.error('[bot] 502 Bad Gateway — Telegram server issue, polling library will auto-retry');
   } else {
@@ -168,11 +184,15 @@ bootstrap().catch((err) => {
   process.exit(1);
 });
 
-function shutdown(signal) {
+async function shutdown(signal) {
   console.log(`[bot] ${signal} received — stopping polling (active: ${pollingActive})`);
   pollingActive = false;
-  bot.stopPolling({ cancel: true }).catch(() => {});
-  setTimeout(() => process.exit(0), 2000).unref();
+  retryScheduled = false;
+  try {
+    await bot.stopPolling({ cancel: true });
+    console.log('[bot] polling stopped cleanly');
+  } catch (_) { /* ignore */ }
+  process.exit(0);
 }
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));

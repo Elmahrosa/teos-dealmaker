@@ -52,13 +52,17 @@ function start(service) {
 
 function shutdown() {
   shuttingDown = true;
-  console.log('[prod] shutting down');
-  for (const child of children.values()) {
+  console.log('[prod] shutting down — sending SIGTERM to children');
+  for (const [name, child] of children.entries()) {
     try {
       child.kill('SIGTERM');
+      console.log(`[prod] sent SIGTERM to ${name} (pid ${child.pid})`);
     } catch (_) { /* ignore */ }
   }
-  setTimeout(() => process.exit(0), 1000);
+  setTimeout(() => {
+    console.log('[prod] force exit after timeout');
+    process.exit(0);
+  }, 5000);
 }
 
 process.on('SIGTERM', shutdown);
