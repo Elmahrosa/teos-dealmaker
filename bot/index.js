@@ -140,7 +140,7 @@ async function bootstrap() {
     return;
   }
   try {
-    await bot.deleteWebHook({ drop_pending_updates: true });
+    await bot.deleteWebhook({ drop_pending_updates: true });
     console.log('[bot] Cleared any stale webhook before polling');
   } catch (_) { /* no webhook to clear — fine */ }
 
