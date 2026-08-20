@@ -21,25 +21,39 @@ function escapeHtml(text) {
 const bot = new TelegramBot(BOT_CONFIG.token, { polling: false });
 
 let pollingActive = false;
+let pollingRetryCount = 0;
+const MAX_POLLING_RETRIES = 10;
 
-bot.on('polling_error', async (err) => {
+function schedulePollingRetry(delayMs) {
+  pollingRetryCount++;
+  console.log(`[bot] Retry #${pollingRetryCount} in ${Math.round(delayMs / 1000)}s (max ${MAX_POLLING_RETRIES})`);
+  setTimeout(async () => {
+    try {
+      await bot.startPolling({ restart: true });
+      pollingActive = true;
+      pollingRetryCount = 0;
+      console.log('[bot] Polling restarted successfully after conflict resolution');
+    } catch (retryErr) {
+      if (String(retryErr.message).includes('409') && pollingRetryCount < MAX_POLLING_RETRIES) {
+        const nextDelay = Math.min(delayMs * 2, 120000);
+        console.error(`[bot] 409 persists after retry #${pollingRetryCount}, backing off to ${Math.round(nextDelay / 1000)}s`);
+        schedulePollingRetry(nextDelay);
+      } else {
+        console.error('[bot] Retry failed:', retryErr.message);
+      }
+    }
+  }, delayMs);
+}
+
+bot.on('polling_error', (err) => {
   const code = err.code || err.message || '';
   console.error(`[bot] polling_error: ${code}`);
 
   if (String(code).includes('409')) {
-    console.error('[bot] 409 Conflict — another instance is polling. Stopping this polling session.');
-    try { await bot.stopPolling({ cancel: true }); } catch (_) { /* stopPolling may throw if not polling */ }
+    console.error('[bot] 409 Conflict — another instance is polling. Initiating backoff retry.');
+    bot.stopPolling({ cancel: true }).catch(() => {});
     pollingActive = false;
-    console.log('[bot] Waiting 30s before retry after 409 Conflict...');
-    setTimeout(async () => {
-      try {
-        await bot.startPolling({ restart: true });
-        pollingActive = true;
-        console.log('[bot] Polling restarted after 409 Conflict resolution');
-      } catch (retryErr) {
-        console.error('[bot] Retry after 409 failed:', retryErr.message);
-      }
-    }, 30000);
+    schedulePollingRetry(10000);
   } else if (String(code).includes('502')) {
     console.error('[bot] 502 Bad Gateway — Telegram server issue, polling library will auto-retry');
   } else {
