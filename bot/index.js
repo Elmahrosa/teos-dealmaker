@@ -20,6 +20,33 @@ function escapeHtml(text) {
 
 const bot = new TelegramBot(BOT_CONFIG.token, { polling: false });
 
+let pollingActive = false;
+
+bot.on('polling_error', async (err) => {
+  const code = err.code || err.message || '';
+  console.error(`[bot] polling_error: ${code}`);
+
+  if (String(code).includes('409')) {
+    console.error('[bot] 409 Conflict — another instance is polling. Stopping this polling session.');
+    try { await bot.stopPolling({ cancel: true }); } catch (_) { /* stopPolling may throw if not polling */ }
+    pollingActive = false;
+    console.log('[bot] Waiting 30s before retry after 409 Conflict...');
+    setTimeout(async () => {
+      try {
+        await bot.startPolling({ restart: true });
+        pollingActive = true;
+        console.log('[bot] Polling restarted after 409 Conflict resolution');
+      } catch (retryErr) {
+        console.error('[bot] Retry after 409 failed:', retryErr.message);
+      }
+    }, 30000);
+  } else if (String(code).includes('502')) {
+    console.error('[bot] 502 Bad Gateway — Telegram server issue, polling library will auto-retry');
+  } else {
+    console.error(`[bot] Unknown polling error: ${code}`);
+  }
+});
+
 bot.on('message', async (msg) => {
   const start = Date.now();
   try {
@@ -112,7 +139,13 @@ async function bootstrap() {
     setInterval(() => {}, 1 << 30);
     return;
   }
-  await bot.startPolling();
+  try {
+    await bot.deleteWebHook({ drop_pending_updates: true });
+    console.log('[bot] Cleared any stale webhook before polling');
+  } catch (_) { /* no webhook to clear — fine */ }
+
+  await bot.startPolling({ restart: true });
+  pollingActive = true;
   console.log(`[TEOS DealMaker Bot] @${BOT_CONFIG.botName} polling (mode: ${getMode()})`);
 }
 
@@ -122,9 +155,10 @@ bootstrap().catch((err) => {
 });
 
 function shutdown(signal) {
-  console.log(`[bot] ${signal} received — stopping polling`);
-  bot.stopPolling().catch(() => {});
-  setTimeout(() => process.exit(0), 1000).unref();
+  console.log(`[bot] ${signal} received — stopping polling (active: ${pollingActive})`);
+  pollingActive = false;
+  bot.stopPolling({ cancel: true }).catch(() => {});
+  setTimeout(() => process.exit(0), 2000).unref();
 }
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
