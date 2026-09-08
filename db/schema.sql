@@ -62,6 +62,10 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX IF NOT EXISTS idx_subscriptions_workspace ON subscriptions(workspace_id);
+
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS missions_used INTEGER DEFAULT 0;
+
 CREATE TABLE IF NOT EXISTS dodo_customers (
     id SERIAL PRIMARY KEY,
     workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -580,3 +584,67 @@ CREATE TABLE IF NOT EXISTS revenue_ops_state (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Deal simulation (migration 003): scenario + run books for the deal lab.
+CREATE TABLE IF NOT EXISTS deal_scenarios (
+    id SERIAL PRIMARY KEY,
+    workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    deal_id INTEGER NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    scenario_type VARCHAR(50),
+    parameters JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_deal_scenarios_workspace_deal ON deal_scenarios(workspace_id, deal_id);
+CREATE INDEX IF NOT EXISTS idx_deal_scenarios_type ON deal_scenarios(scenario_type);
+
+CREATE TABLE IF NOT EXISTS simulation_runs (
+    id SERIAL PRIMARY KEY,
+    workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    deal_scenario_id INTEGER NOT NULL REFERENCES deal_scenarios(id) ON DELETE CASCADE,
+    status VARCHAR(30) NOT NULL DEFAULT 'running',
+    started_at TIMESTAMP WITH TIME ZONE,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    duration_ms INTEGER,
+    cost_cents INTEGER DEFAULT 0,
+    results JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_simulation_runs_workspace_status ON simulation_runs(workspace_id, status);
+CREATE INDEX IF NOT EXISTS idx_simulation_runs_scenario ON simulation_runs(deal_scenario_id);
+
+DROP TRIGGER IF EXISTS update_deal_scenarios_modtime ON deal_scenarios;
+CREATE TRIGGER update_deal_scenarios_modtime
+BEFORE UPDATE ON deal_scenarios
+FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+
+DROP TRIGGER IF EXISTS update_simulation_runs_modtime ON simulation_runs;
+CREATE TRIGGER update_simulation_runs_modtime
+BEFORE UPDATE ON simulation_runs
+FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+
+-- Manual pilot activations: billing entitlement grants for manual_pilot mode.
+CREATE TABLE IF NOT EXISTS manual_pilot_activations (
+    id SERIAL PRIMARY KEY,
+    workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    activated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    plan VARCHAR(50) NOT NULL DEFAULT 'manual_pilot',
+    notes TEXT,
+    activated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    deactivated_at TIMESTAMP WITH TIME ZONE,
+    status VARCHAR(20) NOT NULL DEFAULT 'active',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_manual_pilot_activations_workspace_status ON manual_pilot_activations(workspace_id, status);
+
+DROP TRIGGER IF EXISTS update_manual_pilot_activations_modtime ON manual_pilot_activations;
+CREATE TRIGGER update_manual_pilot_activations_modtime
+BEFORE UPDATE ON manual_pilot_activations
+FOR EACH ROW EXECUTE FUNCTION update_modified_column();
