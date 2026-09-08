@@ -1,15 +1,15 @@
 # How It Works — Production Freeze
 
-Frozen production versions:
+Frozen production versions (current release: **v1.1.0** on `main`):
 
 | Product | Version | Tag |
 |---------|---------|-----|
-| TEOS DealMaker | v1.0.2 Production | `v1.0.2-production` |
+| TEOS DealMaker | v1.1.0 Production | `v1.1.0` |
 | TEOS Civic Mixer | v1.0.0 Production | `v1.0.0-production` |
 
 ---
 
-## 1. TEOS DealMaker — v1.0.2 Production
+## 1. TEOS DealMaker — v1.1.0 Production
 
 An enterprise AI Revenue Operating System (Revenue OS): a policy-governed AI workforce that orchestrates the full revenue lifecycle, from prospect identification to deal closure.
 

@@ -167,7 +167,7 @@ We don't have certifications we don't have. Here's the real state:
 - ⚠️ No third-party penetration test yet
 - ⚠️ Single-instance deployment, no published uptime SLA
 
-We're honest about this because procurement teams need to know what's real. See [docs/SECURITY_REPORT.md](docs/SECURITY_REPORT.md) for the full posture and [docs/ENTERPRISE_READINESS.md](docs/ENTERPRISE_READINESS.md) for the maturity matrix.
+We're honest about this because procurement teams need to know what's real. See [deliverables/SECURITY_REPORT.md](deliverables/SECURITY_REPORT.md) for the full posture and [deliverables/ENTERPRISE_READINESS.md](deliverables/ENTERPRISE_READINESS.md) for the maturity matrix.
 
 ---
 
@@ -305,7 +305,7 @@ See [`docs/PLUGIN_CONTRACT.md`](docs/PLUGIN_CONTRACT.md) for the full plugin con
 
 ## Roadmap (post-v1.1.0 freeze)
 
-The v1.1.0 release is **frozen** on `main`. Only reproducible bug fixes, security fixes, broken-link fixes, and broken-routing fixes are accepted. The roadmap lives in [`docs/ROADMAP.md`](docs/ROADMAP.md).
+The v1.1.0 release is **frozen** on `main`. Only reproducible bug fixes, security fixes, broken-link fixes, and broken-routing fixes are accepted. The roadmap lives in [`deliverables/ROADMAP.md`](deliverables/ROADMAP.md).
 
 - **v1.2.0** — Proactive Telegram notifications (preserved on the `v1.2.0-notifications` branch)
 - **v1.3.x** — Outcome-based usage pricing component, per-action telemetry export
