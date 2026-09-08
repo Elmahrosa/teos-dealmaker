@@ -5,8 +5,8 @@
 // gRPC, or any specific transport — MCP (and future transports) consume it.
 //
 // The default instance is created here; callers use it via
-// `require('./plugin-manager').pluginManager` or create an isolated instance
-// with createPluginManager({ ... }).
+// `require('./plugin-manager').pluginManager` (resolves to this module) or
+// create an isolated instance with createPluginManager({ ... }).
 'use strict';
 
 const path = require('path');

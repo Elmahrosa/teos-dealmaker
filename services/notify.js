@@ -92,21 +92,32 @@ function createNotifier(opts) {
     if (installed) return { ok: false, reason: 'already_installed' };
     installed = true;
 
-    on(EVENT_NAMES.PLAN_COMPLETED, (evt) => {
+    // Every listener is fire-and-forget but must never reject: an unhandled
+    // rejection from a failed Slack/email fetch would trip the global
+    // unhandledRejection guard and crash the process.
+    const fire = (eventName, buildMessage) => {
+      on(eventName, (evt) => {
+        notify(...buildMessage(evt)).catch((err) => {
+          log(`error in ${eventName} notifier:`, err && err.message ? err.message : err);
+        });
+      });
+    };
+
+    fire(EVENT_NAMES.PLAN_COMPLETED, (evt) => {
       const m = evt.metrics || {};
-      notify('✅ Mission completed', `Mission "${evt.title || evt.planId}" completed. ${m.completed_steps || 0}/${m.total_steps || 0} steps, avg confidence ${m.avg_confidence ?? '—'}, elapsed ${m.duration_ms ?? 0}ms.`);
+      return ['✅ Mission completed', `Mission "${evt.title || evt.planId}" completed. ${m.completed_steps || 0}/${m.total_steps || 0} steps, avg confidence ${m.avg_confidence ?? '—'}, elapsed ${m.duration_ms ?? 0}ms.`];
     });
-    on(EVENT_NAMES.PLAN_FAILED, (evt) => {
-      notify('❌ Mission failed', `Mission "${evt.title || evt.planId}" failed. ${evt.error || evt.reason || 'unknown reason'}`);
+    fire(EVENT_NAMES.PLAN_FAILED, (evt) => {
+      return ['❌ Mission failed', `Mission "${evt.title || evt.planId}" failed. ${evt.error || evt.reason || 'unknown reason'}`];
     });
-    on(EVENT_NAMES.TASK_FAILED, (evt) => {
-      notify('⚠️ Step failed', `Step ${evt.stepId || evt.stepKey || '?'} (${evt.agentType || '?'}) failed: ${evt.error || evt.reason || 'unknown'}`);
+    fire(EVENT_NAMES.TASK_FAILED, (evt) => {
+      return ['⚠️ Step failed', `Step ${evt.stepId || evt.stepKey || '?'} (${evt.agentType || '?'}) failed: ${evt.error || evt.reason || 'unknown'}`];
     });
-    on(EVENT_NAMES.APPROVAL_REQUESTED, (evt) => {
-      notify('🛑 Founder approval requested', `Step ${evt.stepId || '?'} (${evt.agentType || '?'}): ${evt.reason || 'approval needed'} (request ${evt.approvalId || '?'}).`);
+    fire(EVENT_NAMES.APPROVAL_REQUESTED, (evt) => {
+      return ['🛑 Founder approval requested', `Step ${evt.stepId || '?'} (${evt.agentType || '?'}): ${evt.reason || 'approval needed'} (request ${evt.approvalId || '?'}).`];
     });
-    on(EVENT_NAMES.APPROVAL_DECIDED, (evt) => {
-      notify(`Founder approval ${evt.status}`, `Request ${evt.approvalId || '?'} for step ${evt.stepId || '?'} was ${evt.status}.`);
+    fire(EVENT_NAMES.APPROVAL_DECIDED, (evt) => {
+      return [`Founder approval ${evt.status}`, `Request ${evt.approvalId || '?'} for step ${evt.stepId || '?'} was ${evt.status}.`];
     });
     return { ok: true };
   }

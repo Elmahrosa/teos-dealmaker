@@ -13,6 +13,9 @@ const { bootstrapFounder } = require('../services/founderSeed');
 const { autoStartFounderMission } = require('../services/founderMission');
 const notify = require('../services/notify');
 const learningHook = require('../services/learningHook');
+const { install: installReliability } = require('../utils/reliability');
+
+installReliability('bot');
 
 function escapeHtml(text) {
   return String(text).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
@@ -33,8 +36,8 @@ function schedulePollingRetry(delayMs) {
     return;
   }
   if (pollingRetryCount >= MAX_POLLING_RETRIES) {
-    console.error(`[bot] Exceeded max retries (${MAX_POLLING_RETRIES}). Giving up on polling. Restart required.`);
-    return;
+    console.error(`[bot] Exceeded max retries (${MAX_POLLING_RETRIES}). Giving up on polling. Exiting so the supervisor can restart this process.`);
+    process.exit(1);
   }
   retryScheduled = true;
   pollingRetryCount++;
@@ -75,6 +78,14 @@ bot.on('polling_error', (err) => {
   } else {
     console.error(`[bot] Unknown polling error: ${code}`);
   }
+});
+
+// node-telegram-bot-api emits 'error' for non-polling request failures (auth,
+// dropped connections, 4xx/5xx during sendMessage/getMe). Without a listener an
+// 'error' event throws and crashes the process; log loudly instead so the
+// send-message error paths stay the single source of truth.
+bot.on('error', (err) => {
+  console.error('[bot] request error:', err && err.message ? err.message : err);
 });
 
 bot.on('message', async (msg) => {
@@ -170,8 +181,8 @@ async function bootstrap() {
     return;
   }
   try {
-    await bot.deleteWebhook({ drop_pending_updates: true });
-    console.log('[bot] Cleared any stale webhook before polling');
+    await bot.deleteWebhook({ drop_pending_updates: false });
+    console.log('[bot] Cleared any stale webhook before polling (pending updates preserved)');
   } catch (_) { /* no webhook to clear — fine */ }
 
   await bot.startPolling({ restart: true });

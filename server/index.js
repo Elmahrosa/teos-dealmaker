@@ -305,7 +305,7 @@ app.get('/api/deploy-verify', requireAuditAuth, (req, res) => {
   res.json(result);
 });
 
-app.get('/api/diagnostics', async (req, res) => {
+app.get('/api/diagnostics', requireAuditAuth, async (req, res) => {
   const out = { dbPingMs: null, dbWarmMs: null, helloMs: null, statusMs: null, error: null };
   try {
     const { getPool } = require('../db');
@@ -316,8 +316,9 @@ app.get('/api/diagnostics', async (req, res) => {
     const warm = Date.now();
     await pool.query('select 1');
     out.dbWarmMs = Date.now() - warm;
-  } catch (err) {
-    out.error = 'db: ' + err.message;
+  } catch (_err) {
+    // Never leak the underlying error (it may contain connection details).
+    out.error = 'db_unreachable';
     return res.json(out);
   }
   const founder = Number(process.env.TEOS_FOUNDER_TELEGRAM_ID || 0);
@@ -331,8 +332,8 @@ app.get('/api/diagnostics', async (req, res) => {
       const t2 = Date.now();
       await router.handleText(adapter, founder, 'status');
       out.statusMs = Date.now() - t2;
-    } catch (err) {
-      out.error = (out.error ? out.error + '; ' : '') + 'router: ' + err.message;
+    } catch (_err) {
+      out.error = (out.error ? out.error + '; ' : '') + 'router_unreachable';
     }
   }
   res.json(out);
@@ -944,7 +945,10 @@ app.use('/api/founder/sales-loop', checkFounderSession, founderSalesLoop);
 app.get('/approvals/customer0', requireAuditAuth, async (_req, res) => {
   try {
     const customer0 = require('../services/customer0');
-    const render = require('./render');
+const render = require('./render');
+const { install: installReliability } = require('../utils/reliability');
+
+installReliability('sentinel');
     const { getAdapter, createMemoryAdapter } = require('../db');
     let adapter;
     try {
@@ -1869,7 +1873,9 @@ function shutdown(signal) {
   server.close(() => {
     process.exitCode = 0;
   });
-  setTimeout(() => process.exit(1), 10000).unref();
+  // If keep-alive connections block close(), force-exit cleanly (0) after a
+  // grace period — a graceful shutdown is not a failure.
+  setTimeout(() => process.exit(0), 10000).unref();
 }
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
