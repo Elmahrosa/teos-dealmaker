@@ -7,7 +7,7 @@
 - **Git Status**: Branch `main`, head commit `d4d739a` (fix(v1.1): approval `decided_by` must store internal users.id — production callback bug fix), = `origin/main`, preceded by `f1e5475` (docs: v1.1.0 release notes), `d9a1e55` (fix(lint): trailing newline) and `a66c053` (chore: trust center + credly). Working tree clean (only the untracked `RAILWAY_RESTORATION_REPORT.md` closeout report). Tag `v1.1.0-production` intact.
 - **Version Consistency**:
   - package.json: `"version": "1.1.0"`
-  - BUILD_STATE.md: Release **v1.1.0** (AI Revenue OS + honest executive output)
+  - docs/history/BUILD_STATE.md: Release **v1.1.0** (AI Revenue OS + honest executive output)
   - Tag `v1.1.0-production` intact (unchanged).
 - **Test Suite**: 47/47 suites passing (0 failed), including the new `tests/test-approval-decider.js` regression (Telegram ID → internal `users.id`, no INT4 overflow).
 - **Code Quality**:

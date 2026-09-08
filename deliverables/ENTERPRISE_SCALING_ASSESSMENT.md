@@ -112,7 +112,7 @@ The existing self-assessment (`deliverables/ENTERPRISE_READINESS.md:7-58`) score
 - **No contract artifacts:** no MSA/DPA, no SLA document, no reseller terms, no security-questionnaire answer pack (`README.md:394`, proprietary license).
 - **README enterprise claims outstrip evidence** (`README.md:314-334`): "SOC 2 Type II and ISO 27001 ready architecture", "GDPR/CCPA compliance tooling", "Regular third-party penetration testing", "99.9% uptime SLA with multi-zone", "Automated failover and disaster recovery", "Docker/Kubernetes-ready" — none backed by repo artifacts, several contradicted by the roadmap (`deliverables/ROADMAP.md:50-69`) and single-node reality.
 - **"Mission-as-a-Trial" copy/code mismatch:** landing flow marked PASS (`LAUNCH_CHECKLIST.md:17`) while the code has no trial feature (`PRODUCTION_VERIFICATION_REPORT.md:86` — trials deliberately removed v1.0.2).
-- Plan-name drift: billing uses `corporate` (`REVENUE_PATH_AUDIT.md:148`), marketing uses `Business`.
+- Plan-name drift: billing uses `corporate` (`docs/history/REVENUE_PATH_AUDIT.md:148`), marketing uses `Business`.
 
 ---
 
@@ -165,8 +165,8 @@ The existing self-assessment (`deliverables/ENTERPRISE_READINESS.md:7-58`) score
 | "Mission-as-a-Trial" PASS vs "no trial feature in code" (D6) | `LAUNCH_CHECKLIST.md:17`, `PRODUCTION_VERIFICATION_REPORT.md:24` vs `:86` |
 | "17+ pre-built connectors (Salesforce/HubSpot/M365)" vs only 2 plugins, connectors = future | `README.md:187-188`, `HOW_IT_WORKS.md:35` vs `docs/PLUGIN_CONTRACT.md:258` |
 | "Immutable audit trail" vs `clearVault` + "Clear audit log" UI | `server/landing.html:235,327` vs `utils/auditLogger.js:170-174`, `bot/i18n.js:178` |
-| Dodo credentials MISSING vs PRESENT in prod | `STATUS_SUMMARY.md:16-19` vs `RAILWAY_RESTORATION_REPORT.md:23` (reconcile: DODO_API_KEY/DODO_WEBHOOK_SECRET still unverified in prod as of 2026-08-09) |
-| Plan naming `corporate` vs `Business` | `REVENUE_PATH_AUDIT.md:148` vs `LAUNCH_CHECKLIST.md:19` |
+| Dodo credentials MISSING vs PRESENT in prod | `docs/history/STATUS_SUMMARY.md:16-19` vs `RAILWAY_RESTORATION_REPORT.md:23` (reconcile: DODO_API_KEY/DODO_WEBHOOK_SECRET still unverified in prod as of 2026-08-09) |
+| Plan naming `corporate` vs `Business` | `docs/history/REVENUE_PATH_AUDIT.md:148` vs `LAUNCH_CHECKLIST.md:19` |
 
 ---
 

@@ -30,7 +30,7 @@ The TEOS DealMaker platform demonstrates strong foundational architecture for an
 - **Strengths**:
   - Clear separation of concerns (services, repositories, handlers).
   - Consistent code patterns and naming conventions.
-  - Comprehensive test suite (as per BUILD_STATE.md).
+  - Comprehensive test suite (as per docs/history/BUILD_STATE.md).
 - **Weaknesses**:
   - Large service files (e.g., workforce.js) could benefit from further decomposition.
   - Some magic strings and hardcoded values.

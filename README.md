@@ -262,7 +262,7 @@ Last verification (2026-08-08, post-v1.1.0 freeze):
 | Bot trust/security intents (EN + AR) | PASS — no `/start` fallback |
 | Customer-facing honesty | No "Coming Soon"/"Demo" placeholders, no simulated branding in reports |
 
-See `BUILD_STATE.md` and `FINAL_VALIDATION_REPORT.md` for the full evidence.
+See [`docs/history/BUILD_STATE.md`](docs/history/BUILD_STATE.md) and [`docs/history/FINAL_VALIDATION_REPORT.md`](docs/history/FINAL_VALIDATION_REPORT.md) for the full evidence.
 
 ---
 
