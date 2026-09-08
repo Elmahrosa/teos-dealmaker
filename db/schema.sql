@@ -281,6 +281,9 @@ CREATE TABLE IF NOT EXISTS plans (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS report_token VARCHAR(64);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_plans_report_token ON plans(report_token);
+
 CREATE INDEX IF NOT EXISTS idx_plans_workspace_time ON plans(workspace_id, created_at);
 
 ALTER TABLE agent_runs ADD COLUMN IF NOT EXISTS plan_id INTEGER REFERENCES plans(id) ON DELETE SET NULL;

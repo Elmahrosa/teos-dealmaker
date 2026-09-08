@@ -28,6 +28,9 @@ const founderSeed = require('../services/founderSeed');
   const report = await missionReport(adapter, ws.id, outcome.plan.id);
   equal(report.plan.id, outcome.plan.id, 'report references the mission');
   equal(report.plan.title, 'Acme research', 'report carries mission title');
+  check(/^[a-f0-9]{48}$/.test(report.plan.report_token), 'report carries an unguessable hex report_token');
+  check(String(report.plan.report_url).includes('/report/' + report.plan.report_token),
+    'report_url addresses the token, never the numeric plan id');
   equal(report.kpis.total_steps, outcome.steps.length, 'KPI total steps match plan');
   equal(report.kpis.completed_steps, report.kpis.total_steps, 'all steps completed in report');
   equal(report.kpis.completion_rate, 100, 'completion rate 100%');
@@ -75,7 +78,8 @@ const founderSeed = require('../services/founderSeed');
   const czHtml = render.renderCustomerZero(czReport);
   check(czHtml.includes('CUSTOMER #0'), 'customer-0 page renders header');
   check(czHtml.includes('ELMAHROSA INTERNATIONAL'), 'customer-0 page names the reference customer');
-  check(czHtml.includes('/report/' + cz.plan.id), 'customer-0 page links to the executive report');
+  check(czHtml.includes('/report/' + czReport.plan.report_token), 'customer-0 page links to the report token, not the numeric id');
+  check(!czHtml.includes('/report/' + cz.plan.id), 'customer-0 page never exposes the enumerable plan id');
   check(!czHtml.includes('Pipeline value'), 'customer-0 page hides empty pipeline value stat');
 
   // Revenue identified stat is hidden when no real figure exists.

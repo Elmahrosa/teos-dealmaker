@@ -182,6 +182,38 @@ function mockRes() {
   eq(session.bearerToken({ get: () => undefined }), null, 'missing authorization header → null');
   eq(session.bearerToken({ get: () => 'Bearer' }), null, 'bearer without value → null');
 
+  // -------------------------------------------------------------------------
+  // httpOnly session cookie transport (founder consoles)
+  // -------------------------------------------------------------------------
+  eq(session.SESSION_COOKIE, 'teos_session', 'cookie name is stable');
+  const cookieReq = mockReq({ headers: { cookie: 'teos_session=' + s4.token + '; theme=dark' } });
+  eq(session.cookieToken(cookieReq), s4.token, 'cookie token extracted from cookie header');
+  eq(session.cookieToken(mockReq({ headers: { cookie: 'other=xyz' } })), null, 'missing session cookie → null');
+  eq(session.cookieToken(mockReq({ headers: {} })), null, 'no cookie header → null');
+  eq(session.requestToken(mockReq({ headers: { cookie: 'teos_session=' + s4.token } })), s4.token, 'requestToken falls back to cookie');
+
+  // Middleware accepts cookie authentication (no Authorization header).
+  const cookieOnly = mockReq({ headers: { cookie: 'teos_session=' + s4.token } });
+  const cookieOnlyRes = mockRes();
+  let cookieReached = false;
+  await requireSession(cookieOnly, cookieOnlyRes, () => { cookieReached = true; });
+  tru(cookieReached, 'cookie-authenticated session reaches the handler');
+  eq(cookieOnly.authUser.id, alice.id, 'cookie session resolves the same user');
+
+  // setSessionCookie writes an httpOnly cookie; plain (http) requests set a
+  // non-secure cookie so local dev keeps working.
+  let setOptions = null;
+  const cookieRes = {
+    cookie: (name, value, opts) => { setOptions = { name, value, opts }; },
+    clearCookie: () => ({})
+  };
+  session.setSessionCookie({ secure: true }, cookieRes, s4.token);
+  eq(setOptions.name, 'teos_session', 'cookie named teos_session');
+  eq(setOptions.value, s4.token, 'cookie carries the raw token');
+  tru(setOptions.opts.httpOnly, 'cookie is httpOnly (invisible to page JS)');
+  tru(setOptions.opts.secure, 'cookie is Secure over TLS');
+  eq(setOptions.opts.sameSite, 'strict', 'cookie is SameSite=Strict (CSRF-safe)');
+
   // The full /api/auth/entitlement + /api/auth/missions/increment flow derives
   // the user from the session adapter, i.e. the exact wiring used by the routes.
   const auth = require('../services/auth');

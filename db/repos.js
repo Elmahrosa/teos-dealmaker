@@ -1,3 +1,9 @@
+const crypto = require('crypto');
+
+function generateReportToken() {
+  return crypto.randomBytes(24).toString('hex');
+}
+
 function createRepos(adapter) {
   return {
     workspaces: {
@@ -406,8 +412,8 @@ function createRepos(adapter) {
       }
     },
     plans: {
-      create({ workspace_id, title, goal, status = 'planned', priority = 'normal', metrics = null, version = null, archived_at = null, is_protected = false }) {
-        return adapter.insert('plans', { workspace_id, title, goal, status, priority, metrics, version, archived_at, is_protected });
+      create({ workspace_id, title, goal, status = 'planned', priority = 'normal', metrics = null, version = null, archived_at = null, is_protected = false, report_token = generateReportToken() }) {
+        return adapter.insert('plans', { workspace_id, title, goal, status, priority, metrics, version, archived_at, is_protected, report_token });
       },
       get(workspace_id, id) {
         return adapter.findOne('plans', { workspace_id, id });

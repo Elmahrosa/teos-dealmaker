@@ -44,6 +44,53 @@ function bearerToken(req) {
   return m ? m[1] : null;
 }
 
+// httpOnly session cookie name. The cookie is set on login/web-login and is the
+// primary authentication transport for the founder consoles — it is invisible
+// to page JavaScript, so XSS cannot exfiltrate the session.
+const SESSION_COOKIE = 'teos_session';
+
+function cookieToken(req) {
+  const header = req && req.get ? req.get('cookie') : (req && req.headers && req.headers.cookie);
+  if (!header) return null;
+  for (const part of String(header).split(';')) {
+    const idx = part.indexOf('=');
+    if (idx === -1) continue;
+    if (part.slice(0, idx).trim() === SESSION_COOKIE) {
+      const value = part.slice(idx + 1).trim();
+      return value || null;
+    }
+  }
+  return null;
+}
+
+// Accept a session token from the Authorization header OR the httpOnly cookie.
+// Either transport still resolves through the same hash/verify path.
+function requestToken(req) {
+  return bearerToken(req) || cookieToken(req);
+}
+
+function setSessionCookie(req, res, token) {
+  if (!res || !token) return false;
+  // Secure only when the request came over TLS (req.secure honours the
+  // configured trust proxy), so local http:// development keeps working.
+  const secure = !!(req && req.secure);
+  const maxAge = sessionTtlMs();
+  res.cookie(SESSION_COOKIE, token, {
+    httpOnly: true,
+    secure,
+    sameSite: 'strict',
+    maxAge,
+    path: '/'
+  });
+  return true;
+}
+
+function clearSessionCookie(res) {
+  if (!res || !res.clearCookie) return false;
+  res.clearCookie(SESSION_COOKIE, { httpOnly: true, path: '/' });
+  return true;
+}
+
 async function createSession(adapter, userId) {
   const token = newToken();
   const expiresAt = new Date(Date.now() + sessionTtlMs()).toISOString();
@@ -92,7 +139,7 @@ function createRequireSession(resolve) {
   const getAdapter = resolve || resolveAdapter;
   return async function requireSession(req, res, next) {
     try {
-      const token = bearerToken(req);
+      const token = requestToken(req);
       if (!token) return res.status(401).json({ ok: false, error: 'Authentication required' });
       const adapter = await getAdapter();
       const verified = await verifySession(adapter, token);
@@ -112,7 +159,7 @@ function createRequireFounderSession(resolve) {
   const getAdapter = resolve || resolveAdapter;
   return async function requireFounderSession(req, res, next) {
     try {
-      const token = bearerToken(req);
+      const token = requestToken(req);
       if (!token) return res.status(401).json({ ok: false, error: 'Authentication required' });
       const adapter = await getAdapter();
       const verified = await verifySession(adapter, token);
@@ -135,6 +182,11 @@ module.exports = {
   hashToken,
   newToken,
   bearerToken,
+  cookieToken,
+  requestToken,
+  SESSION_COOKIE,
+  setSessionCookie,
+  clearSessionCookie,
   createSession,
   verifySession,
   revokeSession,

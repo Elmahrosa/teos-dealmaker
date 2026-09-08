@@ -1,5 +1,7 @@
 const { forWorkspace } = require('../db/repos');
 
+const SITE_URL = process.env.SITE_URL || 'https://dealmaker.elmahrosa.org';
+
 function dayTime(iso) {
   if (!iso) return '—';
   return String(iso).replace('T', ' ').slice(0, 16) + ' UTC';
@@ -102,6 +104,8 @@ async function missionReport(adapter, workspaceId, planId) {
   return {
     plan: {
       id: plan.id,
+      report_token: plan.report_token || null,
+      report_url: plan.report_token ? `${SITE_URL}/report/${plan.report_token}` : null,
       title: plan.title,
       goal: plan.goal,
       status: plan.status,

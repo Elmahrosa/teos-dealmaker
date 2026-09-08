@@ -1,6 +1,5 @@
 const path = require('path');
 const fs = require('fs');
-const crypto = require('crypto');
 require('dotenv').config();
 const express = require('express');
 const compression = require('compression');
@@ -32,18 +31,11 @@ const webhookLimiter = rateLimit({
   legacyHeaders: false
 });
 
-// Audit access is fail-closed: the endpoint returns 503 until AUDIT_API_KEY is
-// configured, and every request must present a matching X-API-Key header.
-// This keeps the sensitive audit trail out of the public marketing surface.
-function requireAuditAuth(req, res, next) {
-  const key = process.env.AUDIT_API_KEY;
-  if (!key) return res.status(503).json({ error: 'audit_endpoint_not_configured' });
-  const provided = req.get('x-api-key') || '';
-  if (provided.length !== key.length) return res.status(401).json({ error: 'unauthorized' });
-  const ok = crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(key));
-  if (!ok) return res.status(401).json({ error: 'unauthorized' });
-  next();
-}
+// Audit access is fail-closed. See services/auditAuth.js for the scoped key
+// contract: AUDIT_API_KEY is the legacy root key (grants every scope) and
+// AUDIT_API_KEYS is an optional JSON map scope -> key so sensitive surfaces
+// can be protected by separate credentials.
+const { requireAuditAuth } = require('../services/auditAuth');
 
 function contentSecurityPolicy() {
   const scriptSrc = ['\'self\'', '\'unsafe-inline\''];
@@ -85,12 +77,12 @@ app.use('/founder', (req, res, next) => {
   res.set('X-Robots-Tag', 'noindex, nofollow');
   next();
 });
-app.use('/founder', requireAuditAuth, express.static(publicFounder));
+app.use('/founder', requireAuditAuth('founder_console'), express.static(publicFounder));
 
 // 24/7 Sales Engine control panel — served from the founder directory, same
 // audit-key gate. The page communicates with /api/founder/sales-loop/* via
 // the founder session (Bearer token).
-app.get('/founder/sales-loop', requireAuditAuth, (req, res) => {
+app.get('/founder/sales-loop', requireAuditAuth('founder_console'), (req, res) => {
   res.sendFile(path.join(publicFounder, 'sales-loop.html'));
 });
 
@@ -151,6 +143,7 @@ app.post('/api/auth/login', express.json({ limit: '32kb' }), async (req, res) =>
     }
     const result = await auth.login(adapter, req.body || {});
     const session = await sessionService.createSession(adapter, result.user.id);
+    sessionService.setSessionCookie(req, res, session.token);
     res.json({
       ok: true,
       user: result.user,
@@ -188,8 +181,11 @@ app.post('/api/auth/web-login', express.json({ limit: '32kb' }), async (req, res
     }
 
     // Issue a real server-side session (SHA-256 hash at rest, expiring,
-    // revocable via /api/auth/logout). The raw token is returned once.
+    // revocable via /api/auth/logout). The raw token is returned once for
+    // backward-compatible Bearer clients and also set as an httpOnly cookie
+    // so the founder consoles never have to touch localStorage/sessionStorage.
     const session = await sessionService.createSession(adapter, userId);
+    sessionService.setSessionCookie(req, res, session.token);
     res.json({
       ok: true,
       user: loginResult.user,
@@ -243,13 +239,31 @@ app.post('/api/auth/missions/increment', sessionService.requireSession, express.
   }
 });
 
-// Logout: revokes the presented session token server-side.
+// Logout: revokes the presented session token server-side and clears the
+// httpOnly session cookie.
 app.post('/api/auth/logout', sessionService.requireSession, async (req, res) => {
   try {
-    await sessionService.revokeSession(req.adapter, req.sessionToken);
+    if (req.sessionToken) await sessionService.revokeSession(req.adapter, req.sessionToken);
+    sessionService.clearSessionCookie(res);
     res.json({ ok: true });
   } catch (err) {
     console.error('[auth] logout error:', err.message);
+    res.status(500).json({ ok: false, error: 'Internal server error' });
+  }
+});
+
+// Boot check for the founder consoles: resolves the current session (via
+// cookie or Bearer header) and returns the user without exposing any secret.
+app.get('/api/auth/session', sessionService.requireSession, async (req, res) => {
+  try {
+    const isFounder = req.authUser ? await identity.isFounderUser(req.adapter, req.authUser.id) : false;
+    if (!req.authUser) return res.json({ ok: true, user: null, isFounder: false });
+    const safeUser = { ...req.authUser };
+    delete safeUser.password_hash;
+    delete safeUser.salt;
+    res.json({ ok: true, user: safeUser, isFounder });
+  } catch (err) {
+    console.error('[auth] session check error:', err.message);
     res.status(500).json({ ok: false, error: 'Internal server error' });
   }
 });
@@ -278,7 +292,7 @@ app.get('/health', (req, res) => {
 
 // Founder-only deployment configuration verification. Reports existence only —
 // never prints secret values, never exposes tokens or keys.
-app.get('/api/deploy-verify', requireAuditAuth, (req, res) => {
+app.get('/api/deploy-verify', requireAuditAuth('ops'), (req, res) => {
   const has = name => process.env[name] !== undefined && process.env[name] !== '';
   const result = {
     ok: true,
@@ -287,6 +301,7 @@ app.get('/api/deploy-verify', requireAuditAuth, (req, res) => {
       TEOS_MODE: has('TEOS_MODE'),
       DATABASE_URL: has('DATABASE_URL'),
       AUDIT_API_KEY: has('AUDIT_API_KEY'),
+      AUDIT_API_KEYS: has('AUDIT_API_KEYS'),
       DODO_API_KEY: has('DODO_API_KEY'),
       DODO_WEBHOOK_SECRET: has('DODO_WEBHOOK_SECRET'),
       RESEND_API_KEY: has('RESEND_API_KEY'),
@@ -305,7 +320,7 @@ app.get('/api/deploy-verify', requireAuditAuth, (req, res) => {
   res.json(result);
 });
 
-app.get('/api/diagnostics', requireAuditAuth, async (req, res) => {
+app.get('/api/diagnostics', requireAuditAuth('ops'), async (req, res) => {
   const out = { dbPingMs: null, dbWarmMs: null, helloMs: null, statusMs: null, error: null };
   try {
     const { getPool } = require('../db');
@@ -339,7 +354,7 @@ app.get('/api/diagnostics', requireAuditAuth, async (req, res) => {
   res.json(out);
 });
 
-app.get('/api/audit', requireAuditAuth, (req, res) => {
+app.get('/api/audit', requireAuditAuth('audit'), (req, res) => {
   const requested = parseInt(req.query.limit, 10);
   const limit = Math.min(Number.isFinite(requested) && requested > 0 ? requested : 100, 500);
   const entries = audit.readTail(limit);
@@ -450,7 +465,7 @@ app.post('/api/intake', express.json({ limit: '32kb' }), async (req, res) => {
 
 // Founder-only intake list (same key gate as /api/audit). Includes contact
 // because the founder acts on the intake.
-app.get('/api/intakes', requireAuditAuth, async (req, res) => {
+app.get('/api/intakes', requireAuditAuth('audit'), async (req, res) => {
   try {
     const { getAdapter } = require('../db');
     const { createRepos } = require('../db/repos');
@@ -472,7 +487,7 @@ app.get('/api/intakes', requireAuditAuth, async (req, res) => {
 });
 
 // Founder-only intake console.
-app.get('/intakes', requireAuditAuth, async (req, res) => {
+app.get('/intakes', requireAuditAuth('audit'), async (req, res) => {
   try {
     const { getAdapter } = require('../db');
     const { createRepos } = require('../db/repos');
@@ -559,14 +574,19 @@ async function getFounderWorkspace(adapter) {
   return { ws, plan };
 }
 
-app.get('/report/:planId', async (req, res) => {
+// Public mission report. Addressed by the unguessable report_token (192-bit),
+// never by the enumerable numeric plan id. A missing or malformed token is a
+// 404 — iterating ids no longer leaks other customers' deal content.
+app.get('/report/:reportToken', async (req, res) => {
   res.set('X-Robots-Tag', 'noindex, nofollow');
-  const planId = Number(req.params.planId);
-  if (!Number.isFinite(planId)) return res.status(400).type('html').send('Bad request');
+  const token = String(req.params.reportToken || '').trim();
+  if (!token || !/^[a-f0-9]{8,64}$/.test(token)) return res.status(404).type('html').send('Mission report not found');
   try {
     const { getAdapter } = require('../db');
     const adapter = getAdapter();
-    const report = await require('../services/missionReport').missionReport(adapter, null, planId);
+    const plan = await adapter.findOne('plans', { report_token: token });
+    if (!plan) return res.status(404).type('html').send('Mission report not found');
+    const report = await require('../services/missionReport').missionReport(adapter, plan.workspace_id, plan.id);
     if (!report) return res.status(404).type('html').send('Mission report not found');
     const html = render.renderMissionReport(report);
     res.type('html').send(html);
@@ -637,7 +657,7 @@ app.get('/api/reports/latest', async (_req, res) => {
 // requires AUDIT_API_KEY, returns sanitized records (never the message body,
 // never any API key). Body content is excluded because a founder-approved
 // email may still contain confidential deal material.
-app.get('/api/emails', requireAuditAuth, async (_req, res) => {
+app.get('/api/emails', requireAuditAuth('outreach'), async (_req, res) => {
   try {
     const { getAdapter } = require('../db');
     const { createRepos } = require('../db/repos');
@@ -674,7 +694,7 @@ app.get('/api/outreach/status', async (_req, res) => {
 
 // Founder-gated queue view. Sanitized: job ids, statuses, provider ids,
 // timestamps, recipient domains — never bodies, never full recipient addresses.
-app.get('/api/outreach/queue', requireAuditAuth, async (req, res) => {
+app.get('/api/outreach/queue', requireAuditAuth('outreach'), async (req, res) => {
   try {
     const { getAdapter } = require('../db');
     const limit = Math.min(Number(req.query.limit) || 50, 200);
@@ -685,7 +705,7 @@ app.get('/api/outreach/queue', requireAuditAuth, async (req, res) => {
   }
 });
 
-app.post('/api/outreach/pause', requireAuditAuth, express.json(), async (req, res) => {
+app.post('/api/outreach/pause', requireAuditAuth('outreach'), express.json(), async (req, res) => {
   try {
     const { getAdapter } = require('../db');
     const result = await worker.pause(getAdapter(), (req.body && req.body.by) || 'founder', req.body && req.body.reason);
@@ -696,7 +716,7 @@ app.post('/api/outreach/pause', requireAuditAuth, express.json(), async (req, re
   }
 });
 
-app.post('/api/outreach/resume', requireAuditAuth, express.json(), async (req, res) => {
+app.post('/api/outreach/resume', requireAuditAuth('outreach'), express.json(), async (req, res) => {
   try {
     const { getAdapter } = require('../db');
     const result = await worker.resume(getAdapter(), (req.body && req.body.by) || 'founder');
@@ -708,7 +728,7 @@ app.post('/api/outreach/resume', requireAuditAuth, express.json(), async (req, r
   }
 });
 
-app.post('/api/outreach/emergency-stop', requireAuditAuth, express.json(), async (req, res) => {
+app.post('/api/outreach/emergency-stop', requireAuditAuth('outreach'), express.json(), async (req, res) => {
   try {
     const { getAdapter } = require('../db');
     const result = await worker.emergencyStop(getAdapter(), (req.body && req.body.by) || 'founder', req.body && req.body.reason);
@@ -722,7 +742,7 @@ app.post('/api/outreach/emergency-stop', requireAuditAuth, express.json(), async
 // Founder-controlled operational email report (destination: FOUNDER_REPORT_TO).
 // Sends only on explicit founder action; never automatic. Fails closed without
 // a configured destination or RESEND_API_KEY.
-app.post('/api/outreach/founder-report', requireAuditAuth, express.json(), async (req, res) => {
+app.post('/api/outreach/founder-report', requireAuditAuth('outreach'), express.json(), async (req, res) => {
   try {
     const { getAdapter } = require('../db');
     const result = await worker.sendFounderOpsReport(getAdapter(), (req.body && req.body.to) ? { to: req.body.to } : undefined);
@@ -740,7 +760,7 @@ app.post('/api/outreach/founder-report', requireAuditAuth, express.json(), async
 // Resend or a founder destination is not configured.
 const revenueOps = require('../services/revenueOps');
 
-app.get('/api/revenue-ops/status', requireAuditAuth, async (_req, res) => {
+app.get('/api/revenue-ops/status', requireAuditAuth('revenue'), async (_req, res) => {
   try {
     const { getAdapter } = require('../db');
     res.json(await revenueOps.status(getAdapter()));
@@ -750,7 +770,7 @@ app.get('/api/revenue-ops/status', requireAuditAuth, async (_req, res) => {
   }
 });
 
-app.post('/api/revenue-ops/trigger', requireAuditAuth, express.json(), async (req, res) => {
+app.post('/api/revenue-ops/trigger', requireAuditAuth('revenue'), express.json(), async (req, res) => {
   try {
     const { getAdapter } = require('../db');
     const result = await revenueOps.triggerNow(getAdapter(), (req.body && req.body.by) || 'founder');
@@ -762,7 +782,7 @@ app.post('/api/revenue-ops/trigger', requireAuditAuth, express.json(), async (re
   }
 });
 
-app.post('/api/revenue-ops/pause', requireAuditAuth, express.json(), async (req, res) => {
+app.post('/api/revenue-ops/pause', requireAuditAuth('revenue'), express.json(), async (req, res) => {
   try {
     const { getAdapter } = require('../db');
     const result = await revenueOps.pause(getAdapter(), (req.body && req.body.by) || 'founder', (req.body && req.body.reason) || null);
@@ -774,7 +794,7 @@ app.post('/api/revenue-ops/pause', requireAuditAuth, express.json(), async (req,
   }
 });
 
-app.post('/api/revenue-ops/resume', requireAuditAuth, express.json(), async (req, res) => {
+app.post('/api/revenue-ops/resume', requireAuditAuth('revenue'), express.json(), async (req, res) => {
   try {
     const { getAdapter } = require('../db');
     const result = await revenueOps.resume(getAdapter(), (req.body && req.body.by) || 'founder', (req.body && req.body.reason) || null, { acknowledgeEmergency: Boolean(req.body && req.body.acknowledgeEmergency) });
@@ -786,7 +806,7 @@ app.post('/api/revenue-ops/resume', requireAuditAuth, express.json(), async (req
   }
 });
 
-app.post('/api/revenue-ops/emergency-stop', requireAuditAuth, express.json(), async (req, res) => {
+app.post('/api/revenue-ops/emergency-stop', requireAuditAuth('revenue'), express.json(), async (req, res) => {
   try {
     const { getAdapter } = require('../db');
     const result = await revenueOps.emergencyStop(getAdapter(), (req.body && req.body.by) || 'founder', (req.body && req.body.reason) || null);
@@ -798,7 +818,7 @@ app.post('/api/revenue-ops/emergency-stop', requireAuditAuth, express.json(), as
   }
 });
 
-app.post('/api/revenue-ops/discover', requireAuditAuth, express.json(), async (req, res) => {
+app.post('/api/revenue-ops/discover', requireAuditAuth('revenue'), express.json(), async (req, res) => {
   try {
     const { getAdapter } = require('../db');
     const result = await revenueOps.discover(getAdapter(), (req.body && req.body.limit) ? { limit: req.body.limit } : {});
@@ -810,7 +830,7 @@ app.post('/api/revenue-ops/discover', requireAuditAuth, express.json(), async (r
   }
 });
 
-app.get('/api/revenue-ops/approvals', requireAuditAuth, async (_req, res) => {
+app.get('/api/revenue-ops/approvals', requireAuditAuth('revenue'), async (_req, res) => {
   try {
     const { getAdapter } = require('../db');
     res.json(await revenueOps.approvalSummary(getAdapter()));
@@ -820,7 +840,7 @@ app.get('/api/revenue-ops/approvals', requireAuditAuth, async (_req, res) => {
   }
 });
 
-app.post('/api/revenue-ops/notify', requireAuditAuth, express.json(), async (req, res) => {
+app.post('/api/revenue-ops/notify', requireAuditAuth('revenue'), express.json(), async (req, res) => {
   try {
     const { getAdapter } = require('../db');
     const result = await revenueOps.notifyFounder(getAdapter(), (req.body && req.body.to) ? { to: req.body.to } : {});
@@ -836,7 +856,7 @@ app.post('/api/revenue-ops/notify', requireAuditAuth, express.json(), async (req
 // The review pages are read-only and gated by the audit key. Decisions are
 // POSTs gated by the founder session and go through the existing governed
 // email lifecycle (services/emailChannel). Nothing sends from here.
-app.get('/api/customer-0/report/latest', requireAuditAuth, async (_req, res) => {
+app.get('/api/customer-0/report/latest', requireAuditAuth('revenue'), async (_req, res) => {
   try {
     const customer0 = require('../services/customer0');
     const { getAdapter, createMemoryAdapter } = require('../db');
@@ -855,7 +875,7 @@ app.get('/api/customer-0/report/latest', requireAuditAuth, async (_req, res) => 
   }
 });
 
-app.get('/api/customer-0/approvals', requireAuditAuth, async (_req, res) => {
+app.get('/api/customer-0/approvals', requireAuditAuth('revenue'), async (_req, res) => {
   try {
     const customer0 = require('../services/customer0');
     const { getAdapter, createMemoryAdapter } = require('../db');
@@ -942,7 +962,7 @@ app.post('/api/customer-0/approvals/batch', checkFounderSession, express.json({ 
 const founderSalesLoop = require('./founderSalesLoop');
 app.use('/api/founder/sales-loop', checkFounderSession, founderSalesLoop);
 
-app.get('/approvals/customer0', requireAuditAuth, async (_req, res) => {
+app.get('/approvals/customer0', requireAuditAuth('revenue'), async (_req, res) => {
   try {
     const customer0 = require('../services/customer0');
 const render = require('./render');
@@ -997,7 +1017,7 @@ app.post('/webhook/resend', express.raw({ type: '*/*' }), async (req, res) => {
   }
 });
 
-// Founder Command Center API - Protected by requireAuditAuth
+// Founder Command Center API - Protected by founder session (checkFounderSession)
 // All endpoints are READ-ONLY in this phase
 
 // Overview endpoint

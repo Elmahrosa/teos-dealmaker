@@ -233,17 +233,22 @@
 
   var KEY = 'sor_founder_key';
   var getToken = function () {
-    var k = sessionStorage.getItem(KEY);
-    if (!k) { k = window.prompt('Enter founder session token:'); if (k) sessionStorage.setItem(KEY, k); }
-    return k || '';
+    // Legacy explicit bearer token (pasted once via older flow). The default
+    // authentication path is the httpOnly session cookie set at
+    // /api/auth/web-login, so this is optional and usually empty.
+    return sessionStorage.getItem(KEY) || '';
   };
   var api = function (path, opts) {
     var o = opts || {};
+    var headers = { 'content-type': 'application/json' };
+    var k = getToken();
+    if (k) headers['Authorization'] = 'Bearer ' + k;
     return fetch('/api/founder/sales-loop' + path, {
       method: o.method || 'GET',
-      headers: { 'Authorization': 'Bearer ' + getToken(), 'content-type': 'application/json' },
+      credentials: 'same-origin',
+      headers: headers,
       body: o.body ? JSON.stringify(o.body) : undefined
-    }).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || j.message || ('HTTP ' + r.status)); return j; }); });
+    }).then(function (r) { return r.json().then(function (j) { if (!r.ok) { if (r.status === 401 || r.status === 403) sessionStorage.removeItem(KEY); throw new Error(j.error || j.message || ('HTTP ' + r.status)); } return j; }); });
   };
   function el(id) { return document.getElementById(id); }
   function ts(d) { if (!d) return '—'; try { return new Date(d).toLocaleString(); } catch (_e) { return String(d); } }

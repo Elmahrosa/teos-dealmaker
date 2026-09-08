@@ -155,7 +155,7 @@
   var KEY = 'sor_founder_key';
   var getKey = function () {
     var k = sessionStorage.getItem(KEY);
-    if (!k) { k = window.prompt('Enter AUDIT_API_KEY for the Command Center:'); if (k) sessionStorage.setItem(KEY, k); }
+    if (!k) { k = window.prompt('Command Center key (revenue-scoped AUDIT_API_KEYS entry, or the AUDIT_API_KEY root):'); if (k) sessionStorage.setItem(KEY, k); }
     return k || '';
   };
   var api = function (path, opts) {

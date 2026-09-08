@@ -101,6 +101,7 @@
       <a href="#" data-view="dodo" class="nav-link" style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; color: var(--text); text-decoration: none; font-size: 14px;">Dodo</a>
       <a href="#" data-view="agents" class="nav-link" style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; color: var(--text); text-decoration: none; font-size: 14px;">Agents</a>
       <a href="#" data-view="audit" class="nav-link" style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; color: var(--text); text-decoration: none; font-size: 14px;">Audit</a>
+      <a href="#" id="founder-logout" style="background: transparent; border: 1px solid var(--red); border-radius: 4px; padding: 8px 16px; color: var(--red); text-decoration: none; font-size: 14px;">Log out</a>
     </div>
   </div>
 
@@ -440,13 +441,24 @@ document.addEventListener('DOMContentLoaded', function() {
   const outreachSection = document.getElementById('outreach');
   const auditNote = document.getElementById('audit-note');
 
-  // Check if we have a session (for simplicity, we'll check for a token in localStorage)
-  // In a real app, we would validate the token with the server.
-  function checkSession() {
-    const token = localStorage.getItem('teos_founder_token');
-    const user = localStorage.getItem('teos_founder_user');
-    return token && user;
+  // Session is an httpOnly cookie set by /api/auth/web-login — never stored
+  // in localStorage. On boot we ask the server which identity, if any, is
+  // attached to the current cookie.
+  function bootCheck() {
+    fetch('/api/auth/session', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.ok && data.user) {
+          currentUser = data.user;
+          showFounderView();
+        } else {
+          showPublicView();
+        }
+      })
+      .catch(function () { showPublicView(); });
   }
+
+  var currentUser = null;
 
   function showFounderView() {
     founderAuth.style.display = 'none';
@@ -461,18 +473,13 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function showPublicView() {
-    localStorage.removeItem('teos_founder_token');
-    localStorage.removeItem('teos_founder_user');
+    currentUser = null;
     founderAuth.style.display = 'block';
     founderNav.style.display = 'none';
     founderContent.style.display = 'none';
+    founderContent.innerHTML = '';
     founderLoginForm.reset();
     founderLoginError.textContent = '';
-    // Show public sections if we hid them
-    // publicStats.style.display = 'flex';
-    // pricingSection.style.display = 'block';
-    // outreachSection.style.display = 'block';
-    // auditNote.style.display = 'block';
   }
 
   // Handle login
@@ -493,14 +500,14 @@ document.addEventListener('DOMContentLoaded', function() {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password }),
+      credentials: 'same-origin'
     })
     .then(response => response.json())
     .then(data => {
       if (data.ok && data.isFounder) {
-        // Store user and token (in real app, use secure storage)
-        localStorage.setItem('teos_founder_token', data.sessionToken);
-        localStorage.setItem('teos_founder_user', JSON.stringify(data.user));
+        // The session is carried by the httpOnly cookie the server just
+        // issued. Nothing is written to localStorage/sessionStorage.
         showFounderView();
       } else {
         founderLoginError.textContent = data.error || 'Login failed';
@@ -510,6 +517,15 @@ document.addEventListener('DOMContentLoaded', function() {
       console.error('Founder login error:', err);
       founderLoginError.textContent = 'Network error. Please try again.';
     });
+  });
+
+  // Log out: revoke the session server-side (clears the httpOnly cookie) and
+  // return to the public view.
+  document.getElementById('founder-logout').addEventListener('click', function (e) {
+    e.preventDefault();
+    fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' })
+      .catch(function () { /* ignore network errors — still exit the view */ })
+      .finally(function () { showPublicView(); });
   });
 
   // Handle navigation
@@ -562,16 +578,11 @@ document.addEventListener('DOMContentLoaded', function() {
         endpoint = '/api/admin/command-center/overview';
     }
 
-    // Authenticate every Command Center request with the session token issued
-    // by /api/auth/web-login via the Authorization: Bearer header. The legacy
-    // x-founder-session header and ?session= query param are not accepted.
-    const token = localStorage.getItem('teos_founder_token');
-    const headers = {};
-    if (token) {
-      headers['Authorization'] = 'Bearer ' + token;
-    }
-
-    fetch(endpoint, { headers })
+    // Every Command Center request is authenticated by the httpOnly session
+    // cookie (same-origin fetch sends it automatically). The legacy
+    // Authorization: Bearer / x-founder-session / ?session= transports are
+    // still rejected for spoofing, but the cookie is the supported path.
+    fetch(endpoint, { credentials: 'same-origin' })
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -895,10 +906,9 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
   }
 
-  // Initialize: check if we have a session and show the appropriate view
-  if (checkSession()) {
-    showFounderView();
-  }
+  // Initialize: resolve the session server-side (cookie) and show the right
+  // view. Until the check returns we keep the auth screen visible.
+  bootCheck();
 });
 </script>
 </body>

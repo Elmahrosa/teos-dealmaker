@@ -406,7 +406,7 @@ function renderCustomerZero(report) {
   <p class="goal">${milestone
     ? 'TEOS DealMaker executed its full AI revenue workflow against itself — every step of the 13-agent mission completed and recorded in the audit vault.'
     : 'Customer #0 reference mission is in flight — TEOS DealMaker is running its own AI revenue workflow end to end.'}</p>
-  <p class="muted" style="margin-top:12px;">View the full <a href="/report/${plan.id}">Executive Mission Report #${plan.id}</a> for the timeline, KPIs and workforce utilization.</p>
+  <p class="muted" style="margin-top:12px;">View the full <a href="/report/${plan.report_token || plan.id}">Executive Mission Report #${plan.id}</a> for the timeline, KPIs and workforce utilization.</p>
 `);
 }
 
@@ -422,7 +422,7 @@ function renderCustomer0ReviewPage(queue, opts) {
       <tr><td>MESSAGE</td><td class="out"><pre>${esc(q.body)}</pre></td></tr>
       <tr><td>CHANNEL</td><td>${esc(q.channel)} → ${esc(q.to)} · version ${esc(q.draft_version)} · hash ${esc(q.draft_hash)}</td></tr>
       <tr><td>OUTCOME</td><td>${esc(q.expected_outcome)}</td></tr>
-      <tr><td>DECISION</td><td><span class="muted">POST ${esc(o.approveBase || '/api/customer-0/approvals')}/${q.id}/approve (or /reject with {"reason":"..."}) with <code>Authorization: Bearer &lt;founder session token&gt;</code>. Decisions are recorded in the audit vault. Nothing sends until the outbound worker is RUNNING.</span></td></tr>
+      <tr><td>DECISION</td><td><span class="muted">POST ${esc(o.approveBase || '/api/customer-0/approvals')}/${q.id}/approve (or /reject with {"reason":"..."}) authenticated by the founder httpOnly session cookie (set at /api/auth/web-login) or an <code>Authorization: Bearer &lt;founder session token&gt;</code>. Decisions are recorded in the audit vault. Nothing sends until the outbound worker is RUNNING.</span></td></tr>
     </table>
   </div>`).join('');
 
