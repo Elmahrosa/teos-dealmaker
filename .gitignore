@@ -10,6 +10,14 @@ debug_auth.js
 debug_auth2.js
 test_audit_logger.js
 test_membership_audit.js
+# Governance-bypass / self-approval tooling (one-off, removed from the repo)
+approve-self.js
+sell-self.js
+debug-approvals.js
+# Standalone auth debug script
+test-auth.js
+# Deploy artifact archive
+hostinger.zip
 
 # Report artifacts
 *_REPORT*.txt

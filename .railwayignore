@@ -5,4 +5,16 @@ node_modules
 data
 *.log
 hostinger.zip
+hostinger/
+memory/
 supabase/.temp
+
+# One-off debug / governance-bypass scripts — never deploy these
+approve-self.js
+sell-self.js
+debug-approvals.js
+debug_auth.js
+debug_auth2.js
+test-auth.js
+test_audit_logger.js
+test_membership_audit.js
