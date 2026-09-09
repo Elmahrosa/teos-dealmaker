@@ -13,6 +13,7 @@
 const { spawn, spawnSync } = require('child_process');
 const path = require('path');
 const { install: installReliability } = require('../utils/reliability');
+const { getMode } = require('../config/mode');
 
 installReliability('prod');
 
@@ -105,6 +106,17 @@ function shutdown() {
 
 process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
+
+// Mode contract: production supervision should never silently run the bot in
+// DRY mode while an operator believes it is live. Surface the runtime mode
+// loudly at startup so Railway/Hostinger logs make the state unambiguous.
+if (getMode() !== 'LIVE') {
+  console.warn(`[prod] WARNING: TEOS_MODE is not LIVE (current: ${getMode()}). ` +
+    'Agents will log/vault output but nothing is sent to customers. ' +
+    'Set TEOS_MODE=LIVE in the environment to run live.');
+} else {
+  console.log('[prod] bot running in LIVE mode (TEOS_MODE=LIVE)');
+}
 
 runMigrations();
 
