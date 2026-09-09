@@ -31,17 +31,31 @@ function isNotModified(err) {
 }
 
 async function editPanel(bot, query, screen) {
+  const chatId = query.message.chat.id;
+  const messageId = query.message.message_id;
   try {
     await bot.editMessageText(screen.text, {
-      chat_id: query.message.chat.id,
-      message_id: query.message.message_id,
+      chat_id: chatId,
+      message_id: messageId,
       parse_mode: 'HTML',
       reply_markup: screen.keyboard
     });
   } catch (err) {
     // Telegram 400 "message is not modified" is a harmless race (double tap /
-    // repeat callback). Swallow it; rethrow everything else.
-    if (!isNotModified(err)) throw err;
+    // repeat callback). Swallow it.
+    if (isNotModified(err)) return;
+    // Any other edit failure (deleted message, edited past the 48h window,
+    // transient HTML/parse mismatch) must still show the user the target
+    // screen. Fall back to sending a fresh message so a button press never
+    // silently does nothing.
+    try {
+      await bot.sendMessage(chatId, screen.text, {
+        parse_mode: 'HTML',
+        reply_markup: screen.keyboard
+      });
+    } catch (sendErr) {
+      console.error('[editPanel] fallback sendMessage failed:', sendErr && sendErr.message ? sendErr.message : sendErr);
+    }
   }
 }
 

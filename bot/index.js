@@ -138,7 +138,15 @@ bot.on('callback_query', async (query) => {
         message_id: query.message.message_id,
         parse_mode: 'HTML'
       });
-    } catch (_) { /* ignore */ }
+    } catch (_editErr) {
+      // If the original message can't be edited (deleted / too old), surface
+      // the failure as a fresh message instead of doing nothing.
+      try {
+        await bot.sendMessage(query.message.chat.id, '🔴 <b>Action failed</b>\n\n' + escapeHtml(err.message), {
+          parse_mode: 'HTML'
+        });
+      } catch (_) { /* ignore */ }
+    }
   }
 });
 

@@ -424,6 +424,34 @@ const menu = require('../bot/menu');
   // cc_admin is reachable via the /admin command; the founder consoles
   // (cc_fd_*) are driven in the dispatch contract and section 1b; neither renders itself.
 
+  // ------------------------------------------- 10. button-response fallback
+  // When editMessageText fails (deleted / too-old / transient), a button press
+  // must still respond via a fresh sendMessage — never silently do nothing.
+  const { editPanel } = require('../bot/screens/lib');
+  {
+    const sends = [];
+    const editThrows = {
+      async editMessageText() { throw new Error('message to edit not found'); },
+      async sendMessage(chatId, text, opts) { sends.push({ chatId, text, opts }); }
+    };
+    const q = makeQuery('cc_home', FOUNDER);
+    await editPanel(editThrows, q, { text: '<b>Home</b>', keyboard: { inline_keyboard: [[{ text: 'x', callback_data: 'cc_home' }]] } });
+    check(sends.length === 1, 'edit failure falls back to a fresh sendMessage');
+    check(sends[0].text === '<b>Home</b>', 'fallback carries the intended screen text');
+    check(sends[0].chatId === FOUNDER, 'fallback targets the same chat');
+    check(sends[0].opts.parse_mode === 'HTML', 'fallback preserves HTML parse mode');
+    check(sends[0].opts.reply_markup && sends[0].opts.reply_markup.inline_keyboard !== undefined, 'fallback preserves the keyboard');
+  }
+  {
+    const sends = [];
+    const editNotModified = {
+      async editMessageText() { throw new Error('message is not modified'); },
+      async sendMessage(chatId, text, opts) { sends.push({ chatId, text, opts }); }
+    };
+    await editPanel(editNotModified, makeQuery('cc_home', FOUNDER), { text: '<b>Home</b>', keyboard: null });
+    check(sends.length === 0, 'harmless "not modified" race is swallowed without a fallback message');
+  }
+
   const { getMode } = require('../config/mode');
   equal(getMode(), 'DRY', 'test never flips global mode to LIVE');
 
