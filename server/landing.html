@@ -162,6 +162,27 @@
   .gov .g.block b { color: var(--red); }
   .gov .g p { color: var(--muted); font-size: 11px; margin-top: 4px; }
   .pg-hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  .price-card ul { list-style: none; margin-top: 12px; }
+  .price-card ul li { color: var(--muted); font-size: 14px; padding: 3px 0; }
+  .price-card ul li::before { content: "◆ "; color: var(--gold); font-size: 10px; }
+  .ev-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .ev-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 22px; display: flex; flex-direction: column; }
+  .ev-card h3 { font-size: 15px; color: var(--gold); margin-bottom: 8px; }
+  .ev-card p { color: var(--muted); font-size: 14px; flex: 1; }
+  .ev-link { display: inline-block; margin-top: 14px; color: var(--blue); text-decoration: none; font-weight: 700; font-size: 14px; }
+  .ev-link:hover { color: var(--gold); }
+  .faq-list { max-width: 760px; margin: 0 auto; }
+  .faq-item { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 4px 18px; margin-bottom: 10px; }
+  .faq-item summary { cursor: pointer; color: var(--text); font-weight: 700; font-size: 15px; padding: 10px 0; }
+  .faq-item p { color: var(--muted); font-size: 14px; padding-bottom: 12px; }
+  .legal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .legal-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
+  .legal-card h3 { font-size: 15px; color: var(--gold); margin-bottom: 8px; }
+  .legal-card p { color: var(--muted); font-size: 13px; }
+  .legal-card .legal-anchor { scroll-margin-top: 8px; }
+  .footer-links { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; }
+  .footer-links a { color: var(--blue); text-decoration: none; }
+  .footer-links a:hover { color: var(--gold); }
 </style>
 </head>
 <body>
@@ -186,6 +207,12 @@
   <div class="hero">
     <div class="eyebrow" data-i18n="hero_eyebrow">Mission-First · Real revenue work, not a demo</div>
     <h2><span data-i18n="hero_t1">Hire an AI Revenue Team. </span><span class="gold" data-i18n="hero_t2">Not a Chatbot.</span></h2>
+    <div style="margin-bottom:14px;">
+      <a class="cta" href="/start" data-i18n="cta_start">🚀 Start a Real Mission</a>
+      <a class="cta ghost" href="#playground" data-i18n="cta_demo_mission">🎮 Run a Demo Mission</a>
+      <a class="cta ghost" href="https://t.me/TeosEgypt_bot" data-i18n="cta_launch">🚀 Launch My First Mission</a>
+      <a class="cta ghost" href="{{SITE_URL}}/customer-0" target="_blank" rel="noopener" data-i18n="cta_reports">📄 Read the Latest Mission Report</a>
+    </div>
     <p data-i18n="hero_text">Complete one real business mission in just a few hours. TEOS DealMaker assigns a dedicated AI Revenue Team that does the actual work — research, governed outreach, qualification, and pipeline — and delivers a real mission report with the tools and scripts to act on it. Every mission runs under policy governance.</p>
     <ul class="hero-bullets">
       <li data-i18n="hero_b1">✅ Plan → Approve → Execute → Report</li>
@@ -194,12 +221,6 @@
       <li data-i18n="hero_b4">📋 A mission report you can act on</li>
       <li data-i18n="hero_b5">🔒 Policy-governed execution</li>
     </ul>
-    <div style="margin-bottom:14px;">
-      <a class="cta" href="/start" data-i18n="cta_start">🚀 Start a Real Mission</a>
-      <a class="cta ghost" href="#playground" data-i18n="cta_demo_mission">🎮 Run a Demo Mission</a>
-      <a class="cta ghost" href="https://t.me/TeosEgypt_bot" data-i18n="cta_launch">🚀 Launch My First Mission</a>
-      <a class="cta ghost" href="{{SITE_URL}}/customer-0" target="_blank" rel="noopener" data-i18n="cta_reports">📄 Read the Latest Mission Report</a>
-    </div>
     <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
       <span class="badge" data-i18n="hero_p1">🤝 Claude Partner Network — multi-provider AI, includes Anthropic Claude</span>
       <span class="badge" data-i18n="hero_p2">✓ Verified Credly Credential</span>
@@ -376,6 +397,28 @@
     </div>
   </section>
 
+  <section id="evidence">
+    <h2 class="sect" data-i18n="evidence_t">Proof Over Promises</h2>
+    <p class="sect-sub" data-i18n="evidence_s">Real, checkable evidence — not curated quotes.</p>
+    <div class="ev-grid">
+      <div class="ev-card">
+        <h3 data-i18n="ev_1_t">Customer #0 is live</h3>
+        <p data-i18n="ev_1_d">TEOS DealMaker runs its own revenue pipeline. Read the actual mission reports, approvals, and outcomes.</p>
+        <a class="ev-link" href="{{SITE_URL}}/customer-0" target="_blank" rel="noopener" data-i18n="ev_1_l">Read the mission report →</a>
+      </div>
+      <div class="ev-card">
+        <h3 data-i18n="ev_2_t">Verified credential</h3>
+        <p data-i18n="ev_2_d">The Claude credential is verified publicly via Credly — click to check it yourself.</p>
+        <a class="ev-link" href="https://www.credly.com/badges/f14c9ae0-c594-4cf8-af37-398545f5b75f" target="_blank" rel="noopener" data-i18n="ev_2_l">Verify the badge →</a>
+      </div>
+      <div class="ev-card">
+        <h3 data-i18n="ev_3_t">Governed by policy</h3>
+        <p data-i18n="ev_3_d">Every mission runs through the Policy Engine, prompt security, and a hash-chained audit trail.</p>
+        <a class="ev-link" href="#architecture" data-i18n="ev_3_l">See the architecture →</a>
+      </div>
+    </div>
+  </section>
+
   <section id="pricing">
     <h2 class="sect" data-i18n="sect_pricing">Pricing</h2>
     <div class="sect-sub" data-i18n="sub_pricing">Annual plans include built-in savings. Enterprise is custom-priced.</div>
@@ -394,7 +437,38 @@
 
   {{ELMAHROSA_PRODUCTS}}
 
+  <section id="faq">
+    <h2 class="sect" data-i18n="faq_t">Frequently Asked Questions</h2>
+    <p class="sect-sub" data-i18n="faq_s">Straight answers, no fine print.</p>
+    <div class="faq-list">
+      <details class="faq-item"><summary data-i18n="faq_q1">Is TEOS DealMaker real, or a demo?</summary><p data-i18n="faq_a1">Real. Customer #0 runs live missions with real mission reports you can open. The Playground section on this page is the only simulated part — it is clearly labelled DEMO.</p></details>
+      <details class="faq-item"><summary data-i18n="faq_q2">What does it cost to start?</summary><p data-i18n="faq_a2">Start with one real revenue mission instead of a feature tour. Run it, review the mission report, then upgrade to a plan only when you decide to continue.</p></details>
+      <details class="faq-item"><summary data-i18n="faq_q3">Does the AI workforce contact my prospects on its own?</summary><p data-i18n="faq_a3">No. Consequential external actions are governed: outreach drafts go through policy evaluation and human review gates before anything is sent. You stay in control of outbound contact.</p></details>
+      <details class="faq-item"><summary data-i18n="faq_q4">Where does my data live?</summary><p data-i18n="faq_a4">By default on the platform database with audit logging. For enterprise and sovereignty requirements, contact info@elmahrosa.org to discuss on-premise and air-gapped deployment options.</p></details>
+      <details class="faq-item"><summary data-i18n="faq_q5">Do I need technical skills to run a mission?</summary><p data-i18n="faq_a5">No. You can describe your mission in plain language to the TEOS DealMaker bot in Telegram, or use /start on this site. The platform handles the plan, the team, and the report.</p></details>
+    </div>
+  </section>
+
+  <section id="legal">
+    <h2 class="sect" data-i18n="legal_t">Legal</h2>
+    <div class="legal-grid">
+      <div class="legal-card legal-anchor" id="privacy">
+        <h3 data-i18n="privacy_t">Privacy</h3>
+        <p data-i18n="privacy_d">TEOS DealMaker processes mission data to execute revenue work on your behalf. We do not sell data. For specific questions, contact info@elmahrosa.org.</p>
+      </div>
+      <div class="legal-card legal-anchor" id="terms">
+        <h3 data-i18n="terms_t">Terms</h3>
+        <p data-i18n="terms_d">Use of TEOS DealMaker is subject to this site and the governing agreements with Elmahrosa International. Plans listed here bill per the selected cycle; custom enterprise terms are agreed directly.</p>
+      </div>
+    </div>
+  </section>
+
   <footer>
+    <div class="footer-links">
+      <a href="#faq" data-i18n="footer_faq">FAQ</a>
+      <a href="#privacy" data-i18n="footer_privacy">Privacy</a>
+      <a href="#terms" data-i18n="footer_terms">Terms</a>
+    </div>
     <span data-i18n="footer_line1">TEOS DEALMAKER — Enterprise AI Revenue Operating System</span><br>
     <span data-i18n="footer_contact">A product of Elmahrosa International · contact <a href="mailto:info@elmahrosa.org">info@elmahrosa.org</a> · <a href="/dashboard">system status</a> · <a href="/customer-0">Customer #0</a></span><br>
     <span data-i18n="footer_license">© 2026 Elmahrosa International — All rights reserved</span>
@@ -466,6 +540,37 @@
       footer_line1: 'TEOS DEALMAKER — Enterprise AI Revenue Operating System',
       footer_contact: 'A product of Elmahrosa International · contact info@elmahrosa.org · system status',
       footer_license: '© 2026 Elmahrosa International — All rights reserved',
+      evidence_t: 'Proof Over Promises',
+      evidence_s: 'Real, checkable evidence — not curated quotes.',
+      ev_1_t: 'Customer #0 is live',
+      ev_1_d: 'TEOS DealMaker runs its own revenue pipeline. Read the actual mission reports, approvals, and outcomes.',
+      ev_1_l: 'Read the mission report →',
+      ev_2_t: 'Verified credential',
+      ev_2_d: 'The Claude credential is verified publicly via Credly — click to check it yourself.',
+      ev_2_l: 'Verify the badge →',
+      ev_3_t: 'Governed by policy',
+      ev_3_d: 'Every mission runs through the Policy Engine, prompt security, and a hash-chained audit trail.',
+      ev_3_l: 'See the architecture →',
+      faq_t: 'Frequently Asked Questions',
+      faq_s: 'Straight answers, no fine print.',
+      faq_q1: 'Is TEOS DealMaker real, or a demo?',
+      faq_a1: 'Real. Customer #0 runs live missions with real mission reports you can open. The Playground section on this page is the only simulated part — it is clearly labelled DEMO.',
+      faq_q2: 'What does it cost to start?',
+      faq_a2: 'Start with one real revenue mission instead of a feature tour. Run it, review the mission report, then upgrade to a plan only when you decide to continue.',
+      faq_q3: 'Does the AI workforce contact my prospects on its own?',
+      faq_a3: 'No. Consequential external actions are governed: outreach drafts go through policy evaluation and human review gates before anything is sent. You stay in control of outbound contact.',
+      faq_q4: 'Where does my data live?',
+      faq_a4: 'By default on the platform database with audit logging. For enterprise and sovereignty requirements, contact info@elmahrosa.org to discuss on-premise and air-gapped deployment options.',
+      faq_q5: 'Do I need technical skills to run a mission?',
+      faq_a5: 'No. You can describe your mission in plain language to the TEOS DealMaker bot in Telegram, or use /start on this site. The platform handles the plan, the team, and the report.',
+      legal_t: 'Legal',
+      privacy_t: 'Privacy',
+      privacy_d: 'TEOS DealMaker processes mission data to execute revenue work on your behalf. We do not sell data. For specific questions, contact info@elmahrosa.org.',
+      terms_t: 'Terms',
+      terms_d: 'Use of TEOS DealMaker is subject to this site and the governing agreements with Elmahrosa International. Plans listed here bill per the selected cycle; custom enterprise terms are agreed directly.',
+      footer_faq: 'FAQ',
+      footer_privacy: 'Privacy',
+      footer_terms: 'Terms',
       sw_en: 'English', sw_ar: 'العربية'
     },
     ar: {
@@ -530,6 +635,37 @@
       footer_line1: 'صانع الصفقات تيوس — نظام تشغيل الإيرادات المؤسسي بالذكاء الاصطناعي',
       footer_contact: 'منتج من المحروسة إنترناشيونال · تواصل عبر info@elmahrosa.org · حالة النظام',
       footer_license: '© 2026 المحروسة إنترناشيونال — جميع الحقوق محفوظة',
+      evidence_t: 'الدليل قبل الوعود',
+      evidence_s: 'أدلة حقيقية قابلة للتحقق — وليست اقتباسات منسقة.',
+      ev_1_t: 'العميل رقم 0 يعمل الآن',
+      ev_1_d: 'يدير TEOS DealMaker مسار إيراداته الخاصة. اقرأ تقارير المهام الفعلية والموافقات والنتائج.',
+      ev_1_l: 'اقرأ تقرير المهمة ←',
+      ev_2_t: 'اعتماد موثق',
+      ev_2_d: 'اعتماد Claude موثق علناً عبر Credly — اضغط للتحقق بنفسك.',
+      ev_2_l: 'تحقق من الشارة ←',
+      ev_3_t: 'محكوم بالسياسات',
+      ev_3_d: 'كل مهمة تعمل عبر محرك السياسات وأمان المطالبات وسجل تدقيق متسلسل التجزئة.',
+      ev_3_l: 'شاهد البنية ←',
+      faq_t: 'الأسئلة الشائعة',
+      faq_s: 'إجابات مباشرة، بلا بنود مخفية.',
+      faq_q1: 'هل TEOS DealMaker حقيقي أم مجرد عرض؟',
+      faq_a1: 'حقيقي. العميل رقم 0 ينفذ مهام فعلية بتقارير يمكنك فتحها. ومنطقة التجربة في هذه الصفحة هي الجزء الوحيد المحاكى، وهي موضحة بوضوح على أنها عرض تجريبي.',
+      faq_q2: 'كم تكلف البداية؟',
+      faq_a2: 'ابدأ بمهمة إيراد حقيقية واحدة بدلاً من جولة في المزايا. نفّذها، وراجع تقرير المهمة، ثم ترقّ إلى خطة فقط عندما تقرر المواصلة.',
+      faq_q3: 'هل يتواصل فريق الذكاء الاصطناعي مع عملائي المحتملين من تلقاء نفسه؟',
+      faq_a3: 'لا. الإجراءات الخارجية الحساسة محكومة: مسودات التواصل تمر بتقييم السياسات وبوابات مراجعة بشرية قبل إرسال أي شيء. أنت تبقى مسيطراً على التواصل الخارجي.',
+      faq_q4: 'أين تُخزن بياناتي؟',
+      faq_a4: 'افتراضياً في قاعدة بيانات المنصة مع سجل تدقيق. لمتطلبات المؤسسات والسيادة الرقمية، تواصل مع info@elmahrosa.org لمناقشة خيارات النشر الداخلي ومنفصل الشبكة.',
+      faq_q5: 'هل أحتاج مهارات تقنية لإدارة مهمة؟',
+      faq_a5: 'لا. يمكنك وصف مهمتك بلغة عادية لبوت TEOS DealMaker في تيليغرام، أو استخدام /start على هذا الموقع. المنصة تتولى الخطة والفريق والتقرير.',
+      legal_t: 'القانونية',
+      privacy_t: 'الخصوصية',
+      privacy_d: 'يعالج TEOS DealMaker بيانات المهمة لتنفيذ أعمال الإيرادات نيابة عنك. لا نبيع البيانات. للأسئلة المحددة، تواصل مع info@elmahrosa.org.',
+      terms_t: 'الشروط',
+      terms_d: 'استخدام TEOS DealMaker يخضع لهذا الموقع والاتفاقيات الحاكمة مع المحروسة إنترناشيونال. تُفوتر الخطط المذكورة هنا حسب الدورة المختارة؛ وتُتفق شروط المؤسسات المخصصة مباشرة.',
+      footer_faq: 'الأسئلة الشائعة',
+      footer_privacy: 'الخصوصية',
+      footer_terms: 'الشروط',
       sw_en: 'English', sw_ar: 'العربية'
     }
   };
