@@ -37,17 +37,27 @@ All fixes were pushed to `main` and deployed; none were related to the root caus
 
 ## Secrets Exposed in Chat
 
-The founder exported the full Railway variable dump into the conversation transcript. All of the following are now in the session log and must be treated as compromised:
+**Single source event:** The founder exported the full Railway production `web` service variable dump and pasted it into the conversation transcript. All five secrets below came from that one paste. No other exposure vector for any of them.
+
+**Provenance for each:**
+
+| Secret | Source event | Notes |
+|--------|-------------|-------|
+| `TELEGRAM_BOT_TOKEN` | Founder's Railway variable dump (pasted line: `TELEGRAM_BOT_TOKEN 8148505959:AAELx…`) | Also appeared in Railway CLI `variables --json` masked output during read-only diagnostics (value not echoed in session) |
+| `DATABASE_URL` | Same dump | Postgres password in plaintext URL |
+| `DODO_API_KEY` | Same dump | First appeared in this session via that dump — no prior mention in conversation |
+| `DODO_WEBHOOK_SECRET` | Same dump | Same — first appearance in this session via that dump |
+| `AUDIT_API_KEY` | Same dump | Mentioned once at session start ("scope/rotate per consumer") but the actual value only appeared in this dump |
+
+**Status after fix:**
 
 | Secret | Severity | Status |
 |--------|----------|--------|
-| `TELEGRAM_BOT_TOKEN` (current: `AAELx…`) | HIGH — bot control | Rotated 4th time; needs 5th rotation |
+| `TELEGRAM_BOT_TOKEN` (current: `AAELx…`) | HIGH — bot control | Set in Railway, confirmed live; needs 5th rotation (value is in chat) |
 | `DATABASE_URL` (Postgres password in plaintext) | HIGH — production data | **Pending rotation** |
-| `DODO_API_KEY` | HIGH — billing/payment API | **Pending rotation** |
-| `DODO_WEBHOOK_SECRET` | MEDIUM-HIGH — webhook integrity | **Pending rotation** |
-| `AUDIT_API_KEY` | MEDIUM — scoped audit API (limited blast radius per `5ba3bf9`) | **Pending rotation** |
-
-All values also appeared in Railway CLI `variables --json` masked output during diagnostics, though values were not echoed in the final session.
+| `DODO_API_KEY` | HIGH — billing/payment API | **Pending rotation** — confirm source/rotation path before acting |
+| `DODO_WEBHOOK_SECRET` | MEDIUM-HIGH — webhook integrity | **Pending rotation** — confirm source/rotation path before acting |
+| `AUDIT_API_KEY` | MEDIUM — scoped audit API (limited blast radius per `5ba3bf9`) | **Pending rotation** — confirm source/rotation path before acting |
 
 ## Standing Rules Established
 
@@ -66,7 +76,7 @@ All values also appeared in Railway CLI `variables --json` masked output during 
 - Railway `web` service production: `TELEGRAM_BOT_TOKEN` valid, `TEOS_MODE=LIVE`, `BOT_POLLING=1`
 - Phone test: `/start` → Founder Control Center menu renders; context buttons (Approve/Cancel/Status/Fix error) responsive
 - `GET https://dealmaker.elmahrosa.org/api/health` → `200`, `mode: live`
-- Git working tree clean; `main` = `04b6231`, pushed to `origin/main`
+- Git working tree clean; `main` = `d5147fe`, pushed to `origin/main`
 - Test suite: 74/74 passed (pre-deploy)
 
 ## Pending Follow-Up
