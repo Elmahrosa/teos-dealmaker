@@ -15,6 +15,11 @@ const notify = require('../services/notify');
 const learningHook = require('../services/learningHook');
 const { install: installReliability } = require('../utils/reliability');
 
+// Fail fast on a misconfigured production deployment before the bot boots.
+// bot/config.js already loaded .env above. Throws on missing required keys
+// and never prints secret values.
+require('../config/env').assertEnv();
+
 installReliability('bot');
 
 function escapeHtml(text) {

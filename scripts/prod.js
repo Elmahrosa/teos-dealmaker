@@ -10,6 +10,15 @@
 // against an empty schema.
 'use strict';
 
+// Load .env BEFORE anything reads process.env. scripts/prod.js spawns
+// children that inherit this process's environment, and the TEOS_MODE gate
+// below (getMode) must see LIVE from .env — otherwise a deployment that only
+// sets TEOS_MODE in .env would be warned as DRY.
+require('dotenv').config();
+const { assertEnv } = require('../config/env');
+
+assertEnv();
+
 const { spawn, spawnSync } = require('child_process');
 const path = require('path');
 const { install: installReliability } = require('../utils/reliability');

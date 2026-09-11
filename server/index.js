@@ -1,6 +1,9 @@
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
+// Fail fast on a misconfigured production deployment before any service module
+// boots. Throws on missing required keys and never prints secret values.
+require('../config/env').assertEnv();
 const express = require('express');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
