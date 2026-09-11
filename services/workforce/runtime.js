@@ -33,6 +33,9 @@ async function runPlan(adapter, workspaceId, opts) {
   if (o.planId) {
     plan = await repos.plans.get(o.planId);
     if (!plan) throw new Error(`Plan ${o.planId} not found in workspace`);
+    if (plan.status === 'cancelled') {
+      throw new Error(`Plan ${o.planId} was cancelled and cannot be resumed`);
+    }
     plan = { ...plan, metrics: plan.metrics || {} };
   } else {
     const steps = o.steps && o.steps.length ? o.steps : planner.planGoal(o.goal || 'General goal', o).steps;
@@ -331,12 +334,24 @@ async function pause(adapter, workspaceId, planId) {
   const repos = forWorkspace(adapter, workspaceId);
   const plan = await repos.plans.get(planId);
   if (!plan) throw new Error(`Plan ${planId} not found in workspace`);
-  if (plan.status === 'completed' || plan.status === 'failed') {
+  if (plan.status === 'completed' || plan.status === 'failed' || plan.status === 'cancelled') {
     return { plan, paused: false, reason: `${plan.status}` };
   }
   await repos.plans.update(planId, { status: 'paused' });
   const updated = await repos.plans.get(planId);
   return { plan: updated, paused: true };
+}
+
+async function stopMission(adapter, workspaceId, planId) {
+  const repos = forWorkspace(adapter, workspaceId);
+  const plan = await repos.plans.get(planId);
+  if (!plan) throw new Error(`Plan ${planId} not found in workspace`);
+  if (plan.status === 'completed' || plan.status === 'failed' || plan.status === 'cancelled') {
+    return { plan, stopped: false, reason: `${plan.status}` };
+  }
+  await repos.plans.update(planId, { status: 'cancelled' });
+  const updated = await repos.plans.get(planId);
+  return { plan: updated, stopped: true };
 }
 
 async function listMissions(adapter, workspaceId) {
@@ -385,4 +400,4 @@ async function approveAndResume(adapter, workspaceId, requestId, userId, decisio
   return { decision: decided, resumed: true, ...outcome };
 }
 
-module.exports = { runPlan, runGoal, runSalesStrategy, resume, pause, listMissions, approveAndResume, buildBriefing, extractCompanyFromStep };
+module.exports = { runPlan, runGoal, runSalesStrategy, resume, pause, stopMission, listMissions, approveAndResume, buildBriefing, extractCompanyFromStep };
