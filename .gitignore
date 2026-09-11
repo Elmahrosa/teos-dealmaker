@@ -28,3 +28,27 @@ CUSTOMER_*_VALIDATION_SUMMARY.md
 
 # Memory scratch
 memory/
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Agent tooling
+.claude/
+.opencode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env — gitignore every env file except the committed example
+.env
+.env.*
+!.env.example
+
+# Coverage / build artifacts
+coverage/
+dist/
+*.tsbuildinfo
