@@ -58,9 +58,14 @@ function oauthScope(connectorId) {
 }
 
 function exchange(connectorId, code) {
+  const { isProduction } = require('../../config/env');
   const c = CONNECTORS[connectorId];
   if (!c || c.auth !== 'oauth') return { ok: false, connector: connectorId, reason: 'not_oauth' };
   if (!code) return { ok: false, connector: connectorId, reason: 'missing_code' };
+  // exchange() is a simulation stub — it fabricates a token instead of calling
+  // the provider. In production a fabricated token would report an integration
+  // as authorized when nothing real happened, so refuse explicitly.
+  if (isProduction()) return { ok: false, connector: connectorId, reason: 'oauth_simulation_disabled' };
   const token = `mock_${hash(`${connectorId}|${code}`).toString(36)}`;
   return { ok: true, connector: connectorId, access_token: token, expires_in: 3600, simulated: true };
 }

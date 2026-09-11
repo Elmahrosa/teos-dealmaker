@@ -4,7 +4,12 @@ const { hash } = require('../providers');
 function verify(connectorId, payload, signature) {
   if (!CONNECTORS[connectorId]) return { ok: false, reason: 'unknown_connector' };
   const secret = process.env[`${connectorId.toUpperCase()}_WEBHOOK_SECRET`];
-  if (!secret || !signature) return { ok: true, reason: 'no_secret_configured', simulated: true };
+  // Fail closed: an unconfigured webhook cannot authenticate a request. This
+  // mirrors the external /webhook/resend + /webhook/dodo contract (503
+  // webhook_not_configured). A missing secret must never validate an unsigned
+  // payload even in simulation mode.
+  if (!secret) return { ok: false, reason: 'webhook_not_configured' };
+  if (!signature) return { ok: false, reason: 'missing_signature' };
   const expected = `sha256=${hash(`${secret}|${JSON.stringify(payload)}`).toString(16)}`;
   return { ok: signature === expected, expected };
 }

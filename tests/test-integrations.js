@@ -168,7 +168,17 @@ const CATEGORY_COUNTS = { crm: 4, email: 4, calendar: 2, storage: 3, website: 2,
   check(!(await oauth.tokenFor(adapter, ws.id, 'slack')), 'no token for other connector');
 
   const v = webhooks.verify('hubspot', { event: 'deal.change' }, null);
-  check(v.ok && v.simulated, 'webhook verify ok without secret');
+  check(!v.ok && v.reason === 'webhook_not_configured', 'webhook verify fails closed without a secret');
+  const signed = webhooks.verify('hubspot', { event: 'deal.change' }, null);
+  check(!signed.ok, 'webhook verify fails closed without a signature');
+  process.env.HUBSPOT_WEBHOOK_SECRET = 'sec_test';
+  const { hash } = require('../services/providers');
+  const goodSig = `sha256=${hash('sec_test|' + JSON.stringify({ event: 'deal.change' })).toString(16)}`;
+  const okSig = webhooks.verify('hubspot', { event: 'deal.change' }, goodSig);
+  check(okSig.ok === true, 'webhook verify accepts a matching signature');
+  const badSig = webhooks.verify('hubspot', { event: 'deal.change' }, 'sha256=bogus');
+  check(badSig.ok === false, 'webhook verify rejects a mismatched signature');
+  delete process.env.HUBSPOT_WEBHOOK_SECRET;
   const ing = await webhooks.ingest(adapter, ws.id, 'hubspot', 'deal.change', { subject: 'Acme deal updated', text: 'Stage moved to negotiation' });
   check(ing.ok && ing.source_type === 'conversations', 'webhook ingested as conversations doc');
   const hookAudit = (await repos.audit.list(ws.id)).find(e => e.action_type === 'INTEGRATION_WEBHOOK');
