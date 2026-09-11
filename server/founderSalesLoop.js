@@ -2,7 +2,7 @@
 
 const express = require('express');
 const { getAdapter, createMemoryAdapter } = require('../db');
-const { createRepos } = require('../db/repos');
+const { forWorkspace } = require('../db/repos');
 const missionScheduler = require('../services/missionScheduler');
 const autoApproval = require('../services/autoApproval');
 const followUpLoop = require('../services/followUpLoop');
@@ -12,9 +12,26 @@ const audit = require('../utils/auditLogger');
 
 const router = express.Router();
 
-function requireFounder(req, res, next) {
+async function requireFounder(req, res, next) {
   if (!req.authUser || !req.isFounder) {
     return res.status(403).json({ ok: false, error: 'founder_access_required' });
+  }
+  // Resolve the deterministic founder workspace so the founder-facing data
+  // queries below stay tenant-scoped. Prefer the seeded workspace_founder
+  // (customer #0 surface), then fall back to the founder's owned workspace.
+  // Routes that need a workspace fail closed with a clear error if none can
+  // be resolved — they never silently span all tenants.
+  try {
+    const adapter = req.adapter || getAdapterSafe();
+    const ws = await adapter.findOne('workspaces', { slug: 'workspace_founder' })
+      || await adapter.findOne('workspaces', { owner_user_id: req.authUser.id });
+    if (ws) {
+      req.founderWorkspace = ws;
+      req.founderWorkspaceId = ws.id;
+    }
+  } catch (_err) {
+    // DB unavailable — subsequent routes that require a workspace will fail
+    // closed with a 409/500 rather than querying a memory stub.
   }
   next();
 }
@@ -274,10 +291,13 @@ router.get('/follow-up/status', requireFounder, async (_req, res) => {
 });
 
 // ─── PIPELINE HEALTH ────────────────────────────────────────────────
-router.get('/pipeline', requireFounder, async (_req, res) => {
+router.get('/pipeline', requireFounder, async (req, res) => {
   try {
-    const adapter = getAdapterSafe();
-    const repos = createRepos(adapter);
+    const adapter = req.adapter || getAdapterSafe();
+    if (!req.founderWorkspaceId) {
+      return res.status(409).json({ ok: false, error: 'founder_workspace_not_provisioned' });
+    }
+    const repos = forWorkspace(adapter, req.founderWorkspaceId);
 
     const deals = await repos.deals.list();
     const openDeals = deals.filter(d => d.status === 'open');
@@ -293,7 +313,7 @@ router.get('/pipeline', requireFounder, async (_req, res) => {
     const totalValue = deals.reduce((sum, d) => sum + (d.deal_value || d.value || 0), 0);
     const openValue = openDeals.reduce((sum, d) => sum + (d.deal_value || d.value || 0), 0);
 
-    const pipeline = await repos.pipeline.list();
+    const pipeline = await repos.pipeline.listAll();
     const recentEvents = pipeline.slice(-20).reverse();
 
     res.json({
@@ -350,10 +370,13 @@ router.post('/mode', requireFounder, express.json(), async (req, res) => {
 });
 
 // ─── HEALTH DASHBOARD ───────────────────────────────────────────────
-router.get('/health', requireFounder, async (_req, res) => {
+router.get('/health', requireFounder, async (req, res) => {
   try {
-    const adapter = getAdapterSafe();
-    const repos = createRepos(adapter);
+    const adapter = req.adapter || getAdapterSafe();
+    if (!req.founderWorkspaceId) {
+      return res.status(409).json({ ok: false, error: 'founder_workspace_not_provisioned' });
+    }
+    const repos = forWorkspace(adapter, req.founderWorkspaceId);
 
     const scheduler = missionScheduler.status();
     const approval = autoApproval.status();

@@ -170,6 +170,10 @@ function createRequireFounderSession(resolve) {
       req.authUser = verified.user;
       req.sessionRow = verified.session;
       req.sessionToken = token;
+      // Founder authorization is derived from the validated session (server-side
+      // identity), never from client-supplied fields. `req.isFounder` is set only
+      // after identity.isFounderUser confirmed TEOS_FOUNDER_TELEGRAM_ID.
+      req.isFounder = true;
       return next();
     } catch (_err) {
       return res.status(500).json({ ok: false, error: 'Internal server error' });

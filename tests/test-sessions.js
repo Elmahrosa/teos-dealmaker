@@ -152,6 +152,7 @@ function mockRes() {
   await requireFounder(fReq, fRes, () => { fReached = true; });
   tru(fReached, 'founder session reaches the handler');
   eq(fReq.authUser.id, founder.id, 'founder identity bound from session');
+  tru(fReq.isFounder === true, 'requireFounderSession marks req.isFounder from the validated session identity');
 
   // A valid session for a NON-founder is denied 403 (authenticated but not
   // authorized), never 401.
@@ -159,6 +160,7 @@ function mockRes() {
   const nonFounderRes = mockRes();
   await requireFounder(nonFounderReq, nonFounderRes, () => tru(false, 'non-founder must not pass the founder gate'));
   eq(nonFounderRes.statusCode, 403, 'non-founder with valid session → 403');
+  tru(nonFounderReq.isFounder !== true, 'a non-founder is never marked isFounder');
 
   // The founder gate fails closed when TEOS_FOUNDER_TELEGRAM_ID is unset.
   delete process.env.TEOS_FOUNDER_TELEGRAM_ID;
