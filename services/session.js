@@ -30,11 +30,7 @@ function newToken() {
 }
 
 async function resolveAdapter() {
-  try {
-    return require('../db').getAdapter();
-  } catch (_err) {
-    return require('../db').createMemoryAdapter();
-  }
+  return require('../db').resolveAdapter();
 }
 
 function bearerToken(req) {

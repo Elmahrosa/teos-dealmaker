@@ -1,7 +1,7 @@
 'use strict';
 
 const express = require('express');
-const { getAdapter, createMemoryAdapter } = require('../db');
+const { resolveAdapter } = require('../db');
 const { forWorkspace } = require('../db/repos');
 const missionScheduler = require('../services/missionScheduler');
 const autoApproval = require('../services/autoApproval');
@@ -37,7 +37,7 @@ async function requireFounder(req, res, next) {
 }
 
 function getAdapterSafe() {
-  try { return getAdapter(); } catch (_e) { return createMemoryAdapter(); }
+  return resolveAdapter();
 }
 
 // ─── MISSION SCHEDULER ──────────────────────────────────────────────

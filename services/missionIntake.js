@@ -57,10 +57,10 @@ function normalize(payload) {
 
 // Shared in-process memory fallback for the intake routes when no
 // DATABASE_URL is configured (dev/demo). Real deployments use Postgres via
-// db.getAdapter(); this only keeps the funnel working without a database.
+// resolveAdapter(); this only keeps the funnel working without a database.
 let shared = null;
 function sharedAdapter() {
-  if (!shared) shared = require('../db').createMemoryAdapter();
+  if (!shared) shared = require('../db').resolveAdapter();
   return shared;
 }
 

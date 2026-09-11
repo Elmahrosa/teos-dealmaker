@@ -8,23 +8,13 @@
 'use strict';
 
 const { createRepos } = require('../../db/repos');
-const { createMemoryAdapter } = require('../../db/adapter');
 const { createTenants } = require('./tenants');
 const { createEntitlements } = require('./entitlements');
 const { createAuthorization } = require('./authorization');
 const { createPolicyEngine } = require('./policies');
 
 function defaultRepos() {
-  let adapter = null;
-  if (process.env.DATABASE_URL) {
-    try {
-      adapter = require('../../db').getAdapter();
-    } catch (_) {
-      /* fall through to the in-memory adapter */
-    }
-  }
-  if (!adapter) adapter = createMemoryAdapter();
-  return createRepos(adapter);
+  return createRepos(require('../../db').resolveAdapter());
 }
 
 function createPlatform(opts) {

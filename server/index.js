@@ -118,13 +118,8 @@ app.get('/api/pricing', (req, res) => {
 // Authentication endpoints
 app.post('/api/auth/signup', express.json({ limit: '32kb' }), async (req, res) => {
   try {
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
+    const { resolveAdapter } = require('../db');
+    const adapter = resolveAdapter();
     const result = await auth.signup(adapter, req.body || {});
     // Remove sensitive data before sending response
     const { password_hash, salt, ...safeUser } = result.user || {}; // eslint-disable-line no-unused-vars
@@ -142,13 +137,8 @@ app.post('/api/auth/signup', express.json({ limit: '32kb' }), async (req, res) =
 
 app.post('/api/auth/login', express.json({ limit: '32kb' }), async (req, res) => {
   try {
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
+    const { resolveAdapter } = require('../db');
+    const adapter = resolveAdapter();
     const result = await auth.login(adapter, req.body || {});
     const session = await sessionService.createSession(adapter, result.user.id);
     sessionService.setSessionCookie(req, res, session.token);
@@ -166,13 +156,8 @@ app.post('/api/auth/login', express.json({ limit: '32kb' }), async (req, res) =>
 // Web founder login - returns session info for founder dashboard access
 app.post('/api/auth/web-login', express.json({ limit: '32kb' }), async (req, res) => {
   try {
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
+    const { resolveAdapter } = require('../db');
+    const adapter = resolveAdapter();
 
     // First, perform regular login
     const loginResult = await auth.login(adapter, req.body || {});
@@ -394,13 +379,8 @@ app.post('/webhook/dodo', express.raw({ type: 'application/json' }), async (req,
 
   let result;
   try {
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
+    const { resolveAdapter } = require('../db');
+    const adapter = resolveAdapter();
     result = await billing.handleEvent(adapter, eventType, data);
   } catch (err) {
     console.error('[webhook] handler error:', err.message);
@@ -867,13 +847,8 @@ app.post('/api/revenue-ops/notify', requireAuditAuth('revenue'), express.json(),
 app.get('/api/customer-0/report/latest', requireAuditAuth('revenue'), async (_req, res) => {
   try {
     const customer0 = require('../services/customer0');
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
+    const { resolveAdapter } = require('../db');
+    const adapter = resolveAdapter();
     const report = await customer0.latestReport({ adapter });
     if (!report) return res.status(404).json({ ok: false, error: 'no_report_yet' });
     res.json({ ok: true, report });
@@ -886,13 +861,8 @@ app.get('/api/customer-0/report/latest', requireAuditAuth('revenue'), async (_re
 app.get('/api/customer-0/approvals', requireAuditAuth('revenue'), async (_req, res) => {
   try {
     const customer0 = require('../services/customer0');
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
+    const { resolveAdapter } = require('../db');
+    const adapter = resolveAdapter();
     const queue = await customer0.pendingOutreach({ adapter }, {});
     res.json({ ok: true, queue });
   } catch (err) {
@@ -974,13 +944,8 @@ const customer0 = require('../services/customer0');
 
 app.get('/approvals/customer0', requireAuditAuth('revenue'), async (_req, res) => {
   try {
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
+    const { resolveAdapter } = require('../db');
+    const adapter = resolveAdapter();
     const queue = await customer0.pendingOutreach({ adapter }, {});
     res.type('html').send(render.renderCustomer0ReviewPage(queue, {}));
   } catch (err) {
@@ -1007,13 +972,8 @@ app.post('/webhook/resend', express.raw({ type: '*/*' }), async (req, res) => {
     return res.status(400).json({ error: 'invalid_json' });
   }
   try {
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
+    const { resolveAdapter } = require('../db');
+    const adapter = resolveAdapter();
     const result = await worker.handleWebhook(adapter, event);
     res.json({ ok: true, ...result });
   } catch (err) {
@@ -1028,13 +988,8 @@ app.post('/webhook/resend', express.raw({ type: '*/*' }), async (req, res) => {
 // Overview endpoint
 app.get('/api/admin/command-center/overview', checkFounderSession, async (req, res) => {
   try {
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
+    const { resolveAdapter } = require('../db');
+    const adapter = resolveAdapter();
 
     const repos = require('../db/repos').createRepos(adapter);
     const { getMode } = require('../config/mode');
@@ -1169,13 +1124,8 @@ app.get('/api/admin/command-center/overview', checkFounderSession, async (req, r
 // Users endpoint
 app.get('/api/admin/command-center/users', checkFounderSession, async (req, res) => {
   try {
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
+    const { resolveAdapter } = require('../db');
+    const adapter = resolveAdapter();
 
     const repos = require('../db/repos').createRepos(adapter);
     const billing = require('../services/billing');
@@ -1250,13 +1200,8 @@ app.get('/api/admin/command-center/users', checkFounderSession, async (req, res)
 // Workspaces endpoint
 app.get('/api/admin/command-center/workspaces', checkFounderSession, async (req, res) => {
   try {
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
+    const { resolveAdapter } = require('../db');
+    const adapter = resolveAdapter();
 
     const repos = require('../db/repos').createRepos(adapter);
     const billing = require('../services/billing');
@@ -1326,13 +1271,8 @@ app.get('/api/admin/command-center/workspaces', checkFounderSession, async (req,
 // Subscriptions endpoint
 app.get('/api/admin/command-center/subscriptions', checkFounderSession, async (req, res) => {
   try {
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
+    const { resolveAdapter } = require('../db');
+    const adapter = resolveAdapter();
 
     const repos = require('../db/repos').createRepos(adapter);
 
@@ -1400,13 +1340,8 @@ app.get('/api/admin/command-center/subscriptions', checkFounderSession, async (r
 // Missions endpoint
 app.get('/api/admin/command-center/missions', checkFounderSession, async (req, res) => {
   try {
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
+    const { resolveAdapter } = require('../db');
+    const adapter = resolveAdapter();
 
     const repos = require('../db/repos').createRepos(adapter);
 
@@ -1498,13 +1433,8 @@ app.post('/api/admin/command-center/missions/:id/archive', checkFounderSession, 
       return res.status(400).json({ ok: false, error: 'Invalid mission ID' });
     }
 
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
+    const { resolveAdapter } = require('../db');
+    const adapter = resolveAdapter();
 
     const repos = require('../db/repos').createRepos(adapter);
     const audit = require('../utils/auditLogger');
@@ -1583,13 +1513,8 @@ app.post('/api/admin/command-center/missions/:id/unarchive', checkFounderSession
       return res.status(400).json({ ok: false, error: 'Invalid mission ID' });
     }
 
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
+    const { resolveAdapter } = require('../db');
+    const adapter = resolveAdapter();
 
     const repos = require('../db/repos').createRepos(adapter);
     const audit = require('../utils/auditLogger');
@@ -1663,13 +1588,8 @@ app.post('/api/admin/command-center/missions/:id/unarchive', checkFounderSession
 // Revenue endpoint (simplified - could be expanded)
 app.get('/api/admin/command-center/revenue', checkFounderSession, async (req, res) => {
   try {
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
+    const { resolveAdapter } = require('../db');
+    const adapter = resolveAdapter();
 
     const repos = require('../db/repos').createRepos(adapter);
 
@@ -1768,13 +1688,8 @@ app.get('/api/admin/command-center/dodo', checkFounderSession, async (req, res) 
 // Agents endpoint
 app.get('/api/admin/command-center/agents', checkFounderSession, async (req, res) => {
   try {
-    const { getAdapter, createMemoryAdapter } = require('../db');
-    let adapter;
-    try {
-      adapter = getAdapter();
-    } catch (_err) {
-      adapter = createMemoryAdapter();
-    }
+    const { resolveAdapter } = require('../db');
+    const adapter = resolveAdapter();
 
     const repos = require('../db/repos').createRepos(adapter);
 
@@ -1882,9 +1797,8 @@ const server = app.listen(PORT, () => {
   }
   try {
     const missionScheduler = require('../services/missionScheduler');
-    const { getAdapter: _getAdapter, createMemoryAdapter: _createMemoryAdapter } = require('../db');
-    let msAdapter;
-    try { msAdapter = _getAdapter(); } catch (_e) { msAdapter = _createMemoryAdapter(); }
+    const { resolveAdapter } = require('../db');
+    const msAdapter = resolveAdapter();
     const msResult = missionScheduler.start(msAdapter);
     if (msResult.ok) console.log(`[Sentinel] mission scheduler started (interval ${msResult.intervalMs / 3600000}h)`);
     else console.log('[Sentinel] mission scheduler not started:', msResult.reason || 'unknown');

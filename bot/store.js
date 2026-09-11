@@ -4,10 +4,12 @@ function getStoreAdapter() {
   if (!adapter) {
     // Hard guard: unit / DRY tests must never touch the live Postgres / Supabase
     // instance, even if a parent process leaked DATABASE_URL.
-    if (process.env.NODE_ENV === 'test' || !process.env.DATABASE_URL) {
+    if (process.env.NODE_ENV === 'test') {
       adapter = require('../db').createMemoryAdapter();
     } else {
-      adapter = require('../db').getAdapter();
+      // resolveAdapter centralizes the fallback policy: pg when DATABASE_URL is
+      // set, memory (with a loud log) only in development, throw in production.
+      adapter = require('../db').resolveAdapter();
     }
   }
   return adapter;
