@@ -79,7 +79,8 @@ async function sendRaw(opts) {
         from: String(o.from || ''),
         to: [to],
         subject: String(o.subject || ''),
-        text: String(o.text || '')
+        text: String(o.text || ''),
+        ...(o.reply_to ? { reply_to: o.reply_to } : {})
       }),
       signal: controller.signal
     });
@@ -162,12 +163,15 @@ function createEmailChannel(opts) {
     if (toErr) return { ok: false, error: 'invalid_recipient', reason: toErr };
     const fromErr = validateEmail(data && data.from, 'sender');
     if (fromErr) return { ok: false, error: 'invalid_sender', reason: fromErr };
+    const replyToErr = data && data.reply_to ? validateEmail(data.reply_to, 'reply_to') : null;
+    if (replyToErr) return { ok: false, error: 'invalid_reply_to', reason: replyToErr };
     if (!data.subject || !String(data.subject).trim()) return { ok: false, error: 'subject_required' };
     if (!data.body || !String(data.body).trim()) return { ok: false, error: 'body_required' };
     const record = await repos.outboundEmails.create({
       workspace_id: workspaceId,
       to_email: String(data.to).trim(),
       from_email: String(data.from).trim(),
+      reply_to: data.reply_to ? String(data.reply_to).trim() : null,
       subject: String(data.subject).trim(),
       body: String(data.body),
       status: STATES.DRAFT,
@@ -270,7 +274,8 @@ function createEmailChannel(opts) {
           from: email.from_email,
           to: [email.to_email],
           subject: email.subject,
-          text: email.body
+          text: email.body,
+          ...(email.reply_to ? { reply_to: email.reply_to } : {})
         }),
         signal: controller.signal
       });

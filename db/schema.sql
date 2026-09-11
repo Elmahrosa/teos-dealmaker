@@ -337,6 +337,7 @@ CREATE TABLE IF NOT EXISTS outbound_emails (
     workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     to_email VARCHAR(255) NOT NULL,
     from_email VARCHAR(255) NOT NULL,
+    reply_to VARCHAR(255),
     subject VARCHAR(500) NOT NULL,
     body TEXT NOT NULL,
     status VARCHAR(30) NOT NULL DEFAULT 'DRAFT',

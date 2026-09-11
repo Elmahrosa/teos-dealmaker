@@ -196,6 +196,27 @@ const assert = require('assert');
   eq(inv.error, 'invalid_recipient', 'invalid recipient rejected at draft time');
   eq(inv.ok, false, 'invalid draft returns not ok');
 
+  // ------------------------------------------ 14b. reply_to is persisted and forwarded
+  const rtDraft = await channel.createDraft(repos, { ...base, reply_to: 'replies@elmahrosa.org' });
+  ok(rtDraft.ok, 'createDraft with reply_to returns ok');
+  eq(rtDraft.email.reply_to, 'replies@elmahrosa.org', 'reply_to persisted on the draft');
+  await channel.requestApproval(repos, ws.id, rtDraft.email.id);
+  await channel.approve(repos, ws.id, rtDraft.email.id, { approved_by: 'founder@teosegypt.com' });
+  fake.push(200, { id: 're_rt_7c4d' });
+  const rtSent = await channel.send(repos, ws.id, rtDraft.email.id);
+  ok(rtSent.ok, 'send with reply_to succeeds');
+  const rtBody = JSON.parse(fake.calls[5].opts.body);
+  eq(rtBody.reply_to, 'replies@elmahrosa.org', 'reply_to forwarded in the Resend payload');
+
+  // ------------------------------------------ 14c. no reply_to => stored NULL, payload omits key
+  const noRt = await channel.createDraft(repos, base);
+  eq(noRt.email.reply_to, null, 'no reply_to stored as NULL when unset');
+
+  // ------------------------------------------ 14d. invalid reply_to rejected at draft time
+  const invRt = await channel.createDraft(repos, { ...base, reply_to: 'not-an-email' });
+  eq(invRt.error, 'invalid_reply_to', 'invalid reply_to rejected at draft time');
+  eq(invRt.ok, false, 'invalid reply_to draft returns not ok');
+
   // ------------------------------------------ 15. invalid state transitions
   const first = await channel.requestApproval(repos, ws.id, okDraft.email.id);
   eq(first.error, 'invalid_state', 'requestApproval refused on PENDING_APPROVAL');

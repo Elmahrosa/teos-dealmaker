@@ -456,8 +456,8 @@ function createRepos(adapter) {
     },
 
     outboundEmails: {
-      create({ workspace_id, to_email, from_email, subject, body, status = 'DRAFT', campaign = null }) {
-        return adapter.insert('outbound_emails', { workspace_id, to_email, from_email, subject, body, status, campaign });
+      create({ workspace_id, to_email, from_email, reply_to = null, subject, body, status = 'DRAFT', campaign = null }) {
+        return adapter.insert('outbound_emails', { workspace_id, to_email, from_email, reply_to, subject, body, status, campaign });
       },
       get(workspace_id, id) {
         return adapter.findOne('outbound_emails', { workspace_id, id });

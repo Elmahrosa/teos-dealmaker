@@ -85,7 +85,7 @@ const TABLES = {
   },
 
   outbound_emails: {
-    columns: ['workspace_id', 'to_email', 'from_email', 'subject', 'body', 'status', 'campaign', 'provider', 'provider_message_id', 'send_status', 'failure_reason', 'requested_at', 'approved_at', 'approved_by', 'rejected_at', 'rejected_by', 'sent_at', 'confirmed_at'],
+    columns: ['workspace_id', 'to_email', 'from_email', 'reply_to', 'subject', 'body', 'status', 'campaign', 'provider', 'provider_message_id', 'send_status', 'failure_reason', 'requested_at', 'approved_at', 'approved_by', 'rejected_at', 'rejected_by', 'sent_at', 'confirmed_at'],
     timestamps: true
   },
 
