@@ -12,12 +12,17 @@ async function createCheckoutLink(dealId, amount, opts = {}) {
   const DODO_API_KEY = process.env.DODO_API_KEY;
 
   if (!DODO_API_KEY) {
+    // No key => there is NO checkout link. Never fabricate a placeholder URL
+    // (e.g. https://dodo.example/...) that a buyer or a strapped-in caller could
+    // mistake for real. dryRun callers get url:null and must treat the payload
+    // as an inert request body only.
     return {
       checkoutId: `CHK-${dealId}`,
       amount,
       currency: opts.currency || 'USD',
       dryRun: true,
-      url: `https://dodo.example/checkout/${dealId}`,
+      url: null,
+      reason: 'dodo_none_configured',
       payload: buildPayload(dealId, amount, opts)
     };
   }
