@@ -5,10 +5,14 @@ on:
     branches: [main, master]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   verify:
-    name: install · build · lint · test
+    name: install · build · lint · transparency · test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         node-version: [20.x, 22.x]
@@ -29,6 +33,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Transparency check
+        run: npm run transparency:check
 
       - name: Test
         run: npm test
