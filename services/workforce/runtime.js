@@ -374,14 +374,15 @@ async function listMissions(adapter, workspaceId) {
   });
 }
 
-async function approveAndResume(adapter, workspaceId, requestId, userId) {
-  const decision = await approvals.decide(adapter, workspaceId, requestId, 'approve', userId);
-  if (decision.status !== 'approved') return { decision, resumed: false };
-  const step = decision.step_id ? await forWorkspace(adapter, workspaceId).planSteps.get(decision.step_id) : null;
-  const planId = decision.plan_id || (step && step.plan_id);
-  if (!planId) return { decision, resumed: false };
+async function approveAndResume(adapter, workspaceId, requestId, userId, decision) {
+  const dec = decision === 'reject' ? 'reject' : 'approve';
+  const decided = await approvals.decide(adapter, workspaceId, requestId, dec, userId);
+  if (decided.status !== 'approved') return { decision: decided, resumed: false };
+  const step = decided.step_id ? await forWorkspace(adapter, workspaceId).planSteps.get(decided.step_id) : null;
+  const planId = decided.plan_id || (step && step.plan_id);
+  if (!planId) return { decision: decided, resumed: false };
   const outcome = await runPlan(adapter, workspaceId, { planId });
-  return { decision, resumed: true, ...outcome };
+  return { decision: decided, resumed: true, ...outcome };
 }
 
 module.exports = { runPlan, runGoal, runSalesStrategy, resume, pause, listMissions, approveAndResume, buildBriefing, extractCompanyFromStep };

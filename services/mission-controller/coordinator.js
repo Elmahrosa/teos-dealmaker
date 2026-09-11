@@ -60,8 +60,8 @@ async function resume(adapter, workspaceId, planId) {
   return workforce.runtime.resume(adapter, workspaceId, planId);
 }
 
-async function approveAndResume(adapter, workspaceId, requestId, userId) {
-  return workforce.runtime.approveAndResume(adapter, workspaceId, requestId, userId);
+async function approveAndResume(adapter, workspaceId, requestId, userId, decision) {
+  return workforce.runtime.approveAndResume(adapter, workspaceId, requestId, userId, decision);
 }
 
 async function executeCapability(adapter, workspaceId, stepOrTool, payload) {
