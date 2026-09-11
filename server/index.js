@@ -11,6 +11,11 @@ const auth = require('../services/auth');
 const sessionService = require('../services/session');
 const identity = require('../services/identity');
 const render = require('./render');
+// Process-level error/exit handlers are installed exactly once at module
+// bootstrap (not inside any route handler), so repeated HTTP requests can
+// never stack process.on listeners. See utils/reliability.js.
+const { install: installReliability } = require('../utils/reliability');
+installReliability('sentinel');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -962,13 +967,10 @@ app.post('/api/customer-0/approvals/batch', checkFounderSession, express.json({ 
 const founderSalesLoop = require('./founderSalesLoop');
 app.use('/api/founder/sales-loop', checkFounderSession, founderSalesLoop);
 
+const customer0 = require('../services/customer0');
+
 app.get('/approvals/customer0', requireAuditAuth('revenue'), async (_req, res) => {
   try {
-    const customer0 = require('../services/customer0');
-const render = require('./render');
-const { install: installReliability } = require('../utils/reliability');
-
-installReliability('sentinel');
     const { getAdapter, createMemoryAdapter } = require('../db');
     let adapter;
     try {
