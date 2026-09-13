@@ -203,12 +203,13 @@ async function handleSubscriptionCreated(adapter, data) {
 
   // Determine subscription status from webhook data
   const rawStatus = data.status;
-  const allowedActivatingStatuses = ['active', 'renewed'];
-  let status = rawStatus;
-  if (!rawStatus || !allowedActivatingStatuses.includes(rawStatus)) {
-    console.warn(`[billing] subscription.created: invalid or missing status '${rawStatus}', defaulting to 'pending'`);
-    status = 'pending';
-  }
+const ALLOWED_STATUSES = ['active', 'trialing', 'past_due', 'canceled', 'incomplete', 'pending', 'unpaid'];
+const allowedActivatingStatuses = ['active', 'renewed'];
+let status = rawStatus;
+if (!rawStatus || !ALLOWED_STATUSES.includes(rawStatus)) {
+  console.warn(`[billing] subscription.created: invalid or missing status '${rawStatus}', defaulting to 'pending'`);
+  status = 'pending';
+}
   const cycle = data.billing_cycle || 'monthly';
   const startDate = today();
   const renewalDate = addMonths(startDate, cycle === 'annual' ? 12 : 1);
@@ -283,12 +284,13 @@ async function handleSubscriptionRenewed(adapter, data) {
   const customerId = data.customer_id || null;
   // Determine subscription status from webhook data
   const rawStatus = data.status;
-  const allowedActivatingStatuses = ['active', 'renewed'];
-  let status = rawStatus;
-  if (!rawStatus || !allowedActivatingStatuses.includes(rawStatus)) {
-    console.warn(`[billing] subscription.renewed: invalid or missing status '${rawStatus}', defaulting to 'pending'`);
-    status = 'pending';
-  }
+const ALLOWED_STATUSES = ['active', 'trialing', 'past_due', 'canceled', 'incomplete', 'pending', 'unpaid'];
+const allowedActivatingStatuses = ['active', 'renewed'];
+let status = rawStatus;
+if (!rawStatus || !ALLOWED_STATUSES.includes(rawStatus)) {
+  console.warn(`[billing] subscription.renewed: invalid or missing status '${rawStatus}', defaulting to 'pending'`);
+  status = 'pending';
+}
   const cycle = data.billing_cycle || 'monthly';
   const renewalDate = addMonths(today(), cycle === 'annual' ? 12 : 1);
 
