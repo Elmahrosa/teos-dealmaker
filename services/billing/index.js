@@ -288,8 +288,8 @@ const ALLOWED_STATUSES = ['active', 'trialing', 'past_due', 'canceled', 'incompl
 const allowedActivatingStatuses = ['active', 'renewed'];
 let status = rawStatus;
 if (!rawStatus || !ALLOWED_STATUSES.includes(rawStatus)) {
-  console.warn(`[billing] subscription.renewed: invalid or missing status '${rawStatus}', defaulting to 'pending'`);
-  status = 'pending';
+  console.warn(`[billing] subscription.renewed: invalid or missing status '${rawStatus}', keeping previous status`);
+  status = sub ? sub.status : 'pending';
 }
   const cycle = data.billing_cycle || 'monthly';
   const renewalDate = addMonths(today(), cycle === 'annual' ? 12 : 1);
