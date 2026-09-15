@@ -1,5 +1,5 @@
 // tests/test-link-audit.js
-// Audits every external link in the rendered landing page:
+// Audits every external link in the landed landing page:
 //   - no unreplaced {{PLACEHOLDER}} tokens
 //   - the Sentinel cross-sell is a CROSS-LINK only (no Dodo checkout, no price)
 //   - every rendered Dodo checkout href matches pricing.config (no drift)
@@ -67,7 +67,10 @@ const render = require('../server/render');
   if (process.env.LINK_AUDIT_OFFLINE === '1') {
     console.log(`SKIP network pass (${unique.length} unique links) — LINK_AUDIT_OFFLINE=1`);
   } else {
-    const results = await Promise.all(unique.map(u => probe(u)));
+    const results = [];
+    for (const u of unique) {
+      results.push(await probe(u));
+    }
     const failures = results.filter(r => !r.ok);
     for (const f of failures) console.error(`  FAIL ${f.url} -> ${f.reason}`);
     check(failures.length === 0, `all ${unique.length} external links reachable (status < 400)`);
@@ -83,18 +86,33 @@ const render = require('../server/render');
 function probe(url) {
   return new Promise((resolve) => {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
+    const timer = setTimeout(() => controller.abort(), 15000);
     let done = false;
     const finish = (r) => { if (!done) { done = true; clearTimeout(timer); resolve(r); } };
     const reasonOf = (err) => (err && err.name === 'AbortError' ? 'timeout' : (err && err.message) || String(err));
     const tryGet = (err) => {
-      fetch(url, { method: 'GET', redirect: 'follow', signal: controller.signal })
+      fetch(url, {
+        method: 'GET',
+        redirect: 'follow',
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': '*/*'
+        }
+      })
         .then(res => finish(res.status >= 400 ? { url, ok: false, reason: 'status ' + res.status } : { url, ok: true, status: res.status }))
         .catch(err2 => finish({ url, ok: false, reason: reasonOf(err || err2) }));
     };
-    fetch(url, { method: 'HEAD', redirect: 'follow', signal: controller.signal })
+    fetch(url, {
+      method: 'HEAD',
+      redirect: 'follow',
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': '*/*'
+      }
+    })
       .then(res => finish(res.status >= 400 ? { url, ok: false, reason: 'status ' + res.status } : { url, ok: true, status: res.status }))
       .catch(err => tryGet(err));
   });
 }
-
