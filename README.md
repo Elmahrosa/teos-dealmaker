@@ -5,7 +5,7 @@
 > A policy-governed AI workforce that plans, approves, executes, and audits your entire revenue pipeline.
 > 13 specialized agents. A Mission Controller. A plugin platform. Real governance — not a chatbot with a prompt.
 
-**Live now** at [dealmaker.elmahrosa.org](https://dealmaker.elmahrosa.org) · **v1.1.0** · 59/59 test suites passing · 0 lint errors · 0 dependency vulnerabilities.
+**v1.1.0** — merged to `main` · 83/83 test suites passing · 0 lint errors · 0 dependency vulnerabilities · live deploy pending verified rollout at [dealmaker.elmahrosa.org](https://dealmaker.elmahrosa.org).
 
 ---
 
@@ -245,14 +245,16 @@ Founder controls (`/api/outreach/pause`, `/resume`, `/emergency-stop`, `/queue`,
 
 ## What's verified today
 
-Last verification (2026-08-08, post-v1.1.0 freeze):
+Last verification (2026-09-25, release candidate `0c12899` + org-hygiene commit):
 
 | Check | Result |
 |---|---|
-| `npm test` | 59 suites, 59 passed, 0 failed |
+| `npm test` | 83 suites, 83 passed, 0 failed |
 | `npm run lint` | 0 errors |
-| `npm run build` | PASS (node --check on 265 JS files) |
+| `npm run build` | PASS (node --check on 316 JS files) |
+| `npm run transparency:check` | 15/15 |
 | `npm audit --omit=dev` | 0 vulnerabilities |
+| `npm run verify` / `preflight` / `smoke` | defined aliases (mandatory pre-live gates) |
 | `GET /api/health` | 200, `status=ok`, `mode=live` |
 | `GET /` landing | 200 |
 | `GET /customer-0` | 200 |
@@ -261,6 +263,11 @@ Last verification (2026-08-08, post-v1.1.0 freeze):
 | `GET /api/audit` | 503 (fail-closed until `AUDIT_API_KEY` is configured) |
 | Bot trust/security intents (EN + AR) | PASS — no `/start` fallback |
 | Customer-facing honesty | No "Coming Soon"/"Demo" placeholders, no simulated branding in reports |
+
+> **Live-deploy status:** the endpoint checks below were verified against the
+> previously deployed build. The v1.1.0 release deploy is pending (operator gate);
+> every endpoint will be re-verified against the new revision before `LIVE` is
+> declared.
 
 See [`docs/history/BUILD_STATE.md`](docs/history/BUILD_STATE.md) and [`docs/history/FINAL_VALIDATION_REPORT.md`](docs/history/FINAL_VALIDATION_REPORT.md) for the full evidence.
 
