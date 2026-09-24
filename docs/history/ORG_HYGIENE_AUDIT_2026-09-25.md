@@ -37,6 +37,33 @@ and the teos-dealmaker root, conducted against the TEOS VAP-Engine Royal Mandate
    is unavailable on the current plan (GitHub 403 "Upgrade to GitHub Pro") — documented,
    not forced.
 
+## Execution record (2026-09-25, all via GitHub API, read-back verified)
+
+**Local repo (`teos-dealmaker`):**
+- `main` advanced to `8127b57` (release `0c12899` + hygiene commits) and pushed.
+- Gates at new HEAD: `npm test` 83/83 · `npm run build` 316/316 · lint clean ·
+  `transparency:check` 15/15 · `npm audit --omit=dev` 0 vulns ·
+  `npm run verify` ✅ · `npm run preflight` ✅ (aliases work).
+- CI on `8127b57`: run #126 **success** (+ treasurer live gate #93 success).
+
+**Org — branch protection applied to all 24 public (non-archived) repos:**
+`strict:true` status checks (only contexts currently green per repo), `enforce_admins`,
+`required_linear_history`, `allow_force_pushes:false`, `allow_deletions:false`.
+Protected `main` (and `master` where default): `.github` · `Ask-Teos-AI` · `EGDFESTIVAL` ·
+`EGDMENA` · `Elmahrosa-Sovereign-AI-Academy` · `Elmahrosa.github.io` · `UnityCare-Platform` ·
+`audit-hub` · `elmahrosa-ai-app-store-builder` · `elmahrosa-official-website` ·
+`elmahrosa-org` · `teos-ai-auditor` · `teos-ai-engine` · `teos-ai-guard` · `teos-auth-library` ·
+`teos-civic-mixer` · `teos-compliance-kit` · `teos-dealmaker` · `teos-ert-token` · `teos-forge` ·
+`teos-international-civic-blockchain-constitution` · `teos-sentinel-shield` ·
+`teos-video-engine` · `teosmcp-ci-example`.
+
+**Org — secret scanning / Dependabot security updates:** enabled (`secret_scanning:
+enabled`) on all 24 repos above.
+
+**Verification of flagship config (`teos-dealmaker`):** `required_linear_history:true`,
+`allow_force_pushes:false`, `allow_deletions:false`, `enforce_admins:true`, `strict:true`,
+4 required check contexts — all currently green.
+
 ## Standing release-gate status (unchanged)
 - Code: **APPROVE** — all gates green at `main` (release `0c12899` + this hygiene commit).
 - Deploy: **BLOCKED AT GATE 4** — Railway account on billing hold; post-payment runbook in
