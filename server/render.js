@@ -187,9 +187,13 @@ function renderStart() {
 
 function renderStartThanks(intake) {
   const i = intake || {};
-  const { CONTACT_FALLBACK } = require('../services/missionIntake');
-  const hasContact = Boolean(i.contact) && i.contact !== CONTACT_FALLBACK;
-  return pageHead('Mission received · TEOS DealMaker') + `\n  <header>\n    <span class="brand">TEOS DEALMAKER</span>\n    <a class="back" href="/">← Back to the landing page</a>\n  </header>\n  <h1>Mission brief received</h1>\n  <div class="okbox"><b>✓ Received</b> — your brief is recorded as intake #${esc(i.id)} with status <span class="status">${esc(i.status)}</span>.</div>\n  <h2>Mission brief</h2>\n  <table>\n    <tbody>\n      <tr><th>Mission</th><td>${esc(i.title)}</td></tr>\n      <tr><th>Business</th><td>${esc(i.objective)}</td></tr>\n      ${i.outcome ? `<tr><th>Success</th><td>${esc(i.outcome)}</td></tr>` : ''}\n      ${hasContact ? '<tr><th>Contact</th><td>Provided — we can reply</td></tr>' : '<tr><th>Contact</th><td>None provided</td></tr>'}\n      <tr><th>Recorded</th><td>${esc(i.created_at)}</td></tr>\n    </tbody>\n  </table>\n  <h2>What happens next</h2>\n  <p class="muted">The founder reviews your brief and assigns your dedicated AI Revenue Team. You will receive the mission plan for approval — the mission only executes under policy governance, and you decide whether to continue after the first mission. While you wait, <a href="https://t.me/TeosEgypt_bot">open the Telegram app</a> or <a href="/#playground">run the demo</a>.</p>\n  <footer><span>TEOS DealMaker · Elmahrosa International · <a href="mailto:info@elmahrosa.org">info@elmahrosa.org</a></span></footer>\n` + pageFoot;
+  // Public confirmation page: records that the brief was received and shows
+  // only the intake reference. It deliberately does NOT echo the submitted
+  // mission content (title/objective/outcome/contact). Intake ids are
+  // sequential, so a public page that rendered submission content would let
+  // anyone replay another customer's brief by enumerating ids (audit finding
+  // 10). No content here means no disclosure.
+  return pageHead('Mission received · TEOS DealMaker') + `\n  <header>\n    <span class="brand">TEOS DEALMAKER</span>\n    <a class="back" href="/">← Back to the landing page</a>\n  </header>\n  <h1>Mission brief received</h1>\n  <div class="okbox"><b>✓ Received</b> — your brief is recorded as intake #${esc(i.id)} with status <span class="status">${esc(i.status)}</span>.</div>\n  <p class="muted">Recorded ${esc(i.created_at || 'just now')}.</p>\n  <h2>What happens next</h2>\n  <p class="muted">The founder reviews your brief and assigns your dedicated AI Revenue Team. You will receive the mission plan for approval — the mission only executes under policy governance, and you decide whether to continue after the first mission. While you wait, <a href="https://t.me/TeosEgypt_bot">open the Telegram app</a> or <a href="/#playground">run the demo</a>.</p>\n  <footer><span>TEOS DealMaker · Elmahrosa International · <a href="mailto:info@elmahrosa.org">info@elmahrosa.org</a></span></footer>\n` + pageFoot;
 }
 
 function renderIntakesAdmin(rows) {

@@ -55,11 +55,19 @@ function createPlatform(opts) {
     if (!enterprise) return { allowed: true, reason: 'platform_inert' };
     if (!capability) return { allowed: false, reason: 'capability_required' };
     // Founder bypass: the platform owner is never limited by subscription,
-    // plan, seats, agents, quotas or RBAC — determined only by
-    // TEOS_FOUNDER_TELEGRAM_ID, never by billing state.
+    // plan, seats, agents, quotas or RBAC — granted ONLY on an explicit
+    // Telegram identity. A numeric users.id (or any client-supplied id) must
+    // never be compared to the founder Telegram id: a signed-up tenant whose
+    // auto-increment users.id collides with TEOS_FOUNDER_TELEGRAM_ID would
+    // otherwise inherit founder capability (mirrors identity.isFounderUser,
+    // audit finding 8).
     const founderId = process.env.TEOS_FOUNDER_TELEGRAM_ID;
-    const founderActing = [userId, requester && requester.user_id, requester && requester.telegram_id]
-      .some(v => founderId && v != null && Number(v) === Number(founderId));
+    const founderActing = Boolean(
+      founderId &&
+      requester &&
+      requester.telegram_id != null &&
+      Number(requester.telegram_id) === Number(founderId)
+    );
     if (founderActing) {
       return { allowed: true, workspaceId, capability, reason: 'founder_bypass', founder: true };
     }

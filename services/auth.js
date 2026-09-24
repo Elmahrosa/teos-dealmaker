@@ -229,7 +229,18 @@ async function checkUserEntitlement(adapter, userId) {
  * @param {number} increment - Amount to increment (default 1)
  * @returns {Promise<Object>} - Updated subscription
  */
+// Cap on a single mission-usage increment request. Mission usage is a
+// metered entitlement; an unbounded increment would let one request exhaust a
+// workspace's quota (self-DoS, audit finding 14). Legit activity increments by
+// 1 (workforce runtime); the cap only bounds abuse while the global rate
+// limiter bounds request frequency.
+const MAX_MISSION_INCREMENT = 100;
+
 async function incrementUserMissionUsage(adapter, userId, increment = 1) {
+  const n = Number(increment);
+  if (!Number.isInteger(n) || n < 1 || n > MAX_MISSION_INCREMENT) {
+    throw new Error('Mission increment must be an integer between 1 and ' + MAX_MISSION_INCREMENT);
+  }
   // Get user's workspace
   const workspace = await identity.getWorkspaceForUser(adapter, userId);
   if (!workspace) {
@@ -237,7 +248,7 @@ async function incrementUserMissionUsage(adapter, userId, increment = 1) {
   }
 
   // Increment mission usage using billing service
-  return await billing.incrementMissionsUsed(adapter, workspace.id, increment);
+  return await billing.incrementMissionsUsed(adapter, workspace.id, n);
 }
 
 module.exports = {

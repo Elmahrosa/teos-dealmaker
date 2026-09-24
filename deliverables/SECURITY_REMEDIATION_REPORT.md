@@ -175,16 +175,17 @@ enterprise still inherently entitled).
 | **12. Signup error leak** (`server/index.js:133-134`) | `services/auth.js` now tags only user-facing validation errors `expose:true`; the route echoes those verbatim and masks everything else with a generic `Unable to complete signup` (detail still logged server-side). `tests/test-auth-hardening.js` (10 assertions) pins the contract. |
 | **13. `data/emergency.json` / `data/approval.json`** (`config/emergency.js`, `config/approval.js`) | Written with owner-only mode `0o600` (the files are gitignored runtime safety controls; a world-writable file made emergency-stop / approval-mode writable by any local user). Content validation on read is preserved. |
 
-## 10. Findings assessed but intentionally NOT changed
+## 10. Residual findings closed in the follow-up pass
 
-Listed here for completeness, per the ordered remediation scope. Each was verified; changing
-them was outside the instructed scope and would need a product decision.
+The three residual findings (8, 10, 14) were closed in the post-launch follow-up at the
+operator's directive ("fix all"). Each fix is minimal, interface-preserving and covered by a
+dedicated regression suite (`tests/test-security-residuals.js`, 20 assertions).
 
-| # | Finding | Assessment |
+| # | Finding | Closure |
 |---|---|---|
-| 8 | Founder equivalence by numeric `user.id` (`services/identity.js:161`) | Verified (Tier 1 founder gate, server-side identity). Not changed — touching the founder derivation requires an explicit product directive and its own release. |
-| 10 | Sequential intake IDs enumerable (`/start/thanks?id=N`) | Verified; intake rows carry no sensitive data. Low risk; not in scope. |
-| 14 | `missions/increment` unbounded self-DoS (`server/index.js:220-223`) | A tenant can only decrement **its own** workspace quota (exhaustion, not privilege). Documented; not in scope. |
+| 8 | Founder equivalence by numeric `user.id` (`services/identity.js:161`) | Founder now derives from `telegram_id` ONLY — the `Number(user.id) === fid` term is removed. A tenant whose auto-increment `users.id` collides with `TEOS_FOUNDER_TELEGRAM_ID` can no longer inherit founder status. The sibling pattern in the platform capability gate (`services/platform/index.js` `founderActing`) is likewise limited to an explicit `requester.telegram_id` — a bare numeric id never grants the fundamental capability bypass. |
+| 10 | Sequential intake IDs enumerable (`/start/thanks?id=N`) | The public confirmation page no longer echoes submission content. `renderStartThanks` confirms `#id` + status + next steps only — title/objective/outcome/contact are removed, so enumerating ids discloses nothing. |
+| 14 | `missions/increment` unbounded self-DoS (`server/index.js:220-223`) | `incrementUserMissionUsage` now accepts only integers 1–100 per request (legit runtime increments by exactly 1); the existing global API rate limiter bounds request frequency. A single request can no longer exhaust a workspace quota. |
 | §5 note | `config/approval.js` `automatic`/`simulation` modes bypass gates deliberately | Intentional, founder-controlled, audited — unchanged (per audit). |
 
 ## 11. Test results
@@ -199,6 +200,7 @@ them was outside the instructed scope and would need a product decision.
 | Phase 5 | billing (75) + platform foundation (63); 016 migration added; full suite green (81/81) |
 | Secondary | auth hardening (10); full suite green |
 | **Final** | **82 suites: 82 passed, 0 failed** |
+| **Residual closure** | findings 8/10/14 closed (`test-security-residuals.js`, 20 assertions); **83 suites: 83 passed, 0 failed** |
 
 `node --check` passes on every changed file.
 
@@ -210,13 +212,19 @@ them was outside the instructed scope and would need a product decision.
 `services/workforce/tools.js` · `services/auth.js` · `db/pool-config.js` · `db/tables.js` ·
 `db/repos.js` · `config/emergency.js` · `config/approval.js`
 
+**Residual closure (findings 8/10/14):** `services/identity.js` (telegram-only founder) ·
+`services/platform/index.js` (telegram-only capability bypass) · `server/render.js` (public
+intake confirmation echoes no submission content) · `services/auth.js` (bounded mission
+increment)
+
 **Schema:** `db/migrations/016_add_billing_webhook_events.sql` (new, forward-only)
 
 **Config/docs:** `.env.example` (scheduler opt-in + TRUST_PROXY default + PGSSLMODE note)
 
 **Tests:** new — `tests/test-mission-scheduler.js`, `tests/test-report-access.js`,
-`tests/test-auth-hardening.js`; extended — `tests/test-mcp.js`, `tests/test-mcp-mission.js`,
-`tests/test-billing.js`, `tests/test-platform-foundation.js`, `tests/test-treasurer.js`
+`tests/test-auth-hardening.js`, `tests/test-security-residuals.js`; extended — `tests/test-mcp.js`,
+`tests/test-mcp-mission.js`, `tests/test-billing.js`, `tests/test-platform-foundation.js`,
+`tests/test-treasurer.js`
 
 **Install artifact (not remediation):** `package-lock.json` — one-line `engines` bump
 (`>=18` → `>=20`) written by `npm install` at baseline setup on Node 24.
@@ -240,9 +248,10 @@ them was outside the instructed scope and would need a product decision.
 - `MISSION_SCHEDULER_ENABLED` / `AUTO_OUTREACH_ENABLED` must be set to `'true'` explicitly to
   resume auto-outreach.
 
-**Residual risk (unchanged, documented in §10):** findings 8, 10, 14; intentional approval
-mode bypasses.
+**Residual risk (unchanged, documented in §10):** intentional approval mode bypasses only.
+Findings 8, 10 and 14 are closed (see §10). Production-side items (migration 016 application,
+`TRUST_PROXY`, Railway deploy) remain operator actions — see §13.
 
-**Integrity:** `deliverables/NEVER_TOUCH_AUDIT.md` untouched. No commits were made; all changes
-remain uncommitted on `security/controlled-remediation-2026-09`, awaiting the second-pass
-follow-up review.
+**Integrity:** `deliverables/NEVER_TOUCH_AUDIT.md` untouched. Changes are committed on
+`security/controlled-remediation-2026-09` (`793c0e5` + residual-closure commit) and pushed to
+`origin`.

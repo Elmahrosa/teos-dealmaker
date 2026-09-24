@@ -150,7 +150,10 @@ async function addMember(adapter, { workspaceId, userId, role = 'operator' }) {
 // Founder determination is a single deterministic gate: the user whose telegram
 // id equals TEOS_FOUNDER_TELEGRAM_ID. Workspace member roles are never trusted
 // for founder authorization — seeding, plan and role assignments can vary and
-// role strings are not an identity proof.
+// role strings are not an identity proof. The numeric users.id is NEVER
+// compared to the founder Telegram id: a signed-up tenant whose auto-increment
+// id collides with TEOS_FOUNDER_TELEGRAM_ID would otherwise inherit founder
+// status (audit finding 8).
 async function isFounderUser(adapter, userId) {
   const fid = process.env.TEOS_FOUNDER_TELEGRAM_ID;
   if (!fid) return false;
@@ -158,7 +161,7 @@ async function isFounderUser(adapter, userId) {
   if (!Number.isFinite(fidNum)) return false;
   const user = await adapter.findOne('users', { id: Number(userId) });
   if (!user) return false;
-  return Number(user.telegram_id) === fidNum || Number(user.id) === fidNum;
+  return Number(user.telegram_id) === fidNum;
 }
 
 module.exports = {
