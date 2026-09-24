@@ -24,11 +24,11 @@ function createClient(deps) {
     const requester = options.requester || 'system';
     const workspaceId = options.workspaceId || null;
     if (!enabled) {
-      return { ok: true, toolId, simulated: true, reason: 'mcp_disabled', requester, workspaceId };
+      return { ok: true, toolId, simulated: true, execution: 'simulated', reason: 'mcp_disabled', requester, workspaceId };
     }
     const tool = registry.get(toolId);
     if (!tool) {
-      return { ok: false, toolId, error: 'unknown_tool', reason: 'unknown_tool', requester, workspaceId };
+      return { ok: false, toolId, error: 'unknown_tool', reason: 'unknown_tool', execution: 'none', requester, workspaceId };
     }
     if (platform && platform.isEnterprise && platform.isEnterprise()) {
       const gate = await platform.canUseCapability({
@@ -40,43 +40,43 @@ function createClient(deps) {
         payload: payload || {}
       });
       if (!gate.allowed) {
-        return { ok: false, toolId, error: 'denied', reason: gate.reason, decision: gate, requester, workspaceId };
+        return { ok: false, toolId, error: 'denied', reason: gate.reason, decision: gate, execution: 'none', requester, workspaceId };
       }
     }
     const decision = await policy.approve({ toolId, payload: payload || {}, requester, workspaceId });
     if (!decision.allowed) {
-      return { ok: false, toolId, error: 'denied', reason: decision.reason, decision, requester, workspaceId };
+      return { ok: false, toolId, error: 'denied', reason: decision.reason, decision, execution: 'none', requester, workspaceId };
     }
     const target = resolveAdapter(tool);
     if (!target) {
-      return { ok: false, toolId, error: 'no_adapter', requester, workspaceId };
+      return { ok: false, toolId, error: 'no_adapter', execution: 'none', requester, workspaceId };
     }
     const adapterConfig = target.config ? target.config() : {};
     if (!adapterConfig.endpoint) {
-      return { ok: true, toolId, simulated: true, reason: 'mcp_not_configured', requester, workspaceId };
+      return { ok: true, toolId, simulated: true, execution: 'simulated', reason: 'mcp_not_configured', requester, workspaceId };
     }
     const result = await target.call({ toolId, payload: payload || {}, requester, id: options.id || Date.now() });
     if (!result.ok) {
-      return { ok: false, toolId, error: result.error, message: result.message, requester, workspaceId };
+      return { ok: false, toolId, error: result.error, message: result.message, execution: 'none', requester, workspaceId };
     }
-    return { ok: true, toolId, data: result.data, simulated: false, requester, workspaceId };
+    return { ok: true, toolId, data: result.data, simulated: false, execution: 'live', requester, workspaceId };
   }
 
   async function health() {
-    if (!enabled) return { ok: true, status: 'disabled', simulated: true };
+    if (!enabled) return { ok: true, status: 'disabled', simulated: true, execution: 'simulated' };
     const adapterConfig = adapter && adapter.config ? adapter.config() : {};
-    if (!adapterConfig.endpoint) return { ok: true, status: 'not_configured', simulated: true };
+    if (!adapterConfig.endpoint) return { ok: true, status: 'not_configured', simulated: true, execution: 'simulated' };
     const result = await adapter.health();
-    return { ok: result.ok, status: result.status, latency_ms: result.latency_ms, simulated: false };
+    return { ok: result.ok, status: result.status, latency_ms: result.latency_ms, simulated: false, execution: 'live' };
   }
 
   async function discover() {
-    if (!enabled) return { ok: true, simulated: true, tools: registry.list() };
+    if (!enabled) return { ok: true, simulated: true, execution: 'simulated', tools: registry.list() };
     const adapterConfig = adapter && adapter.config ? adapter.config() : {};
-    if (!adapterConfig.endpoint) return { ok: true, simulated: true, tools: registry.list() };
+    if (!adapterConfig.endpoint) return { ok: true, simulated: true, execution: 'simulated', tools: registry.list() };
     const result = await adapter.discover();
-    if (!result.ok) return { ok: false, error: result.error, message: result.message };
-    return { ok: true, tools: result.tools, simulated: false };
+    if (!result.ok) return { ok: false, error: result.error, message: result.message, execution: 'none' };
+    return { ok: true, tools: result.tools, simulated: false, execution: 'live' };
   }
 
   function listTools(filter) {

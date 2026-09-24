@@ -28,7 +28,9 @@ function setApprovalMode(mode) {
   if (process.env.NODE_ENV !== 'test') {
     try {
       fs.mkdirSync(path.dirname(FILE), { recursive: true });
-      fs.writeFileSync(FILE, JSON.stringify({ mode: MODE }, null, 2), 'utf8');
+      // Owner-only file mode: the approval mode is a runtime safety control
+      // and must not be writable by other local users on shared hosts.
+      fs.writeFileSync(FILE, JSON.stringify({ mode: MODE }, null, 2), { mode: 0o600 });
     } catch (err) {
       console.error('[approval] persist failed:', err.message);
     }

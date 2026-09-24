@@ -21,9 +21,11 @@ const assert = require('assert');
   const corpWs = repos.workspaces.create({ name: 'Corp Co', slug: 'corp-co', plan: 'corporate', status: 'active' });
   const entWs = repos.workspaces.create({ name: 'Ent Co', slug: 'ent-co', plan: 'enterprise', status: 'active' });
   const suspWs = repos.workspaces.create({ name: 'Suspended Co', slug: 'susp-co', plan: 'growth', status: 'suspended' });
+  const pendWs = repos.workspaces.create({ name: 'Pending Co', slug: 'pend-co', plan: 'growth', status: 'active' });
 
   repos.subscriptions.create({ workspace_id: growthWs.id, plan: 'growth', status: 'active', cycle: 'monthly' });
   repos.subscriptions.create({ workspace_id: corpWs.id, plan: 'corporate', status: 'canceled', cycle: 'annual' });
+  repos.subscriptions.create({ workspace_id: pendWs.id, plan: 'growth', status: 'pending', cycle: 'monthly' });
 
   const userA = repos.users.create({ email: 'a@acme.com' });
   const userB = repos.users.create({ email: 'b@acme.com' });
@@ -55,7 +57,13 @@ const assert = require('assert');
   const corpLic = await platform.entitlements.license(corpWs.id);
   ok(corpLic.valid === false && corpLic.subscriptionValid === false, 'canceled subscription invalidates license');
   const suspLic = await platform.entitlements.license(suspWs.id);
-  ok(suspLic.valid === false && suspLic.subscriptionValid === true, 'inactive workspace invalidates license');
+  ok(suspLic.valid === false && suspLic.subscriptionValid === false, 'no subscription + inactive workspace is not licensed');
+  const pendLic = await platform.entitlements.license(pendWs.id);
+  ok(pendLic.valid === false && pendLic.subscriptionValid === false, 'pending subscription is not licensed (active-only, aligned with billing)');
+  const soloLic = await platform.entitlements.license(soloWs.id);
+  ok(soloLic.valid === false && soloLic.subscriptionValid === false, 'no subscription row is not licensed for a commercial plan');
+  const entLic = await platform.entitlements.license(entWs.id);
+  ok(entLic.valid === true && entLic.subscriptionValid === true, 'enterprise remains inherently entitled without a subscription');
 
   // seats
   const seats = await platform.entitlements.checkSeats(growthWs.id);
@@ -148,7 +156,7 @@ const assert = require('assert');
   ok(gate.allowed === true && gate.plan === 'growth', 'full gate allows entitled owner capability');
   const gateDenied = await platform.canUseCapability({ workspaceId: growthWs.id, role: 'viewer', capability: 'sentinel.audit' });
   ok(gateDenied.allowed === false && gateDenied.reason === 'insufficient_role', 'full gate enforces RBAC');
-  const gatePlan = await platform.canUseCapability({ workspaceId: soloWs.id, capability: 'custom.myplugin.run' });
+  const gatePlan = await platform.canUseCapability({ workspaceId: growthWs.id, capability: 'custom.myplugin.run' });
   ok(gatePlan.allowed === false && gatePlan.reason === 'capability_not_entitled', 'full gate enforces plan scope');
   const gateLicense = await platform.canUseCapability({ workspaceId: corpWs.id, capability: 'sentinel.scan' });
   ok(gateLicense.allowed === false && gateLicense.reason === 'subscription_inactive', 'full gate enforces license');

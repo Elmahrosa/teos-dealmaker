@@ -39,6 +39,9 @@ global.fetch = async (url, options) => {
   ok(typeof workforce.executeCapability === 'function', 'workforce gained optional executeCapability');
   ok(typeof mc.executeCapability === 'function', 'mission controller gained executeCapability');
 
+  // Operator explicitly authorizes the builtin tool for this mission surface.
+  mcp.policy.allowTool('slack.postMessage');
+
   const adapter = createMemoryAdapter();
   const tg = 777001;
   await identity.ensureUser(adapter, tg, { display_name: 'MCP Tester' });
@@ -68,6 +71,9 @@ global.fetch = async (url, options) => {
   const auditLines = audit.readVault();
   ok(auditLines.some(l => l.action === 'MCP_POLICY_ALLOW'), 'policy decision audited');
   ok(auditLines.some(l => l.action === 'MCP_TOOL_OK'), 'tool outcome audited');
+  const liveOkLine = auditLines.filter(l => l.action === 'MCP_TOOL_OK').slice(-1)[0];
+  ok(liveOkLine.status === 'success' && liveOkLine.details && liveOkLine.details.execution === 'live',
+    'live tool outcome audited as a real success');
 
   const unknown = await mc.executeCapability(adapter, ws.id, 'nope.notreal', {});
   ok(unknown.ok === false && unknown.error === 'unknown_tool', 'mission cannot invoke undeclared tools');
@@ -96,6 +102,35 @@ global.fetch = async (url, options) => {
 
   const emptyTool = await mc.executeCapability(adapter, ws.id, { step_key: 'empty', tool: '  ' });
   ok(emptyTool.used === false, 'blank tool declaration is treated as no tool');
+
+  // -------------------------------------- Phase 4: simulated != success
+  // A simulated result (MCP disabled / not configured) is recorded under its
+  // own audit event, never as MCP_TOOL_OK, so no log line can claim a real
+  // execution that never happened; live success is audited as success+live.
+  ok(result.execution === 'live', 'live mission tool result carries execution=live');
+  ok(unknown.execution === 'none', 'unknown tool result carries execution=none');
+  ok(denied.execution === 'none', 'denied tool result carries execution=none');
+
+  const savedCall = mcp.call;
+  mcp.call = async () => ({
+    ok: true,
+    toolId: 'slack.postMessage',
+    simulated: true,
+    execution: 'simulated',
+    reason: 'mcp_not_configured'
+  });
+  const sim = await mc.executeCapability(adapter, ws.id, 'slack.postMessage', {});
+  mcp.call = savedCall;
+  ok(sim.ok === true && sim.execution === 'simulated' && sim.reason === 'mcp_not_configured',
+    'simulated result exposes explicit execution mode');
+  const afterSim = audit.readVault();
+  const lastSim = afterSim.filter(l => l.action === 'MCP_TOOL_SIMULATED').slice(-1)[0];
+  ok(!!lastSim, 'simulated outcome audited under MCP_TOOL_SIMULATED');
+  ok(lastSim.status === 'info' && lastSim.details && lastSim.details.execution === 'simulated',
+    'simulated audit entry is marked info + simulated — never success');
+  const lastOkAfterSim = afterSim.filter(l => l.action === 'MCP_TOOL_OK').slice(-1)[0];
+  ok(!!lastOkAfterSim && lastOkAfterSim.status === 'success' && lastOkAfterSim.details.execution === 'live',
+    'genuine success remains audited as success + live');
 
   console.log(`✓ MCP integration: mission -> workforce -> Civic Mixer (${passed} assertions passed)`);
   console.log('  executeCapability wiring · step tool: · no-tool no-op · policy gate · audit · env config');

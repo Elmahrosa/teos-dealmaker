@@ -64,11 +64,12 @@ function contentSecurityPolicy() {
   ].join('; ');
 }
 
-// Trust exactly one reverse proxy by default (rate limiters rely on it).
-// Set TRUST_PROXY to the number of hops in front of the app (e.g. "0" if the
-// server is directly exposed, "2" behind two proxies).
-const trustProxy = process.env.TRUST_PROXY !== undefined ? Number(process.env.TRUST_PROXY) : 1;
-app.set('trust proxy', Number.isFinite(trustProxy) ? trustProxy : 1);
+// Trust no reverse proxy by default: an untrusted (or forgotten) trust setting
+// must never let a client rotate X-Forwarded-For to bypass rate limiting.
+// Set TRUST_PROXY to the number of hops in front of the app explicitly
+// (e.g. "1" behind a single proxy like Cloudflare/nginx).
+const trustProxy = process.env.TRUST_PROXY !== undefined ? Number(process.env.TRUST_PROXY) : 0;
+app.set('trust proxy', Number.isFinite(trustProxy) ? trustProxy : 0);
 
 app.use('/api/', apiLimiter);
 app.use('/webhook/', webhookLimiter);
@@ -131,7 +132,10 @@ app.post('/api/auth/signup', express.json({ limit: '32kb' }), async (req, res) =
     });
   } catch (err) {
     console.error('[auth] signup error:', err.message);
-    res.status(400).json({ ok: false, error: err.message });
+    // Only validation errors tagged for the client are echoed verbatim;
+    // anything else (DB / internal failures) is masked so no internals leak
+    // to an unauthenticated caller.
+    res.status(400).json({ ok: false, error: err.expose === true ? err.message : 'Unable to complete signup' });
   }
 });
 
@@ -374,14 +378,17 @@ app.post('/webhook/dodo', express.raw({ type: 'application/json' }), async (req,
 
   const eventType = event.event_type || event.type || 'unknown';
   const data = event.data || event.payload || event;
+  const eventId = String(event.id || event.event_id || (event.data && event.data.id) || '').trim();
 
-  console.log('[webhook] Dodo event:', eventType);
+  console.log('[webhook] Dodo event:', eventType, eventId ? `(${eventId})` : '');
 
   let result;
   try {
     const { resolveAdapter } = require('../db');
     const adapter = resolveAdapter();
-    result = await billing.handleEvent(adapter, eventType, data);
+    // Idempotency is persistence-backed inside handleEvent (billing_webhook_events):
+    // a replayed event id is acknowledged but never re-applied.
+    result = await billing.handleEvent(adapter, eventType, data, eventId ? { eventId } : undefined);
   } catch (err) {
     console.error('[webhook] handler error:', err.message);
     return res.status(500).json({ error: 'handler_error' });
@@ -584,7 +591,7 @@ app.get('/report/:reportToken', async (req, res) => {
   }
 });
 
-app.get('/customer-0', async (_req, res) => {
+app.get('/customer-0', checkFounderSession, async (_req, res) => {
   res.set('X-Robots-Tag', 'noindex, nofollow');
   try {
     const { getAdapter } = require('../db');
@@ -614,7 +621,7 @@ async function getLatestReport(adapter) {
   return require('../services/missionReport').missionReport(adapter, ws.id, plans[0].id);
 }
 
-app.get('/reports', async (_req, res) => {
+app.get('/reports', checkFounderSession, async (_req, res) => {
   res.set('X-Robots-Tag', 'noindex, nofollow');
   try {
     const { getAdapter } = require('../db');
@@ -628,7 +635,7 @@ app.get('/reports', async (_req, res) => {
   }
 });
 
-app.get('/api/reports/latest', async (_req, res) => {
+app.get('/api/reports/latest', checkFounderSession, async (_req, res) => {
   try {
     const { getAdapter } = require('../db');
     const adapter = getAdapter();

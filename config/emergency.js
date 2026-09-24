@@ -21,7 +21,10 @@ function isEngaged() {
 function setEmergencyStop(engaged) {
   const state = { engaged: engaged === true, updatedAt: new Date().toISOString() };
   fs.mkdirSync(path.dirname(FILE), { recursive: true });
-  fs.writeFileSync(FILE, JSON.stringify(state, null, 2));
+  // Owner-only file mode: this file is a safety control shared on multi-tenant
+  // hosts and must not be writable (or silently tamperable) by other local
+  // users. See the audit finding "data JSON files have no permission hardening".
+  fs.writeFileSync(FILE, JSON.stringify(state, null, 2), { mode: 0o600 });
   console.log(`[EMERGENCY] ${engaged ? 'ENGAGED' : 'disengaged'}`);
   return state;
 }

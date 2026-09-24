@@ -52,14 +52,27 @@ function decision(allowed, reason, request) {
 }
 
 function evaluate(request) {
+  // Mandatory deny list wins over every other gate (deny-wins).
   if (denyList.has(request.toolId)) return decision(false, 'tool_denied', request);
-  if (allowList && !allowList.has(request.toolId)) return decision(false, 'tool_not_in_allow_list', request);
+  // Workspace allow list, when configured, is also mandatory.
   if (workspaceAllowList) {
     if (!request.workspaceId) return decision(false, 'workspace_required', request);
     if (!workspaceAllowList.has(String(request.workspaceId))) return decision(false, 'workspace_not_allowed', request);
   }
+  // Fail-closed default: a tool may only execute when it has been explicitly
+  // allow-listed. Missing policy configuration denies everything; a configured
+  // allow list denies everything not on the list.
+  if (!allowList || !allowList.has(request.toolId)) {
+    return decision(false, allowList ? 'tool_not_in_allow_list' : 'policy_not_configured', request);
+  }
   for (const rule of rules) {
-    const ruleDecision = rule(request);
+    let ruleDecision = null;
+    try {
+      ruleDecision = rule(request);
+    } catch (_) {
+      // A malformed rule must fail safe: denied, never opened.
+      return decision(false, 'policy_rule_error', request);
+    }
     if (ruleDecision && ruleDecision.allowed === false) {
       return decision(false, ruleDecision.reason || 'denied_by_rule', request);
     }

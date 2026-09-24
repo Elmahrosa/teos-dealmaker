@@ -41,31 +41,70 @@ audit.clearVault();
 
   // ---------------------------------------------------------------- policy
   const policy = require('../services/mcp/policy');
-  const allowAll = await policy.approve({ toolId: 'github.createIssue', requester: 'tester' });
-  ok(allowAll.allowed === true && allowAll.reason === 'policy_allow_all', 'placeholder policy allows by default');
+
+  // Deny-by-default: no policy configuration -> nothing may execute.
+  const noConfig = await policy.approve({ toolId: 'github.createIssue', requester: 'tester' });
+  ok(noConfig.allowed === false && noConfig.reason === 'policy_not_configured',
+    'missing policy configuration denies by default');
+  policy.setAllowList([]);
+  const emptyList = await policy.approve({ toolId: 'github.createIssue', requester: 'tester' });
+  ok(emptyList.allowed === false && emptyList.reason === 'policy_not_configured',
+    'empty allow list denies by default');
+  policy.reset();
+
+  // Dangerous builtin tools stay denied unless an operator allow-lists them.
+  const dangerous = await policy.approve({ toolId: 'docker.runContainer', requester: 'tester' });
+  ok(dangerous.allowed === false && dangerous.reason === 'policy_not_configured',
+    'dangerous builtin tool denied without explicit authorization');
+
+  // Explicitly allow-listed tools pass; everything else on the list surface is denied.
+  policy.setAllowList(['github.createIssue']);
+  ok((await policy.approve({ toolId: 'github.createIssue', requester: 'tester' })).allowed === true,
+    'explicitly allow-listed tool passes');
+  const notListed = await policy.approve({ toolId: 'slack.postMessage', requester: 'tester' });
+  ok(notListed.allowed === false && notListed.reason === 'tool_not_in_allow_list',
+    'tool outside allow list rejected');
+  const dangerousListed = await policy.approve({ toolId: 'docker.runContainer', requester: 'tester' });
+  ok(dangerousListed.allowed === false && dangerousListed.reason === 'tool_not_in_allow_list',
+    'dangerous tool denied even while another tool is allow-listed');
+  policy.reset();
+
+  // Mandatory deny list overrides the allow list (deny-wins).
+  policy.setAllowList(['github.createIssue']);
+  policy.denyTool('github.createIssue');
+  ok((await policy.approve({ toolId: 'github.createIssue', requester: 'tester' })).reason === 'tool_denied',
+    'deny list overrides an allow-listed tool');
+  policy.reset();
+
+  // Custom rules can deny an allow-listed tool.
+  policy.setAllowList(['stripe.createCharge']);
   const off = policy.addRule(req => (req.toolId === 'stripe.createCharge' ? { allowed: false, reason: 'payments_hold' } : null));
   const blocked = await policy.approve({ toolId: 'stripe.createCharge', requester: 'tester' });
-  ok(blocked.allowed === false && blocked.reason === 'payments_hold', 'policy rule can deny a tool');
+  ok(blocked.allowed === false && blocked.reason === 'payments_hold', 'policy rule can deny an allow-listed tool');
   off();
-  ok((await policy.approve({ toolId: 'stripe.createCharge', requester: 'tester' })).allowed === true, 'removed rule no longer blocks');
+  ok((await policy.approve({ toolId: 'stripe.createCharge', requester: 'tester' })).allowed === true,
+    'removed rule no longer blocks an allow-listed tool');
+
+  // A throwing (malformed) rule fails safe -> deny.
+  const throwOff = policy.addRule(() => { throw new Error('boom'); });
+  ok((await policy.approve({ toolId: 'stripe.createCharge', requester: 'tester' })).reason === 'policy_rule_error',
+    'malformed rule denies (fail-safe)');
+  throwOff();
+  policy.reset();
 
   policy.setAllowList(['github.createIssue']);
-  ok((await policy.approve({ toolId: 'github.createIssue', requester: 'tester' })).allowed === true, 'allow-listed tool passes');
-  const notListed = await policy.approve({ toolId: 'slack.postMessage', requester: 'tester' });
-  ok(notListed.allowed === false && notListed.reason === 'tool_not_in_allow_list', 'tool outside allow list rejected');
-  policy.reset();
-
-  policy.denyTool('slack.postMessage');
-  ok((await policy.approve({ toolId: 'slack.postMessage', requester: 'tester' })).reason === 'tool_denied', 'deny list blocks a tool');
-  policy.reset();
-
   policy.allowWorkspaces(['ws-1']);
-  ok((await policy.approve({ toolId: 'github.createIssue', workspaceId: 'ws-1', requester: 'tester' })).allowed === true, 'workspace on allow list passes');
+  ok((await policy.approve({ toolId: 'github.createIssue', workspaceId: 'ws-1', requester: 'tester' })).allowed === true,
+    'workspace on allow list passes');
   const otherWs = await policy.approve({ toolId: 'github.createIssue', workspaceId: 'ws-2', requester: 'tester' });
   ok(otherWs.allowed === false && otherWs.reason === 'workspace_not_allowed', 'workspace isolation rejects foreign workspace');
   const noWs = await policy.approve({ toolId: 'github.createIssue', requester: 'tester' });
   ok(noWs.allowed === false && noWs.reason === 'workspace_required', 'workspace isolation requires a workspace id');
   policy.reset();
+
+  // The client tests below exercise transport/adapter behavior; explicitly
+  // authorize the tools they use (mirroring an operator allow-listing them).
+  policy.setAllowList(['github.createIssue', 'slack.postMessage', 'stripe.createCharge']);
 
   // ------------------------------------------------------------- adapter
   const civic = require('../services/mcp/adapters/civicMixer');
@@ -128,6 +167,21 @@ audit.clearVault();
 
   // --------------------------------------------------------------- client
   const { createClient } = require('../services/mcp/client');
+  // End-to-end guard: with NO policy configuration, a dangerous builtin tool
+  // can never reach an adapter — the raw default is deny.
+  policy.reset();
+  const requestsBeforeDanger = requests.length;
+  const cDangerClient = createClient({
+    enabled: true,
+    registry,
+    policy,
+    adapter: civic.createCivicMixerAdapter({ endpoint: 'https://mixer.test/mcp', transport: okTransport })
+  });
+  const dangerDenied = await cDangerClient.call('docker.runContainer', { image: 'ubuntu' }, { requester: 'unit' });
+  ok(dangerDenied.ok === false && dangerDenied.error === 'denied' && dangerDenied.reason === 'policy_not_configured',
+    'dangerous tool is denied by default through the client');
+  ok(requests.length === requestsBeforeDanger, 'denied tool never reached the transport');
+  policy.setAllowList(['github.createIssue', 'slack.postMessage', 'stripe.createCharge']);
   const client = createClient({
     enabled: true,
     registry,
@@ -157,9 +211,23 @@ audit.clearVault();
   ok((await unconfigured.health()).status === 'not_configured', 'health reports not_configured without endpoint');
   ok((await unconfigured.discover()).tools.length >= 18, 'discover falls back to local catalog without endpoint');
 
+  // ---- Phase 4: execution mode is explicit on every result. A simulated
+  // ok:true must never be indistinguishable from a real run, and callers that
+  // only test ok can now also test execution === 'live'.
+  ok(disabledRes.execution === 'simulated', 'disabled call carries explicit execution=simulated');
+  ok(disabledHealth.execution === 'simulated', 'disabled health carries execution=simulated');
+  ok(disabledDiscover.execution === 'simulated', 'disabled discover carries execution=simulated');
+  ok(unconfRes.execution === 'simulated', 'not-configured call carries execution=simulated');
+  ok(callRes.execution === 'live', 'live successful call carries execution=live');
+  ok(execRes.execution === 'live', 'client.execute live carry execution=live');
+  ok(unknown.execution === 'none', 'unknown tool reports execution=none');
+  ok(dangerDenied.execution === 'none', 'policy-denied tool reports execution=none');
+
   const healthyClient = createClient({ enabled: true, registry, policy, adapter: civic.createCivicMixerAdapter({ endpoint: 'https://mixer.test/mcp', transport: okTransport }) });
   ok((await healthyClient.health()).status === 'ok', 'health returns ok when gateway responds');
+  ok((await healthyClient.health()).execution === 'live', 'healthy health reports execution=live');
   ok((await healthyClient.discover()).tools.length === 2, 'discover returns gateway tool names');
+  ok((await healthyClient.discover()).execution === 'live', 'gateway discover reports execution=live');
   ok(client.listTools({ server: 'github' }).length >= 3, 'client lists discoverable tools');
   ok(client.registerTool({ toolId: 'acme.ping3', server: 'acme', capabilities: [] }).toolId === 'acme.ping3', 'client registers custom tools');
   ok(client.unregisterTool('acme.ping3').removed === true, 'client unregisters custom tools');
@@ -171,7 +239,9 @@ audit.clearVault();
   ok(wsAllowed.ok === true, 'client honors workspace allow list');
   const wsForeign = await client.call('github.createIssue', {}, { requester: 'unit', workspaceId: 'ws-2' });
   ok(wsForeign.ok === false && wsForeign.error === 'denied' && wsForeign.reason === 'workspace_not_allowed', 'client enforces workspace isolation');
+  ok(wsForeign.execution === 'none', 'workspace-denied tool reports execution=none');
   policy.reset();
+  policy.setAllowList(['github.createIssue', 'slack.postMessage']);
 
   // ---------------------------------------------------- adapter selection
   const adapters = require('../services/mcp/adapters');

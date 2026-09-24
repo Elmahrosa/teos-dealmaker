@@ -598,6 +598,16 @@ function createRepos(adapter) {
       }
     },
 
+    // Persistence-backed Dodo webhook idempotency (see 016 migration).
+    billingWebhookEvents: {
+      add(data) {
+        return adapter.insert('billing_webhook_events', data);
+      },
+      getByEventId(eventId) {
+        return adapter.findOne('billing_webhook_events', { event_id: eventId });
+      }
+    },
+
     prospects: {
       create(data) {
         return adapter.insert('prospects', data);

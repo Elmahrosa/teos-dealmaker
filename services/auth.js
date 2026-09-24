@@ -28,6 +28,15 @@ function generateSalt() {
   return crypto.randomBytes(16).toString('hex');
 }
 
+// Errors tagged `expose: true` are validation messages safe to echo to the
+// caller verbatim. Anything else may carry internal details (DB schema, stack
+// traces) and must be masked by the HTTP layer into a generic message.
+function exposedError(message) {
+  const err = new Error(message);
+  err.expose = true;
+  return err;
+}
+
 /**
  * Signup a new user and create their workspace
  * @param {Object} adapter - Database adapter
@@ -38,13 +47,13 @@ async function signup(adapter, userData) {
   const { email, password, companyName, plan = 'solo' } = userData;
 
   if (!email || !password || !companyName) {
-    throw new Error('Email, password, and company name are required');
+    throw exposedError('Email, password, and company name are required');
   }
 
   // Validate plan
   const validPlans = ['solo', 'growth', 'corporate', 'trial'];
   if (!validPlans.includes(plan)) {
-    throw new Error('Invalid plan specified');
+    throw exposedError('Invalid plan specified');
   }
 
   const repos = createRepos(adapter);
@@ -52,7 +61,7 @@ async function signup(adapter, userData) {
   // Check if user already exists
   const existingUser = await repos.users.getByEmail(email);
   if (existingUser) {
-    throw new Error('Unable to complete signup with the provided details');
+    throw exposedError('Unable to complete signup with the provided details');
   }
 
   // Generate salt and hash password

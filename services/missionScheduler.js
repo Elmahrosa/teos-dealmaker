@@ -4,6 +4,7 @@ const { createRepos } = require('../db/repos');
 const customer0 = require('./customer0');
 const revenueOps = require('./revenueOps');
 const audit = require('../utils/auditLogger');
+const emergencyStop = require('../config/emergency');
 
 const MISSION_TYPES = {
   SALES_STRATEGY: 'sales_strategy',
@@ -19,10 +20,15 @@ const MIN_INTERVAL_MS = 30 * 60 * 1000;
 function getConfig() {
   return {
     intervalMs: Math.max(MIN_INTERVAL_MS, Number(process.env.MISSION_SCHEDULER_INTERVAL_MS) || DEFAULT_INTERVAL_MS),
-    enabled: process.env.MISSION_SCHEDULER_ENABLED !== 'false',
+    // All autonomous orchestration is opt-in: a missing, malformed or
+    // unexpected value must never enable automated behavior.
+    enabled: process.env.MISSION_SCHEDULER_ENABLED === 'true',
     maxConcurrent: Number(process.env.MISSION_SCHEDULER_MAX_CONCURRENT) || 3,
     prospectDiscoveryEnabled: process.env.PROSPECT_DISCOVERY_ENABLED !== 'false',
-    autoOutreachEnabled: process.env.AUTO_OUTREACH_ENABLED !== 'false',
+    // Automatic outreach approval is strictly opt-in. Only an exact
+    // AUTO_OUTREACH_ENABLED=true enables it; anything else (missing,
+    // 'false', 'TRUE', '1', 'yes') denies.
+    autoOutreachEnabled: process.env.AUTO_OUTREACH_ENABLED === 'true',
     followUpEnabled: process.env.FOLLOW_UP_ENABLED !== 'false',
     pipelineHealthEnabled: process.env.PIPELINE_HEALTH_ENABLED !== 'false',
     highScoreThreshold: Number(process.env.AUTO_OUTREACH_SCORE_THRESHOLD) || 70,
@@ -139,18 +145,37 @@ async function runProspectDiscovery(adapter, cfg) {
 
 async function runAutoOutreach(adapter, _cfg) {
   const type = MISSION_TYPES.OUTREACH_FOLLOW_UP;
+  // Defense-in-depth, independent of tick(): automatic approval only ever
+  // runs under an explicit, exact AUTO_OUTREACH_ENABLED=true opt-in. A
+  // missing, malformed or unexpected value denies before anything is touched.
+  if (process.env.AUTO_OUTREACH_ENABLED !== 'true') {
+    return { type, status: 'skipped', reason: 'auto_outreach_not_enabled' };
+  }
+  // A founder-engaged emergency stop halts this pipeline too: no approvals
+  // are stamped while the platform is stopped.
+  if (emergencyStop.isEngaged()) {
+    return { type, status: 'skipped', reason: 'emergency_stopped' };
+  }
   try {
     const repos = createRepos(adapter);
-    const pending = await repos.outboundEmails.list({ status: 'pending_approval', limit: 10 });
+    // outboundEmails.list requires (workspace_id, opts) — a bare status query
+    // would silently match nothing. Scan across workspaces and filter here so
+    // the documented PENDING_APPROVAL lifecycle is what actually governs.
+    const all = await repos.outboundEmails.listAll(10000);
+    const pending = all
+      .filter((e) => e.status === 'PENDING_APPROVAL')
+      .slice(0, 10);
 
     if (!pending || !pending.length) {
       return { type, status: 'skipped', reason: 'no_pending_outreach' };
     }
 
     let approved = 0;
+    // decide() expects a { adapter, repos } handle, not a raw adapter.
+    const db = { adapter, pg: null, repos };
     for (const email of pending) {
       try {
-        const result = await customer0.decide(adapter, {
+        const result = await customer0.decide(db, {
           id: email.id,
           decision: 'approve',
           founder: 'mission_scheduler'

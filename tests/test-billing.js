@@ -312,6 +312,51 @@ const crypto = require('crypto');
   await billing.incrementMissionsUsed(adapter, fakeWs.id); // Should not throw
   ok(true, 'incrementMissionsUsed handles missing subscription gracefully');
 
+  // ------------------------------------------ 18. Phase 5: renewed TDZ regression
+  // A webhook with a missing/invalid status previously crashed with
+  // "Cannot access 'sub' before initialization" (referenced before declared).
+  repos.subscriptions.update(sub.id, { status: 'active' });
+  const renewedNoStatus = await billing.handleEvent(adapter, 'subscription.renewed', {
+    customer_id: 'cust_abc123',
+    billing_cycle: 'monthly'
+  });
+  ok(renewedNoStatus.ok === true, 'subscription.renewed with missing status no longer throws (TDZ fixed)');
+  const subKept = repos.subscriptions.get(ws.id);
+  eq(subKept.status, 'active', 'invalid-status renewal keeps the stored subscription status');
+
+  // ------------------------------------------ 19. Phase 5: persistence-backed webhook idempotency
+  const evtId = 'evt_renew_active_001';
+  const first = await billing.handleEvent(adapter, 'subscription.renewed', {
+    customer_id: 'cust_abc123',
+    billing_cycle: 'monthly',
+    status: 'active'
+  }, { eventId: evtId });
+  ok(first.ok === true && first.duplicate === undefined, 'first delivery of a webhook event applies');
+
+  const renewalsBefore = repos.audit.list(ws.id).filter(e => e.action_type === 'SUBSCRIPTION_RENEWED').length;
+  const replay = await billing.handleEvent(adapter, 'subscription.renewed', {
+    customer_id: 'cust_abc123',
+    billing_cycle: 'monthly',
+    status: 'active'
+  }, { eventId: evtId });
+  ok(replay.ok === true && replay.duplicate === true, 'replayed event id is acknowledged as duplicate');
+  const renewalsAfter = repos.audit.list(ws.id).filter(e => e.action_type === 'SUBSCRIPTION_RENEWED').length;
+  eq(renewalsAfter, renewalsBefore, 'replayed event does not re-apply state (no duplicate audit/state change)');
+
+  const processedRow = repos.billingWebhookEvents.getByEventId(evtId);
+  ok(processedRow && processedRow.event_type === 'subscription.renewed', 'processed event persisted to billing_webhook_events');
+  eq(processedRow.workspace_id, ws.id, 'processed marker carries the resolved workspace');
+  ok(await billing.isWebhookProcessed(adapter, evtId) === true, 'isWebhookProcessed reflects the persisted event');
+
+  // ------------------------------------------ 20. Phase 5: only success is marked processed
+  const failEvt = 'evt_fail_001';
+  const failOne = await billing.handleEvent(adapter, 'payment.succeeded', { customer_id: 'cust_no_such' }, { eventId: failEvt });
+  ok(failOne.ok === false && failOne.reason === 'workspace_not_found', 'handler failure returns ok:false');
+  ok(await billing.isWebhookProcessed(adapter, failEvt) === false, 'failed handling is NOT marked processed (provider retries allowed)');
+  const retry = await billing.handleEvent(adapter, 'payment.succeeded', { customer_id: 'cust_no_such' }, { eventId: failEvt });
+  ok(retry.ok === false && retry.reason === 'workspace_not_found' && retry.duplicate === undefined,
+    'a retry of the same event id re-attempts the handler');
+
   console.log(`\n✓ tests/test-billing.js — ${passed} assertions passed`);
   process.exit(0);
 })().catch(err => {

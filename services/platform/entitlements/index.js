@@ -19,7 +19,11 @@ function createEntitlements(repos, opts) {
   const o = opts || {};
   const catalog = o.plans || PLANS;
   const isUnlimited = (value) => value === LIMIT_UNLIMITED;
-  const VALID_SUBSCRIPTION_STATUSES = ['active', 'pending'];
+  // Only 'active' is a licensed subscription status. This mirrors
+  // services/billing isEntitled() so the capability gate can never grant what
+  // the mission-execution gate denies ('pending', 'trialing', 'past_due' or
+  // 'canceled' subscriptions, or a missing subscription row, are not licensed).
+  const VALID_SUBSCRIPTION_STATUSES = ['active'];
 
   async function planFor(workspaceId) {
     const workspace = await repos.workspaces.get(workspaceId);
@@ -32,7 +36,22 @@ function createEntitlements(repos, opts) {
   async function license(workspaceId) {
     const ctx = await planFor(workspaceId);
     if (!ctx) return { ok: false, error: 'tenant_not_found', workspaceId };
-    const subscriptionValid = !ctx.subscription || VALID_SUBSCRIPTION_STATUSES.includes(ctx.subscription.status);
+    // Internal, unlimited plans (founder, enterprise) are entitled without a
+    // subscription. Manual-pilot tenants need a live founder activation, and
+    // every commercial plan requires an ACTIVE subscription row. This aligns
+    // with billing.isEntitled(); previously a workspace with no subscription
+    // row (or a 'pending' subscription) was treated as fully licensed — the
+    // "entitlement mismatch" that let the capability gate grant what the
+    // mission-execution gate denied.
+    let subscriptionValid;
+    if (ctx.planId === 'founder' || ctx.planId === 'enterprise') {
+      subscriptionValid = true;
+    } else if (ctx.planId === 'manual_pilot') {
+      const activation = await repos.manualPilotActivations.getActiveByWorkspace(workspaceId);
+      subscriptionValid = Boolean(activation);
+    } else {
+      subscriptionValid = Boolean(ctx.subscription) && VALID_SUBSCRIPTION_STATUSES.includes(ctx.subscription.status);
+    }
     const valid = subscriptionValid && ctx.workspace.status === 'active';
     return {
       ok: true,

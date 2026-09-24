@@ -23,6 +23,17 @@ async function main() {
   console.log('\n2) Creating DRY checkout...');
   const checkout = await createCheckout(deal, contract);
   console.log(`   Checkout: ${checkout.checkoutId} | ${checkout.url} | dryRun: ${checkout.dryRun}`);
+  if (checkout.dryRun !== true) {
+    console.error('   FAIL: DRY checkout must carry dryRun=true (never a live payment surface)');
+    process.exit(1);
+  }
+  // A non-null DRY url must be the reserved manual-pilot example domain only —
+  // anything else could be a fabricated real payment URL and would be a leak.
+  const dryUrl = checkout.url || '';
+  if (dryUrl !== '' && !/^https:\/\/manual-pilot\.example\.com\//.test(dryUrl)) {
+    console.error(`   FAIL: DRY checkout URL must be inert, got ${dryUrl}`);
+    process.exit(1);
+  }
 
   console.log('\n3) Attempting LIVE checkout (no key)...');
   mode.setMode('LIVE');

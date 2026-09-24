@@ -22,6 +22,17 @@ adapters.setFallback(effectiveAdapter);
 const platform = createPlatform();
 const defaultClient = client.createClient({ registry, policy, adapter: effectiveAdapter, adapters, platform });
 
+function syncPolicyAllowList() {
+  // Deny-by-default: plugin tools are explicitly declared by an enabled
+  // plugin's manifest (and remain subject to the plugin permission + policy
+  // gates). Built-in registry tools are never auto-authorized; an operator
+  // must allow-list them explicitly via setAllowList()/allowTool().
+  for (const plugin of pm.discover()) {
+    if (!plugin.enabled) continue;
+    for (const toolId of plugin.tools || []) policy.allowTool(toolId);
+  }
+}
+
 function syncPluginTools() {
   for (const tool of pm.tools()) {
     if (registry.isKnown(tool.toolId)) continue;
@@ -35,6 +46,7 @@ function syncPluginTools() {
       operations: tool.operations || []
     });
   }
+  syncPolicyAllowList();
   return registry.list().length;
 }
 

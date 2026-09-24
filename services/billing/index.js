@@ -204,7 +204,6 @@ async function handleSubscriptionCreated(adapter, data) {
   // Determine subscription status from webhook data
   const rawStatus = data.status;
 const ALLOWED_STATUSES = ['active', 'trialing', 'past_due', 'canceled', 'incomplete', 'pending', 'unpaid'];
-const allowedActivatingStatuses = ['active', 'renewed'];
 let status = rawStatus;
 if (!rawStatus || !ALLOWED_STATUSES.includes(rawStatus)) {
   console.warn(`[billing] subscription.created: invalid or missing status '${rawStatus}', defaulting to 'pending'`);
@@ -282,15 +281,6 @@ if (!rawStatus || !ALLOWED_STATUSES.includes(rawStatus)) {
 async function handleSubscriptionRenewed(adapter, data) {
   const repos = createRepos(adapter);
   const customerId = data.customer_id || null;
-  // Determine subscription status from webhook data
-  const rawStatus = data.status;
-const ALLOWED_STATUSES = ['active', 'trialing', 'past_due', 'canceled', 'incomplete', 'pending', 'unpaid'];
-const allowedActivatingStatuses = ['active', 'renewed'];
-let status = rawStatus;
-if (!rawStatus || !ALLOWED_STATUSES.includes(rawStatus)) {
-  console.warn(`[billing] subscription.renewed: invalid or missing status '${rawStatus}', keeping previous status`);
-  status = sub ? sub.status : 'pending';
-}
   const cycle = data.billing_cycle || 'monthly';
   const renewalDate = addMonths(today(), cycle === 'annual' ? 12 : 1);
 
@@ -311,7 +301,21 @@ if (!rawStatus || !ALLOWED_STATUSES.includes(rawStatus)) {
     return { ok: true, workspaceId, founderProtected: true };
   }
 
+  // Fetch the stored subscription FIRST. The status fallback below must never
+  // read a variable declared later (the previous code had a temporal dead
+  // zone: it referenced `sub` before this fetch and crashed on any invalid
+  // status from the webhook).
   const sub = await repos.subscriptions.get(workspaceId);
+
+  // Determine subscription status from webhook data; on a missing or invalid
+  // value, keep the stored status rather than fabricating one.
+  const ALLOWED_STATUSES = ['active', 'trialing', 'past_due', 'canceled', 'incomplete', 'pending', 'unpaid'];
+  let status = data.status;
+  if (!status || !ALLOWED_STATUSES.includes(status)) {
+    console.warn(`[billing] subscription.renewed: invalid or missing status '${status}', keeping previous status`);
+    status = sub ? sub.status : 'pending';
+  }
+
   if (sub) {
     await repos.subscriptions.update(sub.id, {
       status,
@@ -595,18 +599,74 @@ const EVENT_HANDLERS = {
   'manual_pilot.activated': (adapter, data) => handleManualPilotActivated(adapter, data)
 };
 
-async function handleEvent(adapter, eventType, data) {
+// Persistence-backed webhook idempotency (replay guard). `processedIds` is an
+// in-process fast path that also closes the check-then-act race when two
+// replays arrive while the first is still being handled. The
+// billing_webhook_events row is the durable record that survives restarts and,
+// in Postgres, the UNIQUE(event_id) constraint makes the dedupe cross-process.
+// Signature verification happens earlier in the HTTP route, before this layer.
+const processedIds = new Set();
+const PROCESSED_ID_CAP = 10000;
+
+async function isWebhookProcessed(adapter, eventId) {
+  if (processedIds.has(eventId)) return true;
+  const repos = createRepos(adapter);
+  const row = await repos.billingWebhookEvents.getByEventId(eventId);
+  if (row) {
+    if (processedIds.size > PROCESSED_ID_CAP) processedIds.clear();
+    processedIds.add(eventId);
+    return true;
+  }
+  return false;
+}
+
+async function markWebhookProcessed(adapter, entry) {
+  if (processedIds.size > PROCESSED_ID_CAP) processedIds.clear();
+  processedIds.add(entry.event_id);
+  const repos = createRepos(adapter);
+  try {
+    return await repos.billingWebhookEvents.add(entry);
+  } catch (_err) {
+    // Postgres UNIQUE(event_id) violation → another process already recorded
+    // this event; treat the mark as a no-op.
+    return null;
+  }
+}
+
+async function handleEvent(adapter, eventType, data, opts) {
+  const o = opts || {};
+  const eventId = o.eventId || (data && (data.event_id || data.id));
+  if (eventId) {
+    const previouslyHandled = await isWebhookProcessed(adapter, eventId);
+    if (previouslyHandled) {
+      return { ok: true, duplicate: true, eventType, eventId };
+    }
+  }
   const handler = EVENT_HANDLERS[eventType];
   if (!handler) {
     console.warn('[billing] unhandled event type:', eventType);
     return { ok: true, skipped: true, reason: 'unhandled_event' };
   }
-  return handler(adapter, data);
+  const result = await handler(adapter, data);
+  // Only a successful handling is recorded as processed, so a handler failure
+  // (HTTP 500 path) still allows the provider to retry and re-apply.
+  if (eventId && result && result.ok === true) {
+    await markWebhookProcessed(adapter, {
+      event_id: eventId,
+      event_type: eventType,
+      workspace_id: result.workspaceId || null,
+      status: 'processed',
+      processed_at: new Date().toISOString()
+    });
+  }
+  return result;
 }
 
 module.exports = {
   verifySignature,
   handleEvent,
+  isWebhookProcessed,
+  markWebhookProcessed,
   getPlanForProduct,
   getMissionLimitForPlan,
   isEntitled,
