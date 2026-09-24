@@ -255,3 +255,44 @@ Findings 8, 10 and 14 are closed (see §10). Production-side items (migration 01
 **Integrity:** `deliverables/NEVER_TOUCH_AUDIT.md` untouched. Changes are committed on
 `security/controlled-remediation-2026-09` (`793c0e5` + residual-closure commit) and pushed to
 `origin`.
+
+## 14. Release gate status — Railway billing hold (updated 2026-09-25)
+
+**Release:** merged to `main` at `0c12899` (fast-forward `811e578..0c12899`), pushed;
+`origin/main` SHA `0c128999b30770801572db89bb3f4de6c5d2840b` (verified via GitHub API).
+No force-push, no history rewrite.
+
+**Gate results:**
+| Gate | Result |
+|---|---|
+| 1 · Migration 016 on live DB | PASSED (operator-verified) |
+| 2 · `TRUST_PROXY` in Railway | PASSED (operator-verified) |
+| 3 · Merge to main | PASSED — `0c12899` on `origin/main` |
+| 4 · Railway deploy of `0c12899` | **BLOCKED — Railway account on billing hold.** Evidence: no `railway-app[bot]` deployment record for `0c12899` exists in the repo deployments API; the last Railway-linked GitHub deployment is `6a48676` from 2026-08-10; the live site (dealmaker.elmahrosa.org) still serves the pre-release revision. |
+| 5 · Health of new revision | not verifiable until Gate 4 clears |
+| 6 · Security smoke tests (live) | not runnable until Gate 4 clears |
+
+**Post-payment runbook (operator, ~5 minutes):**
+1. Settle the Railway account balance.
+2. Railway console → project `df370b33` → service `web` → Settings → GitHub: confirm the
+   repository link is connected; re-connect/re-authorize the GitHub App if needed (last
+   linked deploys were 2026-08-10).
+3. Deployments tab → Deploy → source `main` / commit `0c12899` (or simply push to `main`
+   once the app is re-linked).
+4. Wait for the build and healthcheck (`/api/health`); confirm service `web` is serving
+   `0c12899`.
+5. Confirm the fingerprints below are live, then report back for final verification.
+
+**Deployed-revision fingerprints (what "0c12899 is live" looks like):**
+- `GET /reports`, `GET /customer-0`, `GET /api/reports/latest` unauthenticated → **401/403**
+  (the pre-release code returns 200).
+- `GET /start/thanks?id=<known>` → no submission-content echo (no `Mission brief` recap).
+- `GET /api/health`, `GET /health` → 200.
+- `GET /api/deploy-verify` → 401 without the ops audit key (masked config presence).
+- A fresh `railway-app[bot]` deployment record for `0c12899` appears in the repo deployments
+  API.
+
+**Verification re-run this session (at `0c12899`):** 83/83 tests, 316/316 `node --check`,
+lint green, 15/15 transparency checks — all green.
+
+**Status: NOT LIVE — READY FOR PRODUCTION, BLOCKED AT GATE 4 (Railway billing hold).**
