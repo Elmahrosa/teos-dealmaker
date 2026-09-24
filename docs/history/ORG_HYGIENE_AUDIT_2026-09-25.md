@@ -47,8 +47,18 @@ and the teos-dealmaker root, conducted against the TEOS VAP-Engine Royal Mandate
 - CI on `8127b57`: run #126 **success** (+ treasurer live gate #93 success).
 
 **Org — branch protection applied to all 24 public (non-archived) repos:**
-`strict:true` status checks (only contexts currently green per repo), `enforce_admins`,
+`strict:true` status checks (only contexts currently green per repo), `enforce_admins:false`,
 `required_linear_history`, `allow_force_pushes:false`, `allow_deletions:false`.
+
+> **Correction discovered during execution (free-tier behavior):** with
+> `enforce_admins:true` and required status checks, GitHub's pre-receive hook **rejects
+> admin pushes of fresh commits** (the new commit has no check statuses yet at push time),
+> which would lock the owner's direct-push workflow on every repo. Final config therefore
+> uses `enforce_admins:false`: the owner can push directly (CI runs after the push), while
+> required checks still gate PR merges and non-admin pushes. Verified empirically on
+> `teos-dealmaker` (push succeeded under `enforce_admins:false`, rejected under `true`).
+> If binding admin pushes is ever desired, switch to `enforce_admins:true` and adopt a
+> PR-based flow — documented trade-off, not silently forced.
 Protected `main` (and `master` where default): `.github` · `Ask-Teos-AI` · `EGDFESTIVAL` ·
 `EGDMENA` · `Elmahrosa-Sovereign-AI-Academy` · `Elmahrosa.github.io` · `UnityCare-Platform` ·
 `audit-hub` · `elmahrosa-ai-app-store-builder` · `elmahrosa-official-website` ·
@@ -61,8 +71,8 @@ Protected `main` (and `master` where default): `.github` · `Ask-Teos-AI` · `EG
 enabled`) on all 24 repos above.
 
 **Verification of flagship config (`teos-dealmaker`):** `required_linear_history:true`,
-`allow_force_pushes:false`, `allow_deletions:false`, `enforce_admins:true`, `strict:true`,
-4 required check contexts — all currently green.
+`allow_force_pushes:false`, `allow_deletions:false`, `enforce_admins:false`, `strict:true`,
+4 required check contexts — all currently green; owner push post-protection verified OK.
 
 ## Standing release-gate status (unchanged)
 - Code: **APPROVE** — all gates green at `main` (release `0c12899` + this hygiene commit).
