@@ -3,7 +3,7 @@
 **Date:** 2026-09-25 · **Repo:** teos-dealmaker · **Org:** Elmahrosa International
 
 ## Context
-Senior-dev deep audit of the Elmahrosa GitHub org (87 repos; 43 active / 44 archived)
+Senior-dev deep audit of the Elmahrosa GitHub org (87 total repositories; 43 active / 44 archived)
 and the teos-dealmaker root, conducted against the TEOS VAP-Engine Royal Mandates
 (hard rules: gatekeeper, honest status, security-first, token thrift).
 
