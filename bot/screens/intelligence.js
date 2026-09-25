@@ -116,16 +116,19 @@ function buildKnowledgeAskPrompt() {
 }
 
 function buildAskResult(userId, question, result) {
+  // Everything below is delivered with parse_mode:'HTML'. The question is raw
+  // user input, the answer and excerpts are model/corpus output, so all of it
+  // is escaped at this render boundary. The markup is ours; theirs is data.
   const answerLines = result.answer
-    ? result.answer.split('\n')
+    ? result.answer.split('\n').map(design.esc)
     : [design.it('I could not find an answer in your intelligence layer yet. Add documents about this topic, then ask again.')];
   const evidenceLines = result.evidence.slice(0, 3).map(e =>
-    `${design.code(e.label)} ${design.b(e.title)} · score ${e.score}\n${design.it(e.excerpt.length > 90 ? e.excerpt.slice(0, 90) + '…' : e.excerpt)}`
+    `${design.code(design.esc(e.label))} ${design.b(design.esc(e.title))} · score ${design.esc(e.score)}\n${design.it(design.esc(e.excerpt.length > 90 ? e.excerpt.slice(0, 90) + '…' : e.excerpt))}`
   );
   const lines = [
     `${design.EMOJI.ai} ${design.b('Company Intelligence Answer')}`,
-    design.it('Question: ' + question),
-    design.it('Intent: ' + result.intent.label + (result.provider ? ` · ${result.provider_label || result.provider} ${result.model}` : ' · offline evidence')),
+    design.it('Question: ' + design.esc(question)),
+    design.it('Intent: ' + design.esc(result.intent.label) + (result.provider ? ` · ${design.esc(result.provider_label || result.provider)} ${design.esc(result.model)}` : ' · offline evidence')),
     design.divider(),
     ...answerLines,
     design.section('EVIDENCE'),

@@ -14,6 +14,8 @@ const { autoStartFounderMission } = require('../services/founderMission');
 const notify = require('../services/notify');
 const learningHook = require('../services/learningHook');
 const { install: installReliability } = require('../utils/reliability');
+const { esc } = require('./design');
+const { sendHtml } = require('./screens/lib');
 
 // Fail fast on a misconfigured production deployment before the bot boots.
 // bot/config.js already loaded .env above. Throws on missing required keys
@@ -21,10 +23,6 @@ const { install: installReliability } = require('../utils/reliability');
 require('../config/env').assertEnv();
 
 installReliability('bot');
-
-function escapeHtml(text) {
-  return String(text).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
-}
 
 const bot = new TelegramBot(BOT_CONFIG.token, { polling: false });
 
@@ -113,10 +111,13 @@ bot.on('message', async (msg) => {
         update(userId, { disclosureShown: true });
       }
 
-      await bot.sendMessage(result.chatId, result.text, sendOpts);
+      // Sends as HTML, but falls back to plain text if Telegram rejects the
+      // markup, so a rendering fault never swallows the actual reply.
+      const { fellBack } = await sendHtml(bot, result.chatId, result.text, sendOpts);
       audit.writeEntry('BOT_SEND', String(msg.chat.id), 'success', {
         durationMs: Date.now() - start,
-        mode: getMode()
+        mode: getMode(),
+        plainTextFallback: fellBack
       });
     }
   } catch (err) {
@@ -138,7 +139,7 @@ bot.on('callback_query', async (query) => {
   } catch (err) {
     console.error('[bot] callback error:', err.message);
     try {
-      await bot.editMessageText('🔴 <b>Action failed</b>\n\n' + escapeHtml(err.message), {
+      await bot.editMessageText('🔴 <b>Action failed</b>\n\n' + esc(err.message), {
         chat_id: query.message.chat.id,
         message_id: query.message.message_id,
         parse_mode: 'HTML'
@@ -147,7 +148,7 @@ bot.on('callback_query', async (query) => {
       // If the original message can't be edited (deleted / too old), surface
       // the failure as a fresh message instead of doing nothing.
       try {
-        await bot.sendMessage(query.message.chat.id, '🔴 <b>Action failed</b>\n\n' + escapeHtml(err.message), {
+        await bot.sendMessage(query.message.chat.id, '🔴 <b>Action failed</b>\n\n' + esc(err.message), {
           parse_mode: 'HTML'
         });
       } catch (_) { /* ignore */ }

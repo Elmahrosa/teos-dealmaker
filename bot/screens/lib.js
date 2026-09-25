@@ -30,6 +30,42 @@ function isNotModified(err) {
   return /message is not modified/i.test(msg);
 }
 
+// Telegram rejects the entire message when any part of the HTML is malformed.
+// Screens escape their dynamic text, but the model answer and the document
+// corpus are large enough that one missed case must not cost the user the whole
+// reply: resend once as plain text and report that it happened.
+function isParseError(err) {
+  const msg = String((err && err.message) || err || '');
+  return /can't parse entities|unsupported start tag|can't find end tag|entity parse/i.test(msg);
+}
+
+// Strip the markup design.js emits and undo esc() so the fallback reads as
+// plain text instead of showing the user a wall of <b> tags.
+function toPlainText(text) {
+  return String(text)
+    .replace(/<\/?(?:b|i|code)(?:\s[^>]*)?>/gi, '')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}
+
+async function sendHtml(bot, chatId, text, opts = {}) {
+  const rest = { ...opts };
+  delete rest.parse_mode;
+  try {
+    await bot.sendMessage(chatId, text, { ...rest, parse_mode: 'HTML' });
+    return { fellBack: false };
+  } catch (err) {
+    if (!isParseError(err)) throw err;
+    console.warn('[sendHtml] Telegram rejected the HTML, resending as plain text:', (err && err.message) || err);
+    // No parse_mode in the retry, so the real content still reaches the user
+    // instead of collapsing into a generic error. The keyboard is markup and
+    // is preserved as-is.
+    await bot.sendMessage(chatId, toPlainText(text), rest);
+    return { fellBack: true };
+  }
+}
+
 async function editPanel(bot, query, screen) {
   const chatId = query.message.chat.id;
   const messageId = query.message.message_id;
@@ -128,6 +164,9 @@ module.exports = {
   denied,
   editPanel,
   isNotModified,
+  isParseError,
+  toPlainText,
+  sendHtml,
   learnScreen,
   lastEntry,
   titleCase,

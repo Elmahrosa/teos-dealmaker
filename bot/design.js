@@ -22,6 +22,14 @@ const LINE = '─';
 const BAR_FILL = '█';
 const BAR_EMPTY = '░';
 
+// Escape untrusted text for interpolation into an HTML-parsed Telegram message.
+// Single pass on [&<>&] so already-escaped entities are never double-escaped.
+// The tags emitted by b()/it()/code() are ours; everything else is data.
+function esc(text) {
+  if (text === null || text === undefined) return '';
+  return String(text).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+}
+
 function b(text) {
   return `<b>${text}</b>`;
 }
@@ -116,6 +124,7 @@ function compose(blocks) {
 module.exports = {
   EMOJI,
   STATUS_LABEL,
+  esc,
   b,
   it,
   code,
