@@ -1,4 +1,5 @@
 const design = require('../design');
+const i18n = require('../i18n');
 const audit = require('../../utils/auditLogger');
 const { getStoreAdapter } = require('../store');
 const learning = require('../../services/learning');
@@ -9,52 +10,66 @@ const missionState = require('../missionState');
 const { isFounder } = require('../access');
 const { getCtx } = require('./lib');
 
-const MISSION_FORM_STEPS = [
-  { key: 'name', label: 'Mission Name', hint: 'Give the mission a short name, e.g. Sell TEOS DealMaker' },
-  { key: 'goal', label: 'Mission Goal', hint: 'What should the revenue team achieve? Be specific.' },
-  { key: 'customer', label: 'Target Customer', hint: 'Who is the target customer? e.g. Elmahrosa International' },
-  { key: 'market', label: 'Target Market', hint: 'Which market? e.g. AI Security' },
-  { key: 'priority', label: 'Priority', hint: 'normal, high or urgent' },
-  { key: 'revenue', label: 'Expected Revenue', hint: 'Expected revenue, e.g. $50,000' },
-  { key: 'deadline', label: 'Deadline', hint: 'Deadline, e.g. 24 hours or 2026-08-15' },
-  { key: 'notes', label: 'Notes', hint: 'Any extra notes for the revenue team' }
+// Form step definitions carry i18n keys, not literal copy, so the label and
+// hint can be resolved per-user at render time (labels are user-visible).
+const MISSION_FORM_STEP_DEFS = [
+  { key: 'name', labelKey: 'ms_f_name', hintKey: 'ms_f_name_h' },
+  { key: 'goal', labelKey: 'ms_f_goal', hintKey: 'ms_f_goal_h' },
+  { key: 'customer', labelKey: 'ms_f_customer', hintKey: 'ms_f_customer_h' },
+  { key: 'market', labelKey: 'ms_f_market', hintKey: 'ms_f_market_h' },
+  { key: 'priority', labelKey: 'ms_f_priority', hintKey: 'ms_f_priority_h' },
+  { key: 'revenue', labelKey: 'ms_f_revenue', hintKey: 'ms_f_revenue_h' },
+  { key: 'deadline', labelKey: 'ms_f_deadline', hintKey: 'ms_f_deadline_h' },
+  { key: 'notes', labelKey: 'ms_f_notes', hintKey: 'ms_f_notes_h' }
 ];
 
-function cancelKeyboard() {
-  return design.keyboard([[design.textButton('Cancel', 'cc_mission_form_cancel')]]);
+function missionFormSteps(userId) {
+  return MISSION_FORM_STEP_DEFS.map(s => ({
+    key: s.key,
+    label: i18n.t(userId, s.labelKey),
+    hint: i18n.t(userId, s.hintKey)
+  }));
+}
+
+function cancelKeyboard(userId) {
+  return design.keyboard([[design.textButton(i18n.t(userId, 'ms_btn_cancel'), 'cc_mission_form_cancel')]]);
 }
 
 async function buildMissionCreatePrompt(userId) {
+  const t = key => i18n.t(userId, key);
   const payload = missionState.payload(userId) || {};
   const mission = payload.mission || {};
-  const stepIndex = payload.step ? MISSION_FORM_STEPS.findIndex(s => s.key === payload.step) : 0;
-  const step = stepIndex >= 0 ? MISSION_FORM_STEPS[stepIndex] : null;
+  const steps = missionFormSteps(userId);
+  const stepIndex = payload.step ? steps.findIndex(s => s.key === payload.step) : 0;
+  const step = stepIndex >= 0 ? steps[stepIndex] : null;
   if (!step) return buildMissions(userId);
-  const summary = MISSION_FORM_STEPS
+  const summary = steps
     .filter(s => mission[s.key])
-    .map(s => design.it(`${s.label}: ${mission[s.key]}`));
+    .map(s => design.it(i18n.sprintf(t('ms_form_entry'), s.label, mission[s.key])));
   return {
     text: design.compose([
-      `${design.EMOJI.ai} ${design.b('Create Mission')}`,
-      design.it('Answer the prompts — the Revenue Strategist runs the full governed workflow and halts for your approval before anything ships.'),
+      `${design.EMOJI.ai} ${design.b(t('ms_btn_create'))}`,
+      design.it(t('ms_body_create')),
       design.divider(),
-      design.section(`${stepIndex + 1} of ${MISSION_FORM_STEPS.length} · ${step.label}`),
+      design.section(i18n.sprintf(t('ms_form_progress'), stepIndex + 1, steps.length, step.label)),
       design.it(step.hint),
-      ...(summary.length ? [design.section('SO FAR'), ...summary] : []),
+      ...(summary.length ? [design.section(t('ms_sec_so_far')), ...summary] : []),
       design.divider()
     ]),
-    keyboard: cancelKeyboard()
+    keyboard: cancelKeyboard(userId)
   };
 }
 
 async function handleMissionCreateText(chatId, userId, text) {
+  const t = key => i18n.t(userId, key);
   const payload = missionState.payload(userId) || {};
   const mission = payload.mission || {};
-  const stepIndex = payload.step ? MISSION_FORM_STEPS.findIndex(s => s.key === payload.step) : 0;
-  const step = stepIndex >= 0 ? MISSION_FORM_STEPS[stepIndex] : null;
+  const steps = missionFormSteps(userId);
+  const stepIndex = payload.step ? steps.findIndex(s => s.key === payload.step) : 0;
+  const step = stepIndex >= 0 ? steps[stepIndex] : null;
   if (!step) {
     missionState.clear(userId);
-    return { chatId, text: design.it('Mission form is out of sync — start over.'), replyMarkup: cancelKeyboard() };
+    return { chatId, text: design.it(t('ms_body_sync_err')), replyMarkup: cancelKeyboard(userId) };
   }
 
   const value = String(text || '').trim();
@@ -64,9 +79,9 @@ async function handleMissionCreateText(chatId, userId, text) {
       return {
         chatId,
         text: design.compose([
-          design.it('Priority must be <b>normal</b>, <b>high</b> or <b>urgent</b>. Try again.')
+          design.it(t('ms_body_priority_err'))
         ]),
-        replyMarkup: cancelKeyboard()
+        replyMarkup: cancelKeyboard(userId)
       };
     }
     mission[step.key] = normalized;
@@ -75,14 +90,17 @@ async function handleMissionCreateText(chatId, userId, text) {
   }
 
   const nextIndex = stepIndex + 1;
-  if (nextIndex >= MISSION_FORM_STEPS.length) {
+  if (nextIndex >= steps.length) {
     missionState.clear(userId);
     const adapter = getStoreAdapter();
     const user = await identity.getUserByTelegram(adapter, userId);
     const workspace = user ? await identity.getWorkspaceForUser(adapter, user.id) : null;
     if (!workspace) {
-      return { chatId, text: 'No workspace found. Run /start to provision one.' };
+      return { chatId, text: t('ms_body_no_workspace') };
     }
+    // Agent-facing goal text is deliberately NOT localized: it is model input,
+    // not UI copy, and the runtime prompts are English. Translating it would
+    // change agent behaviour rather than presentation.
     const goalText = [
       `Mission: ${mission.name}`,
       mission.goal,
@@ -93,7 +111,7 @@ async function handleMissionCreateText(chatId, userId, text) {
       mission.notes ? `Notes: ${mission.notes}` : null
     ].filter(Boolean).join('\n');
     const result = await runtime.runGoal(adapter, workspace.id, goalText, {
-      title: mission.name || 'New Mission',
+      title: mission.name || t('ms_title_new'),
       priority: mission.priority || 'high',
       intent: 'deal'
     });
@@ -122,7 +140,7 @@ async function handleMissionCreateText(chatId, userId, text) {
     return { chatId, text: sc.text, replyMarkup: sc.keyboard };
   }
 
-  missionState.begin(userId, { mode: 'mission_create', step: MISSION_FORM_STEPS[nextIndex].key, mission });
+  missionState.begin(userId, { mode: 'mission_create', step: steps[nextIndex].key, mission });
   const sc = await buildMissionCreatePrompt(userId);
   return { chatId, text: sc.text, replyMarkup: sc.keyboard };
 }
@@ -133,16 +151,17 @@ function extractRevenue(output) {
 }
 
 async function buildMissionDashboard(userId) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.target} ${design.b('Mission Dashboard')}`,
-        design.it('Provision a workspace to view the dashboard.'),
+        `${design.EMOJI.target} ${design.b(t('ms_btn_dashboard'))}`,
+        design.it(t('ms_body_dash_noctx')),
         design.divider()
       ]),
       keyboard: design.keyboard([
-        [design.textButton('Back to Home', 'cc_home')]
+        [design.textButton(t('ms_btn_home'), 'cc_home')]
       ])
     };
   }
@@ -184,62 +203,63 @@ async function buildMissionDashboard(userId) {
   const awaiting = missions.find(m => m.status === 'waiting_approval');
   const nextMission = missions.find(m => !['completed', 'failed', 'cancelled'].includes(m.status));
   const recommendation = awaiting
-    ? `Approve "${awaiting.title}" — it is paused waiting for you.`
+    ? i18n.sprintf(t('ms_rec_approve'), awaiting.title)
     : nextMission && nextMission.next_action
-      ? `${nextMission.title} · next: ${nextMission.next_agent} — ${String(nextMission.next_action).slice(0, 100)}`
+      ? i18n.sprintf(t('ms_rec_next'), nextMission.title, nextMission.next_agent, String(nextMission.next_action).slice(0, 100))
       : missions.length
-        ? 'All missions settled — create a new mission to keep the pipeline moving.'
-        : 'Create your first mission to start the revenue workflow.';
+        ? t('ms_rec_all_done')
+        : t('ms_rec_none');
 
   const text = design.compose([
-    `${design.EMOJI.target} ${design.b('Mission Dashboard')}`,
-    design.it('Founder view — every mission, pipeline and approval in one place.'),
+    `${design.EMOJI.target} ${design.b(t('ms_btn_dashboard'))}`,
+    design.it(t('ms_body_dash')),
     design.divider(),
-    design.section('MISSIONS'),
-    design.row('Total', String(missions.length)),
-    design.row('In flight', String(active.length)),
-    design.row('Completed', String(missions.filter(m => m.status === 'completed').length)),
-    design.row('Awaiting approval', String(missions.filter(m => m.status === 'waiting_approval').length)),
-    design.row('Avg progress', avgProgress + '%'),
-    design.section('REVENUE WORKFLOW'),
-    design.row('Leads found', String(leads)),
-    design.row('Qualified', String(qualified)),
-    design.row('Conversion rate', conversion + '%'),
-    design.row('Emails drafted', String(emails)),
-    design.row('LinkedIn messages', String(messages)),
-    design.row('Proposals drafted', String(proposals)),
-    design.row('Meetings planned', String(meetings)),
-    design.row('Follow-ups designed', String(followups)),
-    design.row('Revenue forecast', String(revenueForecast)),
-    design.section('WORKFORCE'),
-    agentUtil.length ? design.list(agentUtil.slice(0, 8)) : design.it('No agent activity yet.'),
-    design.section('HEALTH'),
-    design.row('Failed steps', String(failed.length)),
-    design.row('Audit entries', String(auditCount)),
-    design.section('RECOMMENDATION'),
+    design.section(t('ms_sec_missions')),
+    design.row(t('ms_row_total'), String(missions.length)),
+    design.row(t('ms_row_inflight'), String(active.length)),
+    design.row(t('ms_row_completed'), String(missions.filter(m => m.status === 'completed').length)),
+    design.row(t('ms_row_awaiting'), String(missions.filter(m => m.status === 'waiting_approval').length)),
+    design.row(t('ms_row_avgprog'), avgProgress + '%'),
+    design.section(t('ms_sec_revenue')),
+    design.row(t('ms_row_leads'), String(leads)),
+    design.row(t('ms_row_qualified'), String(qualified)),
+    design.row(t('ms_row_conversion'), conversion + '%'),
+    design.row(t('ms_row_emails'), String(emails)),
+    design.row(t('ms_row_linkedin'), String(messages)),
+    design.row(t('ms_row_proposals'), String(proposals)),
+    design.row(t('ms_row_meetings'), String(meetings)),
+    design.row(t('ms_row_followups'), String(followups)),
+    design.row(t('ms_row_forecast'), String(revenueForecast)),
+    design.section(t('ms_sec_workforce')),
+    agentUtil.length ? design.list(agentUtil.slice(0, 8)) : design.it(t('ms_body_no_activity')),
+    design.section(t('ms_sec_health')),
+    design.row(t('ms_row_failed_steps'), String(failed.length)),
+    design.row(t('ms_row_audit'), String(auditCount)),
+    design.section(t('ms_sec_recommendation')),
     design.it(recommendation),
     design.divider()
   ]);
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('Create Mission', 'cc_mission_create'), design.textButton('Approvals', 'cc_approvals')],
-      [design.textButton('Missions', 'cc_missions'), design.textButton('Back to Home', 'cc_home')]
+      [design.textButton(t('ms_btn_create'), 'cc_mission_create'), design.textButton(t('ms_btn_approvals'), 'cc_approvals')],
+      [design.textButton(t('ms_btn_missions'), 'cc_missions'), design.textButton(t('ms_btn_home'), 'cc_home')]
     ])
   };
 }
 
 async function buildMissions(userId) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Mission Center')}`,
-        design.it('Set up a workspace to run missions.'),
+        `${design.EMOJI.ai} ${design.b(t('ms_title_center'))}`,
+        design.it(t('ms_body_center_noctx')),
         design.divider()
       ]),
       keyboard: design.keyboard([
-        [design.textButton('Back to Home', 'cc_home')]
+        [design.textButton(t('ms_btn_home'), 'cc_home')]
       ])
     };
   }
@@ -248,30 +268,30 @@ async function buildMissions(userId) {
   const missions = await runtime.listMissions(adapter, ctx.workspace.id);
   const missionLines = missions.length
     ? missions.slice(0, 8).map(m => {
-      const status = m.status === 'waiting_approval' ? '🟡 awaiting your approval' : m.status === 'completed' ? '🟢 completed' : m.status === 'failed' ? '🔴 failed' : m.status === 'budget_exceeded' ? '🔴 budget exceeded' : '🟡 in flight';
-      return `${design.b(m.title)}\n${design.it(status + ' · ' + m.progress + '% · ' + m.completed_steps + '/' + m.total_steps + ' steps')}`;
+      const status = m.status === 'waiting_approval' ? t('ms_st_awaiting') : m.status === 'completed' ? t('ms_st_completed') : m.status === 'failed' ? t('ms_st_failed') : m.status === 'budget_exceeded' ? t('ms_st_budget') : t('ms_st_inflight');
+      return `${design.b(m.title)}\n${design.it(status + i18n.sprintf(t('ms_steps_suffix'), m.progress, m.completed_steps, m.total_steps))}`;
     })
-    : [design.it('No missions yet — start Mission 1 below.')];
+    : [design.it(t('ms_body_no_missions'))];
   const rows = [];
   if (progress.complete || isFounder(userId)) {
-    rows.push([design.textButton('Mission 1 · Sell TEOS Dealmaker', 'cc_mission1'), design.textButton('Mission 2 · Revenue Pipeline', 'cc_mission2')]);
-    rows.push([design.textButton('New Custom Mission', 'cc_mission_goal')]);
+    rows.push([design.textButton(t('ms_btn_m1'), 'cc_mission1'), design.textButton(t('ms_btn_m2'), 'cc_mission2')]);
+    rows.push([design.textButton(t('ms_btn_custom'), 'cc_mission_goal')]);
   } else {
-    rows.push([design.textButton('Complete Mission 0 · Learn First', 'cc_learn')]);
+    rows.push([design.textButton(t('ms_btn_m0'), 'cc_learn')]);
   }
   if (missions.length) {
     const missionRows = missions.slice(0, 8).map(m => [design.textButton(`#${m.id} ${m.title.slice(0, 22)}`, `cc_mission:${m.id}`)]);
     rows.push(...missionRows);
   }
   if (isFounder(userId)) {
-    rows.push([design.textButton('📊 Mission Dashboard', 'cc_mission_dashboard'), design.textButton('➕ Create Mission', 'cc_mission_create')]);
+    rows.push([design.textButton('📊 ' + t('ms_btn_dashboard'), 'cc_mission_dashboard'), design.textButton('➕ ' + t('ms_btn_create'), 'cc_mission_create')]);
   }
-  rows.push([design.textButton('Approvals', 'cc_approvals'), design.textButton('Back to Home', 'cc_home')]);
+  rows.push([design.textButton(t('ms_btn_approvals'), 'cc_approvals'), design.textButton(t('ms_btn_home'), 'cc_home')]);
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Mission Center')}`,
-    design.it('Every mission starts with the Revenue Strategist: it decides if the mission makes sense, picks the specialists, sets success criteria and a budget, and asks for human approval before anything ships.'),
+    `${design.EMOJI.ai} ${design.b(t('ms_title_center'))}`,
+    design.it(t('ms_body_center')),
     design.divider(),
-    design.section('YOUR MISSIONS'),
+    design.section(t('ms_sec_your_missions')),
     ...missionLines,
     design.divider()
   ]);
@@ -279,12 +299,13 @@ async function buildMissions(userId) {
 }
 
 async function buildMissionDetail(userId, planId) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
-  if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  if (!ctx) return { text: design.errorPanel(t('ms_err_no_workspace'), t('ms_err_provision_first')).text, keyboard: null };
   const adapter = getStoreAdapter();
   const repos = require('../../db/repos').createRepos(adapter);
   const plan = await repos.plans.get(ctx.workspace.id, Number(planId));
-  if (!plan) return { text: design.errorPanel('Mission not found', String(planId)).text, keyboard: null };
+  if (!plan) return { text: design.errorPanel(t('ms_err_not_found'), String(planId)).text, keyboard: null };
   const steps = await repos.planSteps.list(ctx.workspace.id, Number(planId));
   const stepLines = steps.map(s => {
     const tone = s.status === 'completed' ? '🟢' : s.status === 'awaiting_approval' ? '🟡' : s.status === 'failed' ? '🔴' : s.status === 'skipped' ? '⚪' : '▽';
@@ -292,44 +313,45 @@ async function buildMissionDetail(userId, planId) {
     return `${tone} ${design.b(s.agent_type)} · ${s.step_key}${out}`;
   });
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Mission #' + plan.id + ' · ' + plan.title)}`,
+    `${design.EMOJI.ai} ${design.b(i18n.sprintf(t('ms_title_mission'), plan.id, plan.title))}`,
     design.it(plan.goal),
     design.divider(),
-    design.row('Status', design.badge(plan.status === 'completed' ? 'success' : plan.status === 'waiting_approval' ? 'warning' : 'info')),
-    design.row('Priority', String(plan.priority || 'normal')),
-    design.row('Cost', `$${(((plan.metrics && plan.metrics.total_cost_cents) || 0) / 100).toFixed(2)}`),
-    design.section('STEPS'),
+    design.row(t('ms_row_status'), design.badge(plan.status === 'completed' ? 'success' : plan.status === 'waiting_approval' ? 'warning' : 'info')),
+    design.row(t('ms_row_priority'), String(plan.priority || 'normal')),
+    design.row(t('ms_row_cost'), `$${(((plan.metrics && plan.metrics.total_cost_cents) || 0) / 100).toFixed(2)}`),
+    design.section(t('ms_sec_steps')),
     ...stepLines,
     design.divider()
   ]);
   const rows = [];
-  if (plan.status === 'waiting_approval') rows.push([design.textButton('Review Approval', 'cc_approvals')]);
+  if (plan.status === 'waiting_approval') rows.push([design.textButton(t('ms_btn_review'), 'cc_approvals')]);
   if (plan.status === 'running' || plan.status === 'planned') {
     const completedSteps = steps.filter(s => s.status === 'completed').length;
     if (completedSteps === 0) {
-      rows.push([design.textButton('▶ Start Mission', `cc_mission_run:${plan.id}`)]);
+      rows.push([design.textButton('▶ ' + t('ms_btn_start'), `cc_mission_run:${plan.id}`)]);
     }
   }
   if (plan.status === 'running' || plan.status === 'planned' || plan.status === 'paused') {
     rows.push([
-      design.textButton(plan.status === 'paused' ? 'Resume' : 'Pause', `cc_mission_${plan.status === 'paused' ? 'resume' : 'pause'}:${plan.id}`)
+      design.textButton(plan.status === 'paused' ? t('ms_btn_resume') : t('ms_btn_pause'), `cc_mission_${plan.status === 'paused' ? 'resume' : 'pause'}:${plan.id}`)
     ]);
   }
   rows.push([
-    design.textButton('Executive Report', `cc_mission_report:${plan.id}`),
-    design.textButton('Mission KPIs', `cc_mission_kpis:${plan.id}`)
+    design.textButton(t('ms_btn_exec'), `cc_mission_report:${plan.id}`),
+    design.textButton(t('ms_btn_kpis'), `cc_mission_kpis:${plan.id}`)
   ]);
-  rows.push([design.textButton('Missions', 'cc_missions'), design.textButton('Back to Home', 'cc_home')]);
+  rows.push([design.textButton(t('ms_btn_missions'), 'cc_missions'), design.textButton(t('ms_btn_home'), 'cc_home')]);
   return { text, keyboard: design.keyboard(rows) };
 }
 
 async function buildMissionReport(userId, planId) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
-  if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  if (!ctx) return { text: design.errorPanel(t('ms_err_no_workspace'), t('ms_err_provision_first')).text, keyboard: null };
   const adapter = getStoreAdapter();
   const missionReportSvc = require('../../services/missionReport');
   const report = await missionReportSvc.missionReport(adapter, ctx.workspace.id, Number(planId));
-  if (!report) return { text: design.errorPanel('Mission not found', String(planId)).text, keyboard: null };
+  if (!report) return { text: design.errorPanel(t('ms_err_not_found'), String(planId)).text, keyboard: null };
   const { plan, timeline, kpis, agents } = report;
   const money = cents => `$${(((cents || 0)) / 100).toFixed(2)}`;
   const timelineLines = timeline.length
@@ -338,90 +360,92 @@ async function buildMissionReport(userId, planId) {
       const when = (s.completed_at || s.started_at || '').slice(11, 16) || '';
       return `${tone} ${design.code(when || '—')} ${design.b(s.agent_type)} · ${s.step_key}${s.output ? '\n' + design.it(s.output.slice(0, 90)) : ''}`;
     })
-    : [design.it('No steps executed yet.')];
-  const agentLines = agents.map(a => `· ${a.agent_type}: ${a.completed}/${a.total} steps (${a.utilization}%)`);
+    : [design.it(t('ms_body_no_steps'))];
+  const agentLines = agents.map(a => i18n.sprintf(t('ms_agent_util'), a.agent_type, a.completed, a.total, a.utilization));
   const text = design.compose([
-    `${design.EMOJI.target} ${design.b('Executive Mission Report')}`,
-    design.it(`Mission #${plan.id} · ${plan.title}`),
+    `${design.EMOJI.target} ${design.b(t('ms_title_exec'))}`,
+    design.it(i18n.sprintf(t('ms_mission_ref'), plan.id, plan.title)),
     design.divider(),
-    design.section('OBJECTIVE'),
+    design.section(t('ms_sec_objective')),
     design.it(plan.goal),
-    design.section('STATUS'),
-    design.row('State', design.badge(plan.status === 'completed' ? 'success' : plan.status === 'waiting_approval' ? 'warning' : 'info')),
-    design.row('Completion', `${kpis.completed_steps}/${kpis.total_steps} (${kpis.completion_rate}%)`),
-    design.row('Success rate', kpis.success_rate + '%'),
-    design.row('Cost', money(kpis.total_cost_cents)),
-    design.row('Duration', kpis.duration_ms === null ? '—' : (kpis.duration_ms / 1000).toFixed(1) + 's'),
-    ...(kpis.revenue_cents !== null ? [design.row('Revenue identified', money(kpis.revenue_cents))] : []),
-    design.section('EXECUTIVE MISSION TIMELINE'),
+    design.section(t('ms_sec_status')),
+    design.row(t('ms_row_state'), design.badge(plan.status === 'completed' ? 'success' : plan.status === 'waiting_approval' ? 'warning' : 'info')),
+    design.row(t('ms_row_completion'), `${kpis.completed_steps}/${kpis.total_steps} (${kpis.completion_rate}%)`),
+    design.row(t('ms_row_success'), kpis.success_rate + '%'),
+    design.row(t('ms_row_cost'), money(kpis.total_cost_cents)),
+    design.row(t('ms_row_duration'), kpis.duration_ms === null ? '—' : (kpis.duration_ms / 1000).toFixed(1) + 's'),
+    ...(kpis.revenue_cents !== null ? [design.row(t('ms_row_rev_identified'), money(kpis.revenue_cents))] : []),
+    design.section(t('ms_sec_timeline')),
     ...timelineLines,
-    design.section('WORKFORCE'),
-    ...(agentLines.length ? agentLines : [design.it('No agent activity yet.')]),
+    design.section(t('ms_sec_workforce')),
+    ...(agentLines.length ? agentLines : [design.it(t('ms_body_no_activity'))]),
     design.divider()
   ]);
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('Mission KPIs', `cc_mission_kpis:${plan.id}`), design.textButton('Mission Detail', `cc_mission:${plan.id}`)],
-      [design.textButton('Missions', 'cc_missions'), design.textButton('Back to Home', 'cc_home')]
+      [design.textButton(t('ms_btn_kpis'), `cc_mission_kpis:${plan.id}`), design.textButton(t('ms_btn_detail'), `cc_mission:${plan.id}`)],
+      [design.textButton(t('ms_btn_missions'), 'cc_missions'), design.textButton(t('ms_btn_home'), 'cc_home')]
     ])
   };
 }
 
 async function buildMissionKPIs(userId, planId) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
-  if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  if (!ctx) return { text: design.errorPanel(t('ms_err_no_workspace'), t('ms_err_provision_first')).text, keyboard: null };
   const adapter = getStoreAdapter();
   const missionReportSvc = require('../../services/missionReport');
   const report = await missionReportSvc.missionReport(adapter, ctx.workspace.id, Number(planId));
-  if (!report) return { text: design.errorPanel('Mission not found', String(planId)).text, keyboard: null };
+  if (!report) return { text: design.errorPanel(t('ms_err_not_found'), String(planId)).text, keyboard: null };
   const { plan, kpis } = report;
   const money = cents => `$${(((cents || 0)) / 100).toFixed(2)}`;
   const text = design.compose([
-    `${design.EMOJI.target} ${design.b('Mission KPIs')}`,
-    design.it(`Mission #${plan.id} · ${plan.title}`),
+    `${design.EMOJI.target} ${design.b(t('ms_btn_kpis'))}`,
+    design.it(i18n.sprintf(t('ms_mission_ref'), plan.id, plan.title)),
     design.divider(),
-    design.section('OUTPUT'),
-    design.row('Completed', String(kpis.completed_steps)),
-    design.row('Failed', String(kpis.failed_steps)),
-    design.row('Skipped', String(kpis.skipped_steps)),
-    design.row('Awaiting approval', String(kpis.awaiting_approval)),
-    design.row('Completion rate', kpis.completion_rate + '%'),
-    design.row('Success rate', kpis.success_rate + '%'),
-    design.section('QUALITY'),
-    design.row('Avg confidence', kpis.avg_confidence === null ? '—' : kpis.avg_confidence.toFixed(2) + ' / 1.0'),
-    design.section('ECONOMICS'),
-    design.row('Total cost', money(kpis.total_cost_cents)),
-    design.row('Budget', kpis.budget_cents === null ? '—' : money(kpis.budget_cents)),
-    design.row('Budget exceeded', kpis.budget_exceeded ? '⚠ yes' : 'no'),
-    ...(kpis.revenue_cents !== null ? [design.row('Revenue identified', money(kpis.revenue_cents))] : []),
-    ...(kpis.expected_revenue_cents !== null ? [design.row('Expected revenue', money(kpis.expected_revenue_cents))] : []),
-    design.row('Agents used', String(kpis.agents_used)),
-    design.section('APPROVALS'),
-    design.row('Requested', String(kpis.approvals_requested)),
-    design.row('Pending', String(kpis.approvals_pending)),
+    design.section(t('ms_sec_output')),
+    design.row(t('ms_row_completed'), String(kpis.completed_steps)),
+    design.row(t('ms_row_failed'), String(kpis.failed_steps)),
+    design.row(t('ms_row_skipped'), String(kpis.skipped_steps)),
+    design.row(t('ms_row_awaiting'), String(kpis.awaiting_approval)),
+    design.row(t('ms_row_completion_rate'), kpis.completion_rate + '%'),
+    design.row(t('ms_row_success'), kpis.success_rate + '%'),
+    design.section(t('ms_sec_quality')),
+    design.row(t('ms_row_confidence'), kpis.avg_confidence === null ? '—' : kpis.avg_confidence.toFixed(2) + ' / 1.0'),
+    design.section(t('ms_sec_economics')),
+    design.row(t('ms_row_total_cost'), money(kpis.total_cost_cents)),
+    design.row(t('ms_row_budget'), kpis.budget_cents === null ? '—' : money(kpis.budget_cents)),
+    design.row(t('ms_row_budget_exceeded'), kpis.budget_exceeded ? t('ms_yes') : t('ms_no')),
+    ...(kpis.revenue_cents !== null ? [design.row(t('ms_row_rev_identified'), money(kpis.revenue_cents))] : []),
+    ...(kpis.expected_revenue_cents !== null ? [design.row(t('ms_row_expected_revenue'), money(kpis.expected_revenue_cents))] : []),
+    design.row(t('ms_row_agents_used'), String(kpis.agents_used)),
+    design.section(t('ms_sec_approvals')),
+    design.row(t('ms_row_requested'), String(kpis.approvals_requested)),
+    design.row(t('ms_row_pending'), String(kpis.approvals_pending)),
     design.divider()
   ]);
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('Executive Report', `cc_mission_report:${plan.id}`), design.textButton('Mission Detail', `cc_mission:${plan.id}`)],
-      [design.textButton('Missions', 'cc_missions'), design.textButton('Back to Home', 'cc_home')]
+      [design.textButton(t('ms_btn_exec'), `cc_mission_report:${plan.id}`), design.textButton(t('ms_btn_detail'), `cc_mission:${plan.id}`)],
+      [design.textButton(t('ms_btn_missions'), 'cc_missions'), design.textButton(t('ms_btn_home'), 'cc_home')]
     ])
   };
 }
 
 async function buildApprovals(userId) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Approvals')}`,
-        design.it('Set up a workspace first.'),
+        `${design.EMOJI.ai} ${design.b(t('ms_btn_approvals'))}`,
+        design.it(t('ms_body_appr_noctx')),
         design.divider()
       ]),
       keyboard: design.keyboard([
-        [design.textButton('Back to Home', 'cc_home')]
+        [design.textButton(t('ms_btn_home'), 'cc_home')]
       ])
     };
   }
@@ -439,16 +463,16 @@ async function buildApprovals(userId) {
       }
       return `${design.EMOJI.warning} ${design.b(title)}\n${design.it((a.reason || '').slice(0, 120))}`;
     })
-    : [design.it('No pending approvals.')];
+    : [design.it(t('ms_body_no_approvals'))];
   const rows = [];
   if (pending.length) {
-    const apprRows = pending.map(a => [design.textButton(`Approve #${a.id}`, `cc_appr:${a.id}:approve`), design.textButton(`Reject #${a.id}`, `cc_appr:${a.id}:reject`)]);
+    const apprRows = pending.map(a => [design.textButton(i18n.sprintf(t('ms_btn_approve'), a.id), `cc_appr:${a.id}:approve`), design.textButton(i18n.sprintf(t('ms_btn_reject'), a.id), `cc_appr:${a.id}:reject`)]);
     rows.push(...apprRows);
   }
-  rows.push([design.textButton('Missions', 'cc_missions'), design.textButton('Back to Home', 'cc_home')]);
+  rows.push([design.textButton(t('ms_btn_missions'), 'cc_missions'), design.textButton(t('ms_btn_home'), 'cc_home')]);
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Approvals')}`,
-    design.it('Missions pause here until you decide — nothing is sent, created or issued without your approval.'),
+    `${design.EMOJI.ai} ${design.b(t('ms_btn_approvals'))}`,
+    design.it(t('ms_body_appr')),
     design.divider(),
     ...lines,
     design.divider()
@@ -456,25 +480,27 @@ async function buildApprovals(userId) {
   return { text, keyboard: design.keyboard(rows) };
 }
 
-async function buildMissionGoalPrompt() {
+async function buildMissionGoalPrompt(userId) {
+  const t = key => i18n.t(userId, key);
   return {
     text: design.compose([
-      `${design.EMOJI.ai} ${design.b('New Mission')}`,
+      `${design.EMOJI.ai} ${design.b(t('ms_title_new'))}`,
       design.divider(),
-      design.it('Type your mission goal. The Revenue Strategist will decide whether it makes sense and which specialists to deploy.'),
-      design.it('Examples:'),
-      design.code('Research our top competitors and explain how we win.'),
-      design.code('Build an outreach sequence for fintech founders in the US.'),
-      design.code('Prepare a pricing strategy for our Enterprise plan.'),
+      design.it(t('ms_body_goal')),
+      design.it(t('ms_body_examples')),
+      design.code(t('ms_ex1')),
+      design.code(t('ms_ex2')),
+      design.code(t('ms_ex3')),
       design.divider()
     ]),
     keyboard: design.keyboard([
-      [design.textButton('Cancel', 'cc_missions')]
+      [design.textButton(t('ms_btn_cancel'), 'cc_missions')]
     ])
   };
 }
 
 async function buildMissionRunResult(userId, planId, extra) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
   const adapter = getStoreAdapter();
   const repos = require('../../db/repos').createRepos(adapter);
@@ -490,25 +516,26 @@ async function buildMissionRunResult(userId, planId, extra) {
     ? `\n\n${design.code(extra.strategy.ascii)}`
     : '';
   const lines = [
-    `${design.EMOJI.ai} ${design.b('Mission Launched')}`,
-    design.it(plan ? plan.title : 'Mission'),
+    `${design.EMOJI.ai} ${design.b(t('ms_title_launched'))}`,
+    design.it(plan ? plan.title : t('ms_title_mission_bare')),
     design.divider(),
     ...stepLines,
-    design.section('STATUS'),
-    design.row('State', design.badge(status === 'completed' ? 'success' : status === 'waiting_approval' ? 'warning' : 'info')),
-    ...(status === 'waiting_approval' ? [design.it('The mission paused for your approval — review it in Approvals.')] : []),
+    design.section(t('ms_sec_status')),
+    design.row(t('ms_row_state'), design.badge(status === 'completed' ? 'success' : status === 'waiting_approval' ? 'warning' : 'info')),
+    ...(status === 'waiting_approval' ? [design.it(t('ms_body_paused'))] : []),
     strategyBlock,
     design.divider()
   ];
   const rows = [];
-  if (status === 'waiting_approval') rows.push([design.textButton('Review Approval', 'cc_approvals')]);
-  rows.push([design.textButton('Missions', 'cc_missions'), design.textButton('Back to Home', 'cc_home')]);
+  if (status === 'waiting_approval') rows.push([design.textButton(t('ms_btn_review'), 'cc_approvals')]);
+  rows.push([design.textButton(t('ms_btn_missions'), 'cc_missions'), design.textButton(t('ms_btn_home'), 'cc_home')]);
   return { text: design.compose(lines), keyboard: design.keyboard(rows) };
 }
 
 async function launchMission1(userId) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
-  if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  if (!ctx) return { text: design.errorPanel(t('ms_err_no_workspace'), t('ms_err_provision_first')).text, keyboard: null };
   const adapter = getStoreAdapter();
   const progress = await learning.progress(adapter, ctx.workspace.id);
   if (!progress.complete && !isFounder(userId)) {
@@ -516,8 +543,8 @@ async function launchMission1(userId) {
     const res = await botLearning.buildPrompt(userId, adapter, ctx.workspace.id);
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Mission 1 · Sell TEOS Dealmaker')}`,
-        design.it('Step 1 of 10 — Learn your business. The revenue team builds your strategy, prospects and first outreach as soon as you answer.'),
+        `${design.EMOJI.ai} ${design.b(t('ms_btn_m1'))}`,
+        design.it(t('ms_body_m1_learn')),
         design.divider(),
         res.prompt
       ]),
@@ -535,44 +562,49 @@ async function launchMission1(userId) {
 }
 
 async function launchMission2(userId) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
-  if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  if (!ctx) return { text: design.errorPanel(t('ms_err_no_workspace'), t('ms_err_provision_first')).text, keyboard: null };
   const adapter = getStoreAdapter();
   const progress = await learning.progress(adapter, ctx.workspace.id);
   if (!progress.complete && !isFounder(userId)) {
     return {
       text: design.compose([
-        `${design.EMOJI.warning} ${design.b('Mission 2 is locked')}`,
-        design.it('Complete Mission 0 first.'),
+        `${design.EMOJI.warning} ${design.b(t('ms_title_m2_locked'))}`,
+        design.it(t('ms_body_m2_locked')),
         design.divider()
       ]),
       keyboard: design.keyboard([
-        [design.textButton('Continue Learning', 'cc_learn')],
-        [design.textButton('Back to Home', 'cc_home')]
+        [design.textButton(t('ms_btn_continue'), 'cc_learn')],
+        [design.textButton(t('ms_btn_home'), 'cc_home')]
       ])
     };
   }
+  // Agent-facing prompt: model input, intentionally not localized.
   const result = await runtime.runGoal(adapter, ctx.workspace.id,
     'Run a full revenue pipeline for our target accounts: prospect, qualify, engage, propose and close deals for our known products.',
-    { title: 'Revenue Pipeline', priority: 'high', budgetCents: 1200 });
+    { title: t('ms_title_pipeline'), priority: 'high', budgetCents: 1200 });
   audit.writeEntry('BOT_MISSION2_RUN', String(userId), 'success', { planId: result.plan.id, status: result.status });
   return buildMissionRunResult(userId, result.plan.id, result);
 }
 
 async function launchMarketMission(userId) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
-  if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  if (!ctx) return { text: design.errorPanel(t('ms_err_no_workspace'), t('ms_err_provision_first')).text, keyboard: null };
   const adapter = getStoreAdapter();
+  // Agent-facing prompt: model input, intentionally not localized.
   const result = await runtime.runGoal(adapter, ctx.workspace.id,
     'Analyze our target market: research the market, competitors, ideal customers and opportunity, then recommend where to focus.',
-    { title: 'Analyze a Market', priority: 'high' });
+    { title: t('ms_title_market'), priority: 'high' });
   audit.writeEntry('BOT_MISSION_MARKET', String(userId), 'success', { planId: result.plan.id, status: result.status });
   return buildMissionRunResult(userId, result.plan.id, result);
 }
 
 async function launchGoalMission(userId, goal) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
-  if (!ctx) return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+  if (!ctx) return { text: design.errorPanel(t('ms_err_no_workspace'), t('ms_err_provision_first')).text, keyboard: null };
   const adapter = getStoreAdapter();
   const result = await runtime.runGoal(adapter, ctx.workspace.id, goal, { title: goal.slice(0, 120), priority: 'high' });
   audit.writeEntry('BOT_MISSION_GOAL', String(userId), 'success', { planId: result.plan.id, status: result.status });
