@@ -63,8 +63,17 @@ async function buildKnowledgeDocs(userId) {
     };
   }
   const docs = await intelligence.listDocuments(getStoreAdapter(), ctx.workspace.id);
+  // Delivered with parse_mode:'HTML', so every dynamic value interpolated into
+  // `text` must be escaped at this boundary. d.title is the first line of
+  // whatever the user pasted in buildKnowledgeAdd, i.e. fully user-typed;
+  // d.label is catalog data that still contains a raw '&' ('Products &
+  // Services'), which is a bare entity reference in an HTML body.
+  //
+  // The Delete button label below is deliberately NOT escaped: Telegram never
+  // HTML-parses reply_markup button text, so escaping there would render
+  // "Q&amp;A" to the user. See the assertion in tests/test-bot-html-escaping.js.
   const lines = docs.length ? docs.map(d =>
-    `${design.EMOJI.info} ${design.b(d.title)}${d.seeded ? ' · ' + design.badge('profile') : ''}\n${design.it(d.label + ' · ' + i18n.sprintf(d.chunks === 1 ? t('il_chunks_one') : t('il_chunks_many'), d.chunks))}`
+    `${design.EMOJI.info} ${design.b(design.esc(d.title))}${d.seeded ? ' · ' + design.badge('profile') : ''}\n${design.it(design.esc(d.label) + ' · ' + i18n.sprintf(d.chunks === 1 ? t('il_chunks_one') : t('il_chunks_many'), d.chunks))}`
   ) : [design.it(t('il_body_no_docs'))];
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b(t('il_title_docs'))}`,
@@ -73,6 +82,9 @@ async function buildKnowledgeDocs(userId) {
     ...lines,
     design.divider()
   ]);
+  // Plain-text field: button labels are not HTML-parsed by Telegram, so
+  // d.title is intentionally unescaped here. Escaping would show the user a
+  // literal "&amp;".
   const rows = docs.slice(0, 6).map(d => [design.textButton(i18n.sprintf(t('il_btn_delete'), d.title.slice(0, 18)), `cc_kg_del:${d.id}`)]);
   rows.push([design.textButton(t('il_btn_add'), 'cc_kg_add'), design.textButton(t('il_btn_hub'), 'cc_intelligence')]);
   rows.push([design.textButton(t('common_home'), 'cc_home')]);

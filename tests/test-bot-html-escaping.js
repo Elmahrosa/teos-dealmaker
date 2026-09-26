@@ -22,7 +22,34 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'test';
 
 const assert = require('assert');
 const design = require('../bot/design');
-const { buildAskResult } = require('../bot/screens/intelligence');
+const { LANGS } = require('../bot/i18n');
+
+// --- dependency stubs, installed BEFORE the screen module is first required --
+// buildKnowledgeDocs reads the store and the intelligence service. Inject fakes
+// into require.cache, preserving every other export so the rest of this file
+// still exercises the real design/lib/i18n code.
+const FAKE_DOCS = [];
+
+function stubModule(request, overrides) {
+  const resolved = require.resolve(request);
+  const real = require(resolved);
+  require.cache[resolved].exports = Object.assign({}, real, overrides);
+}
+
+// Keep a handle on the real catalog so the fake documents carry exactly the
+// shape listDocuments() produces, including the label it derives from
+// SOURCE_TYPES. Captured before the exports object is replaced above.
+const REAL_INTELLIGENCE = require('../services/intelligence');
+const sourceLabel = st => (REAL_INTELLIGENCE.SOURCE_TYPES[st] ? REAL_INTELLIGENCE.SOURCE_TYPES[st].label : st);
+
+stubModule('../bot/store', { getStoreAdapter: () => ({ __fake: true }) });
+stubModule('../bot/screens/lib', { getCtx: async () => ({ workspace: { id: 'ws-escaping' } }) });
+stubModule('../services/intelligence', {
+  listDocuments: async () => FAKE_DOCS,
+  describe: async () => ({ sources: [], total_docs: 0, total_chunks: 0, seeded: 0, uploaded: 0 })
+});
+
+const { buildAskResult, buildKnowledgeDocs } = require('../bot/screens/intelligence');
 const { sendHtml, toPlainText, isParseError } = require('../bot/screens/lib');
 
 const HOSTILE = '<script>alert(1)</script> & "quoted" <b>not bold</b>';
@@ -181,8 +208,71 @@ function makeResult(overrides) {
   equal(e2eSent.length, 1, 'end-to-end send delivers exactly one message');
   check(e2eSent[0].body.includes('&lt;script&gt;'), 'end-to-end message carries the escaped model content');
 
+  // ------------------------- 6. buildKnowledgeDocs escapes the document title
+  // buildKnowledgeAdd tells the user "First line becomes the title", so
+  // d.title is the first line of whatever they pasted: fully user-typed, and
+  // rendered into a parse_mode:'HTML' body. Same bug class as buildAskResult.
+  FAKE_DOCS.length = 0;
+  FAKE_DOCS.push(
+    { id: 'd1', title: HOSTILE, source_type: 'products', label: sourceLabel('products'), chunks: 1, seeded: false },
+    { id: 'd2', title: 'Pricing & Packaging', source_type: 'pricing', label: sourceLabel('pricing'), chunks: 7, seeded: true }
+  );
+
+  const docsScreen = await buildKnowledgeDocs(7700010);
+  const docsText = docsScreen.text;
+
+  check(!/<script>/.test(docsText), 'hostile document title does not emit a raw <script> tag');
+  check(docsText.includes('&lt;script&gt;alert(1)&lt;/script&gt;'), 'hostile document title is rendered escaped');
+  check(docsText.includes('Pricing &amp; Packaging'), 'ampersand inside a document title is escaped');
+  // SOURCE_TYPES.products.label is 'Products & Services' -- catalog data with a
+  // bare '&' that was a malformed entity reference in the HTML body.
+  check(docsText.includes('Products &amp; Services'), 'catalog source label containing a raw & is escaped');
+  check(!/ & /.test(docsText), 'no bare ampersand survives anywhere in the documents body');
+
+  assertValidTelegramHtml(docsText);
+  check(true, 'documents screen composes to valid Telegram HTML');
+
+  // The localized chrome must be untouched by the escaping change.
+  check(docsText.includes(LANGS.en.il_title_docs), 'localized screen title still renders (EN)');
+  check(docsText.includes('1 chunk'), 'localized singular count still renders alongside escaped data');
+  check(docsText.includes('7 chunks'), 'localized plural count still renders alongside escaped data');
+  check(docsText.includes('2 documents in this workspace'), 'localized plural headline still renders');
+
+  // The Delete button label is a plain-text field. Telegram never HTML-parses
+  // reply_markup button text, so it is deliberately NOT escaped; pinning that
+  // so a future reader does not "fix" it into a visible "&amp;" regression.
+  const delButtons = docsScreen.keyboard.inline_keyboard
+    .map(row => row[0])
+    .filter(b => b.callback_data.startsWith('cc_kg_del:'));
+  equal(delButtons.length, 2, 'one Delete button per visible document');
+  check(delButtons[0].text.includes('<script>alert(1'), 'plain-text button label keeps the raw title (not HTML-parsed by Telegram)');
+  check(!delButtons[0].text.includes('&lt;'), 'plain-text button label is deliberately not entity-escaped');
+  check(delButtons[1].text.includes('Pricing & Pac'), 'button label keeps a literal & rather than showing "&amp;"');
+  check(delButtons[0].text.includes('Delete:'), 'localized Delete button prefix still renders');
+
+  // And the whole thing still sends: escaped markup, valid HTML, no fallback.
+  const docsSent = [];
+  const docsBot = {
+    async sendMessage(chatId, body, opts) {
+      if (opts && opts.parse_mode === 'HTML') assertValidTelegramHtml(body);
+      docsSent.push({ chatId, body, opts });
+      return { message_id: docsSent.length };
+    }
+  };
+  const docsSend = await sendHtml(docsBot, 7700010, docsText, { reply_markup: docsScreen.keyboard });
+  equal(docsSend.fellBack, false, 'documents screen sends on the first attempt, no plain-text fallback');
+  equal(docsSent.length, 1, 'documents screen delivers exactly one message');
+  check(docsSent[0].body.includes('&lt;script&gt;'), 'the delivered message carries the escaped title');
+
+  // Empty state must still render localized copy and valid HTML.
+  FAKE_DOCS.length = 0;
+  const emptyScreen = await buildKnowledgeDocs(7700011);
+  check(emptyScreen.text.includes(LANGS.en.il_body_no_docs), 'empty-state copy is localized');
+  assertValidTelegramHtml(emptyScreen.text);
+  check(true, 'empty documents screen composes to valid Telegram HTML');
+
   console.log(`\n\u2713 bot HTML escaping + send-path fallback (${n} assertions passed)`);
-  console.log('  esc() · buildAskResult question/answer/excerpt/intent · sendHtml retry · strict validator e2e');
+  console.log('  esc() · buildAskResult question/answer/excerpt/intent · buildKnowledgeDocs doc title/label · sendHtml retry · strict validator e2e');
 })().catch((err) => {
   console.error('FAILED:', err.message);
   process.exit(1);
