@@ -63,11 +63,11 @@ async function buildHome(userId) {
   const completed = missions.filter(m => m.status === 'completed').length;
   const nextMission = missions.find(m => !['completed', 'failed', 'cancelled'].includes(m.status));
   const recommendation = nextMission
-    ? `${nextMission.title} · ${nextMission.progress}% · next: ${nextMission.next_agent || '—'}`
+    ? `${design.esc(nextMission.title)} · ${nextMission.progress}% · next: ${design.esc(nextMission.next_agent || '—')}`
     : t('home_recommend_empty');
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b(t('home_title'))}`,
-    design.it(`${greetingFor(timezone)}, ${name}.`),
+    design.it(`${greetingFor(timezone)}, ${design.esc(name)}.`),
     design.divider(),
     design.section(t('home_sect_missions')),
     design.row(t('home_row_inflight'), String(running)),
@@ -122,21 +122,21 @@ async function buildDashboard(userId) {
     ? ctx.deals.closed
     : audit.readVault().filter(e => e.action === 'CLOSING_AGENT_DEAL_CLOSED').length;
   const recent = audit.readTail(3).reverse().map(e =>
-    `${design.code((e.timestamp || '').slice(11, 19))} ${e.action} → ${e.target}`
+    `${design.code((e.timestamp || '').slice(11, 19))} ${design.esc(e.action)} → ${design.esc(e.target)}`
   );
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b(t('btn_dashboard'))}`,
     design.it(t('dash_operational')),
     design.divider(),
-    ctx ? design.row(t('settings_workspace'), ctx.workspace.name) : null,
-    design.row(t('dash_bot'), `@${BOT_CONFIG.botName}`),
-    ctx ? design.row(t('dash_plan'), titleCase(ctx.workspace.plan)) : null,
+    ctx ? design.row(t('settings_workspace'), design.esc(ctx.workspace.name)) : null,
+    design.row(t('dash_bot'), `@${design.esc(BOT_CONFIG.botName)}`),
+    ctx ? design.row(t('dash_plan'), design.esc(titleCase(ctx.workspace.plan))) : null,
     ctx ? design.row(t('dash_members'), String(ctx.membersCount)) : null,
     ctx ? design.row(t('dash_agents'), i18n.sprintf(t('dash_agents_active'), ctx.agents.active)) : null,
-    ctx ? design.row(t('dash_sub_status'), ctx.subscriptionLabel) : null,
+    ctx ? design.row(t('dash_sub_status'), design.esc(ctx.subscriptionLabel)) : null,
     design.row(t('home_row_audit'), i18n.sprintf(t('home_val_entries'), entryCount)),
     design.row(t('home_row_closed_deals'), `${closed}`),
-    design.row(t('health_last'), last ? `${last.action} · ${(last.timestamp || '').slice(11, 19)}` : '—'),
+    design.row(t('health_last'), last ? `${design.esc(last.action)} · ${(last.timestamp || '').slice(11, 19)}` : '—'),
     design.section(t('home_sect_recent')),
     recent.length ? design.list(recent) : design.it(t('home_no_activity')),
     design.section(t('home_sect_quick'))

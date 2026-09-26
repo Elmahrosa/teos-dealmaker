@@ -25,13 +25,13 @@ async function buildHealth(userId) {
   const agentLines = health.map(h => {
     const tone = h.display === 'Ready' ? 'success' : h.display === 'Busy' ? 'warning' : h.display === 'Failed' ? 'critical' : 'info';
     const detail = h.success_pct !== null ? ` · ${h.success_pct}% ok · ${h.avg_runtime_ms} ms` : '';
-    return `${design.EMOJI[tone]} ${h.label} · ${h.display}${detail}`;
+    return `${design.EMOJI[tone]} ${design.esc(h.label)} · ${design.esc(h.display)}${detail}`;
   });
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b('Platform Health')}`,
     design.it('System status'),
     design.divider(),
-    ...checks.map(ch => design.row(ch.label, `${ch.ok ? design.EMOJI.success : design.EMOJI.warning} ${ch.detail}`)),
+    ...checks.map(ch => design.row(design.esc(ch.label), `${ch.ok ? design.EMOJI.success : design.EMOJI.warning} ${design.esc(ch.detail)}`)),
     design.section('AGENT HEALTH'),
     ...agentLines,
     design.divider()
@@ -63,10 +63,10 @@ async function buildQueue(userId) {
   const movements = await queue.queueMovements(getStoreAdapter(), ctx.workspace.id, 6);
   const stageLines = snap.stages.map(s => {
     const tone = s.count > 0 ? 'warning' : 'info';
-    return design.row(`${s.label}`, `${design.EMOJI[tone]} ${s.count}`);
+    return design.row(`${design.esc(s.label)}`, `${design.EMOJI[tone]} ${s.count}`);
   });
   const movementLines = movements.map(m =>
-    `${design.code((m.created_at || '').slice(11, 19))} ${m.company}: ${m.from_stage} → ${m.to_stage}`
+    `${design.code((m.created_at || '').slice(11, 19))} ${design.esc(m.company)}: ${design.esc(m.from_stage)} → ${design.esc(m.to_stage)}`
   );
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b('Progress')}`,
@@ -103,7 +103,7 @@ async function buildBriefing(userId) {
   const b = await executiveBriefing(getStoreAdapter(), ctx.workspace.id);
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b('Executive Briefing')}`,
-    design.it(b.date),
+    design.it(design.esc(b.date)),
     design.divider(),
     design.section('YESTERDAY'),
     design.row('Prospects', String(b.yesterday.prospects)),
@@ -120,10 +120,10 @@ async function buildBriefing(userId) {
     design.row('Revenue forecast', `$${(b.revenue_forecast_cents / 100).toFixed(2)}`),
     design.section('ATTENTION'),
     ...(b.high_risk_deals.length
-      ? b.high_risk_deals.map(d => design.it(`⚠ ${d.company} stalled in ${d.stage} (${d.days} days)`))
+      ? b.high_risk_deals.map(d => design.it(`⚠ ${design.esc(d.company)} stalled in ${design.esc(d.stage)} (${d.days} days)`))
       : [design.it('No stalled deals.')]),
     design.section('RECOMMENDED ACTION'),
-    design.it(b.recommended_action),
+    design.it(design.esc(b.recommended_action)),
     design.divider()
   ]);
   return {

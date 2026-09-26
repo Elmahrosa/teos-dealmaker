@@ -119,28 +119,28 @@ async function buildConnectorDetail(userId, connectorId) {
   }
   const c = integrations.catalog.CONNECTORS[connectorId];
   if (!c) {
-    return { text: design.errorPanel(t('int_err_unknown_connector'), connectorId).text, keyboard: null };
+    return { text: design.errorPanel(t('int_err_unknown_connector'), design.esc(connectorId)).text, keyboard: null };
   }
   const st = await integrations.manager.status(getStoreAdapter(), ctx.workspace.id);
   const cat = st.categories.find(g => g.category === c.category);
   const info = cat ? cat.connectors.find(x => x.id === connectorId) : null;
   const capLines = Object.keys(c)
     .filter(k => !['label', 'category', 'auth', 'keyEnv', 'baseUrl', 'defaultModel'].includes(k) && typeof c[k] === 'object' && c[k] && c[k].method)
-    .map(k => design.row(k, `${c[k].method} ${c[k].path}`));
+    .map(k => design.row(design.esc(k), `${design.esc(c[k].method)} ${design.esc(c[k].path)}`));
   const statusText = info
     ? statusLabel(t, info)
     : design.EMOJI.critical + ' ' + t('int_st_off');
   const setupHint = c.auth === 'oauth'
     ? t('int_setup_oauth')
     : c.keyEnv
-      ? i18n.sprintf(t('int_setup_key'), design.code(c.keyEnv))
+      ? i18n.sprintf(t('int_setup_key'), design.code(design.esc(c.keyEnv)))
       : t('int_setup_none');
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b(c.label)}`,
-    design.it(i18n.sprintf(t('int_connector_suffix'), titleCase(c.category))),
+    `${design.EMOJI.ai} ${design.b(design.esc(c.label))}`,
+    design.it(i18n.sprintf(t('int_connector_suffix'), design.esc(titleCase(c.category)))),
     design.divider(),
     design.row(t('int_row_status'), statusText),
-    design.row(t('int_row_auth'), c.auth),
+    design.row(t('int_row_auth'), design.esc(c.auth)),
     design.row(t('int_row_configured'), info ? (info.configured ? design.EMOJI.success + ' ' + t('common_yes') : design.EMOJI.info + ' ' + t('common_no')) : design.EMOJI.info + ' ' + t('common_no')),
     design.row(t('int_row_last_sync'), info && info.last_synced_at ? info.last_synced_at.slice(0, 16).replace('T', ' ') : '—'),
     design.section(t('int_sec_capabilities')),
@@ -170,8 +170,8 @@ async function buildConnectorDetail(userId, connectorId) {
 async function buildSyncResult(userId, result) {
   const t = key => i18n.t(userId, key);
   const lines = (result.connectors || []).map(entry => {
-    const err = entry.error ? design.EMOJI.critical + ' ' + entry.error : design.EMOJI.success + ' ' + entry.actions.join(' · ');
-    return `${design.b(entry.label)} (${entry.category})\n${design.it(err)}`;
+    const err = entry.error ? design.EMOJI.critical + ' ' + design.esc(entry.error) : design.EMOJI.success + ' ' + design.esc(entry.actions.join(' · '));
+    return `${design.b(design.esc(entry.label))} (${design.esc(entry.category)})\n${design.it(err)}`;
   });
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b(t('int_title_sync'))}`,

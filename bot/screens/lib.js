@@ -15,7 +15,7 @@ async function getCtx(userId) {
 function denied(resource) {
   const panel = design.errorPanel(
     'Access denied',
-    `You do not have permission to open ${resource}.`
+    `You do not have permission to open ${design.esc(resource)}.`
   );
   return {
     text: panel.text,

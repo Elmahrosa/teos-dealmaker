@@ -51,19 +51,19 @@ function buildPipeline(userId) {
 function buildPipelineResult(userId, result) {
   const t = key => i18n.t(userId, key);
   const notes = (result.notes || []).map(n =>
-    `${design.code(n.agent_name)} ${n.note}`
+    `${design.code(design.esc(n.agent_name))} ${design.esc(n.note)}`
   );
   const c = result.treasurer.contract;
   const lines = [
     `${design.EMOJI.ai} ${design.b(t('pf_title_run'))}`,
     design.it(t('pf_body_chain')),
     design.divider(),
-    design.row(t('pf_row_strategy'), result.strategy.style),
-    design.row(t('pf_row_positioning'), result.marketing.headline),
+    design.row(t('pf_row_strategy'), design.esc(result.strategy.style)),
+    design.row(t('pf_row_positioning'), design.esc(result.marketing.headline)),
     design.row(t('pf_row_landing'), `$${result.negotiation.landingPrice}`),
-    design.row(t('pf_row_terms'), result.negotiation.suggestedTerms),
-    design.row(t('pf_row_contract'), i18n.sprintf(t('pf_contract_line'), c.company, c.amount, c.currency, c.termMonths)),
-    design.row(t('pf_row_checkout'), result.treasurer.checkout ? result.treasurer.checkout.url : t('pf_val_blocked')),
+    design.row(t('pf_row_terms'), design.esc(result.negotiation.suggestedTerms)),
+    design.row(t('pf_row_contract'), i18n.sprintf(t('pf_contract_line'), design.esc(c.company), c.amount, design.esc(c.currency), c.termMonths)),
+    design.row(t('pf_row_checkout'), result.treasurer.checkout ? design.esc(result.treasurer.checkout.url) : t('pf_val_blocked')),
     design.row(t('pf_row_gatekeeper'), design.badge(result.gatekeeper.decision === 'APPROVE' ? 'success' : 'warning')),
     design.row(t('pf_row_outcome'), design.badge(result.closing.status === 'won' ? 'success' : 'critical')),
     design.row(t('pf_row_deal_saved'), design.badge('success')),
@@ -90,10 +90,10 @@ function buildSalesFlow(userId) {
     `${design.EMOJI.ai} ${design.b(t('pf_title_salesflow'))}`,
     design.it(t('pf_body_saleschain')),
     design.divider(),
-    design.row(t('pf_row_objection'), result.draft.objectionType),
+    design.row(t('pf_row_objection'), design.esc(result.draft.objectionType)),
     design.row(t('pf_row_gatekeeper'), design.badge(result.review.decision === 'APPROVE' ? 'success' : 'warning')),
-    design.row(t('pf_row_draft'), design.code(result.draft.draft.slice(0, 80))),
-    design.row(t('pf_row_route'), result.routed ? result.routed.status : t('pf_val_blocked')),
+    design.row(t('pf_row_draft'), design.code(design.esc(result.draft.draft.slice(0, 80)))),
+    design.row(t('pf_row_route'), result.routed ? design.esc(result.routed.status) : t('pf_val_blocked')),
     design.divider()
   ];
   return {

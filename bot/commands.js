@@ -65,7 +65,7 @@ function cmdOutreach(chatId) {
     `${design.EMOJI.ai} ${design.b('Outreach')}`,
     design.it('Draft review and dispatch'),
     design.divider(),
-    design.row('Status', result.status),
+    design.row('Status', design.esc(result.status)),
     design.row('Message ID', design.code(result.message_id)),
     design.divider()
   ]);
@@ -84,8 +84,8 @@ function cmdQualify(chatId) {
     `${design.EMOJI.ai} ${design.b('Qualification')}`,
     design.it('BANT classification'),
     design.divider(),
-    design.row('Action', result.routing.action),
-    design.row('Route', result.routing.target_agent || 'archive'),
+    design.row('Action', design.esc(result.routing.action)),
+    design.row('Route', design.esc(result.routing.target_agent || 'archive')),
     design.divider()
   ]);
   return { chatId, text };

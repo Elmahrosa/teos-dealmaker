@@ -2,6 +2,12 @@
 
 const crypto = require('crypto');
 const { createRepos } = require('../../db/repos');
+// Deliberate cross-layer import (services/ -> bot/). design.js is pure -- no
+// requires, no env, no reverse dependency -- and esc() must remain the single
+// source of truth for escaping text that reaches Telegram's HTML-parsed message
+// body; a second escaper defined here would drift from it. Do not "fix" this
+// layering by inlining a local escaper.
+const { esc } = require('../../bot/design');
 
 const PRODUCT_TO_PLAN_ENV = {
   DODO_STARTER_MONTHLY_PID: 'solo',
@@ -273,7 +279,7 @@ if (!rawStatus || !ALLOWED_STATUSES.includes(rawStatus)) {
     version: 'v1.1.0'
   });
 
-  await sendTelegramNotification(`��✅ <b>New Subscription</b>\nPlan: ${plan}\nCycle: ${cycle}\nWorkspace: ${workspaceId}`);
+  await sendTelegramNotification(`��✅ <b>New Subscription</b>\nPlan: ${esc(plan)}\nCycle: ${esc(cycle)}\nWorkspace: ${esc(workspaceId)}`);
 
   return { ok: true, workspaceId, plan, status };
 }
@@ -332,7 +338,7 @@ async function handleSubscriptionRenewed(adapter, data) {
     version: 'v1.1.0'
   });
 
-  await sendTelegramNotification(`���🔄 <b>Subscription Renewed</b>\nWorkspace: ${workspaceId}\nRenewal: ${renewalDate}`);
+  await sendTelegramNotification(`���🔄 <b>Subscription Renewed</b>\nWorkspace: ${esc(workspaceId)}\nRenewal: ${esc(renewalDate)}`);
 
   return { ok: true, workspaceId };
 }
@@ -374,7 +380,7 @@ async function handleSubscriptionCancelled(adapter, data) {
     version: 'v1.1.0'
   });
 
-  await sendTelegramNotification(`��❌ <b>Subscription Cancelled</b>\nWorkspace: ${workspaceId}\nPlan retained; subscription inactive`);
+  await sendTelegramNotification(`��❌ <b>Subscription Cancelled</b>\nWorkspace: ${esc(workspaceId)}\nPlan retained; subscription inactive`);
 
   return { ok: true, workspaceId };
 }
@@ -409,7 +415,7 @@ async function handlePaymentSucceeded(adapter, data) {
     version: 'v1.1.0'
   });
 
-  await sendTelegramNotification(`���💰 <b>Payment Received</b>\nAmount: ${(amount / 100).toFixed(2)} ${currency}\nWorkspace: ${workspaceId}`);
+  await sendTelegramNotification(`���💰 <b>Payment Received</b>\nAmount: ${(amount / 100).toFixed(2)} ${esc(currency)}\nWorkspace: ${esc(workspaceId)}`);
 
   return { ok: true, workspaceId };
 }
@@ -448,7 +454,7 @@ async function handlePaymentFailed(adapter, data) {
     version: 'v1.1.0'
   });
 
-  await sendTelegramNotification(`��⚠��️ <b>Payment Failed</b>\nWorkspace: ${workspaceId}\nSubscription set to past_due`);
+  await sendTelegramNotification(`��⚠��️ <b>Payment Failed</b>\nWorkspace: ${esc(workspaceId)}\nSubscription set to past_due`);
 
   return { ok: true, workspaceId };
 }
@@ -479,7 +485,7 @@ async function handleRefund(adapter, data) {
     version: 'v1.1.0'
   });
 
-  await sendTelegramNotification(`���💸 <b>Refund Issued</b>\nAmount: ${(amount / 100).toFixed(2)} ${currency}\nWorkspace: ${workspaceId}`);
+  await sendTelegramNotification(`���💸 <b>Refund Issued</b>\nAmount: ${(amount / 100).toFixed(2)} ${esc(currency)}\nWorkspace: ${esc(workspaceId)}`);
 
   return { ok: true, workspaceId };
 }
@@ -525,7 +531,7 @@ async function handlePlanChange(adapter, data, direction) {
   });
 
   const arrow = direction === 'upgraded' ? '��⬆��️' : '��⬇��️';
-  await sendTelegramNotification(`${arrow} <b>Subscription ${direction}</b>\nNew plan: ${newPlan}\nWorkspace: ${workspaceId}`);
+  await sendTelegramNotification(`${arrow} <b>Subscription ${esc(direction)}</b>\nNew plan: ${esc(newPlan)}\nWorkspace: ${esc(workspaceId)}`);
 
   return { ok: true, workspaceId, plan: newPlan };
 }
@@ -582,7 +588,7 @@ async function handleManualPilotActivated(adapter, data) {
   });
 
   // Send telegram notification
-  await sendTelegramNotification(`���🎯 <b>Manual Pilot Activated</b>\nWorkspace: ${workspaceId}\nPlan: ${plan}\nActivated by: ${activatedBy || 'system'}`);
+  await sendTelegramNotification(`���🎯 <b>Manual Pilot Activated</b>\nWorkspace: ${esc(workspaceId)}\nPlan: ${esc(plan)}\nActivated by: ${esc(activatedBy || 'system')}`);
 
   return { ok: true, workspaceId, plan };
 }

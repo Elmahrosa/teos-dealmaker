@@ -22,7 +22,7 @@ async function buildIntelligence(userId) {
   const d = await intelligence.describe(getStoreAdapter(), ctx.workspace.id);
   const sourceRows = d.sources
     .filter(s => s.count > 0)
-    .map(s => design.row(s.label, String(s.count)));
+    .map(s => design.row(design.esc(s.label), String(s.count)));
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b(t('il_title_hub'))}`,
     design.it(t('il_body_sub')),
@@ -99,7 +99,7 @@ function buildKnowledgeAdd(userId, sourceType) {
   const label = intelligence.SOURCE_TYPES[sourceType] ? intelligence.SOURCE_TYPES[sourceType].label : sourceType;
   return {
     text: design.compose([
-      `${design.EMOJI.ai} ${design.b(i18n.sprintf(t('il_title_add'), label))}`,
+      `${design.EMOJI.ai} ${design.b(i18n.sprintf(t('il_title_add'), design.esc(label)))}`,
       design.divider(),
       design.it(t('il_body_paste')),
       design.it(t('il_body_firstline')),

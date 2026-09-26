@@ -9,6 +9,7 @@ const knowledgeState = require('./knowledgeState');
 const missionState = require('./missionState');
 const botLearning = require('./learning');
 const { getStoreAdapter } = require('./store');
+const { esc } = require('./design');
 const { buildHome, buildMemory, buildAskResult, buildMissionRunResult } = require('./menu');
 const audit = require('../utils/auditLogger');
 const { getMode } = require('../config/mode');
@@ -136,7 +137,7 @@ async function handleMessage(msg) {
       return { chatId, text: res.prompt, replyMarkup: res.keyboard };
     } catch (err) {
       audit.writeEntry('BOT_LEARNING_ERROR', String(userId), 'error', { error: err.message });
-      return { chatId, text: `Learning update failed: ${err.message}` };
+      return { chatId, text: `Learning update failed: ${esc(err.message)}` };
     }
   }
 
@@ -174,7 +175,7 @@ async function handleMessage(msg) {
       }
     } catch (err) {
       audit.writeEntry('BOT_INTEL_ERROR', String(userId), 'error', { error: err.message });
-      return { chatId, text: `Intelligence update failed: ${err.message}` };
+      return { chatId, text: `Intelligence update failed: ${esc(err.message)}` };
     }
   }
 
@@ -194,7 +195,7 @@ async function handleMessage(msg) {
       return screenResult(chatId, await buildMemory(userId));
     } catch (err) {
       audit.writeEntry('BOT_MEMORY_UPDATE', String(userId), 'error', { key: pendingKey, error: err.message });
-      return { chatId, text: `Memory update failed: ${err.message}` };
+      return { chatId, text: `Memory update failed: ${esc(err.message)}` };
     }
   }
 
@@ -205,7 +206,7 @@ async function handleMessage(msg) {
         return await require('./screens/missions').handleMissionCreateText(chatId, userId, text);
       } catch (err) {
         audit.writeEntry('BOT_MISSION_CREATE', String(userId), 'error', { error: err.message });
-        return { chatId, text: `Mission failed: ${err.message}` };
+        return { chatId, text: `Mission failed: ${esc(err.message)}` };
       }
     }
     missionState.clear(userId);
@@ -224,7 +225,7 @@ async function handleMessage(msg) {
       return screen;
     } catch (err) {
       audit.writeEntry('BOT_MISSION_GOAL', String(userId), 'error', { error: err.message });
-      return { chatId, text: `Mission failed: ${err.message}` };
+      return { chatId, text: `Mission failed: ${esc(err.message)}` };
     }
   }
 
@@ -253,7 +254,7 @@ async function handleMessage(msg) {
       return result;
     } catch (err) {
       audit.writeEntry(actionType, command, 'error', { userId, error: err.message });
-      return { chatId, text: `Error: ${err.message}` };
+      return { chatId, text: `Error: ${esc(err.message)}` };
     }
   }
 

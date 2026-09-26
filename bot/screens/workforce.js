@@ -57,9 +57,9 @@ async function buildActivity(userId) {
   const today = await workforce.todayActivity(getStoreAdapter(), ctx.workspace.id);
   const lines = today.flatMap(a => {
     const line = a.runs > 0
-      ? `${design.EMOJI.success} ${a.label} · ${a.runs} run${a.runs === 1 ? '' : 's'}`
-      : `${design.EMOJI.info} ${a.label} · waiting`;
-    const detail = a.last_output ? `\n${design.it(String(a.last_output))}` : '';
+      ? `${design.EMOJI.success} ${design.esc(a.label)} · ${a.runs} run${a.runs === 1 ? '' : 's'}`
+      : `${design.EMOJI.info} ${design.esc(a.label)} · waiting`;
+    const detail = a.last_output ? `\n${design.it(design.esc(String(a.last_output)))}` : '';
     return [`${line}${detail}`];
   });
   const total = today.reduce((acc, a) => acc + a.runs, 0);
@@ -87,19 +87,19 @@ async function buildAgentDetail(userId, agentType) {
   const view = await workforce.getWorkforceView(getStoreAdapter(), ctx.workspace.id);
   const agent = view.agents.find(a => a.agent_type === agentType);
   if (!agent) {
-    return { text: design.errorPanel('Agent not found', agentType).text, keyboard: null };
+    return { text: design.errorPanel('Agent not found', design.esc(agentType)).text, keyboard: null };
   }
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b(agent.label)}`,
-    design.it(agent.role),
+    `${design.EMOJI.ai} ${design.b(design.esc(agent.label))}`,
+    design.it(design.esc(agent.role)),
     design.divider(),
     design.row('Status', workforceStatus(agent)),
     design.row('Runs today', String(agent.today_runs)),
     design.row('Total runs', String(agent.total_runs)),
     design.row('Last run', workforce.shortTime(agent.last_run_at)),
     design.row('Next run', workforce.shortTime(agent.next_run_at)),
-    design.row('Provider', agent.provider || 'not configured'),
-    design.row('Model', agent.model || '—'),
+    design.row('Provider', design.esc(agent.provider || 'not configured')),
+    design.row('Model', design.esc(agent.model || '—')),
     design.row('Cost', `$${(agent.total_cost_cents / 100).toFixed(2)}`),
     design.divider()
   ]);

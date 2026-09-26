@@ -45,7 +45,7 @@ async function buildMissionCreatePrompt(userId) {
   if (!step) return buildMissions(userId);
   const summary = steps
     .filter(s => mission[s.key])
-    .map(s => design.it(i18n.sprintf(t('ms_form_entry'), s.label, mission[s.key])));
+    .map(s => design.it(i18n.sprintf(t('ms_form_entry'), s.label, design.esc(mission[s.key]))));
   return {
     text: design.compose([
       `${design.EMOJI.ai} ${design.b(t('ms_btn_create'))}`,
@@ -194,7 +194,7 @@ async function buildMissionDashboard(userId) {
     if (s.status === 'completed') byAgent[s.agent_type].done += 1;
   }
   const agentUtil = Object.entries(byAgent)
-    .map(([agent, v]) => `${agent} ${v.total ? Math.round((v.done / v.total) * 100) : 0}%`);
+    .map(([agent, v]) => `${design.esc(agent)} ${v.total ? Math.round((v.done / v.total) * 100) : 0}%`);
 
   const active = missions.filter(m => ['planned', 'running', 'waiting_approval'].includes(m.status));
   const avgProgress = missions.length ? Math.round(missions.reduce((a, m) => a + m.progress, 0) / missions.length) : 0;
@@ -203,9 +203,9 @@ async function buildMissionDashboard(userId) {
   const awaiting = missions.find(m => m.status === 'waiting_approval');
   const nextMission = missions.find(m => !['completed', 'failed', 'cancelled'].includes(m.status));
   const recommendation = awaiting
-    ? i18n.sprintf(t('ms_rec_approve'), awaiting.title)
+    ? i18n.sprintf(t('ms_rec_approve'), design.esc(awaiting.title))
     : nextMission && nextMission.next_action
-      ? i18n.sprintf(t('ms_rec_next'), nextMission.title, nextMission.next_agent, String(nextMission.next_action).slice(0, 100))
+      ? i18n.sprintf(t('ms_rec_next'), design.esc(nextMission.title), design.esc(nextMission.next_agent), design.esc(String(nextMission.next_action).slice(0, 100)))
       : missions.length
         ? t('ms_rec_all_done')
         : t('ms_rec_none');
@@ -269,7 +269,7 @@ async function buildMissions(userId) {
   const missionLines = missions.length
     ? missions.slice(0, 8).map(m => {
       const status = m.status === 'waiting_approval' ? t('ms_st_awaiting') : m.status === 'completed' ? t('ms_st_completed') : m.status === 'failed' ? t('ms_st_failed') : m.status === 'budget_exceeded' ? t('ms_st_budget') : t('ms_st_inflight');
-      return `${design.b(m.title)}\n${design.it(status + i18n.sprintf(t('ms_steps_suffix'), m.progress, m.completed_steps, m.total_steps))}`;
+      return `${design.b(design.esc(m.title))}\n${design.it(status + i18n.sprintf(t('ms_steps_suffix'), m.progress, m.completed_steps, m.total_steps))}`;
     })
     : [design.it(t('ms_body_no_missions'))];
   const rows = [];
@@ -309,12 +309,12 @@ async function buildMissionDetail(userId, planId) {
   const steps = await repos.planSteps.list(ctx.workspace.id, Number(planId));
   const stepLines = steps.map(s => {
     const tone = s.status === 'completed' ? '🟢' : s.status === 'awaiting_approval' ? '🟡' : s.status === 'failed' ? '🔴' : s.status === 'skipped' ? '⚪' : '▽';
-    const out = s.status === 'completed' && s.output ? `\n${design.it(String(s.output).split('\n')[0].slice(0, 80))}` : '';
+    const out = s.status === 'completed' && s.output ? `\n${design.it(design.esc(String(s.output).split('\n')[0].slice(0, 80)))}` : '';
     return `${tone} ${design.b(s.agent_type)} · ${s.step_key}${out}`;
   });
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b(i18n.sprintf(t('ms_title_mission'), plan.id, plan.title))}`,
-    design.it(plan.goal),
+    `${design.EMOJI.ai} ${design.b(i18n.sprintf(t('ms_title_mission'), plan.id, design.esc(plan.title)))}`,
+    design.it(design.esc(plan.goal)),
     design.divider(),
     design.row(t('ms_row_status'), design.badge(plan.status === 'completed' ? 'success' : plan.status === 'waiting_approval' ? 'warning' : 'info')),
     design.row(t('ms_row_priority'), String(plan.priority || 'normal')),
@@ -358,16 +358,16 @@ async function buildMissionReport(userId, planId) {
     ? timeline.slice(0, 14).map(s => {
       const tone = s.status === 'completed' ? '🟢' : s.status === 'failed' ? '🔴' : s.status === 'awaiting_approval' ? '🟡' : '▽';
       const when = (s.completed_at || s.started_at || '').slice(11, 16) || '';
-      return `${tone} ${design.code(when || '—')} ${design.b(s.agent_type)} · ${s.step_key}${s.output ? '\n' + design.it(s.output.slice(0, 90)) : ''}`;
+      return `${tone} ${design.code(when || '—')} ${design.b(s.agent_type)} · ${s.step_key}${s.output ? '\n' + design.it(design.esc(s.output.slice(0, 90))) : ''}`;
     })
     : [design.it(t('ms_body_no_steps'))];
-  const agentLines = agents.map(a => i18n.sprintf(t('ms_agent_util'), a.agent_type, a.completed, a.total, a.utilization));
+  const agentLines = agents.map(a => i18n.sprintf(t('ms_agent_util'), design.esc(a.agent_type), a.completed, a.total, a.utilization));
   const text = design.compose([
     `${design.EMOJI.target} ${design.b(t('ms_title_exec'))}`,
-    design.it(i18n.sprintf(t('ms_mission_ref'), plan.id, plan.title)),
+    design.it(i18n.sprintf(t('ms_mission_ref'), plan.id, design.esc(plan.title))),
     design.divider(),
     design.section(t('ms_sec_objective')),
-    design.it(plan.goal),
+    design.it(design.esc(plan.goal)),
     design.section(t('ms_sec_status')),
     design.row(t('ms_row_state'), design.badge(plan.status === 'completed' ? 'success' : plan.status === 'waiting_approval' ? 'warning' : 'info')),
     design.row(t('ms_row_completion'), `${kpis.completed_steps}/${kpis.total_steps} (${kpis.completion_rate}%)`),
@@ -402,7 +402,7 @@ async function buildMissionKPIs(userId, planId) {
   const money = cents => `$${(((cents || 0)) / 100).toFixed(2)}`;
   const text = design.compose([
     `${design.EMOJI.target} ${design.b(t('ms_btn_kpis'))}`,
-    design.it(i18n.sprintf(t('ms_mission_ref'), plan.id, plan.title)),
+    design.it(i18n.sprintf(t('ms_mission_ref'), plan.id, design.esc(plan.title))),
     design.divider(),
     design.section(t('ms_sec_output')),
     design.row(t('ms_row_completed'), String(kpis.completed_steps)),
@@ -461,7 +461,7 @@ async function buildApprovals(userId) {
         const p = planCache[a.plan_id];
         if (p) title = p.title;
       }
-      return `${design.EMOJI.warning} ${design.b(title)}\n${design.it((a.reason || '').slice(0, 120))}`;
+      return `${design.EMOJI.warning} ${design.b(design.esc(title))}\n${design.it(design.esc((a.reason || '').slice(0, 120)))}`;
     })
     : [design.it(t('ms_body_no_approvals'))];
   const rows = [];
@@ -509,15 +509,15 @@ async function buildMissionRunResult(userId, planId, extra) {
   const status = plan ? plan.status : 'completed';
   const stepLines = steps.map(s => {
     const tone = s.status === 'completed' ? '🟢' : s.status === 'awaiting_approval' ? '🟡' : s.status === 'failed' ? '🔴' : '▽';
-    const out = s.status === 'completed' && s.output ? `\n${design.it(String(s.output).split('\n')[0].slice(0, 80))}` : '';
+    const out = s.status === 'completed' && s.output ? `\n${design.it(design.esc(String(s.output).split('\n')[0].slice(0, 80)))}` : '';
     return `${tone} ${design.b(s.agent_type)} · ${s.step_key}${out}`;
   });
   const strategyBlock = extra && extra.strategy
-    ? `\n\n${design.code(extra.strategy.ascii)}`
+    ? `\n\n${design.code(design.esc(extra.strategy.ascii))}`
     : '';
   const lines = [
     `${design.EMOJI.ai} ${design.b(t('ms_title_launched'))}`,
-    design.it(plan ? plan.title : t('ms_title_mission_bare')),
+    design.it(plan ? design.esc(plan.title) : t('ms_title_mission_bare')),
     design.divider(),
     ...stepLines,
     design.section(t('ms_sec_status')),

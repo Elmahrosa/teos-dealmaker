@@ -12,7 +12,7 @@ function buildAudit(offset) {
     design.it('Immutable activity feed'),
     design.divider(),
     ...(page.length ? page.map(e =>
-      `${design.code((e.timestamp || '').slice(11, 19))} ${e.action} → ${e.target}\n${design.badge(statusEmoji(e.status))}`
+      `${design.code((e.timestamp || '').slice(11, 19))} ${design.esc(e.action)} → ${design.esc(e.target)}\n${design.badge(statusEmoji(e.status))}`
     ) : [design.it('No entries.')]),
     design.divider()
   ]);

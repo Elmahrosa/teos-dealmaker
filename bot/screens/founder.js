@@ -132,7 +132,7 @@ async function buildFounderWorkspaces(userId) {
   const lines = s.workspaces.length
     ? s.workspaces.map(ws => {
       const count = s.members.filter(m => m.workspace_id === ws.id).length;
-      return `${design.b(ws.name || ws.slug)} · #${ws.id}\n${design.it('plan ' + (ws.plan || 'solo') + ' · ' + (ws.status || 'active') + ' · ' + count + ' ' + t('fd_members'))}`;
+      return `${design.b(design.esc(ws.name || ws.slug))} · #${ws.id}\n${design.it('plan ' + design.esc(ws.plan || 'solo') + ' · ' + design.esc(ws.status || 'active') + ' · ' + count + ' ' + t('fd_members'))}`;
     })
     : [design.it('No workspaces yet.')];
   const text = design.compose([
@@ -158,9 +158,9 @@ async function buildFounderCustomers(userId) {
       .filter(m => m.workspace_id === ws.id)
       .map(m => {
         const u = s.users.find(u => u.id === m.user_id);
-        return u ? (u.display_name || u.email || ('user #' + u.id)) : ('member #' + m.user_id);
+        return u ? design.esc(u.display_name || u.email || ('user #' + u.id)) : ('member #' + m.user_id);
       });
-    return `${design.b(ws.name || ws.slug)} · ${names.length} ${t('fd_members')}\n${design.it(names.slice(0, 3).join(', ') || '—')}`;
+    return `${design.b(design.esc(ws.name || ws.slug))} · ${names.length} ${t('fd_members')}\n${design.it(names.slice(0, 3).join(', ') || '—')}`;
   });
   const text = design.compose([
     `👥 ${design.b(t('fd_customers_title'))}`,
@@ -252,9 +252,9 @@ async function buildFounderDebug(userId) {
     usage ? design.row(t('fd_cost'), `$${((usage.cost_cents || 0) / 100).toFixed(2)}`) : null,
     usage ? design.row(t('fd_tokens'), `${usage.input_tokens || 0}/${usage.output_tokens || 0} in/out`) : null,
     design.section('MEMORY'),
-    ...(memoryLines.length ? memoryLines.map(m => design.it(m.split(':')[0])) : [design.it('No company memory captured.')]),
+    ...(memoryLines.length ? memoryLines.map(m => design.it(design.esc(m.split(':')[0]))) : [design.it('No company memory captured.')]),
     design.section('LAST ACTIVITY'),
-    design.it(last ? `${last.action} · ${(last.timestamp || '').slice(11, 19)}` : 'No activity yet.')
+    design.it(last ? `${design.esc(last.action)} · ${(last.timestamp || '').slice(11, 19)}` : 'No activity yet.')
   ];
   const text = design.compose(blocks);
   return {
@@ -276,7 +276,7 @@ async function buildFounderOps(userId) {
   const text = design.compose([
     `🏭 ${design.b(t('fd_ops_title'))}`,
     design.divider(),
-    design.row(t('fd_telegram'), `${hasBot ? t('fd_connected') : t('fd_not_configured')} · @${BOT_CONFIG.botName}`),
+    design.row(t('fd_telegram'), `${hasBot ? t('fd_connected') : t('fd_not_configured')} · @${design.esc(BOT_CONFIG.botName)}`),
     design.row(t('fd_supabase'), hasDb ? t('fd_connected') : t('fd_not_configured')),
     design.row(t('fd_railway'), liveAllowed ? t('fd_configured') : t('fd_not_configured')),
     design.row(t('fd_dodo'), process.env.DODO_STARTER_MONTHLY_URL ? t('fd_configured') : t('fd_not_configured')),

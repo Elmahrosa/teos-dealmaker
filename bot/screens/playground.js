@@ -16,7 +16,7 @@ function buildPlayground(userId) {
     t('pg_gov'),
     t('pg_report'),
     design.divider(),
-    design.it(PRODUCT.demo.label)
+    design.it(design.esc(PRODUCT.demo.label))
   ]);
   return {
     text,

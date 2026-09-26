@@ -37,7 +37,7 @@ function questionFor(session) {
 }
 
 function buildQuestionText(q, context, idx, total) {
-  const ctx = context ? ` · ${design.b(context)}` : '';
+  const ctx = context ? ` · ${design.b(design.esc(context))}` : '';
   const optional = q.required ? '' : ' (optional)';
   return `${design.EMOJI.info} Question ${idx}/${total}${ctx}${optional}\n${design.b(q.text)}`;
 }

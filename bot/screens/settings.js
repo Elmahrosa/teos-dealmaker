@@ -70,7 +70,7 @@ async function buildMemory(userId) {
     `${design.EMOJI.ai} ${design.b(t('memory_title'))}`,
     design.it(t('memory_sub')),
     design.divider(),
-    ...(rows.length ? rows.map(r => design.row(r.split(':')[0], r.split(':').slice(1).join(':'))) : [design.it(t('memory_empty'))]),
+    ...(rows.length ? rows.map(r => design.row(design.esc(r.split(':')[0]), design.esc(r.split(':').slice(1).join(':')))) : [design.it(t('memory_empty'))]),
     design.section(t('memory_sect_how')),
     design.it(t('memory_how_prospector')),
     design.it(t('memory_how_outreach')),

@@ -94,7 +94,7 @@ async function handleCallback(query, bot) {
         return send(await screens.launchMission1(userId));
       } catch (err) {
         audit.writeEntry('BOT_MISSION1_ERROR', String(userId), 'error', { error: err.message });
-        return send({ text: design.errorPanel('Mission 1 failed', String(err.message)).text, keyboard: null });
+        return send({ text: design.errorPanel('Mission 1 failed', design.esc(String(err.message))).text, keyboard: null });
       }
     }
     case 'cc_mission2': {
@@ -103,7 +103,7 @@ async function handleCallback(query, bot) {
         return send(await screens.launchMission2(userId));
       } catch (err) {
         audit.writeEntry('BOT_MISSION2_ERROR', String(userId), 'error', { error: err.message });
-        return send({ text: design.errorPanel('Mission 2 failed', String(err.message)).text, keyboard: null });
+        return send({ text: design.errorPanel('Mission 2 failed', design.esc(String(err.message))).text, keyboard: null });
       }
     }
     case 'cc_mission_market': {
@@ -112,7 +112,7 @@ async function handleCallback(query, bot) {
         return send(await screens.launchMarketMission(userId));
       } catch (err) {
         audit.writeEntry('BOT_MISSION_MARKET_ERROR', String(userId), 'error', { error: err.message });
-        return send({ text: design.errorPanel('Market analysis failed', String(err.message)).text, keyboard: null });
+        return send({ text: design.errorPanel('Market analysis failed', design.esc(String(err.message))).text, keyboard: null });
       }
     }
     case 'cc_approvals':
@@ -153,7 +153,7 @@ async function handleCallback(query, bot) {
         return send(await screens.buildSyncResult(userId, result));
       } catch (err) {
         audit.writeEntry('BOT_INTEGRATION_SYNC', String(userId), 'error', { error: err.message });
-        return send({ text: design.errorPanel('Sync failed', String(err.message)).text, keyboard: null });
+        return send({ text: design.errorPanel('Sync failed', design.esc(String(err.message))).text, keyboard: null });
       }
     }
     case 'cc_intelligence':
@@ -256,7 +256,7 @@ async function handleCallback(query, bot) {
           return send(screens.buildPipelineResult(userId, result));
         } catch (err) {
           audit.writeEntry('BOT_PIPELINE_ERROR', String(userId), 'error', { error: err.message });
-          return send({ text: design.errorPanel('Pipeline failed', String(err.message)).text, keyboard: null });
+          return send({ text: design.errorPanel('Pipeline failed', design.esc(String(err.message))).text, keyboard: null });
         }
       }
       if (action.startsWith('cc_agent:')) {
@@ -391,7 +391,7 @@ async function handleCallback(query, bot) {
           audit.writeEntry('BOT_APPROVAL_MODE', String(userId), 'success', { mode });
           return send(screens.buildFounderApproval(userId));
         } catch (err) {
-          return send({ text: design.errorPanel('Approval mode', String(err.message)).text, keyboard: null });
+          return send({ text: design.errorPanel('Approval mode', design.esc(String(err.message))).text, keyboard: null });
         }
       }
       if (action.startsWith('cc_fd_flags_set:')) {
@@ -404,7 +404,7 @@ async function handleCallback(query, bot) {
           audit.writeEntry('BOT_FEATURE_FLAG', String(userId), 'success', { flag: flagKey, enabled: updated[flagKey] !== false });
           return send(screens.buildFounderFlags(userId));
         } catch (err) {
-          return send({ text: design.errorPanel('Feature flag', String(err.message)).text, keyboard: null });
+          return send({ text: design.errorPanel('Feature flag', design.esc(String(err.message))).text, keyboard: null });
         }
       }
       if (action === 'cc_connect_crm') {

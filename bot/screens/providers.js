@@ -23,12 +23,12 @@ async function buildProviders(userId) {
   }
   const catalogRows = Object.entries(providers.PROVIDERS).map(([key, p]) => {
     const cfg = providers.isConfigured(key);
-    return design.row(p.label, cfg ? `${design.EMOJI.success} ${p.defaultModel}` : `${design.EMOJI.info} ${t('pv_val_nokey')}`);
+    return design.row(design.esc(p.label), cfg ? `${design.EMOJI.success} ${design.esc(p.defaultModel)}` : `${design.EMOJI.info} ${t('pv_val_nokey')}`);
   });
   const policy = await providers.getPolicy(getStoreAdapter(), ctx.workspace.id);
   const policyRows = Object.entries(policy).map(([agentType, p]) => {
     const label = (workforce.REGISTRY[agentType] || {}).label || agentType;
-    return design.row(label, `${titleCase(p.provider)} · ${p.model}`);
+    return design.row(design.esc(label), `${design.esc(titleCase(p.provider))} · ${design.esc(p.model)}`);
   });
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b(t('pv_title_providers'))}`,
@@ -70,8 +70,8 @@ async function buildProviderPicker(userId, agentType) {
   rows.push([design.textButton(t('common_cancel'), 'cc_providers')]);
   return {
     text: design.compose([
-      `${design.EMOJI.ai} ${design.b(i18n.sprintf(t('pv_title_picker'), label))}`,
-      design.it(i18n.sprintf(t('pv_body_current'), titleCase(current.provider), current.model)),
+      `${design.EMOJI.ai} ${design.b(design.esc(i18n.sprintf(t('pv_title_picker'), label)))}`,
+      design.it(i18n.sprintf(t('pv_body_current'), design.esc(titleCase(current.provider)), design.esc(current.model))),
       design.divider(),
       design.it(t('pv_body_choose')),
       design.divider()
@@ -97,12 +97,12 @@ async function buildCosts(userId) {
   }
   const c = await costIntelligence(getStoreAdapter(), ctx.workspace.id);
   const providerRows = c.by_provider.length
-    ? c.by_provider.map(p => design.row(titleCase(p.provider), i18n.sprintf(t('pv_cost_provider_line'), (p.cost_cents / 100).toFixed(2), p.tasks, p.tokens)))
+    ? c.by_provider.map(p => design.row(design.esc(titleCase(p.provider)), i18n.sprintf(t('pv_cost_provider_line'), (p.cost_cents / 100).toFixed(2), p.tasks, p.tokens)))
     : [design.it(t('pv_costs_none_provider'))];
   const agentRows = c.by_agent.filter(a => a.tasks > 0).slice(0, 5)
-    .map(a => design.row(a.label, i18n.sprintf(t('pv_cost_agent_line'), (a.cost_cents / 100).toFixed(2), a.tasks)));
+    .map(a => design.row(design.esc(a.label), i18n.sprintf(t('pv_cost_agent_line'), (a.cost_cents / 100).toFixed(2), a.tasks)));
   const dealRows = c.by_deal.slice(0, 3)
-    .map(d => design.row(d.company, i18n.sprintf(t('pv_cost_deal_line'), (d.cost_cents / 100).toFixed(2), d.tasks)));
+    .map(d => design.row(design.esc(d.company), i18n.sprintf(t('pv_cost_deal_line'), (d.cost_cents / 100).toFixed(2), d.tasks)));
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b(t('pv_title_costs'))}`,
     design.it(t('pv_costs_sub')),

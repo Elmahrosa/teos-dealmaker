@@ -15,6 +15,10 @@
 //      real content still reaches the user.
 //   4. sendHtml rethrows non-parse errors (it is not a blanket error swallower).
 //   5. End-to-end: escaped screen + strict validator => sends on first try.
+//   6. buildKnowledgeDocs escapes document title + catalog label.
+//   7. Screen-wide sweep: every other screen that interpolates user-typed,
+//      model-emitted or catalog data into an HTML body escapes it too, and
+//      each still composes to valid Telegram HTML.
 
 'use strict';
 
@@ -42,17 +46,182 @@ function stubModule(request, overrides) {
 const REAL_INTELLIGENCE = require('../services/intelligence');
 const sourceLabel = st => (REAL_INTELLIGENCE.SOURCE_TYPES[st] ? REAL_INTELLIGENCE.SOURCE_TYPES[st].label : st);
 
-stubModule('../bot/store', { getStoreAdapter: () => ({ __fake: true }) });
-stubModule('../bot/screens/lib', { getCtx: async () => ({ workspace: { id: 'ws-escaping' } }) });
+// --- hostile fixture data -------------------------------------------------
+// One deliberately nasty value reused for every user-typed / model-emitted /
+// catalog field, so a single assertion proves the value was escaped rather
+// than merely omitted.
+const HOSTILE = '<script>alert(1)</script> & "quoted" <b>not bold</b>';
+
+const HOSTILE_ACTION = 'MISSION_CREATED & <approved>';
+const HOSTILE_TARGET = 'Acme <R&D> & "Co"';
+
+// The workspace context every screen under test resolves through getCtx.
+const FAKE_CTX = {
+  user: { display_name: HOSTILE },
+  workspace: { id: 'ws-escaping', name: HOSTILE, plan: 'growth' },
+  settings: { timezone: 'UTC', lang: 'en' },
+  membersCount: 3,
+  deals: { open: 2, closed: 1, total: 3 },
+  agents: { active: 4, total: 4 },
+  subscriptionLabel: HOSTILE
+};
+
+const FAKE_AUDIT_ENTRY = {
+  timestamp: '2026-09-26T10:11:12.000Z',
+  action: HOSTILE_ACTION,
+  target: HOSTILE_TARGET,
+  status: 'ok'
+};
+
+// A store adapter that satisfies the read paths the screens under test take.
+// Every screen wraps its own reads in try/catch, but returning real rows keeps
+// the hostile values on the code path that actually renders them.
+function fakeAdapter() {
+  return {
+    __fake: true,
+    find: async (table) => {
+      if (table === 'workspaces') return [{ id: 'ws-1', name: HOSTILE, slug: HOSTILE, plan: HOSTILE, status: HOSTILE }];
+      if (table === 'workspace_members') return [{ workspace_id: 'ws-1', user_id: 42 }];
+      if (table === 'users') return [{ id: 42, display_name: HOSTILE, email: HOSTILE }];
+      return [];
+    },
+    get: async () => null,
+    getOne: async () => null,
+    findOne: async () => null,
+    first: async () => null,
+    one: async () => null,
+    all: async () => [],
+    list: async () => [],
+    run: async () => ({ changes: 0 }),
+    exec: async () => ({ changes: 0 }),
+    insert: async () => ({ changes: 1 }),
+    update: async () => ({ changes: 1 }),
+    transaction: async fn => fn(fakeAdapter())
+  };
+}
+
+stubModule('../bot/store', { getStoreAdapter: () => fakeAdapter() });
+stubModule('../bot/screens/lib', { getCtx: async () => FAKE_CTX, lastEntry: () => FAKE_AUDIT_ENTRY });
 stubModule('../services/intelligence', {
   listDocuments: async () => FAKE_DOCS,
   describe: async () => ({ sources: [], total_docs: 0, total_chunks: 0, seeded: 0, uploaded: 0 })
 });
+stubModule('../utils/auditLogger', {
+  countEntries: () => 1,
+  readVault: () => [FAKE_AUDIT_ENTRY],
+  readTail: () => [FAKE_AUDIT_ENTRY],
+  writeEntry: () => {}
+});
+stubModule('../bot/access', { isFounder: () => false, isAdmin: () => false });
+stubModule('../services/workforce/runtime', {
+  listMissions: async () => ([{
+    id: 7,
+    title: HOSTILE,
+    goal: HOSTILE,
+    status: 'running',
+    progress: 40,
+    next_agent: HOSTILE,
+    next_action: HOSTILE,
+    priority: 'normal'
+  }])
+});
+stubModule('../services/workforce', {
+  REGISTRY: { closer: { label: HOSTILE, role: HOSTILE } },
+  agentHealth: async () => ([{ label: HOSTILE, display: HOSTILE, success_pct: 50, avg_runtime_ms: 12, count: 1 }]),
+  todayActivity: async () => ([{ label: HOSTILE, runs: 2, last_output: HOSTILE }]),
+  workforceConsole: async () => ({
+    workers_total: 1, busy: 0, ready: 1, completed_tasks: 2, today_cost_cents: 100,
+    estimated_pipeline_cents: 0,
+    agents: [{ agent_type: 'closer', label: HOSTILE, display: HOSTILE, tone: 'info', runs: 2, last_output: HOSTILE }]
+  }),
+  getWorkforceView: async () => ({
+    agents: [{
+      agent_type: 'closer', label: HOSTILE, role: HOSTILE, provider: HOSTILE, model: HOSTILE,
+      today_runs: 1, total_runs: 2, last_run_at: null, next_run_at: null, total_cost_cents: 0
+    }]
+  }),
+  shortTime: () => '—'
+});
+stubModule('../services/providers', {
+  PROVIDERS: { openai: { label: HOSTILE, defaultModel: HOSTILE } },
+  isConfigured: () => true,
+  getPolicy: async () => ({ closer: { provider: HOSTILE, model: HOSTILE } })
+});
+stubModule('../services/cost', {
+  costIntelligence: async () => ({
+    by_provider: [{ provider: HOSTILE, cost_cents: 100, tasks: 1, tokens: 5 }],
+    by_agent: [{ label: HOSTILE, tasks: 1, cost_cents: 100 }],
+    by_deal: [{ company: HOSTILE, cost_cents: 100, tasks: 1 }]
+  })
+});
+stubModule('../services/briefing', {
+  executiveBriefing: async () => ({
+    date: HOSTILE,
+    yesterday: { prospects: 1, qualified: 1, emails: 1, proposals: 1 },
+    today_opportunities: 1,
+    open_deals: 1,
+    pipeline_value_cents: 100,
+    meetings_needed: 1,
+    revenue_forecast_cents: 100,
+    high_risk_deals: [{ company: HOSTILE, stage: HOSTILE, days: 3 }],
+    recommended_action: HOSTILE
+  })
+});
+stubModule('../services/memory', {
+  describe: () => ([HOSTILE + ':' + HOSTILE])
+});
+// buildHome diverts to the learning wizard until onboarding is complete, which
+// would hide the home body. Report complete so the greeting/mission rows render.
+stubModule('../services/learning', { progress: async () => ({ complete: true }) });
+// buildMissionRunResult reads the plan and its steps from the repos, so the
+// hostile plan title / goal / model step output must come from here.
+stubModule('../db/repos', {
+  createRepos: () => ({
+    plans: {
+      get: async () => ({
+        id: 7, title: HOSTILE, goal: HOSTILE, status: 'completed',
+        priority: 'normal', metrics: { total_cost_cents: 0 }
+      })
+    },
+    planSteps: {
+      list: async () => ([{
+        agent_type: 'closer', step_key: 'forecast', status: 'completed', output: HOSTILE,
+        completed_at: '2026-09-26T10:11:12.000Z', started_at: '2026-09-26T10:00:00.000Z'
+      }])
+    },
+    audit: { count: async () => 1 },
+    approvals: {
+      // A pending approval whose plan resolves to the hostile plan title, and
+      // whose own `reason` is model-generated free text.
+      list: async () => ([{
+        id: 5, agent_type: 'closer', plan_id: 7, reason: HOSTILE,
+        created_at: '2026-09-26T10:11:12.000Z', status: 'pending'
+      }])
+    }
+  })
+});
+// buildSalesFlow runs the real agent chain internally; the require is inside the
+// function, so a require.cache stub replaces the generated draft with hostile text.
+stubModule('../agents/orchestrator', {
+  runSalesFlow: () => ({
+    draft: { objectionType: HOSTILE, draft: HOSTILE },
+    review: { decision: 'APPROVE' },
+    routed: { status: HOSTILE }
+  })
+});
 
-const { buildAskResult, buildKnowledgeDocs } = require('../bot/screens/intelligence');
+const { buildAskResult, buildKnowledgeDocs, buildKnowledgeAdd } = require('../bot/screens/intelligence');
 const { sendHtml, toPlainText, isParseError } = require('../bot/screens/lib');
-
-const HOSTILE = '<script>alert(1)</script> & "quoted" <b>not bold</b>';
+const { buildHome, buildDashboard } = require('../bot/screens/home');
+const { buildAudit } = require('../bot/screens/audit');
+const { buildActivity, buildAgentDetail } = require('../bot/screens/workforce');
+const { buildCosts, buildProviders } = require('../bot/screens/providers');
+const { buildBriefing } = require('../bot/screens/ops');
+const { buildMemory } = require('../bot/screens/settings');
+const { buildMissionRunResult, buildApprovals, handleMissionCreateText } = require('../bot/screens/missions');
+const missionState = require('../bot/missionState');
+const { buildPipelineResult, buildSalesFlow } = require('../bot/screens/pipeline');
+const { buildFounderWorkspaces, buildFounderCustomers } = require('../bot/screens/founder');
 
 // Telegram only accepts these tags in HTML mode; everything else is an error.
 const ALLOWED_TAGS = new Set(['b', 'i', 'code', 'a', 'pre', 's', 'u', 'tg-spoiler', 'tg-emoji']);
@@ -271,8 +440,120 @@ function makeResult(overrides) {
   assertValidTelegramHtml(emptyScreen.text);
   check(true, 'empty documents screen composes to valid Telegram HTML');
 
+  // ============ 7. screen-wide sweep: the same bug class, every screen ======
+  // Each screen below interpolates HOSTILE (or a hostile audit field) into a
+  // parse_mode:'HTML' body. For every one we assert:
+  //   a) the hostile value is present but escaped (not dropped),
+  //   b) no raw <script> tag was emitted and no bare '&' survives,
+  //   c) the composed body passes the strict Telegram validator,
+  //   d) the screen still delivers in exactly one send via the real send path.
+  const ESCAPED = '&lt;script&gt;alert(1)&lt;/script&gt; &amp; "quoted" &lt;b&gt;not bold&lt;/b&gt;';
+
+  async function assertScreenEscapes(label, build, expectHostile) {
+    const screen = await build();
+    const body = screen.text;
+    check(typeof body === 'string' && body.length > 0, label + ': renders a body');
+    check(!/<script>/.test(body), label + ': emits no raw <script> tag');
+    check(!/ & /.test(body), label + ': no bare ampersand survives in the body');
+    assertValidTelegramHtml(body);
+    check(true, label + ': composes to valid Telegram HTML');
+    const out = [];
+    const fakeBot = {
+      async sendMessage(chatId, b, o) {
+        if (o && o.parse_mode === 'HTML') assertValidTelegramHtml(b);
+        out.push(b);
+        return { message_id: out.length };
+      }
+    };
+    const res = await sendHtml(fakeBot, 7700099, body, { reply_markup: screen.keyboard });
+    equal(res.fellBack, false, label + ': sends on the first attempt, no plain-text fallback');
+    equal(out.length, 1, label + ': delivers exactly one message');
+    if (expectHostile !== false) {
+      check(body.includes(ESCAPED), label + ': hostile value present in escaped form (not dropped)');
+    }
+    return body;
+  }
+
+  // 7a. buildKnowledgeAdd: the SOURCE_TYPES catalog label contains a bare '&'
+  // ('Products & Services') -- same bug class as d.label, different call site.
+  const addBody = await assertScreenEscapes('buildKnowledgeAdd', () => buildKnowledgeAdd(7700020, 'products'), false);
+  check(addBody.includes('Products &amp; Services'), 'buildKnowledgeAdd escapes the catalog source label ampersand');
+  check(addBody.includes(LANGS.en.il_body_paste), 'buildKnowledgeAdd localized body still renders');
+
+  // 7b. home: user display_name, mission title, next agent and next action.
+  await assertScreenEscapes('buildHome', () => buildHome(7700021));
+
+  // 7c./7d. dashboard + audit log: workspace name, subscription label, and the
+  // audit action/target pair, which carried a raw '&' and angle brackets.
+  const dashBody = await assertScreenEscapes('buildDashboard', () => buildDashboard(7700022));
+  const auditBody = await assertScreenEscapes('buildAudit', () => buildAudit(7700023, { page: 1 }), false);
+  check(dashBody.includes('MISSION_CREATED &amp; &lt;approved&gt;'), 'dashboard escapes the audit action');
+  check(dashBody.includes('Acme &lt;R&amp;D&gt; &amp; "Co"'), 'dashboard escapes the audit target');
+  check(auditBody.includes('MISSION_CREATED &amp; &lt;approved&gt;'), 'audit log escapes the action');
+  check(auditBody.includes('Acme &lt;R&amp;D&gt; &amp; "Co"'), 'audit log escapes the target');
+
+  // 7e./7f. workforce: agent label, registry role, and last_output (model text).
+  await assertScreenEscapes('buildActivity', () => buildActivity(7700024));
+  await assertScreenEscapes('buildAgentDetail', () => buildAgentDetail(7700025, 'closer'));
+
+  // 7g. providers: provider catalog labels, policy provider/model, cost rows.
+  await assertScreenEscapes('buildProviders', () => buildProviders(7700026));
+  await assertScreenEscapes('buildCosts', () => buildCosts(7700027));
+
+  // 7h. ops briefing: agent health label, stalled deal company, recommendation.
+  await assertScreenEscapes('buildBriefing', () => buildBriefing(7700028));
+
+  // 7i. settings memory: user-entered memory values.
+  await assertScreenEscapes('buildMemory', () => buildMemory(7700029));
+
+  // 7j. mission run result: plan title + goal, model step output, strategy block.
+  await assertScreenEscapes('buildMissionRunResult', () => buildMissionRunResult(7700030, 7, {
+    strategy: { ascii: HOSTILE }
+  }));
+
+  // 7k. founder: workspace name/slug, member display_name and email.
+  await assertScreenEscapes('buildFounderWorkspaces', () => buildFounderWorkspaces(7700031));
+  await assertScreenEscapes('buildFounderCustomers', () => buildFounderCustomers(7700032));
+
+  // 7m. approvals: the pending approval's plan title (user-typed, reached via a
+  // repos lookup and reassigned to a local `title` before rendering) and the
+  // model-generated `reason` string.
+  const apprBody = await assertScreenEscapes('buildApprovals', () => buildApprovals(7700035));
+  check(apprBody.includes(ESCAPED), 'approvals escapes the plan title reached through the plan cache');
+
+  // 7n. mission create form: `mission[s.key]` is the user's own typed answer to
+  // each wizard step, read through a computed member and rendered in a summary.
+  missionState.begin(7700036, {
+    step: 'goal',
+    mission: { name: HOSTILE, goal: HOSTILE, customer: HOSTILE }
+  });
+  await assertScreenEscapes('handleMissionCreateText',
+    async () => handleMissionCreateText(7700036, 7700036, HOSTILE));
+
+  // 7l. pipeline: the multi-agent chain result. Every field below is model
+  // output or CRM data, and result.draft.draft is the raw generated proposal.
+  await assertScreenEscapes('buildPipelineResult', () => buildPipelineResult(7700033, {
+    notes: [{ agent_name: HOSTILE, note: HOSTILE }],
+    strategy: { style: HOSTILE },
+    marketing: { headline: HOSTILE },
+    negotiation: { landingPrice: 1, suggestedTerms: HOSTILE },
+    treasurer: {
+      checkout: { url: HOSTILE },
+      contract: { company: HOSTILE, amount: 1, currency: HOSTILE, termMonths: 1 }
+    },
+    gatekeeper: { decision: 'APPROVE' },
+    closing: { status: 'won' },
+    runs: [{ cost_cents: 100 }]
+  }));
+  await assertScreenEscapes('buildSalesFlow', () => buildSalesFlow(7700034, {
+    draft: { objectionType: HOSTILE, draft: HOSTILE },
+    review: { decision: 'APPROVE' },
+    routed: { status: HOSTILE }
+  }));
+
   console.log(`\n\u2713 bot HTML escaping + send-path fallback (${n} assertions passed)`);
   console.log('  esc() · buildAskResult question/answer/excerpt/intent · buildKnowledgeDocs doc title/label · sendHtml retry · strict validator e2e');
+  console.log('  screen sweep: knowledgeAdd · home · dashboard · audit · workforce · providers · costs · briefing · memory · missions · approvals · mission form · pipeline · salesFlow · founder');
 })().catch((err) => {
   console.error('FAILED:', err.message);
   process.exit(1);
