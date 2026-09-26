@@ -54,6 +54,9 @@ const HOSTILE = '<script>alert(1)</script> & "quoted" <b>not bold</b>';
 
 const HOSTILE_ACTION = 'MISSION_CREATED & <approved>';
 const HOSTILE_TARGET = 'Acme <R&D> & "Co"';
+// Distinct from HOSTILE so the approval plan title and the approval reason can
+// be asserted independently of one another.
+const HOSTILE_REASON = 'because <b>revenue</b> & growth';
 
 // The workspace context every screen under test resolves through getCtx.
 const FAKE_CTX = {
@@ -191,10 +194,13 @@ stubModule('../db/repos', {
     },
     audit: { count: async () => 1 },
     approvals: {
-      // A pending approval whose plan resolves to the hostile plan title, and
-      // whose own `reason` is model-generated free text.
+      // A pending approval whose plan resolves to the hostile plan title. The
+      // reason is a DISTINCT hostile value so the two can be asserted
+      // separately -- otherwise the reason alone satisfies the escaping check
+      // and the plan title (which regressed to empty via a missing await) goes
+      // unpinned.
       list: async () => ([{
-        id: 5, agent_type: 'closer', plan_id: 7, reason: HOSTILE,
+        id: 5, agent_type: 'closer', plan_id: 7, reason: HOSTILE_REASON,
         created_at: '2026-09-26T10:11:12.000Z', status: 'pending'
       }])
     }
@@ -515,11 +521,18 @@ function makeResult(overrides) {
   await assertScreenEscapes('buildFounderWorkspaces', () => buildFounderWorkspaces(7700031));
   await assertScreenEscapes('buildFounderCustomers', () => buildFounderCustomers(7700032));
 
-  // 7m. approvals: the pending approval's plan title (user-typed, reached via a
-  // repos lookup and reassigned to a local `title` before rendering) and the
-  // model-generated `reason` string.
-  const apprBody = await assertScreenEscapes('buildApprovals', () => buildApprovals(7700035));
-  check(apprBody.includes(ESCAPED), 'approvals escapes the plan title reached through the plan cache');
+  // 7m. approvals: the pending approval's plan title (user-typed, read through
+  // an awaited repos lookup and reassigned to a local `title` before rendering)
+  // and the model-generated `reason` string. The plan title and the reason are
+  // distinct values, so each assertion below can only pass on its own field.
+  const apprBody = await assertScreenEscapes('buildApprovals', () => buildApprovals(7700035), false);
+  check(apprBody.includes(ESCAPED), 'approvals renders the plan title, escaped');
+  check(apprBody.includes('&lt;b&gt;revenue&lt;/b&gt; &amp; growth'), 'approvals renders the reason, escaped');
+  // Regression pin for the missing `await` on repos.plans.get: when the promise
+  // was cached un-awaited, p.title was undefined and the heading rendered as an
+  // empty <b></b> instead of the plan title.
+  check(!apprBody.includes('<b></b>'), 'approvals heading is not an empty <b></b> (plan title resolved, not undefined)');
+  check(/<b>[^<]+<\/b>/.test(apprBody), 'approvals heading carries a non-empty bold label');
 
   // 7n. mission create form: `mission[s.key]` is the user's own typed answer to
   // each wizard step, read through a computed member and rendered in a summary.

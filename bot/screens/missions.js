@@ -453,13 +453,20 @@ async function buildApprovals(userId) {
   const repos = require('../../db/repos').createRepos(adapter);
   const pending = await repos.approvals.list(ctx.workspace.id, 'pending');
   const planCache = {};
+  // repos.plans.get is async, so it must be resolved before the synchronous
+  // map below. Caching the promise un-awaited made `p.title` undefined, and the
+  // approvals screen rendered an empty <b></b> heading instead of the plan
+  // title. Resolve each distinct plan_id once, up front.
+  const planIds = [...new Set(pending.filter(a => a.plan_id).map(a => a.plan_id))];
+  await Promise.all(planIds.map(async id => {
+    planCache[id] = await repos.plans.get(ctx.workspace.id, id);
+  }));
   const lines = pending.length
     ? pending.map(a => {
       let title = a.agent_type;
       if (a.plan_id) {
-        if (!planCache[a.plan_id]) planCache[a.plan_id] = repos.plans.get(ctx.workspace.id, a.plan_id);
         const p = planCache[a.plan_id];
-        if (p) title = p.title;
+        if (p && p.title) title = p.title;
       }
       return `${design.EMOJI.warning} ${design.b(design.esc(title))}\n${design.it(design.esc((a.reason || '').slice(0, 120)))}`;
     })
