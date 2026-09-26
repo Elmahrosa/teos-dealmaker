@@ -15,7 +15,17 @@
 //      only ASCII-bearing literals left must be exactly that screen's
 //      documented allowlist (model input, audit event identifiers, machine
 //      field names) — and every allowlisted literal must still be present, so
-//      the allowlist cannot rot into a blanket exemption.
+//      the allowlist cannot rot into a blanket exemption. Literals are
+//      TOKENIZED and template interpolations scanned recursively, so English
+//      copy nested inside ${...} cannot hide (see collectLiterals).
+//   6. No dangling or dead screen keys: every <prefix>_ literal the screen uses
+//      exists in EN, and every <prefix>_ key in EN is actually referenced.
+//   7. Agent-facing strings that ARE allowlisted are additionally asserted to
+//      still be untranslated AND still behave: the pipeline.js Sales Flow
+//      objection must keep classifying as 'price', so translating it (which
+//      would preserve the literal but break the agent) cannot pass.
+//   8. The integrations tool list, substituted into a translated sentence in
+//      both languages, must stay a pure identifier list with no connective.
 
 'use strict';
 
@@ -33,13 +43,18 @@ const SCREENS_DIR = path.join(__dirname, '..', 'bot', 'screens');
 // Model input, deliberately English: these strings are fed to the runtime
 // agent, not rendered to the user. Translating them would change agent
 // behaviour rather than presentation. Each is annotated in missions.js.
+//
+// The first six are the labelled fields of the mission brief that runGoal
+// sends to the agent. They are listed as the literal TEXT of each field
+// (everything before its ${...} hole) because that is the unit the tokenizer
+// reports, trimmed; the interpolation itself is data, not copy.
 const MISSIONS_AGENT_FACING = [
-  'Mission: ${mission.name}',
-  'Target customer: ${mission.customer}',
-  'Target market: ${mission.market}',
-  'Expected revenue: ${mission.revenue}',
-  'Deadline: ${mission.deadline}',
-  'Notes: ${mission.notes}',
+  'Mission:',
+  'Target customer:',
+  'Target market:',
+  'Expected revenue:',
+  'Deadline:',
+  'Notes:',
   'Run a full revenue pipeline for our target accounts: prospect, qualify, engage, propose and close deals for our known products.',
   'Analyze our target market: research the market, competitors, ideal customers and opportunity, then recommend where to focus.'
 ];
@@ -52,6 +67,15 @@ const MISSIONS_AUDIT_EVENTS = [
   'BOT_MISSION2_RUN',
   'BOT_MISSION_MARKET',
   'BOT_MISSION_GOAL'
+];
+
+// Terminal segments of the `cc_appr:<id>:approve` / `:reject` callback-data
+// templates. The `cc_appr:` head is skipped by the callback-data filter, but
+// the tokenizer reports the trailing segment separately, so both halves need
+// to be accounted for.
+const MISSIONS_CALLBACK_SUFFIXES = [
+  ':approve',
+  ':reject'
 ];
 
 // --- integrations.js ------------------------------------------------------
@@ -70,11 +94,46 @@ const INTEGRATIONS_MACHINE_IDS = ['keyEnv', 'baseUrl', 'defaultModel', 'T'];
 // left. The /ask model prompt is built in services/intelligence.js and is out
 // of scope here, so nothing in this screen is agent input.
 
+// --- pipeline.js ----------------------------------------------------------
+// AGENT INPUT, deliberately English. SALES_OBJECTION is the synthetic customer
+// objection handed to runSalesFlow -> draftResponse -> generateResponse ->
+// classifyObjection, which matches ENGLISH keywords
+// (/price|cost|expensive|afford|budget/i). Translating it would silently stop
+// matching and degrade every Sales Flow run to the 'general' canned reply, so
+// it changes agent behaviour rather than presentation. Same category as the
+// missions.js runGoal goal text and the /ask prompt. Guarded behaviourally
+// below, not just by presence.
+const PIPELINE_AGENT_FACING = [
+  'The price is too high for our budget.'
+];
+
+// Machine identifiers: the runSalesFlow actor id, gatekeeper/closing enum
+// values compared against, and design.badge() status keys. The English words
+// a badge shows ('SUCCESS', 'WARNING', 'CRITICAL') come from STATUS_LABEL in
+// bot/design.js, which is shared by every screen and out of screen scope --
+// batch 1 set the same precedent in missions.js.
+const PIPELINE_MACHINE_IDS = [
+  'bot_sales',
+  'APPROVE',
+  'won',
+  'success',
+  'warning',
+  'critical'
+];
+
+// --- providers.js ---------------------------------------------------------
+// No allowlist: zero ASCII-bearing literals remain. Provider brand names
+// (OpenAI, Groq, Ollama, ...), model ids and workforce REGISTRY labels are read
+// off service catalogs at render time, so they are not literals in this file
+// and cannot be translated from here.
+
 const SCREENS = [
   {
     name: 'missions.js',
     prefix: 'ms_',
-    allow: MISSIONS_AGENT_FACING.concat(MISSIONS_AUDIT_EVENTS)
+    allow: MISSIONS_AGENT_FACING
+      .concat(MISSIONS_AUDIT_EVENTS)
+      .concat(MISSIONS_CALLBACK_SUFFIXES)
   },
   {
     name: 'intelligence.js',
@@ -85,10 +144,99 @@ const SCREENS = [
     name: 'integrations.js',
     prefix: 'int_',
     allow: [INTEGRATIONS_TOOL_NAMES].concat(INTEGRATIONS_MACHINE_IDS)
+  },
+  {
+    name: 'pipeline.js',
+    prefix: 'pf_',
+    allow: PIPELINE_AGENT_FACING.concat(PIPELINE_MACHINE_IDS)
+  },
+  {
+    name: 'providers.js',
+    prefix: 'pv_',
+    allow: []
   }
 ];
 
 const countPlaceholders = s => (String(s).match(/%s/g) || []).length;
+
+// Collect every string literal in a screen, as a real tokenization rather than
+// a regex sweep. This replaced a regex for a concrete reason: a regex treats a
+// whole template literal as ONE candidate, so copy nested inside an
+// interpolation was invisible. Given
+//   `${design.EMOJI.ai} ${design.b('Sales Pipeline')}`
+// the regex yielded the entire template as a single "literal", and the
+// `${...}`-stripping filter then removed every hole — including the one
+// holding the hardcoded English — and skipped it. Mutation testing confirmed
+// the guard passed while English copy sat in the file, so interpolation bodies
+// are now scanned recursively here.
+//
+// Also handles // and /* */ comments inline, so an apostrophe inside prose
+// cannot desync the scan. Regex literals containing a quote character would
+// confuse it; none of the localized screens have one (asserted by the fact
+// that every allowlisted literal is still found below).
+function collectLiterals(src) {
+  const out = [];
+  const n = src.length;
+  let i = 0;
+
+  // Consume an expression. With stopAtBrace, return (without consuming) at the
+  // '}' that closes an enclosing ${...} hole, tracking nested braces.
+  function scan(stopAtBrace) {
+    let brace = 0;
+    while (i < n) {
+      const c = src[i];
+      if (c === "'" || c === '"') { readSimple(c); continue; }
+      if (c === '`') { readTemplate(); continue; }
+      if (c === '/' && src[i + 1] === '/') { while (i < n && src[i] !== '\n') i++; continue; }
+      if (c === '/' && src[i + 1] === '*') {
+        i += 2;
+        while (i < n && !(src[i] === '*' && src[i + 1] === '/')) i++;
+        i += 2;
+        continue;
+      }
+      if (stopAtBrace) {
+        if (c === '{') brace++;
+        else if (c === '}') { if (brace === 0) return; brace--; }
+      }
+      i++;
+    }
+  }
+
+  function readSimple(q) {
+    i++; // opening quote
+    let val = '';
+    while (i < n) {
+      const c = src[i];
+      if (c === '\\') { val += src[i] + src[i + 1]; i += 2; continue; }
+      if (c === q) { i++; break; }
+      val += c; i++;
+    }
+    out.push(val);
+  }
+
+  function readTemplate() {
+    i++; // opening backtick
+    let val = '';
+    while (i < n) {
+      const c = src[i];
+      if (c === '\\') { val += src[i] + src[i + 1]; i += 2; continue; }
+      if (c === '`') { i++; break; }
+      if (c === '$' && src[i + 1] === '{') {
+        out.push(val);   // the literal text preceding this hole
+        val = '';
+        i += 2;          // consume ${
+        scan(true);      // consume the expression, nested strings included
+        if (src[i] === '}') i++;
+        continue;
+      }
+      val += c; i++;
+    }
+    out.push(val);
+  }
+
+  scan(false);
+  return out;
+}
 
 (async () => {
   let n = 0;
@@ -142,19 +290,17 @@ const countPlaceholders = s => (String(s).match(/%s/g) || []).length;
     }
 
     // ---- 5. zero remaining hardcoded English UI strings ----------------
-    let src = fs.readFileSync(path.join(SCREENS_DIR, screen.name), 'utf8');
-    // strip comments so apostrophes in prose cannot desync the quote scan
-    src = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-
-    const literals = [];
-    const re = /'((?:[^'\\]|\\.)*)'|`((?:[^`\\]|\\.)*)`/g;
-    let m;
-    while ((m = re.exec(src))) literals.push(m[1] !== undefined ? m[1] : m[2]);
+    // Trimmed up front so the allowlist, the presence check and the key
+    // reference set all compare the same form: a template quasi keeps its
+    // trailing space ('Mission: ') but the filter and the allowlist both work
+    // on 'Mission:'.
+    const literals = collectLiterals(
+      fs.readFileSync(path.join(SCREENS_DIR, screen.name), 'utf8')
+    ).map(l => l.trim());
 
     const allowed = new Set(screen.allow);
     const unaccounted = [];
-    for (const raw of literals) {
-      const lit = raw.trim();
+    for (const lit of literals) {
       if (!lit) continue;
       // i18n keys, callback data, require paths, enum-ish values
       if (/^[a-z][a-z0-9]*(_[a-z0-9]+)+$/.test(lit)) continue;
@@ -179,10 +325,43 @@ const countPlaceholders = s => (String(s).match(/%s/g) || []).length;
       check(literals.includes(lit), `${tag} allowlisted literal still present: ${JSON.stringify(lit.slice(0, 48))}`);
     }
 
+    // ---- 6. no dangling or dead screen keys ----------------------------
+    // Every <prefix>_ literal the screen uses must exist in EN, so a typo'd
+    // t() call cannot silently fall through to rendering the raw key. And
+    // every <prefix>_ key defined in EN must actually be referenced, so a key
+    // cannot be added to both dictionaries and then never wired up.
+    //
+    // Key usage is counted from the literals rather than from t() call sites
+    // because missions.js also passes keys through data arrays (s.labelKey)
+    // and calls i18n.t(userId, '...') directly.
+    const referenced = new Set(literals.filter(l => l.startsWith(screen.prefix)));
+    const dangling = [...referenced].filter(k => !enSet.has(k));
+    const dead = keys.filter(k => !referenced.has(k));
+    check(
+      dangling.length === 0,
+      `${tag} uses no key absent from EN (dangling: ${JSON.stringify(dangling)})`
+    );
+    check(
+      dead.length === 0,
+      `${tag} defines no unreferenced key (dead: ${JSON.stringify(dead)})`
+    );
+
     summary.push({ name: screen.name, prefix: screen.prefix, keys: keys.length, allow: screen.allow.length });
   }
 
-  // ---- 6. the %s-argument tool list stays pure identifiers ---------------
+  // ---- 7. agent-facing strings stay English AND stay behaviourally live --
+  // Presence in the allowlist is not enough for these: if someone "helpfully"
+  // translated the Sales Flow objection, the literal would still be present but
+  // classifyObjection would stop matching and the run would silently degrade to
+  // the 'general' reply. Assert the classification actually still resolves.
+  const objection = PIPELINE_AGENT_FACING[0];
+  check(/^[\x20-\x7E]+$/.test(objection) && !/[؀-ۿ]/.test(objection),
+    'the Sales Flow objection is intentionally untranslated ASCII (agent input)');
+  const { classifyObjection } = require('../agents/sales/objection');
+  check(classifyObjection(objection) === 'price',
+    `the untranslated objection still classifies as 'price' (got ${JSON.stringify(classifyObjection(objection))})`);
+
+  // ---- 8. the %s-argument tool list stays pure identifiers ---------------
   // This list is substituted into int_body_tools in both languages, so any
   // English connective inside it lands verbatim in the Arabic sentence. Pin
   // the shape: bare identifiers and separators, nothing else.

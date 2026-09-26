@@ -157,8 +157,8 @@ async function cmdWorkforce(chatId, userId) {
   return screenResult(chatId, await buildWorkforce(userId));
 }
 
-async function cmdPipeline(chatId) {
-  return screenResult(chatId, buildPipeline());
+async function cmdPipeline(chatId, userId) {
+  return screenResult(chatId, buildPipeline(userId));
 }
 
 async function cmdDeals(chatId, userId) {

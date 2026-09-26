@@ -36,7 +36,7 @@ async function handleCallback(query, bot) {
     case 'cc_workforce':
       return send(await screens.buildWorkforce(userId));
     case 'cc_pipeline':
-      return send(screens.buildPipeline());
+      return send(screens.buildPipeline(userId));
     case 'cc_deals':
       return send(await screens.buildDeals(userId));
     case 'cc_pricing':
@@ -245,7 +245,7 @@ async function handleCallback(query, bot) {
       }
       if (action === 'cc_sales_run') {
         try { await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
-        return send(screens.buildSalesFlow());
+        return send(screens.buildSalesFlow(userId));
       }
       if (action === 'cc_pipeline_run') {
         try { await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
