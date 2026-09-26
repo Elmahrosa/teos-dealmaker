@@ -1,19 +1,21 @@
 const design = require('../design');
+const i18n = require('../i18n');
 const { getStoreAdapter } = require('../store');
 const intelligence = require('../../services/intelligence');
 const { getCtx } = require('./lib');
 
 async function buildIntelligence(userId) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Company Intelligence')}`,
-        design.it('Set up a workspace to build your intelligence layer.'),
+        `${design.EMOJI.ai} ${design.b(t('il_title_hub'))}`,
+        design.it(t('il_body_noctx')),
         design.divider()
       ]),
       keyboard: design.keyboard([
-        [design.textButton('Back to Home', 'cc_home')]
+        [design.textButton(t('common_home'), 'cc_home')]
       ])
     };
   }
@@ -22,57 +24,58 @@ async function buildIntelligence(userId) {
     .filter(s => s.count > 0)
     .map(s => design.row(s.label, String(s.count)));
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Company Intelligence')}`,
-    design.it('The knowledge your workforce answers from.'),
+    `${design.EMOJI.ai} ${design.b(t('il_title_hub'))}`,
+    design.it(t('il_body_sub')),
     design.divider(),
-    design.row('Documents', String(d.total_docs)),
-    design.row('Knowledge chunks', String(d.total_chunks)),
-    design.row('From your profile', String(d.seeded)),
-    design.row('Uploaded', String(d.uploaded)),
-    design.section('SOURCES'),
-    ...(sourceRows.length ? sourceRows : [design.it('No knowledge yet — add your products, pricing, FAQs and past proposals.')]),
-    design.section('COPILOT'),
-    design.it('Ask questions like "Which plan fits a 300-person company?" or "Draft a proposal with Enterprise pricing."'),
+    design.row(t('il_documents'), String(d.total_docs)),
+    design.row(t('il_row_chunks'), String(d.total_chunks)),
+    design.row(t('il_row_profile'), String(d.seeded)),
+    design.row(t('il_row_uploaded'), String(d.uploaded)),
+    design.section(t('il_sec_sources')),
+    ...(sourceRows.length ? sourceRows : [design.it(t('il_body_no_knowledge'))]),
+    design.section(t('il_sec_copilot')),
+    design.it(t('il_body_copilot')),
     design.divider()
   ]);
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('Ask the AI', 'cc_kg_ask'), design.textButton('Add Knowledge', 'cc_kg_add')],
-      [design.textButton('Documents', 'cc_kg_docs'), design.textButton('Edit Company Details', 'cc_memory')],
-      [design.textButton('Back to Home', 'cc_home')]
+      [design.textButton(t('il_btn_ask'), 'cc_kg_ask'), design.textButton(t('il_btn_add'), 'cc_kg_add')],
+      [design.textButton(t('il_documents'), 'cc_kg_docs'), design.textButton(t('il_btn_edit_details'), 'cc_memory')],
+      [design.textButton(t('common_home'), 'cc_home')]
     ])
   };
 }
 
 async function buildKnowledgeDocs(userId) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Intelligence Documents')}`,
-        design.it('Set up a workspace first.'),
+        `${design.EMOJI.ai} ${design.b(t('il_title_docs'))}`,
+        design.it(t('il_body_workspace_first')),
         design.divider()
       ]),
       keyboard: design.keyboard([
-        [design.textButton('Back to Home', 'cc_home')]
+        [design.textButton(t('common_home'), 'cc_home')]
       ])
     };
   }
   const docs = await intelligence.listDocuments(getStoreAdapter(), ctx.workspace.id);
   const lines = docs.length ? docs.map(d =>
-    `${design.EMOJI.info} ${design.b(d.title)}${d.seeded ? ' · ' + design.badge('profile') : ''}\n${design.it(d.label + ' · ' + d.chunks + ' chunk' + (d.chunks === 1 ? '' : 's'))}`
-  ) : [design.it('No documents yet — add pricing, FAQs, proposals or notes.')];
+    `${design.EMOJI.info} ${design.b(d.title)}${d.seeded ? ' · ' + design.badge('profile') : ''}\n${design.it(d.label + ' · ' + i18n.sprintf(d.chunks === 1 ? t('il_chunks_one') : t('il_chunks_many'), d.chunks))}`
+  ) : [design.it(t('il_body_no_docs'))];
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Intelligence Documents')}`,
-    design.it(`${docs.length} document${docs.length === 1 ? '' : 's'} in this workspace`),
+    `${design.EMOJI.ai} ${design.b(t('il_title_docs'))}`,
+    design.it(i18n.sprintf(docs.length === 1 ? t('il_docs_one') : t('il_docs_many'), docs.length)),
     design.divider(),
     ...lines,
     design.divider()
   ]);
-  const rows = docs.slice(0, 6).map(d => [design.textButton('Delete: ' + d.title.slice(0, 18), `cc_kg_del:${d.id}`)]);
-  rows.push([design.textButton('Add Knowledge', 'cc_kg_add'), design.textButton('Intelligence Hub', 'cc_intelligence')]);
-  rows.push([design.textButton('Back to Home', 'cc_home')]);
+  const rows = docs.slice(0, 6).map(d => [design.textButton(i18n.sprintf(t('il_btn_delete'), d.title.slice(0, 18)), `cc_kg_del:${d.id}`)]);
+  rows.push([design.textButton(t('il_btn_add'), 'cc_kg_add'), design.textButton(t('il_btn_hub'), 'cc_intelligence')]);
+  rows.push([design.textButton(t('common_home'), 'cc_home')]);
   return {
     text,
     keyboard: design.keyboard(rows)
@@ -80,37 +83,39 @@ async function buildKnowledgeDocs(userId) {
 }
 
 function buildKnowledgeAdd(userId, sourceType) {
+  const t = key => i18n.t(userId, key);
   const label = intelligence.SOURCE_TYPES[sourceType] ? intelligence.SOURCE_TYPES[sourceType].label : sourceType;
   return {
     text: design.compose([
-      `${design.EMOJI.ai} ${design.b('Add Knowledge · ' + label)}`,
+      `${design.EMOJI.ai} ${design.b(i18n.sprintf(t('il_title_add'), label))}`,
       design.divider(),
-      design.it('Paste the knowledge text now.'),
-      design.it('First line becomes the title, the rest is the content.'),
-      design.it('Example:'),
-      design.code('Enterprise Pricing\n$2,999/year for teams up to 100 seats. Includes onboarding, priority support and a dedicated CSM.'),
+      design.it(t('il_body_paste')),
+      design.it(t('il_body_firstline')),
+      design.it(t('il_body_example')),
+      design.code(t('il_ex_pricing')),
       design.divider()
     ]),
     keyboard: design.keyboard([
-      [design.textButton('Cancel', 'cc_kg_cancel')]
+      [design.textButton(t('common_cancel'), 'cc_kg_cancel')]
     ])
   };
 }
 
-function buildKnowledgeAskPrompt() {
+function buildKnowledgeAskPrompt(userId) {
+  const t = key => i18n.t(userId, key);
   return {
     text: design.compose([
-      `${design.EMOJI.ai} ${design.b('Ask Company Intelligence')}`,
+      `${design.EMOJI.ai} ${design.b(t('il_title_ask'))}`,
       design.divider(),
-      design.it('Type your question. The layer searches products, pricing, FAQs, playbooks and past conversations.'),
-      design.it('Examples:'),
-      design.code('Which plan fits a company with 300 employees?'),
-      design.code('Draft a proposal with our Enterprise pricing.'),
-      design.code('What objections has Acme raised before?'),
+      design.it(t('il_body_ask')),
+      design.it(t('il_body_examples')),
+      design.code(t('il_ex1')),
+      design.code(t('il_ex2')),
+      design.code(t('il_ex3')),
       design.divider()
     ]),
     keyboard: design.keyboard([
-      [design.textButton('Cancel', 'cc_kg_cancel')]
+      [design.textButton(t('common_cancel'), 'cc_kg_cancel')]
     ])
   };
 }
@@ -119,27 +124,30 @@ function buildAskResult(userId, question, result) {
   // Everything below is delivered with parse_mode:'HTML'. The question is raw
   // user input, the answer and excerpts are model/corpus output, so all of it
   // is escaped at this render boundary. The markup is ours; theirs is data.
+  // Only the surrounding chrome is localized: the model prompt itself is built
+  // in services/intelligence.js and is deliberately not translated.
+  const t = key => i18n.t(userId, key);
   const answerLines = result.answer
     ? result.answer.split('\n').map(design.esc)
-    : [design.it('I could not find an answer in your intelligence layer yet. Add documents about this topic, then ask again.')];
+    : [design.it(t('il_body_no_answer'))];
   const evidenceLines = result.evidence.slice(0, 3).map(e =>
-    `${design.code(design.esc(e.label))} ${design.b(design.esc(e.title))} · score ${design.esc(e.score)}\n${design.it(design.esc(e.excerpt.length > 90 ? e.excerpt.slice(0, 90) + '…' : e.excerpt))}`
+    `${design.code(design.esc(e.label))} ${design.b(design.esc(e.title))} · ${i18n.sprintf(t('il_score'), design.esc(e.score))}\n${design.it(design.esc(e.excerpt.length > 90 ? e.excerpt.slice(0, 90) + '…' : e.excerpt))}`
   );
   const lines = [
-    `${design.EMOJI.ai} ${design.b('Company Intelligence Answer')}`,
-    design.it('Question: ' + design.esc(question)),
-    design.it('Intent: ' + design.esc(result.intent.label) + (result.provider ? ` · ${design.esc(result.provider_label || result.provider)} ${design.esc(result.model)}` : ' · offline evidence')),
+    `${design.EMOJI.ai} ${design.b(t('il_title_answer'))}`,
+    design.it(i18n.sprintf(t('il_question'), design.esc(question))),
+    design.it(i18n.sprintf(t('il_intent'), design.esc(result.intent.label)) + (result.provider ? ` · ${design.esc(result.provider_label || result.provider)} ${design.esc(result.model)}` : t('il_offline_evidence'))),
     design.divider(),
     ...answerLines,
-    design.section('EVIDENCE'),
-    ...(evidenceLines.length ? evidenceLines : [design.it('No evidence retrieved.')]),
+    design.section(t('il_sec_evidence')),
+    ...(evidenceLines.length ? evidenceLines : [design.it(t('il_body_no_evidence'))]),
     design.divider()
   ];
   return {
     text: design.compose(lines),
     keyboard: design.keyboard([
-      [design.textButton('Ask Again', 'cc_kg_ask'), design.textButton('Intelligence Hub', 'cc_intelligence')],
-      [design.textButton('Back to Home', 'cc_home')]
+      [design.textButton(t('il_btn_ask_again'), 'cc_kg_ask'), design.textButton(t('il_btn_hub'), 'cc_intelligence')],
+      [design.textButton(t('common_home'), 'cc_home')]
     ])
   };
 }

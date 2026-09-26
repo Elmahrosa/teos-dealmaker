@@ -1,19 +1,31 @@
 const design = require('../design');
+const i18n = require('../i18n');
 const { getStoreAdapter } = require('../store');
 const integrations = require('../../services/integrations');
 const { getCtx, titleCase } = require('./lib');
 
+// Connector API method names are identifiers the agents call by name, not copy.
+// They are passed as an argument to int_body_tools and must not be translated.
+const TOOL_NAMES = 'searchContacts, searchDeals, sendMessage, createMeeting, storeDocument, fetchKnowledge and crawl';
+
+function statusLabel(t, info) {
+  if (info.enabled) return design.EMOJI.success + ' ' + t('int_st_enabled');
+  if (info.configured) return design.EMOJI.info + ' ' + t('int_st_configured');
+  return design.EMOJI.critical + ' ' + t('int_st_off');
+}
+
 async function buildIntegrations(userId) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Enterprise Integration Hub')}`,
-        design.it('Set up a workspace to manage integrations.'),
+        `${design.EMOJI.ai} ${design.b(t('int_title_hub'))}`,
+        design.it(t('int_body_noctx')),
         design.divider()
       ]),
       keyboard: design.keyboard([
-        [design.textButton('Back to Home', 'cc_home')]
+        [design.textButton(t('common_home'), 'cc_home')]
       ])
     };
   }
@@ -22,17 +34,16 @@ async function buildIntegrations(userId) {
   for (const cat of st.categories) {
     lines.push(design.section(titleCase(cat.label)));
     for (const c of cat.connectors) {
-      const flag = c.enabled ? design.EMOJI.success : c.configured ? design.EMOJI.info : design.EMOJI.critical;
-      lines.push(design.row(`${c.label}`, `${flag} ${c.enabled ? 'Enabled' : c.configured ? 'Configured' : 'Off'}`));
+      lines.push(design.row(`${c.label}`, statusLabel(t, c)));
     }
   }
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Enterprise Integration Hub')}`,
-    design.it('One interface for every external system your agents use.'),
+    `${design.EMOJI.ai} ${design.b(t('int_title_hub'))}`,
+    design.it(t('int_body_sub')),
     design.divider(),
-    design.row('Enabled connectors', String(st.enabled_total)),
+    design.row(t('int_row_enabled'), String(st.enabled_total)),
     ...lines,
-    design.it('Agents call searchContacts, searchDeals, sendMessage, createMeeting, storeDocument, fetchKnowledge and crawl — the hub routes them.'),
+    design.it(i18n.sprintf(t('int_body_tools'), TOOL_NAMES)),
     design.divider()
   ]);
   const rows = [];
@@ -47,8 +58,8 @@ async function buildIntegrations(userId) {
       ].filter(Boolean));
     }
   }
-  rows.push([design.textButton('All Connectors', 'cc_int_all'), design.textButton('Sync Now', 'cc_sync_now')]);
-  rows.push([design.textButton('Back to Home', 'cc_home')]);
+  rows.push([design.textButton(t('int_btn_all'), 'cc_int_all'), design.textButton(t('int_btn_sync'), 'cc_sync_now')]);
+  rows.push([design.textButton(t('common_home'), 'cc_home')]);
   return {
     text,
     keyboard: design.keyboard(rows)
@@ -56,16 +67,17 @@ async function buildIntegrations(userId) {
 }
 
 async function buildAllConnectors(userId) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
   if (!ctx) {
     return {
       text: design.compose([
-        `${design.EMOJI.ai} ${design.b('Enterprise Integration Hub')}`,
-        design.it('Set up a workspace to manage integrations.'),
+        `${design.EMOJI.ai} ${design.b(t('int_title_hub'))}`,
+        design.it(t('int_body_noctx')),
         design.divider()
       ]),
       keyboard: design.keyboard([
-        [design.textButton('Back to Home', 'cc_home')]
+        [design.textButton(t('common_home'), 'cc_home')]
       ])
     };
   }
@@ -74,13 +86,12 @@ async function buildAllConnectors(userId) {
   for (const cat of st.categories) {
     lines.push(design.section(titleCase(cat.label)));
     for (const c of cat.connectors) {
-      const flag = c.enabled ? design.EMOJI.success : c.configured ? design.EMOJI.info : design.EMOJI.critical;
-      lines.push(design.row(`${c.label} (${c.auth})`, `${flag} ${c.enabled ? 'Enabled' : c.configured ? 'Configured' : 'Off'}`));
+      lines.push(design.row(`${c.label} (${c.auth})`, statusLabel(t, c)));
     }
   }
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('All Connectors')}`,
-    design.it(`${st.enabled_total} enabled · ${integrations.catalog.CONNECTORS ? Object.keys(integrations.catalog.CONNECTORS).length : 0} available`),
+    `${design.EMOJI.ai} ${design.b(t('int_title_all'))}`,
+    design.it(i18n.sprintf(t('int_meta_counts'), st.enabled_total, integrations.catalog.CONNECTORS ? Object.keys(integrations.catalog.CONNECTORS).length : 0)),
     design.divider(),
     ...lines,
     design.divider()
@@ -91,7 +102,7 @@ async function buildAllConnectors(userId) {
       rows.push([design.textButton(`${c.label}`, `cc_int_conn:${c.id}`)]);
     }
   }
-  rows.push([design.textButton('Integration Hub', 'cc_integrations'), design.textButton('Back to Home', 'cc_home')]);
+  rows.push([design.textButton(t('int_btn_hub'), 'cc_integrations'), design.textButton(t('common_home'), 'cc_home')]);
   return {
     text,
     keyboard: design.keyboard(rows)
@@ -99,13 +110,14 @@ async function buildAllConnectors(userId) {
 }
 
 async function buildConnectorDetail(userId, connectorId) {
+  const t = key => i18n.t(userId, key);
   const ctx = await getCtx(userId);
   if (!ctx) {
-    return { text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null };
+    return { text: design.errorPanel(t('common_no_workspace'), t('common_provision_first')).text, keyboard: null };
   }
   const c = integrations.catalog.CONNECTORS[connectorId];
   if (!c) {
-    return { text: design.errorPanel('Unknown connector', connectorId).text, keyboard: null };
+    return { text: design.errorPanel(t('int_err_unknown_connector'), connectorId).text, keyboard: null };
   }
   const st = await integrations.manager.status(getStoreAdapter(), ctx.workspace.id);
   const cat = st.categories.find(g => g.category === c.category);
@@ -114,39 +126,39 @@ async function buildConnectorDetail(userId, connectorId) {
     .filter(k => !['label', 'category', 'auth', 'keyEnv', 'baseUrl', 'defaultModel'].includes(k) && typeof c[k] === 'object' && c[k] && c[k].method)
     .map(k => design.row(k, `${c[k].method} ${c[k].path}`));
   const statusText = info
-    ? (info.enabled ? design.EMOJI.success + ' Enabled' : info.configured ? design.EMOJI.info + ' Configured' : design.EMOJI.critical + ' Off')
-    : design.EMOJI.critical + ' Off';
+    ? statusLabel(t, info)
+    : design.EMOJI.critical + ' ' + t('int_st_off');
   const setupHint = c.auth === 'oauth'
-    ? 'OAuth — use Connect to authorize this connector.'
+    ? t('int_setup_oauth')
     : c.keyEnv
-      ? `Set the API key env var ${design.code(c.keyEnv)} and restart.`
-      : 'No credentials required.';
+      ? i18n.sprintf(t('int_setup_key'), design.code(c.keyEnv))
+      : t('int_setup_none');
   const text = design.compose([
     `${design.EMOJI.ai} ${design.b(c.label)}`,
-    design.it(titleCase(c.category) + ' connector'),
+    design.it(i18n.sprintf(t('int_connector_suffix'), titleCase(c.category))),
     design.divider(),
-    design.row('Status', statusText),
-    design.row('Auth', c.auth),
-    design.row('Configured', info ? (info.configured ? design.EMOJI.success + ' Yes' : design.EMOJI.info + ' No') : design.EMOJI.info + ' No'),
-    design.row('Last sync', info && info.last_synced_at ? info.last_synced_at.slice(0, 16).replace('T', ' ') : '—'),
-    design.section('CAPABILITIES'),
+    design.row(t('int_row_status'), statusText),
+    design.row(t('int_row_auth'), c.auth),
+    design.row(t('int_row_configured'), info ? (info.configured ? design.EMOJI.success + ' ' + t('common_yes') : design.EMOJI.info + ' ' + t('common_no')) : design.EMOJI.info + ' ' + t('common_no')),
+    design.row(t('int_row_last_sync'), info && info.last_synced_at ? info.last_synced_at.slice(0, 16).replace('T', ' ') : '—'),
+    design.section(t('int_sec_capabilities')),
     ...capLines,
-    design.section('SETUP'),
+    design.section(t('int_sec_setup')),
     design.it(setupHint),
     design.divider()
   ]);
   const rows = [];
   if (info && info.enabled) {
-    rows.push([design.textButton('Disable', `cc_int_disable:${connectorId}`)]);
+    rows.push([design.textButton(t('int_btn_disable'), `cc_int_disable:${connectorId}`)]);
   } else {
-    rows.push([design.textButton('Enable', `cc_int_enable:${connectorId}`)]);
+    rows.push([design.textButton(t('int_btn_enable'), `cc_int_enable:${connectorId}`)]);
   }
   if (c.auth === 'oauth') {
-    rows.push([design.textButton('Connect (OAuth)', `cc_int_auth:${connectorId}`)]);
+    rows.push([design.textButton(t('int_btn_connect_oauth'), `cc_int_auth:${connectorId}`)]);
   } else {
-    rows.push([design.textButton('Test Connection', `cc_int_test:${connectorId}`)]);
+    rows.push([design.textButton(t('int_btn_test'), `cc_int_test:${connectorId}`)]);
   }
-  rows.push([design.textButton('Back to Integrations', 'cc_integrations')]);
+  rows.push([design.textButton(t('int_btn_back'), 'cc_integrations')]);
   return {
     text,
     keyboard: design.keyboard(rows)
@@ -154,26 +166,27 @@ async function buildConnectorDetail(userId, connectorId) {
 }
 
 async function buildSyncResult(userId, result) {
+  const t = key => i18n.t(userId, key);
   const lines = (result.connectors || []).map(entry => {
     const err = entry.error ? design.EMOJI.critical + ' ' + entry.error : design.EMOJI.success + ' ' + entry.actions.join(' · ');
     return `${design.b(entry.label)} (${entry.category})\n${design.it(err)}`;
   });
   const text = design.compose([
-    `${design.EMOJI.ai} ${design.b('Integration Sync')}`,
-    design.it(`${result.connectors.length} connector${result.connectors.length === 1 ? '' : 's'} synced`),
+    `${design.EMOJI.ai} ${design.b(t('int_title_sync'))}`,
+    design.it(i18n.sprintf(result.connectors.length === 1 ? t('int_synced_one') : t('int_synced_many'), result.connectors.length)),
     design.divider(),
-    ...(lines.length ? lines : [design.it('No connectors enabled — enable one in the hub, then sync.')]),
-    design.section('WRITE-OUT'),
-    design.row('Knowledge documents', String(result.docs_written)),
-    design.row('Deals upserted', String(result.deals_upserted)),
-    design.row('Audit entries', String(result.audits)),
+    ...(lines.length ? lines : [design.it(t('int_body_none_enabled'))]),
+    design.section(t('int_sec_writeout')),
+    design.row(t('int_row_docs'), String(result.docs_written)),
+    design.row(t('int_row_deals'), String(result.deals_upserted)),
+    design.row(t('int_row_audits'), String(result.audits)),
     design.divider()
   ]);
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton('Sync Again', 'cc_sync_now'), design.textButton('Integration Hub', 'cc_integrations')],
-      [design.textButton('Back to Home', 'cc_home')]
+      [design.textButton(t('int_btn_sync_again'), 'cc_sync_now'), design.textButton(t('int_btn_hub'), 'cc_integrations')],
+      [design.textButton(t('common_home'), 'cc_home')]
     ])
   };
 }

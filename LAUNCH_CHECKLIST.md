@@ -25,8 +25,8 @@
 ## Verification Gate (2026-08-08 · figures re-verified 2026-09-26)
 | Check | Result |
 |-------|--------|
-| `npm test` | PARTIAL — 84 suites, 83 passed, 1 failed. Sole failure is `test-link-audit`, an external-network check: `https://elmahrosa.org/trust` returns HTTP 404. Unrelated to this repo's code; not reproducible as a code defect. |
-| `npm run lint` | PASS — 0 errors, 0 warnings across the repo (as of `54d8f78`). Caveat: this gate **could not be executed** before `54d8f78` because `@eslint/js` was declared but never installed; the earlier "PASS" was unverified. |
+| `npm test` | PARTIAL — 85 suites, 84 passed, 1 failed. Sole failure is `test-link-audit`, an external-network check: `https://elmahrosa.org/trust` returns HTTP 404. Unrelated to this repo's code; not reproducible as a code defect. |
+| `npm run lint` | PASS — 0 errors, 0 warnings across the repo, re-verified at `1cec0b8` and re-run on the batch-2 i18n commit. Caveat: this gate **could not be executed** before `54d8f78` because `@eslint/js` was declared but never installed; the earlier "PASS" was unverified. |
 | `npm run build` | PASS — 313 JS files pass `node --check` |
 | `npm audit --omit=dev` | PASS — 0 vulnerabilities |
 | Landing page `/` | PASS — HTTP 200 |
@@ -48,16 +48,26 @@ READY FOR PUBLIC LAUNCH — with one open external issue
 **Justification**: Corrected as of 2026-09-26. The v1.1.0 claim "all verified checks pass, no blockers" was **not accurate**: the Trust Center link returns HTTP 404, and AR screen coverage was incomplete. The 404 is external to this repository and is tracked as a known issue above, not closed here. Test and lint figures above are the currently reproducible ones.
 
 ## v1.2.0 scope — Arabic (AR) screen coverage
-Arabic is treated as required end-user coverage, not an optional nicety. This work closes the largest single gap in the 248-string backlog; the remaining 12 screens are **not** in scope for this change and remain English-only.
+Arabic is treated as required end-user coverage, not an optional nicety. Work proceeds in explicitly scoped batches. The remaining 10 screens are **not** in scope for this change and remain English-only.
 
 | Item | Status |
 |------|--------|
-| `bot/screens/missions.js` (58 hardcoded strings — largest gap) | DONE — 136 i18n keys added, EN + AR, 0 remaining hardcoded English UI strings |
-| EN/AR dictionary parity | PASS — 495 keys each, 0 missing, 0 extra, 0 empty |
-| Regression guard | `tests/test-missions-i18n.js` — 968 assertions |
-| Remaining 12 screens (intelligence, integrations, ops, deals, providers, pipeline, workforce, learning, audit, admin, home, lib) | NOT STARTED — follow-up |
+| `bot/screens/missions.js` (batch 1) | DONE — 136 `ms_` keys, EN + AR, 0 remaining hardcoded English UI strings |
+| `bot/screens/intelligence.js` (batch 2) | DONE — 43 `il_` keys, EN + AR, 0 remaining hardcoded English UI strings (empty allowlist) |
+| `bot/screens/integrations.js` (batch 2) | DONE — 38 `int_` keys, EN + AR, 0 remaining hardcoded English UI strings (5 machine identifiers allowlisted) |
+| Shared global keys | DONE — 6 `common_` keys (`Back to Home`, `Cancel`, `No workspace`, `Provision a workspace first.`, `Yes`, `No`) introduced in batch 2 |
+| EN/AR dictionary parity | PASS — 582 keys each, 0 missing, 0 extra, 0 empty |
+| Regression guard | `tests/test-screen-i18n.js` — 1544 assertions, covers all three screens |
+| Remaining 10 screens (ops, deals, providers, pipeline, workforce, learning, audit, admin, home, lib) | NOT STARTED — follow-up |
 
-Known limitation carried forward: agent-facing model prompts in `missions.js` (the `runGoal` goal text and the Mission 2 / market-mission prompts) are intentionally **not** localized, because they are model input rather than UI copy and translating them would change runtime agent behaviour.
+Note on extraction counts: the earlier "58 hardcoded strings" figure for `missions.js` was an **undercount** from a regex that only caught `design.(it|b|code|textButton)('literal')`. Real extraction was 136 keys once `design.row` labels, `design.section` headers, `design.errorPanel` arguments, form-step labels, status ternaries and interpolated strings were included. Do not trust a single narrow regex when scoping the remaining screens.
+
+Known limitations carried forward:
+- Agent-facing model prompts in `missions.js` (the `runGoal` goal text and the Mission 2 / market-mission prompts) are intentionally **not** localized, because they are model input rather than UI copy and translating them would change runtime agent behaviour.
+- The `/ask` model prompt is built in `services/intelligence.js`, not in the screen. It remains English and out of scope. `buildAskResult` in the screen is display-only and is fully localized.
+- Connector API method names (`searchContacts`, `searchDeals`, …) and catalog field names (`keyEnv`, `baseUrl`, `defaultModel`) are machine identifiers, passed as arguments to translated format strings rather than translated themselves.
+- Catalog-supplied data (connector labels, categories, document source labels) is English service data and renders untranslated in both languages. Translating it means translating the catalogs in `services/`, not the screens.
+- `common_*` keys were introduced in batch 2 and are used by `intelligence.js` and `integrations.js`. `missions.js` still carries its own equivalent `ms_*` keys for the same strings; consolidating them is a cosmetic follow-up, not a defect.
 
 ## Post-launch directives
 - **Production freeze remains ACTIVE**, except for localization (i18n) work, which is unfrozen for v1.2.0 AR coverage.
