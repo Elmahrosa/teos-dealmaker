@@ -6,7 +6,9 @@ const { getCtx, titleCase } = require('./lib');
 
 // Connector API method names are identifiers the agents call by name, not copy.
 // They are passed as an argument to int_body_tools and must not be translated.
-const TOOL_NAMES = 'searchContacts, searchDeals, sendMessage, createMeeting, storeDocument, fetchKnowledge and crawl';
+// Pure comma-separated identifiers with no connective: a literal "and" here
+// would ride the %s substitution straight into the Arabic sentence.
+const TOOL_NAMES = 'searchContacts, searchDeals, sendMessage, createMeeting, storeDocument, fetchKnowledge, crawl';
 
 function statusLabel(t, info) {
   if (info.enabled) return design.EMOJI.success + ' ' + t('int_st_enabled');

@@ -57,7 +57,9 @@ const MISSIONS_AUDIT_EVENTS = [
 // --- integrations.js ------------------------------------------------------
 // Connector API method names. The agents call these by name, so they are
 // identifiers, not copy; they are passed as the %s argument to int_body_tools.
-const INTEGRATIONS_TOOL_NAMES = 'searchContacts, searchDeals, sendMessage, createMeeting, storeDocument, fetchKnowledge and crawl';
+// Comma-separated with no connective, so that no English word rides the %s
+// substitution into the Arabic sentence.
+const INTEGRATIONS_TOOL_NAMES = 'searchContacts, searchDeals, sendMessage, createMeeting, storeDocument, fetchKnowledge, crawl';
 
 // Catalog field names used to exclude non-capability keys, plus the ISO-8601
 // date/time separator. Machine identifiers, not UI copy.
@@ -179,6 +181,22 @@ const countPlaceholders = s => (String(s).match(/%s/g) || []).length;
 
     summary.push({ name: screen.name, prefix: screen.prefix, keys: keys.length, allow: screen.allow.length });
   }
+
+  // ---- 6. the %s-argument tool list stays pure identifiers ---------------
+  // This list is substituted into int_body_tools in both languages, so any
+  // English connective inside it lands verbatim in the Arabic sentence. Pin
+  // the shape: bare identifiers and separators, nothing else.
+  const TOOL_LIST = INTEGRATIONS_TOOL_NAMES;
+  check(!/\band\b/i.test(TOOL_LIST),
+    'integrations tool list carries no English connective into the translated sentence');
+  check(
+    TOOL_LIST.split(', ').every(w => /^[A-Za-z][A-Za-z0-9]*$/.test(w)),
+    'integrations tool list is bare identifiers separated by ", "');
+  check(countPlaceholders(LANGS.en.int_body_tools) === 1 && countPlaceholders(LANGS.ar.int_body_tools) === 1,
+    'int_body_tools takes exactly one %s (the tool list)');
+  const renderedAr = String(LANGS.ar.int_body_tools).replace('%s', TOOL_LIST);
+  check(!/\b(?:and|or|the|of)\b/.test(renderedAr.replace(/[\u0600-\u06FF]/g, '')),
+    'the Arabic int_body_tools render has no stray English connective: ' + JSON.stringify(renderedAr));
 
   console.log(`\n✓ screen AR localization (${n} assertions passed)`);
   for (const s of summary) {
