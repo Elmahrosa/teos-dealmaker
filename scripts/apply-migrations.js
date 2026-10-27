@@ -47,6 +47,15 @@ async function main() {
     'CREATE TABLE IF NOT EXISTS schema_migrations (filename VARCHAR(255) PRIMARY KEY, applied_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)'
   );
 
+  // Fresh database: migrations assume the base schema already exists.
+  if (!dryRun) {
+    const base = await pool.query("SELECT to_regclass('public.agent_runs') AS t");
+    if (!base.rows[0].t) {
+      console.log(`${tag} empty database — applying db/schema.sql baseline first`);
+      await pool.query(fs.readFileSync(path.join(root, 'db', 'schema.sql'), 'utf8'));
+    }
+  }
+
   const { rows } = await pool.query('SELECT filename FROM schema_migrations');
   const applied = new Set(rows.map((r) => r.filename));
   const pending = files.filter((f) => !applied.has(f));
