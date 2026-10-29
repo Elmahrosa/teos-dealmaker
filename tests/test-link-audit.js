@@ -63,6 +63,24 @@ const render = require('../server/render');
   });
   check(bad.length === 0, 'all hrefs parse as valid absolute URLs');
 
+  // Founder-gated pages are linked from the landing page but sit behind
+  // requireFounderSession. For an unauthenticated probe the correct answer is
+  // exactly 401. Exact URL match only; every other status (200 = gate open,
+  // 403/404/5xx/timeout = broken) fails, and every other link keeps the plain
+  // status < 400 rule.
+  const FOUNDER_GATED = new Map([[new URL('/customer-0', render.SITE_URL).href, 401]]);
+  const gated = [...FOUNDER_GATED.keys()][0];
+  const R = (url, status) => (status < 400 ? { url, ok: true, status } : { url, ok: false, status, reason: 'status ' + status });
+  check(!linkFails(R(gated, 401), FOUNDER_GATED), 'gated page: 401 is accepted');
+  for (const st of [200, 403, 404, 500]) {
+    check(linkFails(R(gated, st), FOUNDER_GATED), `gated page: ${st} fails`);
+  }
+  check(linkFails({ url: gated, ok: false, reason: 'timeout' }, FOUNDER_GATED), 'gated page: timeout fails');
+  check(linkFails(R('https://example.com/other', 401), FOUNDER_GATED), 'other link: 401 still fails');
+  check(linkFails(R(gated + '/x', 401), FOUNDER_GATED), 'gated exception is exact-URL only');
+  check(!linkFails(R('https://example.com/other', 200), FOUNDER_GATED), 'other link: 200 passes');
+  check(linkFails(R('https://example.com/other', 404), FOUNDER_GATED), 'other link: 404 fails');
+
   const unique = [...new Set(hrefs)];
   if (process.env.LINK_AUDIT_OFFLINE === '1') {
     console.log(`SKIP network pass (${unique.length} unique links) — LINK_AUDIT_OFFLINE=1`);
@@ -71,8 +89,10 @@ const render = require('../server/render');
     for (const u of unique) {
       results.push(await probe(u));
     }
-    const failures = results.filter(r => !r.ok);
-    for (const f of failures) console.error(`  FAIL ${f.url} -> ${f.reason}`);
+    const failures = results.filter(r => linkFails(r, FOUNDER_GATED));
+    for (const f of failures) {
+      console.error(`  FAIL ${f.url} -> ${FOUNDER_GATED.has(f.url) ? `expected ${FOUNDER_GATED.get(f.url)} (founder-gated), got ${f.reason || 'status ' + f.status}` : f.reason}`);
+    }
     check(failures.length === 0, `all ${unique.length} external links reachable (status < 400)`);
   }
 
@@ -82,6 +102,10 @@ const render = require('../server/render');
   console.error('test-link-audit FAILED:', err && err.stack || err);
   process.exit(1);
 });
+
+function linkFails(r, gatedMap) {
+  return gatedMap.has(r.url) ? r.status !== gatedMap.get(r.url) : !r.ok;
+}
 
 function probe(url) {
   return new Promise((resolve) => {
@@ -100,7 +124,7 @@ function probe(url) {
           'Accept': '*/*'
         }
       })
-        .then(res => finish(res.status >= 400 ? { url, ok: false, reason: 'status ' + res.status } : { url, ok: true, status: res.status }))
+        .then(res => finish(res.status >= 400 ? { url, ok: false, status: res.status, reason: 'status ' + res.status } : { url, ok: true, status: res.status }))
         .catch(err2 => finish({ url, ok: false, reason: reasonOf(err || err2) }));
     };
     fetch(url, {
@@ -112,7 +136,7 @@ function probe(url) {
         'Accept': '*/*'
       }
     })
-      .then(res => finish(res.status >= 400 ? { url, ok: false, reason: 'status ' + res.status } : { url, ok: true, status: res.status }))
+      .then(res => finish(res.status >= 400 ? { url, ok: false, status: res.status, reason: 'status ' + res.status } : { url, ok: true, status: res.status }))
       .catch(err => tryGet(err));
   });
 }
