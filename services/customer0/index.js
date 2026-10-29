@@ -321,7 +321,7 @@ async function decide(db, opts) {
       return { ok: false, error: res.error || 'approval_failed', email_id: email.id };
     }
     audit(r, email, 'CUSTOMER0_OUTREACH_APPROVED', 'APPROVED', baseDetails);
-    let enqueue = null;
+    let enqueue;
     try {
       const worker = require('../outboundWorker');
       const q = await worker.enqueue(db.adapter, {
@@ -438,8 +438,7 @@ async function seed(db, opts) {
         email = await r.outboundEmails.get(ws.id, email.id);
       }
       if (email && email.status === 'DRAFT') {
-        const req = await ch.requestApproval(r, ws.id, email.id, { reason: 'customer0 outreach' });
-        if (req && req.ok) email = req.email;
+        await ch.requestApproval(r, ws.id, email.id, { reason: 'customer0 outreach' });
       }
     }
   }

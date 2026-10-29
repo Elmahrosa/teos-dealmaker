@@ -23,7 +23,7 @@ function evaluateMission(goal, knowledge) {
     'Any irreversible action (send, contract, payment) gets founder approval first'
   ];
   const specialists = [];
-  let budgetCents = 500;
+  let budgetCents;
 
   if (hasKnowledge) {
     reasoning.push(`Grounded in company knowledge for ${company.company_name || 'this workspace'} (${products.length} products, ${personas.length} personas).`);

@@ -112,7 +112,7 @@ function verifyStamp(stamp, context) {
     }
   }
 
-  let stampHash = null;
+  let stampHash;
   try {
     stampHash = computeStampHash(stamp);
   } catch (_) {

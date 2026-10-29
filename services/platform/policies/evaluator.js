@@ -11,7 +11,7 @@ function createEvaluator(registry) {
   async function evaluate(request) {
     const trace = [];
     for (const rule of registry.ordered()) {
-      let result = null;
+      let result;
       try {
         result = await rule.fn(request);
       } catch (err) {

@@ -65,10 +65,9 @@ async function executeStep(adapter, workspaceId, step, opts) {
   emit(EVENT_NAMES.TASK_STARTED, { stepId: step.id, planId: step.plan_id, agentType: step.agent_type, task: step.task });
 
   const startedAt = Date.now();
-  let run = null;
+  let run;
   let attempts = 0;
-  let lastError = null;
-
+  let lastError;
   const runOnce = async (taskPrompt) => {
     attempts += 1;
     return runAgent(adapter, workspaceId, step.agent_type, null, {
@@ -87,7 +86,6 @@ async function executeStep(adapter, workspaceId, step, opts) {
       onProviderFailure: err => emit(EVENT_NAMES.PROVIDER_FAILED, { stepId: step.id, provider: route.provider, error: err.message })
     });
   } catch (err) {
-    lastError = err;
     emit(EVENT_NAMES.TASK_FAILED, { stepId: step.id, planId: step.plan_id, agentType: step.agent_type, error: err.message });
     await repos.planSteps.update(step.id, { status: 'failed', error: err.message, completed_at: new Date().toISOString() });
     return { stepId: step.id, status: 'failed', error: err.message, attempts };

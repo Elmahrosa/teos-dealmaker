@@ -66,7 +66,7 @@ function evaluate(request) {
     return decision(false, allowList ? 'tool_not_in_allow_list' : 'policy_not_configured', request);
   }
   for (const rule of rules) {
-    let ruleDecision = null;
+    let ruleDecision;
     try {
       ruleDecision = rule(request);
     } catch (_) {

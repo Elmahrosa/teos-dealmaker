@@ -98,7 +98,7 @@ async function sendRaw(opts) {
   if (!providerMessageId) {
     return { ok: false, outcome: 'provider_missing_message_id', reason: 'provider_missing_message_id', detail: 'Resend returned success without a verifiable message id' };
   }
-  let messageIdHeader = null;
+  let messageIdHeader;
   try {
     messageIdHeader = res.headers && typeof res.headers.get === 'function' ? res.headers.get('message-id') : null;
   } catch (_err) {

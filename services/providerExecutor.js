@@ -80,7 +80,7 @@ async function realCall(providerKey, model, prompt, opts) {
     return { text, input_tokens: inputTokens, output_tokens: outputTokens, simulated: false };
   } catch (err) {
     if (controller && err && err.name === 'AbortError') {
-      throw new Error(`Provider ${providerKey} ${model} timeout after ${timeoutMs}ms`);
+      throw new Error(`Provider ${providerKey} ${model} timeout after ${timeoutMs}ms`, { cause: err });
     }
     throw err;
   } finally {

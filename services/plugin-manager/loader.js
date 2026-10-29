@@ -213,7 +213,7 @@ function createLoader(deps) {
     try {
       manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     } catch (err) {
-      throw new Error(`invalid ${MANIFEST} in ${dir}: ${err.message}`);
+      throw new Error(`invalid ${MANIFEST} in ${dir}: ${err.message}`, { cause: err });
     }
     const check = validateManifest(manifest, dir);
     if (!check.valid) {
@@ -282,7 +282,7 @@ function createLoader(deps) {
       try {
         record.installApi = entries.install(ctx);
       } catch (err) {
-        throw new Error(`plugin install hook failed: ${err.message}`);
+        throw new Error(`plugin install hook failed: ${err.message}`, { cause: err });
       }
     }
 

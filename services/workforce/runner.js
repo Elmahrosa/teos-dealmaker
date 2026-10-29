@@ -53,7 +53,7 @@ async function runAgent(adapter, workspaceId, agentType, fn, opts) {
   let result;
   let status = 'completed';
   let error = null;
-  let llm = null;
+  let llm;
   try {
     if (o.prompt !== undefined && o.prompt !== null) {
       const enriched = await intelligencePrompt(adapter, workspaceId, agentType, o.prompt);
