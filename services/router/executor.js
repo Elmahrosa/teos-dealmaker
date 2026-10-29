@@ -145,22 +145,47 @@ async function dispatch(adapter, step, ctx, session) {
 
     case 'approve':
     case 'cancel': {
-      const decision = step.intent === 'approve' ? 'approved' : 'rejected';
-      let requestId = step.params.requestId || (session.approvalState && session.approvalState.requestId);
-      if (!requestId) {
-        const pending = await wf.approvals.list('pending');
-        if (pending && pending.length === 1) requestId = pending[0].id;
-        else if (pending && pending.length > 1) {
-          session.lastQuestion = 'approval_choice';
-          return { action: 'need_approval_choice', data: { pending, language: lang } };
-        }
+      // approvals.decide accepts only 'approve' | 'reject'. The stored status
+      // (not the typed intent) decides what is reported and whether to resume.
+      //
+      // Authorization note: the target is limited to the caller's own workspace
+      // (wf is workspace-scoped), but there is no founder-only check here. Any
+      // member of the workspace can decide its pending requests by typing.
+      const decision = step.intent === 'approve' ? 'approve' : 'reject';
+      const pending = (await wf.approvals.list('pending')) || [];
+      let target;
+      if (step.params.ambiguousIds) {
+        // "approve 12 13": more than one id. Decide nothing; ask which one.
+        if (!pending.length) return { action: 'no_pending_approvals', data: { language: lang } };
+        session.lastQuestion = 'approval_choice';
+        return { action: 'need_approval_choice', data: { pending, language: lang } };
       }
-      if (!requestId) return { action: 'no_pending_approvals', data: { language: lang } };
-      const updated = await approvals.decide(adapter, wsId, requestId, decision, ctx.userId);
-      session.approvalState = null;
+      if (step.params.requestId != null) {
+        target = pending.find((a) => Number(a.id) === Number(step.params.requestId));
+        if (!target) return { action: 'approval_not_pending', data: { requestId: step.params.requestId, language: lang } };
+      } else if (pending.length === 1) {
+        target = pending[0];
+      } else if (pending.length > 1) {
+        session.lastQuestion = 'approval_choice';
+        return { action: 'need_approval_choice', data: { pending, language: lang } };
+      } else {
+        return { action: 'no_pending_approvals', data: { language: lang } };
+      }
+      let updated;
+      try {
+        updated = await approvals.decide(adapter, wsId, target.id, decision, ctx.userId);
+      } catch (err) {
+        if (/already/i.test(String(err && err.message))) {
+          return { action: 'approval_not_pending', data: { requestId: target.id, language: lang } };
+        }
+        throw err;
+      }
+      if (session.approvalState) session.approvalState = null;
       let resumed = null;
-      if (updated.step_id) {
-        const plan = await latestPlan(adapter, wsId);
+      if (updated.status === 'approved' && updated.step_id) {
+        const stepRow = await wf.planSteps.get(updated.step_id);
+        const planId = updated.plan_id || (stepRow && stepRow.plan_id);
+        const plan = planId ? await wf.plans.get(planId) : await latestPlan(adapter, wsId);
         if (plan) {
           resumed = await runtime.resume(adapter, wsId, plan.id);
           session.currentMission = { planId: plan.id, title: plan.title };
