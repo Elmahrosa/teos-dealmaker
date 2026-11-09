@@ -12,7 +12,7 @@ function config() {
     const n = Number(raw);
     return raw !== undefined && raw !== '' && Number.isFinite(n) && n > 0 ? n : def;
   };
-  const hours = num('SOR_REPORT_INTERVAL_HOURS', 3);
+  const hours = num('SOR_REPORT_INTERVAL_HOURS', 2);
   return {
     enabled: require('../../db').isSorEnabled(),
     intervalMs: Math.round(hours * 60 * 60 * 1000),
