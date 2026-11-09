@@ -44,7 +44,17 @@ async function runPlan(adapter, workspaceId, opts) {
       goal: o.goal || o.title || '',
       status: 'planned',
       priority: o.priority || 'normal',
-      metrics: { total_steps: steps.length, completed_steps: 0, total_cost_cents: 0, budget_cents: o.budgetCents || null },
+      metrics: {
+        total_steps: steps.length,
+        completed_steps: 0,
+        total_cost_cents: 0,
+        budget_cents: o.budgetCents || null,
+        ...(o.durationHours ? {
+          duration_hours: o.durationHours,
+          started_at: new Date().toISOString(),
+          deadline_at: new Date(Date.now() + o.durationHours * 60 * 60 * 1000).toISOString()
+        } : {})
+      },
       version: 'v1.0.0'
     });
     for (const s of steps) {
@@ -79,11 +89,17 @@ async function runPlan(adapter, workspaceId, opts) {
   }
 
   const startedAt = Date.now();
+  const deadlineAt = plan.metrics && plan.metrics.deadline_at ? Date.parse(plan.metrics.deadline_at) : null;
+  let timeboxExpired = false;
   let failed = false;
   let halted = false;
   let failReason = null;
 
   for (let round = 0; round < 200; round++) {
+    if (deadlineAt && Date.now() >= deadlineAt) {
+      timeboxExpired = true;
+      break;
+    }
     const steps = await repos.planSteps.list(plan.id);
     const done = steps.filter(s => s.status === 'completed').map(s => s.step_key);
     const failedStep = steps.find(s => s.status === 'failed');
@@ -130,7 +146,7 @@ async function runPlan(adapter, workspaceId, opts) {
     }
   }
 
-  const status = failed ? 'failed' : halted ? 'waiting_approval' : 'completed';
+  const status = failed ? 'failed' : halted ? 'waiting_approval' : timeboxExpired ? 'timebox_expired' : 'completed';
   const budget = (plan.metrics && plan.metrics.budget_cents) || null;
   const budgetExceeded = budget !== null && totalCostCents > budget;
   const finalStatus = budgetExceeded ? 'budget_exceeded' : status;
@@ -144,7 +160,10 @@ async function runPlan(adapter, workspaceId, opts) {
       avg_confidence: avgConfidence,
       total_cost_cents: totalCostCents,
       budget_cents: budget,
-      budget_exceeded: budgetExceeded ? true : null
+      budget_exceeded: budgetExceeded ? true : null,
+      timebox_expired: timeboxExpired || null,
+      deadline_at: deadlineAt ? new Date(deadlineAt).toISOString() : (plan.metrics && plan.metrics.deadline_at) || null,
+      duration_hours: (plan.metrics && plan.metrics.duration_hours) || null
     }
   });
 
@@ -286,6 +305,7 @@ function extractCompanyFromStep(step) {
 
 async function runGoal(adapter, workspaceId, goal, opts) {
   const o = opts || {};
+  const durationHours = [3, 12, 24].includes(Number(o.durationHours)) ? Number(o.durationHours) : null;
   const planned = planner.planGoal(goal, o);
   return runPlan(adapter, workspaceId, {
     title: o.title || goal.slice(0, 120),
@@ -293,7 +313,8 @@ async function runGoal(adapter, workspaceId, goal, opts) {
     priority: o.priority || 'normal',
     steps: planned.steps,
     quality: o.quality,
-    budgetCents: o.budgetCents
+    budgetCents: o.budgetCents,
+    durationHours
   });
 }
 
