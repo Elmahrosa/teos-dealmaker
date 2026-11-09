@@ -118,7 +118,7 @@ function clearPendingInputState(userId) {
   missionState.clear(userId);
 }
 
-async function runSellMission(chatId, userId, goal, durationHours) {
+      return await runSellMission(chatId, userId, sellMatch[2].trim(), Number(sellMatch[1]) || 3);
   const adapter = getStoreAdapter();
   const user = await identity.getUserByTelegram(adapter, userId);
   const workspace = user ? await identity.getWorkspaceForUser(adapter, user.id) : null;
@@ -148,7 +148,7 @@ async function handleMessage(msg) {
   if (!text) return null;
 
   // One-line universal sales mission: "Sell [offer]" or "Sell 12h [offer]".
-  const sellMatch = text.match(/^(?:\/sell\s+)?(?:sell|بيع)\s+(?:(3|12|24)\s*(?:h|hours?|ساعة|ساعات)\s+)?([\s\S]+)$/i);
+  const sellMatch = text.match(/^(?:\\/sell|sell|بيع)\\s+(?:(3|12|24)\\s*(?:h|hours?|ساعة|ساعات)\\s+)?([\\s\\S]+)$/i);
   if (sellMatch) {
     try {
       return await runSellMission(chatId, userId, sellMatch[3].trim(), Number(sellMatch[1] || sellMatch[2]) || 3);
