@@ -305,8 +305,8 @@ function extractCompanyFromStep(step) {
 
 async function runGoal(adapter, workspaceId, goal, opts) {
   const o = opts || {};
-  const durationHours = [3, 12, 24].includes(Number(o.durationHours)) ? Number(o.durationHours) : null;
   const planned = planner.planGoal(goal, o);
+  const durationHours = [3, 12, 24].includes(Number(o.durationHours)) ? Number(o.durationHours) : (planned.intent === 'sell' ? 3 : null);
   return runPlan(adapter, workspaceId, {
     title: o.title || goal.slice(0, 120),
     goal,
