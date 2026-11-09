@@ -110,12 +110,39 @@ function parseMemoryValue(key, text) {
   return text;
 }
 
+function clearPendingInputState(userId) {
+  onboarding.reset(userId);
+  botLearning.clear(userId);
+  knowledgeState.clear(userId);
+  memoryEdit.clear(userId);
+  missionState.clear(userId);
+}
+
 async function handleMessage(msg) {
   const chatId = msg.chat.id;
   const userId = msg.from ? msg.from.id : null;
   const text = (msg.text || '').trim();
 
   if (!text) return null;
+
+  // Founder escape hatch: never trap a new request inside an unfinished form.
+  // /cancel clears every conversational input state; /new starts a fresh goal.
+  const commandText = text.split(/\\s+/)[0].toLowerCase().replace(/@[^@]+$/, '');
+  if (commandText === '/cancel') {
+    clearPendingInputState(userId);
+    audit.writeEntry('BOT_INPUT_CANCELLED', String(userId), 'success', { mode: getMode() });
+    return { chatId, text: 'Cancelled. Your previous input flow is cleared. Send a new request whenever you are ready.' };
+  }
+  if (commandText === '/new') {
+    clearPendingInputState(userId);
+    const request = text.replace(/^\\/new(?:@[^\\s]+)?\\s*/i, '').trim();
+    if (!request) {
+      return { chatId, text: 'Send one request after /new. Example: /new Find 30 companies in Saudi Arabia that may need TEOS domains.' };
+    }
+    audit.writeEntry('BOT_NEW_REQUEST', String(userId), 'in_progress', { mode: getMode(), request_length: request.length });
+    const routed = await routerResult(chatId, userId, request);
+    return routed || { chatId, text: 'I could not route that request. Try /new with a clearer goal.' };
+  }
 
   if (onboarding.isActive(userId) && !text.startsWith('/')) {
     return onboarding.handleText(chatId, userId, text);
