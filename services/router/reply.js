@@ -167,8 +167,11 @@ function textFor(result, ctx, session) {
     case 'approve':
     case 'cancel': {
       const status = d.updated?.status;
-      const ok = status === 'approved' ? (ar ? 'تمت الموافقة.' : 'Approved.') : (ar ? 'تم الإلغاء.' : 'Cancelled.');
-      if (d.resumed?.plan) {
+      const ok = status === 'approved'
+        ? (ar ? 'تمت الموافقة.' : 'Approved.')
+        : (ar ? 'تم الرفض.' : 'Rejected.');
+      // Only an approved request ever resumes a mission.
+      if (status === 'approved' && d.resumed?.plan) {
         const s = summaryOf(d.resumed.plan, d.resumed.steps);
         return ar
           ? `${ok} المهمة «${d.resumed.plan.title}» استؤنفت (${s.done}/${s.total}).`
@@ -180,10 +183,19 @@ function textFor(result, ctx, session) {
     case 'no_pending_approvals':
       return ar ? 'لا توجد طلبات موافقة معلقة حالياً.' : 'No pending approval requests right now.';
 
-    case 'need_approval_choice':
+    case 'approval_not_pending':
       return ar
-        ? `توجد ${(d.pending || []).length} موافقات معلقة. أرسل الرقم لكل واحدة (مثل: موافقة 123456).`
-        : `There are ${(d.pending || []).length} pending approvals. Reply with its id, e.g. "approve 123456".`;
+        ? `لا يوجد طلب موافقة معلق بالرقم ${d.requestId}. ربما تم البت فيه مسبقاً.`
+        : `There is no pending approval request #${d.requestId}. It may already have been decided.`;
+
+    case 'need_approval_choice': {
+      const list = (d.pending || [])
+        .map((a) => `#${a.id} — ${String(a.reason || a.agent_type || '').slice(0, 80)}`)
+        .join('\n');
+      return ar
+        ? `توجد ${(d.pending || []).length} موافقات معلقة. أرسل الرقم لكل واحدة (مثل: موافقة 123):\n${list}`
+        : `There are ${(d.pending || []).length} pending approvals. Reply with its id, e.g. "approve 123":\n${list}`;
+    }
 
     case 'need_goal':
       return ar
@@ -260,6 +272,8 @@ function suggestionsFor(result, ctx) {
     case 'cancel':
     case 'continue':
     case 'no_pending_approvals':
+    case 'approval_not_pending':
+    case 'need_approval_choice':
     case 'run_sales':
       list = S.pending;
       break;

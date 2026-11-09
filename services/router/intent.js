@@ -6,6 +6,12 @@
 
 const AR_SCRIPT = /[\u0600-\u06FF]/;
 
+// Optional request id after an Arabic approve/reject command, then end of text.
+// A trailing question mark (? or ؟) is deliberately NOT accepted: a question is
+// not a command.
+// Accepts "موافق 126", "موافق على 126", "موافق #126", "موافق رقم 126".
+const AR_ID_TAIL = '(?:\\s+(?:على\\s+)?(?:#|رقم\\s*)?[0-9\\u0660-\\u0669]+)?\\s*[.!]*\\s*$';
+
 const PATTERNS = [
   {
     intent: 'greeting',
@@ -100,13 +106,15 @@ const PATTERNS = [
     intent: 'approve',
     capability: 'approval.decide',
     en: [/^(approve|accept|confirm|yes|ok|okay|go ahead)\b/i],
-    ar: [/(موافقة|موافق|أوافق|تأكيد|نعم|تمام)/, /^وافق/]
+    // Anchored: only a standalone command (optionally followed by a request id)
+    // approves. A sentence that merely contains "نعم" or "تمام" must not.
+    ar: [new RegExp('^\\s*(?:موافقة|موافق|أوافق|اوافق|وافق|تأكيد|نعم|تمام)' + AR_ID_TAIL)]
   },
   {
     intent: 'cancel',
     capability: 'mission.cancel',
     en: [/^(cancel|stop|abort|reject|no|dismiss)\b/i],
-    ar: [/(إلغاء|إلغي|أوقف|ارفض|لا)/, /^إلغاء/]
+    ar: [new RegExp('^\\s*(?:رفض|ارفض|أرفض|إلغاء|الغاء|إلغي|أوقف|لا)' + AR_ID_TAIL)]
   },
   {
     intent: 'continue',
@@ -134,6 +142,10 @@ const PATTERNS = [
   }
 ];
 
+function toAsciiDigits(text) {
+  return String(text).replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660));
+}
+
 function detectLanguage(text) {
   return AR_SCRIPT.test(text) ? 'ar' : 'en';
 }
@@ -155,8 +167,11 @@ function extractParams(intent, text) {
     if (!params.goal && /^(research|generate|sell|contact|build)\b/i.test(t)) params.goal = t;
   }
   if (intent === 'approve' || intent === 'cancel') {
-    const id = t.match(/\b(\d{6,})\b/);
-    if (id) params.requestId = Number(id[1]);
+    // Exactly one number selects a request. Two or more is ambiguous: never
+    // decide the first one; the executor asks the user to choose.
+    const ids = toAsciiDigits(t).match(/\d+/g) || [];
+    if (ids.length === 1) params.requestId = Number(ids[0]);
+    else if (ids.length > 1) params.ambiguousIds = true;
   }
   if (intent === 'talk_to_agent') {
     const agents = ['researcher', 'strategist', 'sales', 'gatekeeper', 'sentinel', 'closer', 'prospector', 'qualifier', 'treasurer', 'revenue'];
@@ -192,6 +207,8 @@ function detect(rawText) {
   if (!text) return { intent: 'unknown', capability: null, language, confidence: 0.1, params: {} };
   for (const p of PATTERNS) {
     const rex = language === 'ar' ? p.ar : p.en;
+    // A question ("approve?", "موافق؟") never decides anything.
+    if ((p.intent === 'approve' || p.intent === 'cancel') && /[?؟]\s*$/.test(text)) continue;
     if (rex && rex.some((re) => re.test(text))) {
       const params = extractParams(p.intent, text);
       return { intent: p.intent, capability: p.capability, language, confidence: 0.9, params };
