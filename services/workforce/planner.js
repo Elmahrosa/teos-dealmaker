@@ -20,6 +20,7 @@ const PRIORITY_BY_AGENT = {
 
 function intentOf(goal) {
   const g = String(goal || '').toLowerCase();
+  if (/(sell|selling|sales mission|revenue mission|launch sales|بيع|مبيعات)/.test(g)) return 'sell';
   if (/(outreach|cold|email campaign|sequence)/.test(g)) return 'outreach';
   if (/(research|analy|dossier|company profile)/.test(g)) return 'research';
   if (/(qualif|fit score|bant|lead scoring)/.test(g)) return 'qualification';
@@ -43,6 +44,20 @@ function buildSteps(goal, intent) {
   };
 
   const templates = {
+    sell: () => {
+      add('revenue_strategist', 'commercial_brief', `Define the commercial objective, measurable KPIs, operating budget and approval boundaries for selling this product or service: "${goal}". Treat the seller as any independent business; do not assume Elmahrosa products or company context.`);
+      const marketKey = add('market_intelligence', 'market_map', `Identify the strongest buyer segments, geographies, buying triggers and competitor alternatives for the specific product or service in: "${goal}". Separate evidence from assumptions.`, { group: 'parallel' });
+      const positioningKey = add('strategist', 'positioning', `Create the ideal customer profile, value proposition and differentiation for the product or service in: "${goal}". Do not invent capabilities, proof or customer results.`, { depends_on: [marketKey] });
+      const prospectKey = add('prospecting', 'prospects', `Build a prioritized, evidence-based prospect list for the product or service in: "${goal}". Include source and fit rationale; do not fabricate contacts.`, { depends_on: [positioningKey] });
+      const qualifyKey = add('qualification', 'qualify', `Score prospects against need, authority, budget, timing and fit for: "${goal}". Mark unknown fields as unknown; prioritize high-fit buyers.`, { depends_on: [prospectKey] });
+      const messageKey = add('marketer', 'personalize', `Create tailored value messages and objection-aware angles for the qualified prospects for: "${goal}".`, { depends_on: [qualifyKey] });
+      const termsKey = add('negotiator', 'offer', `Prepare a commercially sound offer, pricing options and negotiation boundaries for: "${goal}". Never grant discounts or change terms without delegated authority.`, { depends_on: [messageKey] });
+      const reviewKey = add('gatekeeper', 'policy_review', `Review prospect sources, claims, personalization, pricing and outreach drafts for compliance and accuracy for: "${goal}". Block unsupported claims and unsafe outreach.`, { depends_on: [termsKey] });
+      add('outreach', 'outreach_drafts', `Prepare individualized outreach and follow-up drafts for approved high-fit prospects for: "${goal}". Sending requires explicit channel authorization and approval.`, { depends_on: [reviewKey] });
+      add('treasurer', 'checkout_ready', `Prepare a quote, payment instructions or checkout handoff for: "${goal}". Do not charge, invoice or make a financial commitment without explicit approval.`, { depends_on: [reviewKey] });
+      add('sales', 'objection_playbook', `Prepare responses to likely buyer objections and a qualification-to-meeting handoff for: "${goal}".`, { depends_on: [messageKey] });
+      add('closing', 'close_plan', `Define close criteria, next steps and payment-confirmation requirements for: "${goal}". Never report a sale without verified buyer acceptance and payment evidence.`, { depends_on: ['outreach_drafts', 'checkout_ready', 'objection_playbook'] });
+    },
     deal: () => {
       add('revenue_strategist', 'assess', `Act as Revenue Strategist. Decide whether this mission makes sense, choose which specialist agents should participate, set success criteria and a cost budget, and decide when to ask for human approval. Goal: "${goal}".`);
       add('strategist', 'strategy', `Build a tactical playbook for the goal: "${goal}". Define positioning, target pricing and the sequence of moves.`);
