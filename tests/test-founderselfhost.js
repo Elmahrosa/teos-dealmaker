@@ -142,6 +142,17 @@ const missionState = require('../bot/missionState');
     equal(storedMission.notes, 'Run the full workflow.', 'notes saved');
   }
 
+  // ------------------------------------------------ 5. founder escape hatch
+  missionState.begin(FOUNDER, { mode: 'mission_create', step: 'goal', mission: { name: 'Stale form' } });
+  res = await handleMessage(msg('/cancel'));
+  equal(missionState.pending(FOUNDER), false, '/cancel clears a pending mission form');
+  check(res.text.includes('Cancelled'), '/cancel confirms the input flow was cleared');
+
+  missionState.begin(FOUNDER, { mode: 'mission_create', step: 'goal', mission: { name: 'Stale form' } });
+  res = await handleMessage(msg('/new Check the current sales pipeline'));
+  equal(missionState.pending(FOUNDER), false, '/new clears a pending mission form');
+  check(!res.text.includes('2 of 8'), '/new does not continue the old multi-step form');
+
   // ------------------------------------------------ 5. dashboard render
   const qid = { n: 0 };
   const makeBot = () => ({
