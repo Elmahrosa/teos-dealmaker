@@ -151,7 +151,7 @@ async function handleMessage(msg) {
   const sellMatch = text.match(/^(?:\/sell\s+)?(?:sell|بيع)\s+(?:(3|12|24)\s*(?:h|hours?|ساعة|ساعات)\s+)?([\s\S]+)$/i);
   if (sellMatch) {
     try {
-      return await runSellMission(chatId, userId, sellMatch[2].trim(), Number(sellMatch[1]) || 3);
+      return await runSellMission(chatId, userId, sellMatch[3].trim(), Number(sellMatch[1] || sellMatch[2]) || 3);
     } catch (err) {
       audit.writeEntry('BOT_UNIVERSAL_SELL_MISSION', String(userId), 'error', { error: err.message });
       return { chatId, text: `Sales mission failed: ${esc(err.message)}` };
