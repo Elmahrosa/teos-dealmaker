@@ -127,7 +127,7 @@ async function handleMessage(msg) {
 
   // Founder escape hatch: never trap a new request inside an unfinished form.
   // /cancel clears every conversational input state; /new starts a fresh goal.
-  const commandText = text.split(/\\s+/)[0].toLowerCase().replace(/@[^@]+$/, '');
+  const commandText = text.split(/\s+/)[0].toLowerCase().replace(/@[^@]+$/, '');
   if (commandText === '/cancel') {
     clearPendingInputState(userId);
     audit.writeEntry('BOT_INPUT_CANCELLED', String(userId), 'success', { mode: getMode() });
@@ -135,7 +135,7 @@ async function handleMessage(msg) {
   }
   if (commandText === '/new') {
     clearPendingInputState(userId);
-    const request = text.replace(/^\\/new(?:@[^\\s]+)?\\s*/i, '').trim();
+    const request = text.replace(/^\/new(?:@[^\s]+)?\s*/i, '').trim();
     if (!request) {
       return { chatId, text: 'Send one request after /new. Example: /new Find 30 companies in Saudi Arabia that may need TEOS domains.' };
     }
