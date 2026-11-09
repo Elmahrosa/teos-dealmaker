@@ -110,12 +110,72 @@ function parseMemoryValue(key, text) {
   return text;
 }
 
+function clearPendingInputState(userId) {
+  onboarding.reset(userId);
+  botLearning.clear(userId);
+  knowledgeState.clear(userId);
+  memoryEdit.clear(userId);
+  missionState.clear(userId);
+}
+
+      return await runSellMission(chatId, userId, sellMatch[2].trim(), Number(sellMatch[1]) || 3);
+  const adapter = getStoreAdapter();
+  const user = await identity.getUserByTelegram(adapter, userId);
+  const workspace = user ? await identity.getWorkspaceForUser(adapter, user.id) : null;
+  if (!workspace) {
+    return { chatId, text: 'No workspace found. Run /start to provision one.' };
+  }
+  const runtime = require('../services/workforce/runtime');
+  const result = await runtime.runGoal(adapter, workspace.id, goal, {
+    title: goal.slice(0, 120),
+    priority: 'high',
+    durationHours: durationHours || 3
+  });
+  audit.writeEntry('BOT_UNIVERSAL_SELL_MISSION', String(userId), 'success', {
+    planId: result.plan.id,
+    status: result.status,
+    durationHours: durationHours || 3
+  });
+  const screen = await buildMissionRunResult(userId, result.plan.id, result);
+  return { chatId, text: screen.text, replyMarkup: screen.keyboard };
+}
+
 async function handleMessage(msg) {
   const chatId = msg.chat.id;
   const userId = msg.from ? msg.from.id : null;
   const text = (msg.text || '').trim();
 
   if (!text) return null;
+
+  // One-line universal sales mission: "Sell [offer]" or "Sell 12h [offer]".
+  const sellMatch = text.match(/^(?:\/sell|sell|بيع)\s+(?:(3|12|24)\s*(?:h|hours?|ساعة|ساعات)\s+)?([\s\S]+)$/i);
+  if (sellMatch) {
+    try {
+      return await runSellMission(chatId, userId, sellMatch[3].trim(), Number(sellMatch[1] || sellMatch[2]) || 3);
+    } catch (err) {
+      audit.writeEntry('BOT_UNIVERSAL_SELL_MISSION', String(userId), 'error', { error: err.message });
+      return { chatId, text: `Sales mission failed: ${esc(err.message)}` };
+    }
+  }
+
+  // Founder escape hatch: never trap a new request inside an unfinished form.
+  // /cancel clears every conversational input state; /new starts a fresh goal.
+  const commandText = text.split(/\s+/)[0].toLowerCase().replace(/@[^@]+$/, '');
+  if (commandText === '/cancel') {
+    clearPendingInputState(userId);
+    audit.writeEntry('BOT_INPUT_CANCELLED', String(userId), 'success', { mode: getMode() });
+    return { chatId, text: 'Cancelled. Your previous input flow is cleared. Send a new request whenever you are ready.' };
+  }
+  if (commandText === '/new') {
+    clearPendingInputState(userId);
+    const request = text.replace(/^\/new(?:@[^\s]+)?\s*/i, '').trim();
+    if (!request) {
+      return { chatId, text: 'Send one request after /new. Example: /new Find 30 companies in Saudi Arabia that may need TEOS domains.' };
+    }
+    audit.writeEntry('BOT_NEW_REQUEST', String(userId), 'in_progress', { mode: getMode(), request_length: request.length });
+    const routed = await routerResult(chatId, userId, request);
+    return routed || { chatId, text: 'I could not route that request. Try /new with a clearer goal.' };
+  }
 
   if (onboarding.isActive(userId) && !text.startsWith('/')) {
     return onboarding.handleText(chatId, userId, text);

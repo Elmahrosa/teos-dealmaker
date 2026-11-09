@@ -22,7 +22,9 @@ async function main() {
   const r = db.repos;
 
   // ---- target-customer persistence ----
+  delete process.env.SOR_REPORT_INTERVAL_HOURS;
   const revenueOps = require('../services/revenueOps');
+  assert.strictEqual(revenueOps._core.config().intervalHours, 2, 'founder report cadence defaults to two hours');
   const first = await revenueOps.recordProspect(adapter, {
     contact_email: 'ops@nilefabric.com',
     company_name: 'Nile Fabric',
