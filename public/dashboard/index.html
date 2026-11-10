@@ -28,6 +28,7 @@
   header .sub { color: var(--muted); font-size: 13px; }
   #mode { font-weight: 700; padding: 2px 10px; border-radius: 10px; font-size: 12px; }
   #mode.dry { background: #2a2410; color: var(--gold); }
+  #mode.ok { background: #10281a; color: #4ade80; }
   #mode.live { background: #2a1212; color: var(--red); }
   .stats { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
   .stat {
@@ -76,7 +77,7 @@
   </div>
 
   <div class="stats">
-    <div class="stat"><div class="label" data-i18n="mode">Mode</div><div class="value" id="stat-mode">—</div></div>
+    <div class="stat"><div class="label" data-i18n="mode">Service Status</div><div class="value" id="stat-mode">—</div></div>
     <div class="stat"><div class="label" data-i18n="auditEntries">Audit Entries</div><div class="value" id="stat-total">—</div></div>
     <div class="stat"><div class="label" data-i18n="lastUpdate">Last Update</div><div class="value" id="stat-time" style="font-size:14px;">—</div></div>
     <div class="stat"><div class="label" data-i18n="contactChannel">Contact Channel</div><div class="value" id="stat-contact">—</div></div>
@@ -103,7 +104,7 @@
     en: {
       header: '🏛️ TEOS DEALMAKER',
       sub: 'Operations Console · Enterprise AI Revenue Operating System',
-      mode: 'Mode', auditEntries: 'Audit Entries', lastUpdate: 'Last Update',
+      mode: 'Service Status', auditEntries: 'Audit Entries', lastUpdate: 'Last Update',
       contactChannel: 'Contact Channel', contactNone: 'Not yet established', contactEmail: 'Email', contactTelegram: 'Telegram', contactNoIntakes: 'No intakes yet', contactUnavailable: 'Unavailable',
       outreachHeader: '📧 OUTBOUND OPS', workerState: 'Worker', outboundEmail: 'Outbound Email', queue: 'Queue', lastSent: 'Last Successful Send',
       auditNote: 'The audit trail is founder-only and served over the protected audit API. Customers are never asked for an admin key.',
@@ -118,7 +119,7 @@
     ar: {
       header: '🏛️ تيوس صانع الصفقات',
       sub: 'لوحة تحكم العمليات · نظام تشغيل إيرادات المؤسسات بالذكاء الاصطناعي',
-      mode: 'الوضع', auditEntries: 'سجلات التدقيق', lastUpdate: 'آخر تحديث',
+      mode: 'حالة الخدمة', auditEntries: 'سجلات التدقيق', lastUpdate: 'آخر تحديث',
       contactChannel: 'قناة التواصل', contactNone: 'لم تُحدد بعد', contactEmail: 'بريد إلكتروني', contactTelegram: 'تيليجرام', contactNoIntakes: 'لا توجد طلبات بعد', contactUnavailable: 'غير متاح',
       outreachHeader: '📧 تشغيل المراسلات الصادرة', workerState: 'العامل', outboundEmail: 'البريد الصادر', queue: 'الطابور', lastSent: 'آخر إرسال ناجح',
       auditNote: 'سجل التدقيق مخصص للمؤسس فقط ويُقدَّم عبر واجهة التدقيق المحمية. لا يُطلب من العملاء أي مفتاح إدارة.',
@@ -275,7 +276,7 @@
 
     var modeEl = document.getElementById('mode');
     modeEl.textContent = publicMode();
-    modeEl.className = 'dry';
+    modeEl.className = 'ok';
 
     var outRes = await fetchJson('/api/outreach/status');
     renderOutreach(outRes.ok ? outRes.body : null);
