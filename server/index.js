@@ -228,7 +228,7 @@ app.post('/api/auth/missions/increment', sessionService.requireSession, express.
     });
   } catch (err) {
     console.error('[auth] mission increment error:', err.message);
-    res.status(400).json({ ok: false, error: err.message });
+    res.status(400).json({ ok: false, error: 'Unable to update mission usage' });
   }
 });
 
@@ -262,16 +262,8 @@ app.get('/api/auth/session', sessionService.requireSession, async (req, res) => 
 });
 
 app.get('/api/health', (req, res) => {
-  const totalEntries = audit.countEntries();
-  // Execution modes are founder-only. Public consoles see a neutral
-  // operational status, never the DRY/LIVE mode.
-  const mode = getMode() === 'LIVE' ? 'live' : 'operational';
-  res.json({
-    status: 'ok',
-    mode,
-    totalEntries,
-    timestamp: new Date().toISOString()
-  });
+  // Public liveness only: no execution mode, counts or other operational detail.
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Plain uptime check used by deployment verification and external monitors.

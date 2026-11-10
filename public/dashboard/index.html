@@ -269,13 +269,13 @@
     offline = false;
     var health = healthRes.body;
 
-    document.getElementById('stat-mode').textContent = publicMode(health.mode);
-    document.getElementById('stat-total').textContent = health.totalEntries;
+    document.getElementById('stat-mode').textContent = publicMode();
+    document.getElementById('stat-total').textContent = '—';
     document.getElementById('stat-time').textContent = new Date(health.timestamp).toLocaleString(lang === 'ar' ? 'ar-EG' : undefined);
 
     var modeEl = document.getElementById('mode');
-    modeEl.textContent = publicMode(health.mode);
-    modeEl.className = String(health.mode).toUpperCase() === 'LIVE' ? 'live' : 'dry';
+    modeEl.textContent = publicMode();
+    modeEl.className = 'dry';
 
     var outRes = await fetchJson('/api/outreach/status');
     renderOutreach(outRes.ok ? outRes.body : null);

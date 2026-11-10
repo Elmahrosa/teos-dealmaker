@@ -33,6 +33,12 @@ const SENSITIVE = ['last_error', 'from_email', 'limits', 'queue_counts', 'verifi
     for (let i = 0; i < 60 && !up; i += 1) { try { up = (await get('/health')).status === 200; } catch (_e) { await sleep(250); } }
     ok(up, 'server started');
 
+    // Public liveness exposes only status and timestamp: no mode, counts or detail.
+    const health = await get('/api/health');
+    eq(health.status, 200, 'public health answers');
+    eq(JSON.stringify(Object.keys(JSON.parse(health.text)).sort()), JSON.stringify(['status', 'timestamp']), 'public health has exactly status and timestamp');
+    ok(!/mode|totalEntries|LIVE|DRY/.test(health.text), 'public health never exposes mode or entry counts');
+
     // Access control (needs no database).
     eq((await get('/api/outreach/health')).status, 401, 'detailed status refuses unauthenticated requests');
     eq((await get('/api/outreach/health', { 'x-api-key': 'wrong' })).status, 401, 'detailed status refuses a wrong key');
@@ -52,10 +58,23 @@ const SENSITIVE = ['last_error', 'from_email', 'limits', 'queue_counts', 'verifi
       ok(detail.limits && detail.queue_counts && 'from_email' in detail && 'last_error' in detail, 'founder gets the full operational detail');
     }
 
+    if (dbUrl) {
+      // mission-increment: validation failure must not echo internal error text.
+      const post = (p, body, headers = {}) => fetch(`http://127.0.0.1:${port}${p}`, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) }).then(async r => ({ status: r.status, text: await r.text() }));
+      const creds = { email: `inc-${Date.now()}@example.test`, password: 'Correct-Horse-9', companyName: 'Increment Test Co' };
+      eq((await post('/api/auth/signup', creds)).status, 201, 'test user signs up');
+      const login = JSON.parse((await post('/api/auth/login', creds)).text);
+      const inc = await post('/api/auth/missions/increment', { increment: 99999999 }, { authorization: `Bearer ${login.sessionToken}` });
+      eq(inc.status, 400, 'oversized increment is rejected');
+      ok(!/between|MAX|workspace not found|Error|at /.test(inc.text), 'increment error does not echo internal error text');
+      eq(JSON.parse(inc.text).error, 'Unable to update mission usage', 'increment returns the generic message');
+    }
+
     // Dashboard keeps working on the public fields only.
     const html = fs.readFileSync(path.join(__dirname, '..', 'public', 'dashboard', 'index.html'), 'utf8');
     ok(/\/api\/outreach\/status/.test(html) && !/\/api\/outreach\/health/.test(html), 'dashboard reads only the public status');
     ok(!/queue_counts|last_successful_job|from_email|last_error/.test(html), 'dashboard no longer depends on founder-only fields');
+    ok(!/health\.mode|health\.totalEntries/.test(html), 'dashboard no longer reads mode or totalEntries from health');
     eq(html, fs.readFileSync(path.join(__dirname, '..', 'hostinger', 'dashboard', 'index.html'), 'utf8'), 'hostinger dashboard copy matches');
     console.log(`PASS: outreach status exposure (${n} assertions${dbUrl ? ', with PostgreSQL' : ', no database: content checks skipped'})`);
   } finally {
