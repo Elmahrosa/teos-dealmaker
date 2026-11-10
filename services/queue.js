@@ -27,7 +27,20 @@ async function enqueueDeal(adapter, workspaceId, companyName) {
   });
 }
 
-async function advanceQueue(adapter, workspaceId, dealId, toStage) {
+// A deal may enter 'won' only with explicit customer acceptance and trusted
+// payment evidence (see agents/closing). Internal approval or a generated
+// contract/invoice is never sufficient. Fails closed.
+async function advanceQueue(adapter, workspaceId, dealId, toStage, opts = {}) {
+  if (toStage === 'won') {
+    // Delegated to the repository boundary. The verifier is NOT taken from the
+    // caller: only the trusted, boot-installed verifier is used (none today,
+    // so this fails closed).
+    const repos = createRepos(adapter);
+    return repos.deals.closeWon(workspaceId, dealId, {
+      customerAcceptance: opts.customerAcceptance,
+      paymentEvidence: opts.paymentEvidence
+    });
+  }
   const repos = createRepos(adapter);
   const deal = await repos.deals.get(workspaceId, dealId);
   if (!deal) return null;
@@ -35,9 +48,6 @@ async function advanceQueue(adapter, workspaceId, dealId, toStage) {
   const next = normalizeStage(toStage);
   if (fromStage === next) return deal;
   await repos.deals.advanceStage(workspaceId, dealId, next, fromStage);
-  if (next === 'won') {
-    await repos.deals.update(workspaceId, dealId, { status: 'closed' });
-  }
   return repos.deals.get(workspaceId, dealId);
 }
 

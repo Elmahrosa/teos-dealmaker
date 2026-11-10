@@ -46,7 +46,13 @@ const { getWorkspaceContext, setWorkspaceLang, subscriptionLabel, isFounder } = 
 
   await repos.deals.create({ workspace_id: ws.id, company_name: 'Fawry', stage: 'qualified', status: 'open' });
   await repos.deals.create({ workspace_id: ws.id, company_name: 'Nexus', stage: 'closing', status: 'open' });
-  await repos.deals.create({ workspace_id: ws.id, company_name: 'ClosedCo', stage: 'won', status: 'won' });
+  {
+    const { createTestPaymentVerifier, evidenceFor } = require('./helpers/testPaymentVerifier');
+    const verifier = createTestPaymentVerifier();
+    const wonRepos = require('../db').createRepos(adapter, { paymentVerifier: verifier });
+    const closedCo = await wonRepos.deals.create({ workspace_id: ws.id, company_name: 'ClosedCo', stage: 'closing', status: 'open', deal_value: 1200, currency: 'USD' });
+    await wonRepos.deals.closeWon(ws.id, closedCo.id, evidenceFor(verifier, { amount: 1200, tag: 'workspace' }));
+  }
   ctx = await getWorkspaceContext(adapter, tgA);
   assert.strictEqual(ctx.deals.total, 3, 'deals counted');
   assert.strictEqual(ctx.deals.open, 2, 'two open');

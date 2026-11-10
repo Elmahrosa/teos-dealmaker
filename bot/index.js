@@ -14,7 +14,6 @@ const { autoStartFounderMission } = require('../services/founderMission');
 const notify = require('../services/notify');
 const learningHook = require('../services/learningHook');
 const { install: installReliability } = require('../utils/reliability');
-const { esc } = require('./design');
 const { sendHtml } = require('./screens/lib');
 
 // Fail fast on a misconfigured production deployment before the bot boots.
@@ -123,7 +122,7 @@ bot.on('message', async (msg) => {
   } catch (err) {
     console.error('[bot] handler error:', err.message);
     try {
-      await bot.sendMessage(msg.chat.id, '🔴 <b>Request failed</b>\n\nCheck server logs.');
+      await bot.sendMessage(msg.chat.id, i18n.t(msg.from ? msg.from.id : msg.chat.id, 'err_request_failed'), { parse_mode: 'HTML' });
     } catch (_) { /* ignore */ }
   }
 });
@@ -131,6 +130,8 @@ bot.on('message', async (msg) => {
 bot.on('callback_query', async (query) => {
   try {
     const userId = query.from ? query.from.id : null;
+    // Navigating away from setup (any non-setup button) drops the setup state.
+    if (userId && onboarding.isActive(userId) && !String(query.data || '').startsWith('cc_onb_')) onboarding.reset(userId);
     if (userId && onboarding.isActive(userId)) {
       const handled = await onboarding.handleCallback(query, bot);
       if (handled) return;
@@ -138,8 +139,10 @@ bot.on('callback_query', async (query) => {
     await handleCallback(query, bot);
   } catch (err) {
     console.error('[bot] callback error:', err.message);
+    // Internal error text is logged, never echoed to the user.
+    const failText = i18n.t(query.from ? query.from.id : null, 'err_action_failed');
     try {
-      await bot.editMessageText('🔴 <b>Action failed</b>\n\n' + esc(err.message), {
+      await bot.editMessageText(failText, {
         chat_id: query.message.chat.id,
         message_id: query.message.message_id,
         parse_mode: 'HTML'
@@ -148,7 +151,7 @@ bot.on('callback_query', async (query) => {
       // If the original message can't be edited (deleted / too old), surface
       // the failure as a fresh message instead of doing nothing.
       try {
-        await bot.sendMessage(query.message.chat.id, '🔴 <b>Action failed</b>\n\n' + esc(err.message), {
+        await bot.sendMessage(query.message.chat.id, failText, {
           parse_mode: 'HTML'
         });
       } catch (_) { /* ignore */ }

@@ -192,7 +192,7 @@ async function main() {
       lookup: async () => [
         { address: '93.184.216.34', family: 4 }
       ],
-      requestOnce: async (url, addresses) => ({
+      requestOnce: async (url, _addresses) => ({
         html: '<html><head><title>Test Property</title>' +
           '<script type="application/ld+json">' +
           JSON.stringify({

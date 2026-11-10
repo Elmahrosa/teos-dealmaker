@@ -21,9 +21,16 @@ function getPool() {
   return pool;
 }
 
+// One shared PostgreSQL adapter (one pool) per process and connection string.
+// Previously every call built a new pool, which leaked connections under any
+// route that resolves the adapter per request.
+let cachedPg = null;
 function getAdapter() {
   if (process.env.DATABASE_URL) {
-    return createPgAdapter();
+    if (!cachedPg || cachedPg.url !== process.env.DATABASE_URL) {
+      cachedPg = { url: process.env.DATABASE_URL, adapter: createPgAdapter() };
+    }
+    return cachedPg.adapter;
   } else {
     throw new Error('DATABASE_URL environment variable is not set. Cannot connect to PostgreSQL.');
   }

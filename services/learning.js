@@ -22,7 +22,7 @@ const COMPANY_QUESTIONS = [
 
 const PRODUCT_QUESTIONS = [
   { key: 'name', text: 'What is the product name?' },
-  { key: 'price', text: 'What is the price? (e.g. $99/month)' },
+  { key: 'price', text: 'What is the price? (e.g. a list price or a range)' },
   { key: 'target_customer', text: 'Who is the target customer for this product?' },
   { key: 'benefits', text: 'What are the main benefits?' },
   { key: 'objections', text: 'What objections do customers raise?' },

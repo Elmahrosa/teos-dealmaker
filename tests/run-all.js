@@ -53,8 +53,11 @@ for (const file of suites) {
     env: testEnv,
   });
   const ok = res.status === 0;
-  results.push({ rel, ok, status: res.status, signal: res.signal });
-  if (ok) {
+  const skipped = res.status === 77;
+  results.push({ rel, ok, skipped, status: res.status, signal: res.signal });
+  if (skipped) {
+    console.log(`- ${rel} SKIPPED (needs a database; not counted as passed)`);
+  } else if (ok) {
     console.log(`\u2713 ${rel}`);
   } else {
     console.log(`\u2717 ${rel} (exit ${res.status === null ? res.signal : res.status})`);
@@ -70,7 +73,8 @@ for (const file of suites) {
   }
 }
 
+const skippedCount = results.filter((r) => r.skipped).length;
 const passed = results.filter((r) => r.ok).length;
-const failed = results.length - passed;
-console.log(`\n${results.length} suites: ${passed} passed, ${failed} failed`);
+const failed = results.length - passed - skippedCount;
+console.log(`\n${results.length} suites: ${passed} passed, ${failed} failed, ${skippedCount} skipped`);
 process.exit(failed ? 1 : 0);

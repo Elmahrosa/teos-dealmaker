@@ -55,11 +55,11 @@ function buildPipelineResult(userId, result) {
   );
   const c = result.treasurer?.contract || {};
   const negotiation = result.negotiation;
-  const landingValue = negotiation ? "$" + negotiation.landingPrice : "Pending verified financial inputs";
-  const termsValue = negotiation ? design.esc(negotiation.suggestedTerms || 'Terms unavailable') : 'Negotiation not started: seller target, buyer budget and currency are required.';
+  const landingValue = negotiation ? '$' + negotiation.landingPrice : t('pf_val_pending_inputs');
+  const termsValue = negotiation ? design.esc(negotiation.suggestedTerms || t('pf_val_terms_unavailable')) : t('pf_val_neg_not_started');
   const contractValue = c.amount != null
     ? i18n.sprintf(t('pf_contract_line'), design.esc(c.company || ''), c.amount, design.esc(c.currency || ''), c.termMonths || '—')
-    : `Awaiting verified price (${c.status || 'pending'})`;
+    : i18n.sprintf(t('pf_val_awaiting_price'), c.status || 'pending');
   const lines = [
     `${design.EMOJI.ai} ${design.b(t('pf_title_run'))}`,
     design.it(t('pf_body_chain')),
@@ -69,11 +69,11 @@ function buildPipelineResult(userId, result) {
     design.row(t('pf_row_landing'), landingValue),
     design.row(t('pf_row_terms'), termsValue),
     design.row(t('pf_row_contract'), contractValue),
-    design.row(t('pf_row_checkout'), result.treasurer?.checkout ? design.esc(result.treasurer.checkout.url) : t('pf_val_blocked')),
     design.row(t('pf_row_gatekeeper'), design.badge(result.gatekeeper.decision === 'APPROVE' ? 'success' : 'warning')),
     design.row(t('pf_row_outcome'), design.badge(result.closing.status === 'won' ? 'success' : result.closing.status === 'awaiting_customer' ? 'info' : 'critical')),
-    design.row(t('pf_row_deal_saved'), design.badge('success')),
-    design.row(t('pf_row_cost'), `$${(result.runs.reduce((acc, r) => acc + r.cost_cents, 0) / 100).toFixed(2)}`),
+    design.row(t('pf_row_deal_saved'), result.dry_run ? t('pf_val_dry_not_saved') : design.badge('success')),
+    design.row(t('pf_row_next'), t('pf_val_awaiting_customer')),
+    design.row(t('pf_row_cost'), `$${((result.runs || []).reduce((acc, r) => acc + r.cost_cents, 0) / 100).toFixed(2)}`),
     design.section(t('pf_sec_notes')),
     ...notes,
     design.divider()

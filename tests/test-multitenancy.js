@@ -32,7 +32,13 @@ function check(label, cond) {
   check('workspace A sees only its deal', listA.length === 1 && listA[0].company_name === 'Acme Client');
   check('workspace B sees only its deal', listB.length === 1 && listB[0].company_name === 'Zeta Client');
   check('cross-tenant get returns null', repos.deals.get(wsB.id, dealA.id) === null);
-  check('cross-tenant update returns null', repos.deals.update(wsB.id, dealA.id, { stage: 'won' }) === null);
+  check('cross-tenant update returns null', repos.deals.update(wsB.id, dealA.id, { stage: 'qualified' }) === null);
+  let wonThrew = null;
+  try { repos.deals.update(wsA.id, dealA.id, { stage: 'won' }); } catch (e) { wonThrew = e; }
+  check('repository refuses a direct won write', wonThrew && wonThrew.code === 'WON_NOT_VERIFIED');
+  let closedThrew = null;
+  try { repos.deals.update(wsA.id, dealA.id, { status: 'closed' }); } catch (e) { closedThrew = e; }
+  check('repository refuses a direct closed write', closedThrew && closedThrew.code === 'WON_NOT_VERIFIED');
 
   const updated = repos.deals.update(wsA.id, dealA.id, { stage: 'qualified', deal_value: 7500 });
   check('tenant-scoped update applies', updated.stage === 'qualified' && Number(updated.deal_value) === 7500);

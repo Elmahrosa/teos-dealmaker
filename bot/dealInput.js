@@ -1,18 +1,22 @@
-﻿const sessions = new Map();
+const i18n = require('./i18n');
+
+const sessions = new Map();
+
+const P = (userId, step) => i18n.t(userId, step.prompt);
 
 const STEPS = [
-  { key: 'assetType', prompt: 'What are you selling?\n1. Product\n2. Land / Real Estate\n3. Boat\n4. Service\n5. Other Asset', required: true },
-  { key: 'description', prompt: 'Describe the asset, its condition, location or key specifications:', required: true },
-  { key: 'askingPrice', prompt: 'Seller asking/list price? Enter a number, or /skip if unknown:', numeric: true },
-  { key: 'currency', prompt: 'Currency (USD, EUR, EGP, SAR, etc.). Use /skip if not specified:' },
-  { key: 'sellerTarget', prompt: 'Seller minimum acceptable price / target? Enter a number, or /skip:', numeric: true },
-  { key: 'buyerBudget', prompt: 'Buyer budget, if known? Enter a number, or /skip:', numeric: true },
-  { key: 'sourceUrl', prompt: 'Optional listing/source URL. Send the link or /skip:' }
+  { key: 'assetType', prompt: 'di_assetType', required: true },
+  { key: 'description', prompt: 'di_description', required: true },
+  { key: 'askingPrice', prompt: 'di_askingPrice', numeric: true },
+  { key: 'currency', prompt: 'di_currency' },
+  { key: 'sellerTarget', prompt: 'di_sellerTarget', numeric: true },
+  { key: 'buyerBudget', prompt: 'di_buyerBudget', numeric: true },
+  { key: 'sourceUrl', prompt: 'di_sourceUrl' }
 ];
 
 function begin(userId) {
   sessions.set(String(userId), { index: 0, data: {} });
-  return STEPS[0].prompt;
+  return P(userId, STEPS[0]);
 }
 
 function pending(userId) {
@@ -25,20 +29,23 @@ function clear(userId) {
 
 function handle(userId, rawText) {
   const session = sessions.get(String(userId));
-  if (!session) return { done: false, prompt: 'No active deal input.' };
+  if (!session) return { done: false, prompt: i18n.t(userId, 'di_no_active') };
 
   const step = STEPS[session.index];
-  const value = String(rawText || '').trim();
+  // Accept Arabic-Indic digits and the Arabic decimal/thousands separators.
+  const value = String(rawText || '').trim()
+    .replace(/[\u0660-\u0669]/g, d => String(d.charCodeAt(0) - 0x660))
+    .replace(/\u066B/g, '.').replace(/\u066C/g, ',');
   const skipped = value.toLowerCase() === '/skip';
 
   if (step.required && (!value || skipped)) {
-    return { done: false, prompt: 'This field is required.\n' + step.prompt };
+    return { done: false, prompt: i18n.t(userId, 'di_required') + '\n' + P(userId, step) };
   }
 
   if (step.numeric && !skipped) {
     const amount = Number(value.replace(/,/g, ''));
     if (!Number.isFinite(amount) || amount <= 0) {
-      return { done: false, prompt: 'Enter a valid positive number, or /skip.\n' + step.prompt };
+      return { done: false, prompt: i18n.t(userId, 'di_bad_number') + '\n' + P(userId, step) };
     }
     session.data[step.key] = amount;
   } else if (!skipped) {
@@ -52,7 +59,7 @@ function handle(userId, rawText) {
       };
       const normalized = types[value] || value.toLowerCase().replace(/[\s/-]+/g, '_');
       if (!['product', 'real_estate', 'boat', 'service', 'other_asset'].includes(normalized)) {
-        return { done: false, prompt: 'Choose 1, 2, 3, 4, or 5.\n' + step.prompt };
+        return { done: false, prompt: i18n.t(userId, 'di_bad_choice') + '\n' + P(userId, step) };
       }
       session.data[step.key] = normalized;
     } else if (step.key === 'sourceUrl') {
@@ -61,7 +68,7 @@ function handle(userId, rawText) {
         url = new URL(value);
         if (!['http:', 'https:'].includes(url.protocol)) throw new Error('protocol');
       } catch (_) {
-        return { done: false, prompt: 'Enter a valid http/https URL, or /skip.\n' + step.prompt };
+        return { done: false, prompt: i18n.t(userId, 'di_bad_url') + '\n' + P(userId, step) };
       }
       session.data[step.key] = url.toString();
     } else {
@@ -71,7 +78,7 @@ function handle(userId, rawText) {
 
   session.index += 1;
   if (session.index < STEPS.length) {
-    return { done: false, prompt: STEPS[session.index].prompt };
+    return { done: false, prompt: P(userId, STEPS[session.index]) };
   }
 
   const data = { ...session.data };

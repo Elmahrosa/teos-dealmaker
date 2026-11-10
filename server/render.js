@@ -166,19 +166,9 @@ function renderLanding(template) {
     .replace(/\{\{SITE_URL\}\}/g, SITE_URL);
 }
 
-// The dashboard console only needs display fields; product IDs and checkout
-// URLs are trimmed to the public short links so the shipped dashboard never
-// leaks `pdt_` product ids into a public static artifact.
+// The dashboard carries no pricing data: no price list or checkout is published.
 function renderDashboard(template) {
-  const sanitized = PRICING.map(t => ({
-    tier: t.tier,
-    tagline: t.tagline || '',
-    custom: !!t.custom,
-    features: t.features || [],
-    monthly: { price: t.monthly.price, url: t.monthly.shortUrl || t.monthly.url || '' },
-    annual: { price: t.annual.price, url: t.annual.shortUrl || t.annual.url || '' }
-  }));
-  return template.replace('{{PRICING_JSON}}', JSON.stringify(sanitized));
+  return template;
 }
 function renderStart() {
   const startPath = path.join(__dirname, '..', 'public', 'start.html');

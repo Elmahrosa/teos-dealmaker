@@ -6,7 +6,7 @@
 //   DATABASE_URL=postgres://... node tests/test-phase25-supabase.js
 // or run through npm:   npm test -- (only when DATABASE_URL is exported)
 //
-// When DATABASE_URL is not set this suite skips cleanly (exit 0) so the
+// When DATABASE_URL is not set this suite reports a skip (exit 77) so the
 // default test suite stays infrastructure-independent. Every run uses random telegram
 // ids so the test is re-runnable against the same database.
 
@@ -16,8 +16,8 @@ const path = require('path');
 (async () => {
   const url = process.env.DATABASE_URL;
   if (!url) {
-    console.log('  - phase25-supabase skipped (DATABASE_URL not set)');
-    process.exit(0);
+    console.log('  - phase25-supabase SKIPPED: TEST_DATABASE_URL/DATABASE_URL not set (needs isolated PostgreSQL)');
+    process.exit(77); // 77 = skipped; tests/run-all.js reports it separately from passes
   }
 
   const founderId = 7700000 + Math.floor(Math.random() * 900000);

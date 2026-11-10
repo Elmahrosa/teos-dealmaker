@@ -1,5 +1,6 @@
 const { CONNECTORS } = require('./catalog');
 const adapterUtil = require('./adapter');
+const { sanitizeExternalDeal } = require('../dealLifecycle');
 
 async function runSync(adapter, workspaceId) {
   const repos = require('../../db/repos').createRepos(adapter);
@@ -14,7 +15,12 @@ async function runSync(adapter, workspaceId) {
     try {
       if (c.category === 'crm') {
         const deals = await adapterUtil.execute(adapter, workspaceId, row.connector_id, 'searchDeals', {});
-        for (const d of deals.items || []) {
+        for (const raw of deals.items || []) {
+          // Connector-reported won/closed is an unverified claim: keep it open.
+          const d = sanitizeExternalDeal(raw);
+          if (d.externalTerminalClaim) {
+            require('../../utils/auditLogger').writeEntry('CRM_TERMINAL_STATE_IGNORED', String(workspaceId), 'warning', { connector: row.connector_id, company: d.company });
+          }
           const existing = await repos.deals.list(workspaceId, {});
           const match = existing.find(e => e.company_name === d.company);
           if (match) {

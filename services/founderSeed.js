@@ -31,9 +31,14 @@ const CUSTOMER_ZERO = {
   company_name: 'Elmahrosa International',
   industry: 'AI Security',
   website: 'https://dealmaker.elmahrosa.org',
-  stage: 'active',
-  status: 'active'
+  stage: 'incoming',
+  status: 'open'
 };
+
+// Legacy seeds created Customer #0 as active/active. Only that exact legacy
+// pair is migrated; any other state (a deal the founder has moved on) is left
+// untouched so repeated seeding never resets valid records.
+const LEGACY_CUSTOMER_ZERO = { stage: 'active', status: 'active' };
 
 const FIRST_MISSION_TITLE = 'Sell TEOS DealMaker';
 const FIRST_MISSION_GOAL = 'Use Elmahrosa as Customer #0 and allow TEOS DealMaker to execute its complete AI Revenue workflow against its own product before public launch.';
@@ -53,7 +58,7 @@ const FIRST_MISSION_STEPS = [
   { step_key: 'outreach_linkedin', agent_type: 'outreach', task: 'Draft LinkedIn connection and message sequences for the same qualified prospects.', depends_on: ['qualify'] },
   { step_key: 'proposal', agent_type: 'sales', task: 'Draft the TEOS DealMaker proposal framework: packages, pricing anchors and terms.', depends_on: ['outreach_email', 'outreach_linkedin'] },
   { step_key: 'meetings', agent_type: 'sales', task: 'Propose the meeting cadence and discovery questions for the scheduled prospect calls.', depends_on: ['proposal'] },
-  { step_key: 'pricing', agent_type: 'strategist', task: 'Recommend final pricing for the TEOS DealMaker tiers (Solo, Growth, Business, Enterprise) with anchoring rationale.', depends_on: ['proposal'] },
+  { step_key: 'pricing', agent_type: 'strategist', task: 'Recommend a pricing approach for the customer proposal with anchoring rationale.', depends_on: ['proposal'] },
   { step_key: 'followups', agent_type: 'outreach', task: 'Design the follow-up cadence for TEOS DealMaker prospects who do not respond to the first outreach wave.', depends_on: ['meetings'] },
   { step_key: 'forecast', agent_type: 'treasurer', task: 'Produce a revenue forecast for TEOS DealMaker: pipeline value, expected conversion and confidence range.', depends_on: ['followups'] },
   { step_key: 'present', agent_type: 'gatekeeper', task: 'Present the complete TEOS DealMaker revenue workflow, target accounts, outreach, pricing and forecast to the founder. Requires founder approval before presenting.', depends_on: ['forecast'] }
@@ -122,6 +127,18 @@ async function ensureFounderWorkspace(adapter) {
   // Customer #0: Elmahrosa International (AI Security) as the first deal.
   let customer0 = (await repos.deals.list(wsId, {}))
     .find(d => d.company_name === CUSTOMER_ZERO.company_name);
+  if (customer0 && customer0.stage === LEGACY_CUSTOMER_ZERO.stage && customer0.status === LEGACY_CUSTOMER_ZERO.status) {
+    await repos.deals.update(wsId, customer0.id, { stage: CUSTOMER_ZERO.stage, status: CUSTOMER_ZERO.status });
+    await repos.audit.add({
+      workspace_id: wsId,
+      deal_id: customer0.id,
+      agent_name: 'orchestrator',
+      action_type: 'CUSTOMER_ZERO_MIGRATED',
+      details: { from: LEGACY_CUSTOMER_ZERO, to: { stage: CUSTOMER_ZERO.stage, status: CUSTOMER_ZERO.status } },
+      version: 'v1.0.0'
+    });
+    customer0 = await repos.deals.get(wsId, customer0.id);
+  }
   if (!customer0) {
     customer0 = await repos.deals.create({
       workspace_id: wsId,

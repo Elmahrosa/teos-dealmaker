@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TEOS DealMaker — Operations Console</title>
-<script>window.__PRICING__ = [];</script>
 <style>
   :root {
     --bg: #0b0f14;
@@ -83,13 +82,6 @@
     <div class="stat"><div class="label" data-i18n="contactChannel">Contact Channel</div><div class="value" id="stat-contact">—</div></div>
   </div>
 
-  <section id="pricing">
-    <h2 style="color:var(--gold);font-size:16px;letter-spacing:1px;margin-bottom:12px;" data-i18n="pricing">💳 PRICING</h2>
-    <div id="pricing-cards" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
-      <div data-i18n="loadingPricing" style="color:var(--muted);padding:12px;">Loading pricing…</div>
-    </div>
-  </section>
-
   <section id="outreach" style="margin-bottom:24px;">
     <h2 style="color:var(--gold);font-size:16px;letter-spacing:1px;margin-bottom:12px;" data-i18n="outreachHeader">📧 OUTBOUND OPS</h2>
     <div class="stats" style="margin-bottom:12px;">
@@ -113,12 +105,9 @@
       sub: 'Operations Console · Enterprise AI Revenue Operating System',
       mode: 'Mode', auditEntries: 'Audit Entries', lastUpdate: 'Last Update',
       contactChannel: 'Contact Channel', contactNone: 'Not yet established', contactEmail: 'Email', contactTelegram: 'Telegram', contactNoIntakes: 'No intakes yet', contactUnavailable: 'Unavailable',
-      pricing: '💳 PRICING',
-      loadingPricing: 'Loading pricing…', pricingUnavailable: 'Pricing unavailable.',
       outreachHeader: '📧 OUTBOUND OPS', workerState: 'Worker', outboundEmail: 'Outbound Email', queue: 'Queue', lastSent: 'Last Successful Send',
       auditNote: 'The audit trail is founder-only and served over the protected audit API. Customers are never asked for an admin key.',
       footer: 'Fail-closed governance · every capability decision is policy-evaluated and written to the audit vault',
-      monthly: 'Monthly', annual: 'Annual', checkout: 'checkout',
       offline: 'offline', staticPreview: 'OFFLINE',
       offlineMsg: 'Unable to reach DealMaker API.',
       stripServiceRunning: '🟢 SERVICE RUNNING', stripServiceOffline: '🔴 SERVICE OFFLINE',
@@ -131,12 +120,9 @@
       sub: 'لوحة تحكم العمليات · نظام تشغيل إيرادات المؤسسات بالذكاء الاصطناعي',
       mode: 'الوضع', auditEntries: 'سجلات التدقيق', lastUpdate: 'آخر تحديث',
       contactChannel: 'قناة التواصل', contactNone: 'لم تُحدد بعد', contactEmail: 'بريد إلكتروني', contactTelegram: 'تيليجرام', contactNoIntakes: 'لا توجد طلبات بعد', contactUnavailable: 'غير متاح',
-      pricing: '💳 الأسعار',
-      loadingPricing: 'جارٍ تحميل الأسعار…', pricingUnavailable: 'الأسعار غير متاحة.',
       outreachHeader: '📧 تشغيل المراسلات الصادرة', workerState: 'العامل', outboundEmail: 'البريد الصادر', queue: 'الطابور', lastSent: 'آخر إرسال ناجح',
       auditNote: 'سجل التدقيق مخصص للمؤسس فقط ويُقدَّم عبر واجهة التدقيق المحمية. لا يُطلب من العملاء أي مفتاح إدارة.',
       footer: 'حوكمة تغلق عند الخطأ · كل قرار قدرة يُقيَّم حسب السياسات ويُسجَّل في خزنة التدقيق',
-      monthly: 'شهرياً', annual: 'سنوياً', checkout: 'شراء',
       offline: 'غير متصل', staticPreview: 'غير متصل',
       offlineMsg: 'تعذر الوصول إلى واجهة DealMaker API.',
       stripServiceRunning: '🟢 الخدمة قيد التشغيل', stripServiceOffline: '🔴 الخدمة غير متصلة',
@@ -146,17 +132,9 @@
     }
   };
 
-  var PRICING_AR = {
-    '🚀 Solo': { features: ['مساحة عمل واحدة', 'وحدة تحكم المهام مع قوة عاملة من 13 وكيل ذكاء اصطناعي', 'إمكانات الوكلاء الأساسية', 'دعم المجتمع'] },
-    '⚡ Growth': { features: ['10 مقاعد', 'إضافة Civic Mixer المجانية', 'ذكاء المعرفة المؤسسية', 'دعم عبر البريد الإلكتروني'] },
-    '👑 Business': { features: ['25 مقعداً', 'تثبيت إضافات الطرف الثالث', 'جميع إضافات المنصة', 'دعم ذو أولوية'] },
-    '🏛️ Enterprise': { features: ['مساحات عمل غير محدودة', 'مهام غير محدودة', 'خيارات نشر مخصصة', 'حوكمة السياسات على نطاق واسع', 'وصول مباشر للفريق المؤسس'] }
-  };
-
   var MODE_AR = { production: 'إنتاج', live: 'مباشر', dry: 'تجريبي', dry_run: 'تشغيل تجريبي', offline: 'غير متصل' };
 
   var lang = 'en';
-  var currentTiers = [];
   var offline = false;
 
   function detectLang() {
@@ -203,29 +181,6 @@
     if (sw) sw.textContent = lang === 'en' ? t('sw_ar') : t('sw_en');
   }
 
-  function renderPricing(tiers) {
-    currentTiers = tiers;
-    var cards = document.getElementById('pricing-cards');
-    if (!tiers.length) {
-      cards.innerHTML = '<div style="color:var(--muted);padding:12px;">' + esc(t('pricingUnavailable')) + '</div>';
-      return;
-    }
-    cards.innerHTML = tiers.map(function (tier) {
-      var ar = lang === 'ar' ? PRICING_AR[tier.tier] : null;
-      var features = ar ? ar.features : (tier.features || []);
-      var monthly = tier.monthly.url
-        ? '<div style="margin-top:6px;">' + esc(t('monthly')) + ' <b>' + esc(tier.monthly.price) + '</b> · <a href="' + esc(tier.monthly.url) + '" style="color:var(--blue);font-size:12px;">' + esc(t('checkout')) + '</a></div>'
-        : '<div style="margin-top:6px;">' + esc(t('monthly')) + ' <b>' + esc(tier.monthly.price) + '</b></div>';
-      var annual = tier.annual.url
-        ? '<div style="margin-top:6px;">' + esc(t('annual')) + ' <b>' + esc(tier.annual.price) + '</b> · <a href="' + esc(tier.annual.url) + '" style="color:var(--blue);font-size:12px;">' + esc(t('checkout')) + '</a></div>'
-        : '<div style="margin-top:6px;">' + esc(t('annual')) + ' <b>' + esc(tier.annual.price) + '</b></div>';
-      var lis = features.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('');
-      return '<div class="stat" style="min-width:240px;">' +
-        '<div class="label">' + esc(tier.tier) + '</div>' + monthly + annual +
-        '<ul style="list-style:none;margin-top:8px;color:var(--muted);font-size:11px;">' + lis + '</ul></div>';
-    }).join('');
-  }
-
   // Public health status only: no secrets, no message bodies, no admin key.
   function stateColor(s) {
     if (s === 'RUNNING') return 'var(--green)';
@@ -261,10 +216,10 @@
     stateEl.style.color = stateColor(h.state);
     emailEl.textContent = h.outbound_email;
     emailEl.style.color = h.outbound_email === 'ENABLED' ? 'var(--green)' : 'var(--muted)';
-    var q = h.queue_counts || {};
-    queueEl.textContent = (q.queued || 0) + ' queued · ' + (q.processing || 0) + ' processing · ' +
-      (q.send_failed || 0) + ' failed · ' + (q.send_unknown || 0) + ' unknown · ' + (q.sent_today || 0) + ' today';
-    lastEl.textContent = h.last_successful_job ? String(h.last_successful_job).replace('T', ' ').slice(0, 19) : '—';
+    // The public status carries only state and on/off. Queue counts and send
+    // history are founder-only (authenticated console), so they stay blank here.
+    queueEl.textContent = '—';
+    lastEl.textContent = '—';
   }
 
   function updateStrip(online, h) {
@@ -285,23 +240,12 @@
 
   function fetchJson(path, opts) {
     return fetch(path, opts).then(function (r) {
-      return { ok: r.ok, status: r.status, body: r.json().catch(function () { return null; }) };
+      return r.json().catch(function () { return null; }).then(function (body) {
+        return { ok: r.ok, status: r.status, body: body };
+      });
     }).catch(function () {
       return { ok: false, status: 0, body: null };
     });
-  }
-
-  async function loadPricing() {
-    try {
-      var res = await fetch('/api/pricing');
-      if (!res.ok) throw new Error('pricing unavailable');
-      var data = await res.json();
-      renderPricing(Array.isArray(data) ? data : (data.tiers || []));
-    } catch (_) {
-      var fallback = window.__PRICING__ || [];
-      if (fallback.length) renderPricing(fallback);
-      else renderPricing([]);
-    }
   }
 
   // Connectivity is judged by the PUBLIC /api/health endpoint only. The audit
@@ -370,7 +314,6 @@
   function setLang(l) {
     lang = l;
     applyStatic();
-    renderPricing(currentTiers);
     try { localStorage.setItem('teos_lang', l); } catch (_) { /* ignore */ }
   }
 
@@ -386,7 +329,6 @@
   }
 
   refresh();
-  loadPricing();
   setInterval(refresh, 5000);
 </script>
 </body>

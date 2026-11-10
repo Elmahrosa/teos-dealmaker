@@ -30,8 +30,8 @@ async function handleText(adapter, userId, rawText) {
   if (!ctx) {
     return {
       text: language === 'ar'
-        ? 'يبدو أنك لست مرتبطاً بحساب بعد. أرسل /start للبدء.'
-        : 'You are not linked to a workspace yet. Send /start to begin.',
+        ? 'أهلاً بك في TEOS DealMaker. يمكنني مساعدتك في المبيعات والعملاء والصفقات، لكني أحتاج أولاً إلى مساحة عمل. أرسل /start ثم اضغط «بدء سريع».'
+        : 'Welcome to TEOS DealMaker. I can help with sales, customers and deals, but I need a workspace first. Send /start, then tap Quick Start (one tap).',
       suggestions: [],
       session
     };

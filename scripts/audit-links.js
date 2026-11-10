@@ -17,7 +17,7 @@ const OUT_DIR = path.join(root, 'hostinger');
 const KNOWN_ROUTES = [
   '/', '/start', '/start/thanks', '/dashboard', '/dashboard/',
   '/reports', '/report/:planId', '/customer-0', '/intakes',
-  '/api/health', '/api/pricing', '/api/outreach/status', '/api/reports/latest',
+  '/api/health', '/api/outreach/status', '/api/reports/latest',
   '/api/outreach/queue', '/api/emails', '/api/audit', '/api/diagnostics',
   '/api/deploy-verify', '/api/intake', '/api/intakes',
 '/webhook/resend',

@@ -75,10 +75,22 @@ function lastLineHash() {
   }
 }
 
+// One adapter (one connection pool) per process for the mirror. Creating a pool
+// per audit entry leaked connections under load.
+let mirrorAdapter = null;
+let mirrorAdapterUrl = null;
+function getMirrorAdapter() {
+  const url = process.env.DATABASE_URL;
+  if (!mirrorAdapter || mirrorAdapterUrl !== url) {
+    mirrorAdapter = require('../db').getAdapter();
+    mirrorAdapterUrl = url;
+  }
+  return mirrorAdapter;
+}
+
 function mirrorToDb(entry) {
   try {
-    const { getAdapter } = require('../db');
-    const adapter = getAdapter();
+    const adapter = getMirrorAdapter();
     const agentName = (entry.action.split('_')[0] || 'system').toLowerCase();
     const result = adapter.insert('audit_trail', {
       workspace_id: null,
@@ -98,7 +110,12 @@ function mirrorToDb(entry) {
   }
 }
 
-function writeEntry(action, target, status, details) {
+// The hash-chained vault file is the authoritative, synchronous record. The
+// PostgreSQL audit_trail mirror is best-effort: failures are logged, never
+// thrown, and are repaired by syncVaultToDb(). Callers that already persisted
+// their own transactional audit_trail row pass { mirror: false } so the same
+// event is not recorded twice.
+function writeEntry(action, target, status, details, opts = {}) {
   const entry = {
     timestamp: timestamp(),
     action,
@@ -111,7 +128,7 @@ function writeEntry(action, target, status, details) {
 
   const line = JSON.stringify(entry);
   fs.appendFileSync(AUDIT_LOG, line + '\n', 'utf8');
-  mirrorToDb(entry);
+  if (opts.mirror !== false) mirrorToDb(entry);
   return entry;
 }
 
@@ -152,8 +169,19 @@ async function syncVaultToDb() {
   const entries = readVault();
   let inserted = 0;
   let failed = 0;
+  let skipped = 0;
+
+  // Idempotent: an entry already present (same action_type and timestamp) is
+  // skipped, so re-running reconciliation never duplicates audit rows.
+  const keyOf = (action, ts) => `${action}|${new Date(ts).toISOString()}`;
+  const existing = new Set();
+  const rows = await adapter.find('audit_trail', {});
+  for (const r of rows) {
+    if (r.timestamp) existing.add(keyOf(r.action_type, r.timestamp));
+  }
 
   for (const entry of entries) {
+    if (existing.has(keyOf(entry.action, entry.timestamp))) { skipped++; continue; }
     const agentName = (entry.action.split('_')[0] || 'system').toLowerCase();
     try {
       await adapter.insert('audit_trail', {
@@ -165,6 +193,7 @@ async function syncVaultToDb() {
         details: entry.details,
         version: 'v0.1.0'
       });
+      existing.add(keyOf(entry.action, entry.timestamp));
       inserted++;
     } catch (err) {
       failed++;
@@ -172,7 +201,7 @@ async function syncVaultToDb() {
     }
   }
 
-  return { inserted, failed };
+  return { inserted, failed, skipped };
 }
 
 function readVault() {
@@ -283,6 +312,17 @@ function countEntries() {
   return count;
 }
 
+// Latest vault entry carrying details.eventId === eventId, or null. Used by the
+// audit outbox to make delivery idempotent.
+function findByEventId(eventId) {
+  if (!eventId) return null;
+  let found = null;
+  for (const e of readVault()) {
+    if (e && e.details && e.details.eventId === eventId) { found = e; break; }
+  }
+  return found;
+}
+
 function clearVault() {
   if (fs.existsSync(AUDIT_LOG)) {
     fs.unlinkSync(AUDIT_LOG);
@@ -297,6 +337,7 @@ module.exports = {
   clearVault,
   syncVaultToDb,
   verifyVault,
+  findByEventId,
   countEntries,
   timestamp
 };

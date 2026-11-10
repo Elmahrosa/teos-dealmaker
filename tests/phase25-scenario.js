@@ -96,18 +96,20 @@ async function runWorkflow({ mode, founderId = FOUNDER, newcomerId = NEWCOMER } 
   }
   const onb = await handleMessage(msg(newcomerId, '/start'));
   check(/Set up your workspace/i.test(onb.text), 'newcomer /start kicks off workspace setup');
+  const intro = await handleMessage(msg(newcomerId, 'Stabilize Ventures'));
+  check(!hasButton(intro, 'English'), 'ordinary first text is not taken as a company name');
+  await cb('cc_onb_company', newcomerId);
   const nameRes = await handleMessage(msg(newcomerId, 'Stabilize Ventures'));
   check(hasButton(nameRes, 'English') && hasButton(nameRes, 'العربية'), 'company name advances to language picker');
   const langRes = await cb('cc_onb_lang:en', newcomerId);
-  check(hasButton(langRes.last, 'Growth'), 'language pick lands on plan screen');
-  const planRes = await cb('cc_onb_plan:growth', newcomerId);
-  check(hasButton(planRes.last, 'Start Mission 0'), 'plan selection completes onboarding');
+  check(hasButton(langRes.last, 'Start Mission 0'), 'language pick completes onboarding (no plan sales screen)');
+  check(!hasButton(langRes.last, '$'), 'onboarding shows no subscription prices');
 
   const ncUser = await identity.getUserByTelegram(adapter, newcomerId);
   check(Boolean(ncUser), 'newcomer user persisted');
   const ncWorkspace = await identity.getWorkspaceForUser(adapter, ncUser.id);
   check(Boolean(ncWorkspace), 'newcomer workspace provisioned');
-  equal(ncWorkspace.plan, 'growth', 'onboarded plan is growth');
+  equal(ncWorkspace.plan, 'solo', 'onboarded entitlement defaults to solo');
   equal(ncWorkspace.name, 'Stabilize Ventures', 'onboarded workspace name correct');
   // Activate subscription for newcomer growth plan
   repos = createRepos(adapter);
@@ -199,10 +201,25 @@ async function runWorkflow({ mode, founderId = FOUNDER, newcomerId = NEWCOMER } 
   // ------------------------------------------------------------- pipeline
   const pipeline = await cb('cc_pipeline', founderId);
   check(pipeline.last && /Sales Pipeline/i.test(pipeline.last.text), 'Pipeline screen renders');
+  const dealsBefore = (await createRepos(adapter).deals.list(ws.id)).length;
   const pipeRun = await cb('cc_pipeline_run', founderId);
-  check(pipeRun.last && pipeRun.last.text.length > 0 && !/Pipeline failed/i.test(pipeRun.last.text), 'pipeline run executes');
-  const dealCount = (await require('../db/repos').createRepos(adapter).deals.list(ws.id)).length;
-  check(dealCount > 0, 'pipeline run created deals');
+  check(pipeRun.last && /What are you selling/i.test(pipeRun.last.text), 'pipeline run asks for asset details');
+  let pipeReply = null;
+  for (const answer of ['1', 'Industrial widget lot', '12000', 'USD', '10000', '11000', '/skip']) {
+    pipeReply = await handleMessage(msg(founderId, answer));
+  }
+  check(pipeReply && /Sales Pipeline Run|Pipeline Run|pipeline/i.test(pipeReply.text), 'pipeline run executes: ' + strip(pipeReply && pipeReply.text).slice(0, 80));
+  check(!/failed/i.test(pipeReply.text), 'pipeline run did not fail');
+  const dealsAfterList = await createRepos(adapter).deals.list(ws.id);
+  if (mode === 'DRY') {
+    equal(dealsAfterList.length, dealsBefore, 'DRY pipeline run persisted no deal');
+    check(/DRY/.test(pipeReply.text), 'DRY reply states nothing was saved');
+  } else {
+    equal(dealsAfterList.length, dealsBefore + 1, 'LIVE pipeline run persisted exactly one deal');
+    const created = dealsAfterList[dealsAfterList.length - 1];
+    check(created.status === 'open' && !['won', 'closing'].includes(created.stage), 'LIVE deal stays open and never reaches closing/won without customer acceptance and payment evidence');
+  }
+  check(!dealsAfterList.some(d => d.stage === 'won' || d.status === 'won' || d.status === 'closed'), 'no deal is won/closed by the pipeline');
 
   // ----------------------------------------------------------------- queue
   const qDeal = await queue.enqueueDeal(adapter, ws.id, 'Queue Inc');

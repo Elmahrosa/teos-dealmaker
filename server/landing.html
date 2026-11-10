@@ -196,7 +196,7 @@
       <a href="#plugins" data-i18n="nav_plugins">Plugins</a>
       <a href="#mission" data-i18n="nav_mission">Mission</a>
       <a href="#elmahrosa-products" data-i18n="nav_elmahrosa">Elmahrosa Products</a>
-      <a href="#pricing" data-i18n="nav_pricing">Pricing</a>
+      <a href="#pricing" data-i18n="nav_pricing">Get started</a>
       <a href="https://elmahrosa.org/trust" target="_blank" rel="noopener" data-i18n="nav_trust">Trust &amp; Security</a>
       <a href="/dashboard" data-i18n="nav_console">Console</a>
       <a href="/customer-0" data-i18n="nav_customer0">Customer #0</a>
@@ -420,19 +420,8 @@
   </section>
 
   <section id="pricing">
-    <h2 class="sect" data-i18n="sect_pricing">Pricing</h2>
-    <div class="sect-sub" data-i18n="sub_pricing">Annual plans include built-in savings. Enterprise is custom-priced.</div>
-    <div class="billing-toggle" role="group" aria-label="Billing cycle">
-      <button type="button" data-period="monthly" class="active" data-i18n="period_monthly">Monthly</button>
-      <button type="button" data-period="annual" data-i18n="period_annual">Annual</button>
-    </div>
-    <div class="price-grid" data-i18n-pricing>
-      {{PRICING_CARDS}}
-    </div>
-    <h2 class="sect" style="margin-top:8px;" data-i18n="pricing_addons">Platform Add-ons</h2>
-    <div class="grid" data-i18n-addons>
-      {{ADDONS}}
-    </div>
+    <h2 class="sect" data-i18n="sect_pricing">Getting started</h2>
+    <div class="sect-sub" data-i18n="sub_pricing">Pricing is not published. Activation is agreed directly with the founder after a mission review.</div>
   </section>
 
   {{ELMAHROSA_PRODUCTS}}
@@ -442,7 +431,7 @@
     <p class="sect-sub" data-i18n="faq_s">Straight answers, no fine print.</p>
     <div class="faq-list">
       <details class="faq-item"><summary data-i18n="faq_q1">Is TEOS DealMaker real, or a demo?</summary><p data-i18n="faq_a1">Real. Customer #0 runs live missions with real mission reports you can open. The Playground section on this page is the only simulated part — it is clearly labelled DEMO.</p></details>
-      <details class="faq-item"><summary data-i18n="faq_q2">What does it cost to start?</summary><p data-i18n="faq_a2">Start with one real revenue mission instead of a feature tour. Run it, review the mission report, then upgrade to a plan only when you decide to continue.</p></details>
+      <details class="faq-item"><summary data-i18n="faq_q2">What does it cost to start?</summary><p data-i18n="faq_a2">Start with one real revenue mission instead of a feature tour. Run it, review the mission report, then decide whether to continue.</p></details>
       <details class="faq-item"><summary data-i18n="faq_q3">Does the AI workforce contact my prospects on its own?</summary><p data-i18n="faq_a3">No. Consequential external actions are governed: outreach drafts go through policy evaluation and human review gates before anything is sent. You stay in control of outbound contact.</p></details>
       <details class="faq-item"><summary data-i18n="faq_q4">Where does my data live?</summary><p data-i18n="faq_a4">By default on the platform database with audit logging. For enterprise and sovereignty requirements, contact info@elmahrosa.org to discuss on-premise and air-gapped deployment options.</p></details>
       <details class="faq-item"><summary data-i18n="faq_q5">Do I need technical skills to run a mission?</summary><p data-i18n="faq_a5">No. You can describe your mission in plain language to the TEOS DealMaker bot in Telegram, or use /start on this site. The platform handles the plan, the team, and the report.</p></details>
@@ -458,7 +447,7 @@
       </div>
       <div class="legal-card legal-anchor" id="terms">
         <h3 data-i18n="terms_t">Terms</h3>
-        <p data-i18n="terms_d">Use of TEOS DealMaker is subject to this site and the governing agreements with Elmahrosa International. Plans listed here bill per the selected cycle; custom enterprise terms are agreed directly.</p>
+        <p data-i18n="terms_d">Use of TEOS DealMaker is subject to this site and the governing agreements with Elmahrosa International. Commercial terms are agreed directly in writing.</p>
       </div>
     </div>
   </section>
@@ -480,7 +469,7 @@
   var I18N = {
     en: {
       nav_features: 'Features', nav_playground: 'Playground', nav_architecture: 'Architecture', nav_plugins: 'Plugins',
-      nav_mission: 'Mission', nav_elmahrosa: 'Elmahrosa Products', nav_pricing: 'Pricing', nav_console: 'Console', nav_customer0: 'Customer #0',
+      nav_mission: 'Mission', nav_elmahrosa: 'Elmahrosa Products', nav_pricing: 'Get started', nav_console: 'Console', nav_customer0: 'Customer #0',
       nav_trust: 'Trust & Security',
       hero_eyebrow: 'Mission-First · Real revenue work, not a demo',
       hero_t1: 'Hire an AI Revenue Team. ', hero_t2: 'Not a Chatbot.',
@@ -530,7 +519,7 @@
       sec_1: '🛡 Policy-Governed Execution', sec_2: '⚖ Policy & Human Oversight', sec_3: '📋 Auditable AI Operations',
       sec_4: '🔐 Sovereignty Standards', sec_5: '🤝 Claude Partner Network', sec_6: '✓ Verified Credly Credential',
       sec_cta1: 'View Trust Center →', sec_cta2: 'View Verified Credential →',
-      sect_pricing: 'Pricing', sub_pricing: 'Annual plans include built-in savings. Enterprise is custom-priced.',
+      sect_pricing: 'Getting started', sub_pricing: 'Pricing is not published. Activation is agreed directly with the founder after a mission review.',
       pricing_addons: 'Platform Add-ons',
       elmahrosa_products_t: 'ELMAHROSA PRODUCTS', elmahrosa_products_sub: 'Optional add-ons — independent Elmahrosa products, sold separately. Not included with the DealMaker base product.',
       elmahrosa_independent: 'OPTIONAL ADD-ON · INDEPENDENT PRODUCT',
@@ -556,7 +545,7 @@
       faq_q1: 'Is TEOS DealMaker real, or a demo?',
       faq_a1: 'Real. Customer #0 runs live missions with real mission reports you can open. The Playground section on this page is the only simulated part — it is clearly labelled DEMO.',
       faq_q2: 'What does it cost to start?',
-      faq_a2: 'Start with one real revenue mission instead of a feature tour. Run it, review the mission report, then upgrade to a plan only when you decide to continue.',
+      faq_a2: 'Start with one real revenue mission instead of a feature tour. Run it, review the mission report, then decide whether to continue.',
       faq_q3: 'Does the AI workforce contact my prospects on its own?',
       faq_a3: 'No. Consequential external actions are governed: outreach drafts go through policy evaluation and human review gates before anything is sent. You stay in control of outbound contact.',
       faq_q4: 'Where does my data live?',
@@ -567,7 +556,7 @@
       privacy_t: 'Privacy',
       privacy_d: 'TEOS DealMaker processes mission data to execute revenue work on your behalf. We do not sell data. For specific questions, contact info@elmahrosa.org.',
       terms_t: 'Terms',
-      terms_d: 'Use of TEOS DealMaker is subject to this site and the governing agreements with Elmahrosa International. Plans listed here bill per the selected cycle; custom enterprise terms are agreed directly.',
+      terms_d: 'Use of TEOS DealMaker is subject to this site and the governing agreements with Elmahrosa International. Commercial terms are agreed directly in writing.',
       footer_faq: 'FAQ',
       footer_privacy: 'Privacy',
       footer_terms: 'Terms',
@@ -575,7 +564,7 @@
     },
     ar: {
       nav_features: 'المزايا', nav_playground: 'منطقة التجربة', nav_architecture: 'البنية', nav_plugins: 'الإضافات',
-      nav_mission: 'المهام', nav_elmahrosa: 'منتجات المحروسة', nav_pricing: 'الأسعار', nav_console: 'لوحة التحكم', nav_customer0: 'العميل 0',
+      nav_mission: 'المهام', nav_elmahrosa: 'منتجات المحروسة', nav_pricing: 'ابدأ الآن', nav_console: 'لوحة التحكم', nav_customer0: 'العميل 0',
       nav_trust: 'الثقة والأمان',
       hero_eyebrow: 'البدء بمهمة أولاً · عمل إيرادات حقيقي، وليس عرضاً',
       hero_t1: 'وظّف فريق إيرادات ذكي... ', hero_t2: 'وليس مجرد روبوت محادثة.',
@@ -586,7 +575,7 @@
       hero_p1: '🤝 شبكة شركاء Claude — ذكاء اصطناعي متعدد المزوّدين، يتضمن Anthropic Claude', hero_p2: '✓ اعتماد موثق عبر Credly',
       cta_start: '🚀 ابدأ مهمة حقيقية', cta_launch: '🚀 ابدأ مهمتي الأولى', cta_reports: '📄 اقرأ أحدث تقرير مهمة', cta_demo: 'كيف يعمل البدء بمهمة أولاً', cta_demo_mission: '🎮 جرّب مهمة تجريبية',
       demo_banner: '⚠ وضع التجربة — بيانات محاكاة',
-      pg_title: 'جرّب DealMaker', pg_sub: 'جولة تفاعلية محاكاة لمسار العمل المحقق في DealMaker. لا بريد خارجي، لا إنشاء طلب دفع عبر دودو، لا تواصل مع أي عميل محتمل، ولا أي نتيجة عميل حقيقية — هذا عرض تجريبي فقط.',
+      pg_title: 'جرّب DealMaker', pg_sub: 'جولة تفاعلية محاكاة لمسار العمل المحقق في DealMaker. لا بريد خارجي، لا إنشاء طلب دفع، لا تواصل مع أي عميل محتمل، ولا أي نتيجة عميل حقيقية — هذا عرض تجريبي فقط.',
       pg_brief_t: 'موجز الصفقة', pg_stake_t: 'تحليل الأطراف', pg_sim_t: 'محاكاة الصفقة', pg_mc_t: 'وحدة تحكم المهام',
       pg_mc_hint: 'دورة حياة المهام المحكومة. اضغط الزر لمشاهدة تنفيذ محاكى.',
       pg_run: '▶ جرّب مهمة تجريبية', pg_log_idle: 'جاهز — تنفيذ محاكى فقط.',
@@ -599,7 +588,7 @@
       f_plugins_t: 'منصة الإضافات المؤسسية', f_plugins_1: 'سجلّ إضافات مع عزل للإمكانات', f_plugins_2: 'تثبيتات مدقّقة ومعزولة الإمكانات', f_plugins_3: 'إضافة Civic Mixer المجانية',
       f_mcp_t: 'تكامل MCP', f_mcp_1: 'بوابة بروتوكول سياق النموذج (MCP)', f_mcp_2: 'استدعاء الأدوات للقوى العاملة', f_mcp_3: 'محوّلات مستقلة عن المزوّد',
       f_intel_t: 'ذكاء المعرفة المؤسسية', f_intel_1: 'استرجاع معزّز بالتوليد (RAG) مع إسناد المصادر', f_intel_2: 'قاعدة معرفة الشركة', f_intel_3: 'مساعد ذكي',
-      f_pipeline_t: 'أتمتة مسار الإيرادات', f_pipeline_1: 'من تأهيل العملاء إلى العقود', f_pipeline_2: 'حدود التفاوض والشروط', f_pipeline_3: 'إتمام الدفع متصل بمنصة دودو',
+      f_pipeline_t: 'أتمتة مسار الإيرادات', f_pipeline_1: 'من تأهيل العملاء إلى العقود', f_pipeline_2: 'حدود التفاوض والشروط', f_pipeline_3: 'تفعيل الدفع يتطلب موافقة المؤسس',
       f_sentinel_t: 'حوكمة السياسات', f_sentinel_1: 'فرض السياسات على كل إمكانية', f_sentinel_2: 'تقييم يُغلق عند الخطأ ويُرجّح الرفض', f_sentinel_3: 'أمان المطالبات والأكواد',
       f_analytics_t: 'التحليلات المؤسسية', f_analytics_1: 'سجل تدقيق متسلسل التجزئة', f_analytics_2: 'مؤشرات الإيرادات والمهام', f_analytics_3: 'واجهات برمجية للصحة والتدقيق',
       sect_architecture: 'بنية المنصة', sub_architecture: 'كل مهمة تمر عبر سلسلة تنفيذ محكومة.',
@@ -625,7 +614,7 @@
       sec_1: '🛡 تنفيذ محكوم بالسياسات', sec_2: '⚖ السياسات والرقابة البشرية', sec_3: '📋 عمليات ذكاء اصطناعي قابلة للتدقيق',
       sec_4: '🔐 معايير السيادة الرقمية', sec_5: '🤝 شبكة شركاء Claude', sec_6: '✓ اعتماد موثق عبر Credly',
       sec_cta1: 'عرض مركز الثقة ←', sec_cta2: 'عرض الاعتماد الموثق ←',
-      sect_pricing: 'الأسعار', sub_pricing: 'الخطط السنوية تشمل توفيراً مضمّناً، والمؤسسي بسعر مخصص.',
+      sect_pricing: 'ابدأ الآن', sub_pricing: 'الأسعار غير منشورة. يتم الاتفاق على التفعيل مباشرة مع المؤسس بعد مراجعة المهمة.',
       pricing_addons: 'إضافات المنصة',
       elmahrosa_products_t: 'منتجات المحروسة', elmahrosa_products_sub: 'إضافات اختيارية — منتجات المحروسة المستقلة تُباع بشكل منفصل ولا تُضمّن في منتج DealMaker الأساسي.',
       elmahrosa_independent: 'إضافة اختيارية · منتج مستقل',
@@ -651,7 +640,7 @@
       faq_q1: 'هل TEOS DealMaker حقيقي أم مجرد عرض؟',
       faq_a1: 'حقيقي. العميل رقم 0 ينفذ مهام فعلية بتقارير يمكنك فتحها. ومنطقة التجربة في هذه الصفحة هي الجزء الوحيد المحاكى، وهي موضحة بوضوح على أنها عرض تجريبي.',
       faq_q2: 'كم تكلف البداية؟',
-      faq_a2: 'ابدأ بمهمة إيراد حقيقية واحدة بدلاً من جولة في المزايا. نفّذها، وراجع تقرير المهمة، ثم ترقّ إلى خطة فقط عندما تقرر المواصلة.',
+      faq_a2: 'ابدأ بمهمة إيراد حقيقية واحدة بدلاً من جولة في المزايا. نفّذها، وراجع تقرير المهمة، ثم قرر ما إذا كنت ستواصل.',
       faq_q3: 'هل يتواصل فريق الذكاء الاصطناعي مع عملائي المحتملين من تلقاء نفسه؟',
       faq_a3: 'لا. الإجراءات الخارجية الحساسة محكومة: مسودات التواصل تمر بتقييم السياسات وبوابات مراجعة بشرية قبل إرسال أي شيء. أنت تبقى مسيطراً على التواصل الخارجي.',
       faq_q4: 'أين تُخزن بياناتي؟',
@@ -662,7 +651,7 @@
       privacy_t: 'الخصوصية',
       privacy_d: 'يعالج TEOS DealMaker بيانات المهمة لتنفيذ أعمال الإيرادات نيابة عنك. لا نبيع البيانات. للأسئلة المحددة، تواصل مع info@elmahrosa.org.',
       terms_t: 'الشروط',
-      terms_d: 'استخدام TEOS DealMaker يخضع لهذا الموقع والاتفاقيات الحاكمة مع المحروسة إنترناشيونال. تُفوتر الخطط المذكورة هنا حسب الدورة المختارة؛ وتُتفق شروط المؤسسات المخصصة مباشرة.',
+      terms_d: 'استخدام TEOS DealMaker يخضع لهذا الموقع والاتفاقيات الحاكمة مع المحروسة إنترناشيونال. تُتفق الشروط التجارية مباشرة وكتابياً.',
       footer_faq: 'الأسئلة الشائعة',
       footer_privacy: 'الخصوصية',
       footer_terms: 'الشروط',
@@ -831,7 +820,7 @@
         objective: 'تأمين تجربة شراكة لمدة 12 شهراً مع Acme Manufacturing (محاكاة)',
         kpis: ['خطوات المهمة المنجزة: 6 / 6', 'نسبة النجاح: 100%', 'الساعات المستثمرة: ~4'],
         timeline: ['T+0 خطط', 'T+1 حلّل', 'T+2 حاكِ', 'T+3 اعتمد', 'T+4 نفّذ (في الطابور، التواصل الخارجي متوقف)', 'T+5 أبلغ'],
-        actions: ['صياغة الاقتراح وإرساله لاعتماد المؤسس', 'صياغة التواصل وإبقاؤه عند بوابة المراجعة البشرية', 'لم يُرسَل أي بريد خارجي في التجربة', 'لم يُنشأ أي طلب دفع عبر دودو', 'لم يُتواصل مع أي عميل محتمل'],
+        actions: ['صياغة الاقتراح وإرساله لاعتماد المؤسس', 'صياغة التواصل وإبقاؤه عند بوابة المراجعة البشرية', 'لم يُرسَل أي بريد خارجي في التجربة', 'لم يُنشأ أي طلب دفع', 'لم يُتواصل مع أي عميل محتمل'],
         governanceDecisions: ['ALLOW — مسودّة الاقتراح الداخلي', 'REVIEW — مسودّة التواصل (معلّقة)', 'BLOCK — درجة المخاطر المحاكاة فوق عتبة السياسة'],
         outcome: 'بلغت المهمة المحاكاة مرحلة الإبلاغ. لم يُرسَل أو يُنشأ أو يُتواصل مع أي شيء خارجي.'
       }

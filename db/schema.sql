@@ -644,3 +644,30 @@ DROP TRIGGER IF EXISTS update_manual_pilot_activations_modtime ON manual_pilot_a
 CREATE TRIGGER update_manual_pilot_activations_modtime
 BEFORE UPDATE ON manual_pilot_activations
 FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+
+-- Transactional audit outbox (see db/migrations/017_audit_outbox.sql)
+CREATE TABLE IF NOT EXISTS audit_outbox (
+    id SERIAL PRIMARY KEY,
+    event_id UUID NOT NULL UNIQUE,
+    workspace_id INTEGER REFERENCES workspaces(id) ON DELETE CASCADE,
+    deal_id INTEGER,
+    action VARCHAR(100) NOT NULL,
+    target VARCHAR(255),
+    status VARCHAR(50),
+    details JSONB,
+    state VARCHAR(20) NOT NULL DEFAULT 'pending',
+    attempts INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT,
+    vault_hash VARCHAR(128),
+    delivered_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT audit_outbox_state_check CHECK (state IN ('pending', 'failed', 'delivered'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_outbox_state ON audit_outbox(state, id);
+
+DROP TRIGGER IF EXISTS update_audit_outbox_modtime ON audit_outbox;
+CREATE TRIGGER update_audit_outbox_modtime
+BEFORE UPDATE ON audit_outbox
+FOR EACH ROW EXECUTE FUNCTION update_modified_column();

@@ -215,11 +215,11 @@ function textFor(result, ctx, session) {
     case 'diagnostics': {
       if (ar) {
         return d.repair
-          ? `واجهت خطأً: ${result.error || 'غير معروف'}.\nخطة الإصلاح: أعد المحاولة، تحقق من إعدادات المزود، أو أرسل «حالة» لمعرفة موقع التنفيذ.`
+          ? 'حدث خطأ أثناء التنفيذ. التفاصيل في سجل الخادم.\nخطة الإصلاح: أعد المحاولة، تحقق من إعدادات المزود، أو أرسل «حالة» لمعرفة موقع التنفيذ.'
           : 'أجريت فحصاً. إن استمرت المشكلة أرسل «إصلاح الخطأ» وسأشخّصها بالتفصيل.';
       }
       return d.repair
-        ? `Hit an error: ${result.error || 'unknown'}.\nRepair plan: retry, check provider settings, or send "status" to see where execution stopped.`
+        ? 'Something went wrong while running that. Details are in the server log.\nRepair plan: retry, check provider settings, or send "status" to see where execution stopped.'
         : 'Ran a check. If the issue persists send "fix error" and I will diagnose it in detail.';
     }
 
@@ -228,8 +228,8 @@ function textFor(result, ctx, session) {
 
     case 'pricing':
       return ar
-        ? 'يمكنك اختيار باقة مناسبة أو التواصل معنا للتفاصيل.'
-        : 'You can pick a plan that fits you, or message us for details.';
+        ? 'تُحدَّد الأسعار لكل صفقة. أخبرني عن الصفقة وسأساعدك في إعداد عرض.'
+        : 'Pricing is set per deal. Tell me about the deal and I will help you prepare a proposal.';
 
     case 'no_pricing':
       return ar
