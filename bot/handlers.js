@@ -147,11 +147,14 @@ async function handleMessage(msg) {
   const userId = msg.from ? msg.from.id : null;
   const text = (msg.text || '').trim();
 
-  if (!text) return null;
+  // Empty or non-text updates (stickers, photos, blank text) never dead-end.
+  if (!text) return { chatId, text: i18n.t(userId, 'fallback_nontext') };
 
   // Founder escape hatch: never trap a new request inside an unfinished form.
   // /cancel clears every conversational input state; /new starts a fresh goal.
   const commandText = text.split(/\s+/)[0].toLowerCase().replace(/@[^@]+$/, '');
+  // Any command other than /start abandons a half-finished setup.
+  if (text.startsWith('/') && commandText !== '/start' && onboarding.isActive(userId)) onboarding.reset(userId);
   if (commandText === '/cancel') {
     clearPendingInputState(userId);
     audit.writeEntry('BOT_INPUT_CANCELLED', String(userId), 'success', { mode: getMode() });
@@ -175,6 +178,7 @@ async function handleMessage(msg) {
       return { chatId, text: inputResult.prompt };
     }
 
+    const tr = key => i18n.t(userId, key);
     try {
       const adapter = getStoreAdapter();
       const user = await identity.getUserByTelegram(adapter, userId);
@@ -183,44 +187,38 @@ async function handleMessage(msg) {
         : null;
 
       if (!workspace) {
-        return { chatId, text: 'No workspace found. Please provision a workspace and start again.' };
+        return { chatId, text: tr('di_no_workspace') };
       }
 
       const pipeline = require('../services/workforce/pipeline');
       const result = await pipeline.runPipeline(adapter, workspace.id, inputResult.data);
 
       if (!result.ok) {
-        return { chatId, text: `Pipeline not started: ${esc(result.reason || 'unknown reason')}` };
+        return { chatId, text: i18n.sprintf(tr('di_not_started'), esc(result.reason || 'unknown')) };
       }
-
-      const deal = result.deal || {};
-      const lines = [
-        'Asset analysis completed.',
-        `Type: ${esc(inputResult.data.assetType)}`,
-        `Description: ${esc(inputResult.data.description)}`,
-        `Asking price: ${inputResult.data.askingPrice ?? 'Not provided'} ${esc(inputResult.data.currency || '')}`,
-        `Negotiation: ${result.negotiation ? 'Analyzed' : 'Pending verified financial inputs'}`,
-        `Contract: ${esc(result.treasurer?.contract?.status || 'Pending')}`,
-        `Deal status: ${esc(deal.status || 'Awaiting customer')}`,
-        'No deal has been marked as won.'
-      ];
 
       audit.writeEntry('BOT_ASSET_PIPELINE_COMPLETED', String(userId), 'success', {
         assetType: inputResult.data.assetType,
         hasSourceUrl: Boolean(inputResult.data.sourceUrl),
-        dealId: deal.id || null
+        dryRun: Boolean(result.dry_run),
+        dealId: (result.deal && result.deal.id) || null
       });
 
-      return { chatId, text: lines.join('\n') };
+      const screen = require('./screens').buildPipelineResult(userId, result);
+      const note = result.dry_run ? `\n\n${esc(tr('di_dry_note'))}` : '';
+      return { chatId, text: screen.text + note, replyMarkup: screen.keyboard };
     } catch (err) {
       audit.writeEntry('BOT_ASSET_PIPELINE_ERROR', String(userId), 'error', {
         error: err.message
       });
-      return { chatId, text: `Pipeline failed: ${esc(err.message)}` };
+      return { chatId, text: tr('di_failed') };
     }
   }
   if (onboarding.isActive(userId) && !text.startsWith('/')) {
-    return onboarding.handleText(chatId, userId, text);
+    // Only an explicit "enter company name" step consumes free text; anything
+    // else falls through and is answered as an ordinary message.
+    const onb = await onboarding.handleText(chatId, userId, text);
+    if (onb) return onb;
   }
 
   if (botLearning.pending(userId) && !text.startsWith('/')) {
@@ -239,7 +237,7 @@ async function handleMessage(msg) {
       return { chatId, text: res.prompt, replyMarkup: res.keyboard };
     } catch (err) {
       audit.writeEntry('BOT_LEARNING_ERROR', String(userId), 'error', { error: err.message });
-      return { chatId, text: `Learning update failed: ${esc(err.message)}` };
+      return { chatId, text: i18n.t(userId, 'err_request_failed') };
     }
   }
 
@@ -277,7 +275,7 @@ async function handleMessage(msg) {
       }
     } catch (err) {
       audit.writeEntry('BOT_INTEL_ERROR', String(userId), 'error', { error: err.message });
-      return { chatId, text: `Intelligence update failed: ${esc(err.message)}` };
+      return { chatId, text: i18n.t(userId, 'err_request_failed') };
     }
   }
 
@@ -297,7 +295,7 @@ async function handleMessage(msg) {
       return screenResult(chatId, await buildMemory(userId));
     } catch (err) {
       audit.writeEntry('BOT_MEMORY_UPDATE', String(userId), 'error', { key: pendingKey, error: err.message });
-      return { chatId, text: `Memory update failed: ${esc(err.message)}` };
+      return { chatId, text: i18n.t(userId, 'err_request_failed') };
     }
   }
 
@@ -308,7 +306,7 @@ async function handleMessage(msg) {
         return await require('./screens/missions').handleMissionCreateText(chatId, userId, text);
       } catch (err) {
         audit.writeEntry('BOT_MISSION_CREATE', String(userId), 'error', { error: err.message });
-        return { chatId, text: `Mission failed: ${esc(err.message)}` };
+        return { chatId, text: i18n.t(userId, 'err_request_failed') };
       }
     }
     missionState.clear(userId);
@@ -328,7 +326,7 @@ async function handleMessage(msg) {
       return screen;
     } catch (err) {
       audit.writeEntry('BOT_MISSION_GOAL', String(userId), 'error', { error: err.message });
-      return { chatId, text: `Mission failed: ${esc(err.message)}` };
+      return { chatId, text: i18n.t(userId, 'err_request_failed') };
     }
   }
 
@@ -339,7 +337,7 @@ async function handleMessage(msg) {
       return await runSellMission(chatId, userId, sellMatch[2].trim(), Number(sellMatch[1]) || 3);
     } catch (err) {
       audit.writeEntry('BOT_UNIVERSAL_SELL_MISSION', String(userId), 'error', { error: err.message });
-      return { chatId, text: `Sales mission failed: ${esc(err.message)}` };
+      return { chatId, text: i18n.t(userId, 'err_request_failed') };
     }
   }
 
@@ -356,7 +354,7 @@ async function handleMessage(msg) {
     if (!handler) {
       audit.writeEntry('BOT_COMMAND_UNKNOWN', String(userId), 'denied', { command, mode: getMode() });
       const routed = await routerResult(chatId, userId, parts.slice(1).join(' ') || command.slice(1));
-      return routed || { chatId, text: `Unknown command: <code>${command}</code>. Send a natural message like "run sales" instead.` };
+      return routed || { chatId, text: `${i18n.t(userId, 'fallback_unknown_cmd')} <code>${esc(command)}</code>` };
     }
 
     const actionType = 'BOT_COMMAND_' + command.slice(1).toUpperCase();
@@ -368,17 +366,14 @@ async function handleMessage(msg) {
       return result;
     } catch (err) {
       audit.writeEntry(actionType, command, 'error', { userId, error: err.message });
-      return { chatId, text: `Error: ${esc(err.message)}` };
+      return { chatId, text: i18n.t(userId, 'err_request_failed') };
     }
   }
 
   audit.writeEntry('BOT_TEXT', String(userId), 'info', { text, mode: getMode() });
   const routed = await routerResult(chatId, userId, text);
   if (routed) return routed;
-  return {
-    chatId,
-    text: 'How can I help? Try "run sales", "find customers", "create mission", or "status".'
-  };
+  return { chatId, text: i18n.t(userId, 'fallback_help') };
 }
 
 module.exports = { handleMessage };

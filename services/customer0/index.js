@@ -69,7 +69,7 @@ const CUSTOMER0_SEED_PROSPECTS = [
         governance_security_fit: 4, geo_priority: 5, evidence_quality: 5,
         conversion_likelihood: 3
       },
-      recommended_tier: 'Growth ($299/mo or $2,990/yr)',
+      recommended_tier: 'To be scoped with the founder',
       expected_objection: 'We already have our own revenue team and do not buy from cold intros.',
       objection_response: 'It is a 30-minute live demo, not a pitch. No contract or invoice before evidence.',
       next_action: 'Founder-approved warm intro via LinkedIn (founder channel), then a 30-minute live demo.'
@@ -123,7 +123,7 @@ const CUSTOMER0_SEED_PROSPECTS = [
         governance_security_fit: 3, geo_priority: 2, evidence_quality: 3,
         conversion_likelihood: 3
       },
-      recommended_tier: 'Growth ($299/mo or $2,990/yr)',
+      recommended_tier: 'To be scoped with the founder',
       expected_objection: 'Cold outreach to an unnamed hiring manager will not reach the decision maker.',
       objection_response: 'Queue for the founder-led channel; no email drafted until the decision maker is identified.',
       next_action: 'Identify the hiring manager, then route through the founder-led intro channel.'

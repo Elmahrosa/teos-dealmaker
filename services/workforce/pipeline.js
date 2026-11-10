@@ -4,6 +4,67 @@ const queue = require('../queue');
 const { runAgent } = require('./runner');
 const emergency = require('../../config/emergency');
 const flags = require('../../config/flags');
+const { isDRY } = require('../../config/mode');
+
+// DRY mode: run the pure agent logic and return the analysis without touching
+// the store (no deal, notes, queue events, agent runs or usage rows) and
+// without any external side effect. The caller sees `dry_run: true`.
+async function runPipelineDry(adapter, workspaceId, input) {
+  const memorySvc = require('../memory');
+  const { buildPlaybook } = require('../../agents/strategist');
+  const { craftPositioning } = require('../../agents/marketer');
+  const { buildTerms } = require('../../agents/negotiator');
+  const { draftContract, closeDeal } = require('../../agents/treasurer');
+  const { reviewDraft } = require('../../agents/gatekeeper');
+
+  const mem = await memorySvc.getMemory(adapter, workspaceId);
+  const lead = {
+    id: 'dry_run',
+    company: mem.company_name || 'Asset Listing',
+    contactName: null,
+    product: input.description,
+    assetType: input.assetType,
+    sourceUrl: input.sourceUrl || null,
+    askingPrice: input.askingPrice ?? null,
+    sellerTarget: input.sellerTarget ?? null,
+    budget: input.buyerBudget ?? null,
+    classification: 'Unqualified',
+    industry: mem.industry || 'General',
+    currency: input.currency || null,
+    termMonths: null,
+    paymentMethod: null
+  };
+  const strategy = buildPlaybook(lead);
+  const marketing = craftPositioning(lead, strategy);
+  const canNegotiate = hasNegotiationInputs(lead);
+  const negotiation = canNegotiate ? buildTerms(lead, lead.sellerTarget, lead.budget) : null;
+  const deal = { ...lead, amount: lead.askingPrice };
+  const contract = draftContract(deal);
+  const status = closeDeal(deal, contract);
+  const gatekeeper = reviewDraft(
+    `Asset proposal: ${lead.product}. Asset type: ${lead.assetType}`,
+    'deal:dry_run'
+  );
+  return {
+    ok: true,
+    dry_run: true,
+    strategy,
+    marketing,
+    negotiation,
+    treasurer: { contract, checkout: null, status },
+    gatekeeper,
+    closing: { dealId: lead.id, company: lead.company, status: 'awaiting_customer', won: false },
+    deal: null,
+    notes: [],
+    won: false,
+    runs: []
+  };
+}
+
+function hasNegotiationInputs(lead) {
+  return Number.isFinite(lead.sellerTarget) && lead.sellerTarget > 0 &&
+    Number.isFinite(lead.budget) && lead.budget > 0 && Boolean(lead.currency);
+}
 
 async function runPipeline(adapter, workspaceId, input = {}) {
   const repos = createRepos(adapter);
@@ -18,6 +79,8 @@ async function runPipeline(adapter, workspaceId, input = {}) {
   if (!input.assetType || !input.description) {
     return { ok: false, reason: 'missing_asset_details' };
   }
+
+  if (isDRY()) return runPipelineDry(adapter, workspaceId, input);
 
   const memorySvc = require('../memory');
   const { buildPlaybook } = require('../../agents/strategist');
@@ -59,7 +122,6 @@ async function runPipeline(adapter, workspaceId, input = {}) {
     });
 
   const strategy = await runAgent(adapter, workspaceId, 'strategist', async () => {
-    const ctx = await memorySvc.getContextFor(adapter, workspaceId, 'strategist');
     const r = buildPlaybook(lead);
     const note = `Playbook: ${r.style}`;
     await collaborate('strategist', note);
@@ -97,7 +159,9 @@ async function runPipeline(adapter, workspaceId, input = {}) {
     );
   }
 
-  await queue.advanceQueue(adapter, workspaceId, d.id, 'negotiation');
+  // Only advance to negotiation when negotiation analysis actually ran.
+  // Never advance past it here: closing/won need customer acceptance.
+  if (negotiation) await queue.advanceQueue(adapter, workspaceId, d.id, 'negotiation');
 
   const deal = {
     ...lead,
@@ -131,8 +195,6 @@ async function runPipeline(adapter, workspaceId, input = {}) {
     };
   }, { deal_id: d.id });
 
-  await queue.advanceQueue(adapter, workspaceId, d.id, 'closing');
-
   const gatekeeper = await runAgent(adapter, workspaceId, 'gatekeeper', async () => {
     const { reviewDraft } = require('../../agents/gatekeeper');
     const commercialDraft = [
@@ -160,8 +222,10 @@ async function runPipeline(adapter, workspaceId, input = {}) {
       amount: deal.amount,
       currency: lead.currency,
       contractId: treasurer.result.data.contract.contractId,
-      approved: false,
-      paymentMethod: null
+      approved: gatekeeper.result.data.decision === 'APPROVE',
+      paymentMethod: null,
+      customerAcceptance: null,
+      paymentEvidence: null
     });
 
     const note = 'Deal remains awaiting customer acceptance and independently verified payment evidence.';

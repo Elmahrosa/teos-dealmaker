@@ -199,7 +199,7 @@ const planStatus = async (repos, wsId, id) => (await repos.plans.get(wsId, id)).
     check(/No pending|no pending/.test(r1.text + r2.text), 'outsider is told nothing is pending');
     const r3 = await router.handleText(adapter, UNLINKED, 'approve');
     equal(await statusOf(repos, wsId, approval.id), 'pending', 'unlinked user cannot decide');
-    check(/not linked/.test(r3.text), 'unlinked user is told to /start');
+    check(/\/start/.test(r3.text), 'unlinked user is told to /start');
   }
 
   console.log(`✓ typed approvals (${n} assertions passed)`);

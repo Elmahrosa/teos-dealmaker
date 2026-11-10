@@ -75,7 +75,9 @@ const menu = require('../bot/menu');
 
   // Seed a recorded deal + queue movement so the Deals and Timeline screens
   // render deal buttons before the dispatch contract walks them.
-  await workforce.runPipeline(adapter, wsId);
+  // The pipeline persists a deal only in LIVE mode (DRY is side-effect free).
+  require('../config/mode').setMode('LIVE');
+  await workforce.runPipeline(adapter, wsId, { assetType: 'product', description: 'Seed asset', askingPrice: 5000, currency: 'USD' });
 
   // ------------------------------------------------------------------ mocks
   let qid = 0;
@@ -182,7 +184,7 @@ const menu = require('../bot/menu');
     ['cc_workforce', FOUNDER, 'My Revenue Team'],
     ['cc_pipeline', FOUNDER, 'Sales Pipeline'],
     ['cc_deals', FOUNDER, 'Deals'],
-    ['cc_pricing', FOUNDER, 'Pricing'],
+    ['cc_pricing', FOUNDER, 'Control Center'],
     ['cc_ai_guide', FOUNDER, 'AI Guide'],
     ['cc_settings', FOUNDER, 'Settings'],
     ['cc_missions', FOUNDER, 'Mission Center'],
@@ -206,7 +208,7 @@ const menu = require('../bot/menu');
     ['cc_audit', FOUNDER, 'Audit Log'],
     ['cc_admin', FOUNDER, 'Admin'],
     ['cc_sales_run', FOUNDER, 'Sales Flow'],
-    ['cc_pipeline_run', FOUNDER, 'Pipeline Run'],
+    ['cc_pipeline_run', FOUNDER, 'What are you selling'],
     ['cc_live', FOUNDER, 'Switch to LIVE mode?'],
     ['cc_live_cancel', FOUNDER, 'Admin'],
     ['cc_dry', FOUNDER, 'Switch to DRY mode?'],
@@ -370,10 +372,10 @@ const menu = require('../bot/menu');
   // The cc_upload_catalog / cc_launch_campaign "Coming soon" stubs were removed
   // with the legacy dashboard; they now fall through to the unknown-action
   // handler (and are no longer dispatched namespaces).
-  await driveNoEdit('cc_upload_catalog', FOUNDER, 'Unknown action');
-  await driveNoEdit('cc_launch_campaign', FOUNDER, 'Unknown action');
+  await driveNoEdit('cc_upload_catalog', FOUNDER, 'no longer available');
+  await driveNoEdit('cc_launch_campaign', FOUNDER, 'no longer available');
   await driveNoEdit('cc_set_lang:fr', FOUNDER, 'Unknown language');
-  await driveNoEdit('cc_totally_unknown_xyz', FOUNDER, 'Unknown action');
+  await driveNoEdit('cc_totally_unknown_xyz', FOUNDER, 'no longer available');
 
   // -------------------------------------------- 8. role-aware home keyboards
   const memberHome = await drive('cc_home', MEMBER);
@@ -397,7 +399,7 @@ const menu = require('../bot/menu');
 
   // ------------------------------------------------------------ 9. coverage
   const RENDERED_REQUIRED_EXACT = [
-    'cc_home', 'cc_dashboard', 'cc_workforce', 'cc_pipeline', 'cc_deals', 'cc_pricing',
+    'cc_home', 'cc_dashboard', 'cc_workforce', 'cc_pipeline', 'cc_deals',
     'cc_settings', 'cc_learn', 'cc_learn_quit', 'cc_missions', 'cc_mission_goal',
     'cc_mission_create', 'cc_mission_dashboard', 'cc_mission1', 'cc_mission2', 'cc_mission_market', 'cc_approvals', 'cc_memory',
     'cc_mem_cancel', 'cc_activity', 'cc_timeline', 'cc_costs', 'cc_health', 'cc_providers',

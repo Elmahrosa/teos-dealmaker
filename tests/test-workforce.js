@@ -3,6 +3,8 @@ const { createMemoryAdapter } = require('../db/adapter');
 const { createRepos } = require('../db/repos');
 const identity = require('../services/identity');
 const workforce = require('../services/workforce');
+const PIPELINE_INPUT = { assetType: 'product', description: 'Industrial widget lot', askingPrice: 12000, currency: 'USD', sellerTarget: 10000, buyerBudget: 11000 };
+const { setMode } = require('../config/mode');
 
 (async () => {
   const adapter = createMemoryAdapter();
@@ -76,10 +78,11 @@ const workforce = require('../services/workforce');
   assert.strictEqual(actOutreach.runs, 1, 'activity counts outreach runs');
   assert.strictEqual(actProspector.last_output, 'Found 12 more', 'activity latest output');
 
-  const pipeline = await workforce.runPipeline(adapter, ws.id);
+  const pipeline = (setMode('LIVE'), await workforce.runPipeline(adapter, ws.id, PIPELINE_INPUT));
   assert.ok(pipeline.deal.id, 'pipeline persisted a deal');
   assert.strictEqual(pipeline.runs.length, 6, 'six agents ran');
-  assert.ok(pipeline.closing.status === 'won' || pipeline.closing.status === 'blocked', 'closing outcome');
+  assert.strictEqual(pipeline.won, false, 'pipeline never marks a win');
+  assert.strictEqual(pipeline.closing.status, 'awaiting_customer', 'closing awaits customer');
   const dealStages = await repos.pipeline.list(ws.id, pipeline.deal.id);
   assert.ok(dealStages.length >= 1, 'pipeline events recorded');
   const notes = await repos.dealNotes.list(ws.id, pipeline.deal.id);
@@ -116,7 +119,7 @@ const workforce = require('../services/workforce');
   const flags = require('../config/flags');
   try {
     emergency.setEmergencyStop(true);
-    const halted = await workforce.runPipeline(adapter, ws.id);
+    const halted = (setMode('LIVE'), await workforce.runPipeline(adapter, ws.id, PIPELINE_INPUT));
     assert.strictEqual(halted.ok, false, 'pipeline halts while emergency stop engaged');
     assert.strictEqual(halted.reason, 'emergency_stop', 'halt reason is emergency_stop');
   } finally {
@@ -125,13 +128,13 @@ const workforce = require('../services/workforce');
   const flagsBefore = flags.list();
   try {
     flags.setFlag('pipeline', false);
-    const blocked = await workforce.runPipeline(adapter, ws.id);
+    const blocked = (setMode('LIVE'), await workforce.runPipeline(adapter, ws.id, PIPELINE_INPUT));
     assert.strictEqual(blocked.ok, false, 'pipeline blocked when pipeline flag is off');
     assert.strictEqual(blocked.reason, 'feature_disabled:pipeline', 'block reason is the pipeline flag');
   } finally {
     flags.setFlag('pipeline', flagsBefore.pipeline !== false);
   }
-  const after = await workforce.runPipeline(adapter, ws.id);
+  const after = (setMode('LIVE'), await workforce.runPipeline(adapter, ws.id, PIPELINE_INPUT));
   assert.strictEqual(after.ok, true, 'pipeline runs again once rails are released');
 
   console.log(`\n✓ ai workforce (${42} assertions passed)`);

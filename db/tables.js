@@ -144,6 +144,12 @@ const TABLES = {
     timestamps: true
   },
 
+  // Transactional outbox for lifecycle audit events (delivered to the vault).
+  audit_outbox: {
+    columns: ['event_id', 'workspace_id', 'deal_id', 'action', 'target', 'status', 'details', 'state', 'attempts', 'last_error', 'vault_hash', 'delivered_at'],
+    timestamps: true
+  },
+
   revenue_ops_state: {
     columns: ['key', 'value', 'payload', 'heartbeat_at'],
     timestamps: true

@@ -2,8 +2,6 @@ const { getMode, setMode } = require('../config/mode');
 const audit = require('../utils/auditLogger');
 const { isFounder, isAdmin } = require('./access');
 const { buildHome, buildWorkforce, buildPipeline, buildDeals, buildAudit, buildAdmin, buildMemory, buildCosts, buildHealth, buildProviders, buildQueue, buildBriefing, buildIntelligence, buildKnowledgeDocs, buildAskResult, buildIntegrations, buildLearn, buildMissions, buildApprovals, buildMissionGoalPrompt, launchGoalMission } = require('./menu');
-const { formatPricingText, pricingButtons } = require('../config/pricing.config');
-const i18n = require('./i18n');
 const design = require('./design');
 const identity = require('../services/identity');
 const intelligence = require('../services/intelligence');
@@ -54,7 +52,11 @@ function cmdAudit(chatId, userId) {
   return screenResult(chatId, buildAudit(0));
 }
 
-function cmdOutreach(chatId) {
+function cmdOutreach(chatId, userId) {
+  if (!isFounder(userId)) {
+    audit.writeEntry('BOT_OUTREACH_DENIED', String(userId), 'denied', { reason: 'not founder' });
+    return { chatId, text: design.errorPanel('Access denied', 'Founder only.').text };
+  }
   const { runOutreachCycle } = require('../agents/outreach');
   const result = runOutreachCycle({
     name: 'Telegram (Test)',
@@ -72,7 +74,10 @@ function cmdOutreach(chatId) {
   return { chatId, text };
 }
 
-function cmdQualify(chatId) {
+function cmdQualify(chatId, userId) {
+  if (!isFounder(userId)) {
+    return { chatId, text: design.errorPanel('Access denied', 'Founder only.').text };
+  }
   const { processResponse } = require('../agents/qualification');
   const result = processResponse({
     id: 'tg_' + Date.now(),
@@ -92,6 +97,12 @@ function cmdQualify(chatId) {
 }
 
 function cmdSales(chatId, userId, prompt) {
+  // The sales flow drafts and routes customer-facing messages in the current
+  // mode, so it is a founder-only operation.
+  if (!isFounder(userId)) {
+    audit.writeEntry('BOT_SALES_DENIED', String(userId), 'denied', { reason: 'not founder' });
+    return { chatId, text: design.errorPanel('Access denied', 'Founder only.').text };
+  }
   if (!prompt) {
     const text = design.compose([
       `${design.EMOJI.ai} ${design.b('Sales Flow')}`,
@@ -146,11 +157,6 @@ function cmdSales(chatId, userId, prompt) {
     ]);
     return { chatId, text };
   }
-}
-
-function cmdPricing(chatId, userId) {
-  const lang = i18n.getLang(userId);
-  return { chatId, text: formatPricingText(lang), replyMarkup: pricingButtons(lang) };
 }
 
 async function cmdWorkforce(chatId, userId) {
@@ -269,7 +275,6 @@ const COMMANDS = {
   '/outreach': cmdOutreach,
   '/qualify': cmdQualify,
   '/sales': cmdSales,
-  '/pricing': cmdPricing,
   '/workforce': cmdWorkforce,
   '/pipeline': cmdPipeline,
   '/deals': cmdDeals,

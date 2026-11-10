@@ -40,7 +40,7 @@ async function buildHome(userId) {
     if (isAdminOrFounder) {
       row4.push(design.textButton(t('btn_audit'), 'cc_audit'));
     }
-    row4.push(design.textButton(t('btn_pricing'), 'cc_pricing'), design.textButton(t('btn_playground'), 'cc_playground'));
+    row4.push(design.textButton(t('btn_playground'), 'cc_playground'));
     const row5 = [];
     if (isAdminOrFounder) {
       row5.push(design.textButton(t('btn_admin'), 'cc_admin'));
@@ -87,7 +87,7 @@ async function buildHome(userId) {
         [design.textButton(t('btn_sales_pipeline'), 'cc_pipeline'), design.textButton(t('btn_revenue_team'), 'cc_workforce')],
         [design.textButton(t('btn_activity'), 'cc_activity'), design.textButton(t('btn_daily_summary'), 'cc_briefing'), design.textButton(t('btn_costs'), 'cc_costs')],
         [design.textButton(t('btn_health'), 'cc_health'), design.textButton(t('btn_intelligence'), 'cc_intelligence'), design.textButton(t('btn_integrations'), 'cc_integrations')],
-        [design.textButton(t('btn_playground'), 'cc_playground'), design.textButton(t('btn_pricing'), 'cc_pricing'), design.textButton(t('btn_settings'), 'cc_settings'), design.textButton(t('btn_audit'), 'cc_audit'), design.textButton(t('btn_admin'), 'cc_admin')]
+        [design.textButton(t('btn_playground'), 'cc_playground'), design.textButton(t('btn_settings'), 'cc_settings'), design.textButton(t('btn_audit'), 'cc_audit'), design.textButton(t('btn_admin'), 'cc_admin')]
       ])
     };
   }
@@ -144,7 +144,10 @@ async function buildDashboard(userId) {
   return {
     text,
     keyboard: design.keyboard([
-      [design.textButton(t('btn_run_sales_flow'), 'cc_sales_run'), design.textButton(t('btn_run_pipeline'), 'cc_pipeline_run')],
+      [
+        ...(isFounder(userId) ? [design.textButton(t('btn_run_sales_flow'), 'cc_sales_run')] : []),
+        design.textButton(t('btn_run_pipeline'), 'cc_pipeline_run')
+      ],
       [design.textButton(t('btn_audit'), 'cc_audit'), design.textButton(t('btn_back_home'), 'cc_home')]
     ])
   };

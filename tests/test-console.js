@@ -3,6 +3,9 @@ const { createMemoryAdapter } = require('../db/adapter');
 const identity = require('../services/identity');
 const workforce = require('../services/workforce');
 const queue = require('../services/queue');
+const { setMode } = require('../config/mode');
+
+const PIPELINE_INPUT = { assetType: 'product', description: 'Industrial widget lot', askingPrice: 12000, currency: 'USD', sellerTarget: 10000, buyerBudget: 11000 };
 
 (async () => {
   const adapter = createMemoryAdapter();
@@ -37,20 +40,30 @@ const queue = require('../services/queue');
   assert.strictEqual(orchestrator.display, 'Ready', 'orchestrator idle → Ready');
   assert.strictEqual(consoleView.estimated_pipeline_cents, 0, 'no deals yet');
 
-  const pipeline = await workforce.runPipeline(adapter, ws.id);
+  // LIVE mode persists the deal; DRY mode must not (covered in test-phase25-dry).
+  setMode('LIVE');
+  const dry = (setMode('DRY'), await workforce.runPipeline(adapter, ws.id, PIPELINE_INPUT));
+  assert.strictEqual(dry.dry_run, true, 'DRY run flagged');
+  assert.strictEqual((await queue.queueSnapshot(adapter, ws.id)).total, 0, 'DRY run persisted no deal');
+  setMode('LIVE');
+  const pipeline = await workforce.runPipeline(adapter, ws.id, PIPELINE_INPUT);
   const consoleAfter = await workforce.workforceConsole(adapter, ws.id);
-  assert.strictEqual(pipeline.won, true, 'pipeline run closes a win');
-  assert.strictEqual(consoleAfter.open_deals, 0, 'won deal no longer open');
-  assert.strictEqual(consoleAfter.estimated_pipeline_cents, 0, 'no open pipeline after win');
+  assert.strictEqual(pipeline.won, false, 'internal approval never closes a win');
+  assert.strictEqual(pipeline.closing.status, 'awaiting_customer', 'closing awaits customer');
+  assert.strictEqual(pipeline.deal.stage, 'negotiation', 'deal stops at negotiation');
+  assert.strictEqual(pipeline.deal.status, 'open', 'deal remains open');
+  assert.strictEqual(consoleAfter.open_deals, 1, 'deal stays open pending customer');
+  assert.ok(consoleAfter.estimated_pipeline_cents >= 0, 'pipeline estimate present');
   assert.ok(consoleAfter.today_cost_cents > 18, 'pipeline adds cost');
   assert.strictEqual(consoleAfter.completed_tasks, 8, 'six more runs → 8 total tasks');
 
   const tl = await workforce.dealTimeline(adapter, ws.id, pipeline.deal.id);
   assert.ok(tl, 'timeline found');
   assert.strictEqual(tl.notes.length, 6, 'six collaboration notes');
-  assert.strictEqual(tl.events.length, 6, 'six queue transitions');
+  assert.strictEqual(tl.events.length, 4, 'four queue transitions (never past negotiation)');
   assert.strictEqual(tl.events[0].text, 'incoming → research', 'queue starts at research');
-  assert.strictEqual(tl.events[5].text, 'closing → won', 'queue ends at won');
+  assert.strictEqual(tl.events[3].text, 'proposal → negotiation', 'queue ends at negotiation');
+  assert.ok(!tl.events.some(e => /won/.test(e.text)), 'no win transition recorded');
   assert.strictEqual(tl.notes[0].agent_name, 'strategist', 'chain starts with strategist');
   assert.ok(tl.notes.every(n => n.time), 'notes carry timestamps');
   assert.strictEqual(await workforce.dealTimeline(adapter, ws.id, 999999), null, 'missing deal returns null');
@@ -58,10 +71,23 @@ const queue = require('../services/queue');
   const snapshot = await queue.queueSnapshot(adapter, ws.id);
   assert.strictEqual(snapshot.stages.length, 7, 'seven queue stages');
   const wonStage = snapshot.stages.find(s => s.stage === 'won');
-  assert.strictEqual(wonStage.count, 1, 'one deal in won queue');
+  assert.strictEqual(wonStage.count, 0, 'no deal in won queue');
+  await assert.rejects(queue.advanceQueue(adapter, ws.id, pipeline.deal.id, 'won'), /no_trusted_payment_verifier_configured/, 'won is refused without acceptance and payment evidence');
+  await assert.rejects(queue.advanceQueue(adapter, ws.id, pipeline.deal.id, 'won', { customerAcceptance: { accepted: true, acceptedBy: 'a', acceptedAt: new Date().toISOString() } }), /no_trusted_payment_verifier_configured/, 'acceptance alone is not enough');
+  const { createTestPaymentVerifier } = require('./helpers/testPaymentVerifier');
+  const ledgerVerifier = createTestPaymentVerifier();
+  const acc = { accepted: true, acceptedBy: 'buyer@example.com', acceptedAt: new Date().toISOString(), proofRef: 'signed-contract-1' };
+  const pay = { verified: true, reference: 'bank-ref-9001', source: 'bank_statement', recordedBy: 'founder:1', recordedAt: new Date().toISOString(), amount: Number(pipeline.deal.deal_value), currency: pipeline.deal.currency };
+  await assert.rejects(queue.advanceQueue(adapter, ws.id, pipeline.deal.id, 'won', { customerAcceptance: acc, paymentEvidence: { ...pay, amount: 1 } }), /no_trusted_payment_verifier_configured/, 'payment amount must match the deal');
+  await assert.rejects(queue.advanceQueue(adapter, ws.id, pipeline.deal.id, 'won', { customerAcceptance: acc, paymentEvidence: { verified: true, reference: 'x', source: 'founder_confirmed_receipt' } }), /no_trusted_payment_verifier_configured/, 'founder flag without recorded receipt is refused');
+  // Production wiring has no verifier: even a perfectly shaped claim is refused.
+  await assert.rejects(queue.advanceQueue(adapter, ws.id, pipeline.deal.id, 'won', { customerAcceptance: acc, paymentEvidence: pay }), /no_trusted_payment_verifier_configured/, 'well-formed but unverified claim is refused');
+  // A verifier that never recorded the payment rejects a fabricated reference.
+  await assert.rejects(queue.advanceQueue(adapter, ws.id, pipeline.deal.id, 'won', { paymentVerifier: ledgerVerifier, customerAcceptance: acc, paymentEvidence: pay }), /no_trusted_payment_verifier_configured/, 'queue ignores a caller-supplied verifier');
+  assert.strictEqual((await queue.queueSnapshot(adapter, ws.id)).stages.find(s => s.stage === 'won').count, 0, 'rejections left no won deal');
   const movements = await queue.queueMovements(adapter, ws.id, 10);
-  assert.ok(movements.length >= 6, 'movements recorded');
-  assert.strictEqual(movements[0].to_stage, 'won', 'most recent movement is the win');
+  assert.ok(movements.length >= 4, 'movements recorded');
+  assert.strictEqual(movements[0].to_stage, 'negotiation', 'most recent movement is negotiation');
   assert.ok(movements.every(m => m.company), 'movements carry deal names');
 
   const costs = await workforce.costSummary(adapter, ws.id);

@@ -22,16 +22,6 @@ function getMissionLimitForPlan(plan) {
   return MISSION_LIMITS[plan] || null;
 }
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function addMonths(isoDate, months) {
-  const d = new Date(isoDate + 'T00:00:00');
-  d.setMonth(d.getMonth() + months);
-  return d.toISOString().slice(0, 10);
-}
-
 async function sendTelegramNotification(message) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const founderId = process.env.TEOS_FOUNDER_TELEGRAM_ID;

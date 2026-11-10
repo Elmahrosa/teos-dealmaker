@@ -13,7 +13,6 @@ const providers = require('../services/providers');
 const intelligence = require('../services/intelligence');
 const integrations = require('../services/integrations');
 const runtime = require('../services/workforce/runtime');
-const workforce = require('../services/workforce');
 const { getCtx, denied, editPanel } = require('./screens/lib');
 
 async function handleCallback(query, bot) {
@@ -27,6 +26,10 @@ async function handleCallback(query, bot) {
 
   const send = async screen => editPanel(bot, query, screen);
 
+  // Navigating anywhere abandons an unfinished deal-input form so the next
+  // plain message is never swallowed by a stale conversation.
+  if (action !== 'cc_pipeline_run') require('./dealInput').clear(userId);
+
   switch (action) {
     case 'cc_home':
     case 'btn_back':
@@ -39,8 +42,8 @@ async function handleCallback(query, bot) {
       return send(screens.buildPipeline(userId));
     case 'cc_deals':
       return send(await screens.buildDeals(userId));
-    case 'cc_pricing':
-      return send(screens.buildPricing(userId));
+    case 'cc_pricing': // retired: stale buttons from old messages land on Home
+      return send(await screens.buildHome(userId));
     case 'cc_playground':
       return send(screens.buildPlayground(userId));
     case 'cc_ai_guide':
@@ -94,7 +97,7 @@ async function handleCallback(query, bot) {
         return send(await screens.launchMission1(userId));
       } catch (err) {
         audit.writeEntry('BOT_MISSION1_ERROR', String(userId), 'error', { error: err.message });
-        return send({ text: design.errorPanel('Mission 1 failed', design.esc(String(err.message))).text, keyboard: null });
+        return send({ text: design.errorPanel('Mission 1 failed', i18n.t(userId, 'err_generic_detail')).text, keyboard: null });
       }
     }
     case 'cc_mission2': {
@@ -103,7 +106,7 @@ async function handleCallback(query, bot) {
         return send(await screens.launchMission2(userId));
       } catch (err) {
         audit.writeEntry('BOT_MISSION2_ERROR', String(userId), 'error', { error: err.message });
-        return send({ text: design.errorPanel('Mission 2 failed', design.esc(String(err.message))).text, keyboard: null });
+        return send({ text: design.errorPanel('Mission 2 failed', i18n.t(userId, 'err_generic_detail')).text, keyboard: null });
       }
     }
     case 'cc_mission_market': {
@@ -112,7 +115,7 @@ async function handleCallback(query, bot) {
         return send(await screens.launchMarketMission(userId));
       } catch (err) {
         audit.writeEntry('BOT_MISSION_MARKET_ERROR', String(userId), 'error', { error: err.message });
-        return send({ text: design.errorPanel('Market analysis failed', design.esc(String(err.message))).text, keyboard: null });
+        return send({ text: design.errorPanel('Market analysis failed', i18n.t(userId, 'err_generic_detail')).text, keyboard: null });
       }
     }
     case 'cc_approvals':
@@ -153,7 +156,7 @@ async function handleCallback(query, bot) {
         return send(await screens.buildSyncResult(userId, result));
       } catch (err) {
         audit.writeEntry('BOT_INTEGRATION_SYNC', String(userId), 'error', { error: err.message });
-        return send({ text: design.errorPanel('Sync failed', design.esc(String(err.message))).text, keyboard: null });
+        return send({ text: design.errorPanel('Sync failed', i18n.t(userId, 'err_generic_detail')).text, keyboard: null });
       }
     }
     case 'cc_intelligence':
@@ -244,6 +247,7 @@ async function handleCallback(query, bot) {
         return send(screens.buildAdmin(userId));
       }
       if (action === 'cc_sales_run') {
+        if (!isFounder(userId)) return send(denied('sales flow'));
         try { await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
         return send(screens.buildSalesFlow(userId));
       }
@@ -252,7 +256,10 @@ async function handleCallback(query, bot) {
         const ctx = await getCtx(userId);
         if (!ctx) return send({ text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null });
         const prompt = require('./dealInput').begin(userId);
-        return send({ text: prompt, keyboard: null });
+        return send({
+          text: prompt,
+          keyboard: design.keyboard([[design.textButton(i18n.t(userId, 'common_home'), 'cc_home')]])
+        });
       }
       if (action.startsWith('cc_agent:')) {
         const agentType = action.split(':')[1];
@@ -385,8 +392,8 @@ async function handleCallback(query, bot) {
           setApprovalMode(mode);
           audit.writeEntry('BOT_APPROVAL_MODE', String(userId), 'success', { mode });
           return send(screens.buildFounderApproval(userId));
-        } catch (err) {
-          return send({ text: design.errorPanel('Approval mode', design.esc(String(err.message))).text, keyboard: null });
+        } catch (_err) {
+          return send({ text: design.errorPanel('Approval mode', i18n.t(userId, 'err_generic_detail')).text, keyboard: null });
         }
       }
       if (action.startsWith('cc_fd_flags_set:')) {
@@ -398,8 +405,8 @@ async function handleCallback(query, bot) {
           const updated = flags.setFlag(flagKey, current[flagKey] === false);
           audit.writeEntry('BOT_FEATURE_FLAG', String(userId), 'success', { flag: flagKey, enabled: updated[flagKey] !== false });
           return send(screens.buildFounderFlags(userId));
-        } catch (err) {
-          return send({ text: design.errorPanel('Feature flag', design.esc(String(err.message))).text, keyboard: null });
+        } catch (_err) {
+          return send({ text: design.errorPanel('Feature flag', i18n.t(userId, 'err_generic_detail')).text, keyboard: null });
         }
       }
       if (action === 'cc_connect_crm') {
@@ -465,7 +472,7 @@ async function handleCallback(query, bot) {
         audit.writeEntry('BOT_APPROVAL_DECIDE', String(userId), 'success', { requestId, decision });
         return send(await screens.buildApprovals(userId));
       }
-      return bot.answerCallbackQuery(query.id, { text: 'Unknown action' }).catch(() => {});
+      return bot.answerCallbackQuery(query.id, { text: i18n.t(userId, 'fallback_unknown_action') }).catch(() => {});
     }
   }
 }

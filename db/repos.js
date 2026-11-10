@@ -4,7 +4,10 @@ function generateReportToken() {
   return crypto.randomBytes(24).toString('hex');
 }
 
-function createRepos(adapter) {
+function createRepos(adapter, options = {}) {
+  const { assertNotTerminal, lifecycleError, PROTECTED_COMPANIES, WIN_CAPABILITY } = require('../services/dealLifecycle');
+  const { isVerifier, getTrustedVerifier } = require('../services/paymentVerifier');
+  const paymentVerifier = options.paymentVerifier || getTrustedVerifier();
   return {
     workspaces: {
       create({ name, slug, plan = 'solo', status = 'active', owner_user_id = null, subscription_id = null }) {
@@ -84,9 +87,9 @@ function createRepos(adapter) {
       }
     },
 
-
     deals: {
       create({ workspace_id, company_name, stage = 'lead', status = 'open', deal_value = null, currency = 'USD', current_agent = null }) {
+        assertNotTerminal({ stage, status });
         return adapter.insert('deals', { workspace_id, company_name, stage, status, deal_value, currency, current_agent });
       },
       get(workspace_id, id) {
@@ -105,9 +108,80 @@ function createRepos(adapter) {
         });
       },
       update(workspace_id, id, changes) {
+        assertNotTerminal(changes);
         return adapter.update('deals', { workspace_id, id }, changes);
       },
+      // The only path into won/closed. Requires an injected verifier that
+      // independently confirms customer acceptance and payment; the caller's
+      // evidence object is a claim to check, never proof. Fails closed.
+      async closeWon(workspace_id, id, { customerAcceptance, paymentEvidence } = {}) {
+        const audit = require('../utils/auditLogger');
+        const { verifiedAcceptance, verifiedPayment } = require('../agents/closing');
+        const deal = await adapter.findOne('deals', { workspace_id, id });
+        if (!deal) return null;
+        const reject = (code, reason) => {
+          audit.writeEntry('DEAL_WON_REJECTED', String(id), 'denied', { workspaceId: workspace_id, dealId: id, reason });
+          throw lifecycleError(code, reason);
+        };
+        if (deal.stage === 'won') return deal;
+        if (PROTECTED_COMPANIES.includes(deal.company_name)) reject('WON_NOT_VERIFIED', 'protected_deal_cannot_be_won');
+        if (!isVerifier(paymentVerifier)) reject('PAYMENT_VERIFIER_UNAVAILABLE', 'no_trusted_payment_verifier_configured');
+        const asDeal = { amount: Number(deal.deal_value), currency: deal.currency };
+        if (!verifiedAcceptance(customerAcceptance) || !verifiedPayment(paymentEvidence, asDeal)) {
+          reject('WON_NOT_VERIFIED', 'won_requires_customer_acceptance_and_verified_payment');
+        }
+        const acc = await paymentVerifier.verifyAcceptance({ deal, acceptance: customerAcceptance });
+        const pay = await paymentVerifier.verifyPayment({ deal, evidence: paymentEvidence });
+        if (!acc || acc.ok !== true || !verifiedAcceptance({ accepted: true, ...acc })) reject('WON_NOT_VERIFIED', 'acceptance_not_independently_verified');
+        if (!pay || pay.ok !== true || !verifiedPayment({ verified: true, ...pay }, asDeal)) reject('WON_NOT_VERIFIED', 'payment_not_independently_verified');
+        // One transaction: compare-and-set on the observed stage/status, the
+        // 'won' pipeline event, and the DEAL_WON audit_trail row commit together
+        // or not at all. Of two concurrent wins exactly one matches the CAS; the
+        // loser gets null, writes nothing, and returns the current deal.
+        const tx = typeof adapter.withTransaction === 'function' ? adapter.withTransaction.bind(adapter) : null;
+        if (!tx) throw lifecycleError('TRANSACTION_UNSUPPORTED', 'adapter_cannot_run_atomic_closeWon');
+        const facts = {
+          workspaceId: workspace_id, dealId: id,
+          acceptedBy: acc.acceptedBy, acceptanceProof: acc.proofRef,
+          paymentSource: pay.source, paymentReference: pay.reference, paymentRecordedBy: pay.recordedBy
+        };
+        const outbox = require('../services/auditOutbox');
+        let outboxEvent = null;
+        const won = await tx(async t => {
+          const row = await t.update(
+            'deals',
+            { workspace_id, id, stage: deal.stage, status: deal.status },
+            { stage: 'won', status: 'closed', current_agent: null },
+            WIN_CAPABILITY
+          );
+          if (!row) return null;
+          await t.insert('pipeline_events', { workspace_id, deal_id: id, from_stage: deal.stage, to_stage: 'won' });
+          await t.insert('audit_trail', {
+            workspace_id, deal_id: id, agent_name: 'closing', action_type: 'DEAL_WON',
+            details: facts, version: 'v1.0.0'
+          });
+          // Outbox row: same transaction, so a committed win always has a durable,
+          // uniquely-identified pending vault event (never lost on a crash).
+          outboxEvent = outbox.buildEvent({ workspace_id, deal_id: id, action: 'DEAL_WON', target: String(id), status: 'won', details: facts });
+          await t.insert('audit_outbox', outboxEvent);
+          return row;
+        });
+        if (!won) return adapter.findOne('deals', { workspace_id, id });
+        // Committed. Deliver the outbox event to the hash-chained vault now. If
+        // that fails the win stands and the event stays pending in audit_outbox
+        // (recorded failure, retried by auditOutbox.reconcile); the caller is told
+        // so it is never reported as a clean success.
+        let vault = 'written';
+        const delivery = await outbox.deliverByEventId(adapter, outboxEvent.event_id);
+        if (!delivery.ok) {
+          vault = 'FAILED';
+          console.error('[closeWon] vault audit write failed after commit; event stays pending in audit_outbox:', delivery.error);
+        }
+        const result = await adapter.findOne('deals', { workspace_id, id });
+        return vault === 'written' ? result : { ...result, audit_vault: vault };
+      },
       async advanceStage(workspace_id, id, to_stage, from_stage = null) {
+        assertNotTerminal({ stage: to_stage });
         const deal = await adapter.findOne('deals', { workspace_id, id });
         if (!deal) return null;
         await adapter.update('deals', { workspace_id, id }, { stage: to_stage, current_agent: null });

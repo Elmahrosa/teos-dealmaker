@@ -153,7 +153,7 @@ function workforceStatus(agent) {
 
 function statusEmoji(status) {
   if (['success', 'won', 'closed', 'SENT', 'APPROVE', 'dry_run'].includes(status)) return 'success';
-  if (['dry_run', 'info', 'VAULTED_DRY'].includes(status)) return 'info';
+  if (['dry_run', 'info', 'VAULTED_DRY', 'PENDING_DELIVERY'].includes(status)) return 'info';
   if (['in_progress', 'warning'].includes(status)) return 'warning';
   if (['error', 'denied', 'blocked', 'CRITICAL'].includes(status)) return 'critical';
   return 'info';

@@ -1,6 +1,7 @@
 const { buildPlaybook } = require('../agents/strategist');
 const { craftPositioning } = require('../agents/marketer');
 const { buildTerms } = require('../agents/negotiator');
+const assert = require('assert');
 const { draftContract, createCheckout, closeDeal } = require('../agents/treasurer');
 const { closeDeal: closeDealAgent } = require('../agents/closing');
 const audit = require('../utils/auditLogger');
@@ -38,7 +39,10 @@ async function main() {
   const contract = draftContract(deal);
   const checkout = await createCheckout(deal, contract);
   const summary = closeDeal(deal, contract, checkout);
-  console.log(`4) Treasurer   -> ${contract.contractId} | ${checkout.url} | closed=${summary.status}`);
+  assert.strictEqual(checkout, null, 'checkout stays disabled');
+  assert.strictEqual(summary.status, 'awaiting_customer');
+  assert.strictEqual(summary.won, false);
+  console.log(`4) Treasurer   -> ${contract.contractId} | no checkout | status=${summary.status}`);
 
   const closed = closeDealAgent({
     id: lead.id,
@@ -49,6 +53,9 @@ async function main() {
     approved: true,
     paymentMethod: 'invoice'
   });
+  // Internal approval + contract is not a win.
+  assert.strictEqual(closed.status, 'awaiting_customer');
+  assert.strictEqual(closed.won, false);
   console.log(`5) Closing     -> ${closed.status} (${closed.dealId})`);
 
   const entries = audit.readVault().filter(e =>

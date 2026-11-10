@@ -112,10 +112,6 @@ function cacheImmutable(req, res, next) {
   next();
 }
 
-app.get('/api/pricing', (req, res) => {
-  res.json({ tiers: render.PRICING, addons: render.PRICING.ADDONS });
-});
-
 // Authentication endpoints
 app.post('/api/auth/signup', express.json({ limit: '32kb' }), async (req, res) => {
   try {
@@ -232,7 +228,7 @@ app.post('/api/auth/missions/increment', sessionService.requireSession, express.
     });
   } catch (err) {
     console.error('[auth] mission increment error:', err.message);
-    res.status(400).json({ ok: false, error: err.message });
+    res.status(400).json({ ok: false, error: 'Unable to update mission usage' });
   }
 });
 
@@ -266,16 +262,8 @@ app.get('/api/auth/session', sessionService.requireSession, async (req, res) => 
 });
 
 app.get('/api/health', (req, res) => {
-  const totalEntries = audit.countEntries();
-  // Execution modes are founder-only. Public consoles see a neutral
-  // operational status, never the DRY/LIVE mode.
-  const mode = getMode() === 'LIVE' ? 'live' : 'operational';
-  res.json({
-    status: 'ok',
-    mode,
-    totalEntries,
-    timestamp: new Date().toISOString()
-  });
+  // Public liveness only: no execution mode, counts or other operational detail.
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Plain uptime check used by deployment verification and external monitors.
@@ -289,7 +277,7 @@ app.get('/health', (req, res) => {
 
 // Founder-only deployment configuration verification. Reports existence only —
 // never prints secret values, never exposes tokens or keys.
-app.get('/api/deploy-verify', requireAuditAuth('ops'), (req, res) => {
+app.get('/api/deploy-verify', requireAuditAuth('ops'), async (req, res) => {
   const has = name => process.env[name] !== undefined && process.env[name] !== '';
   const result = {
     ok: true,
@@ -312,7 +300,38 @@ app.get('/api/deploy-verify', requireAuditAuth('ops'), (req, res) => {
     revenue_ops: has('SOR_ENABLED') ? (String(process.env.SOR_ENABLED).toLowerCase() === 'true' ? 'ENABLED' : 'DISABLED') : 'UNSET',
     timestamp: new Date().toISOString()
   };
+  try {
+    result.audit_outbox = await require('../services/auditOutbox').counts(require('../bot/store').getStoreAdapter());
+    if (result.audit_outbox.failed) result.ok = false;
+  } catch (_err) {
+    result.audit_outbox = 'UNAVAILABLE';
+  }
   res.json(result);
+});
+
+// Founder-only audit outbox status and explicit reconciliation. Counts only.
+app.get('/api/audit-outbox', requireAuditAuth('ops'), async (req, res) => {
+  try {
+    const outbox = require('../services/auditOutbox');
+    const counts = await outbox.counts(require('../bot/store').getStoreAdapter());
+    res.json({
+      ok: counts.failed === 0,
+      counts,
+      warning: counts.failed ? `${counts.failed} audit event(s) failed delivery to the vault; repair the chain and POST /api/audit-outbox/reconcile` : null
+    });
+  } catch (_err) {
+    res.status(503).json({ ok: false, error: 'outbox_unavailable' });
+  }
+});
+
+app.post('/api/audit-outbox/reconcile', requireAuditAuth('ops'), async (req, res) => {
+  try {
+    const outbox = require('../services/auditOutbox');
+    const r = await outbox.reconcile(require('../bot/store').getStoreAdapter());
+    res.status(r.failed ? 502 : 200).json({ ok: !r.failed, ...r });
+  } catch (_err) {
+    res.status(503).json({ ok: false, error: 'outbox_unavailable' });
+  }
 });
 
 app.get('/api/diagnostics', requireAuditAuth('ops'), async (req, res) => {
@@ -355,7 +374,6 @@ app.get('/api/audit', requireAuditAuth('audit'), (req, res) => {
   const entries = audit.readTail(limit);
   res.json(entries.reverse());
 });
-
 
 app.get('/', (req, res) => {
   const template = fs.readFileSync(path.join(__dirname, 'landing.html'), 'utf8');
@@ -637,12 +655,27 @@ app.get('/api/emails', requireAuditAuth('outreach'), async (_req, res) => {
 const worker = require('../services/outboundWorker');
 
 // Public operational status. Never exposes any secret (no API keys, no bodies).
+// PUBLIC, minimal: only the coarse worker state and whether outbound email is
+// on. No errors, sender address, limits, queue counts or timestamps. The detailed
+// view is /api/outreach/health behind founder audit auth.
 app.get('/api/outreach/status', async (_req, res) => {
+  try {
+    const { getAdapter } = require('../db');
+    const h = await worker.health(getAdapter());
+    res.json({ ok: true, state: h.state, outbound_email: h.outbound_email });
+  } catch (err) {
+    console.error('[outboundWorker] status error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// Founder-gated full operational status.
+app.get('/api/outreach/health', requireAuditAuth('outreach'), async (_req, res) => {
   try {
     const { getAdapter } = require('../db');
     res.json(await worker.health(getAdapter()));
   } catch (err) {
-    console.error('[outboundWorker] status error:', err.message);
+    console.error('[outboundWorker] health error:', err.message);
     res.status(500).json({ error: 'internal_error' });
   }
 });
@@ -1556,19 +1589,9 @@ app.get('/api/admin/command-center/revenue', checkFounderSession, async (req, re
       }
     }
 
-    // Calculate estimated MRR (simplified - would need actual pricing data)
-    const PRICING = {
-      founder: 0, // Founder is typically free/internal
-      trial: 0,   // Trial is free
-      solo: 99,   // $99/month
-      growth: 299, // $299/month
-      corporate: 999 // $999/month
-    };
-
-    let estimatedMrr = 0;
-    for (const [plan, count] of Object.entries(revenueByPlan)) {
-      estimatedMrr += (PRICING[plan] || 0) * count;
-    }
+    // No published price list exists, so MRR cannot be estimated truthfully.
+    // Never derive revenue from hardcoded plan prices.
+    const estimatedMrr = null;
 
     res.json({
       ok: true,
@@ -1668,6 +1691,15 @@ const server = app.listen(PORT, () => {
       }
     })
     .catch(err => console.error('[Sentinel] founder seed failed:', err && err.stack ? err.stack : err));
+  // Deliver any audit events committed before a crash/restart (never blocks boot).
+  try {
+    // Web service only: bot/index.js never reconciles. Bounded and non-overlapping.
+    const auditOutbox = require('../services/auditOutbox');
+    auditOutbox.reconcileOnStartup(require('../bot/store').getStoreAdapter());
+    auditOutbox.startPeriodic(() => require('../bot/store').getStoreAdapter());
+  } catch (err) {
+    console.error('[Sentinel] audit outbox reconcile not started:', err.message);
+  }
   const notify = require('../services/notify');
   notify.install();
   const learningHook = require('../services/learningHook');
@@ -1705,14 +1737,33 @@ const server = app.listen(PORT, () => {
   }
 });
 
+let shuttingDown = false;
+const SHUTDOWN_TIMEOUT_MS = Number(process.env.SHUTDOWN_TIMEOUT_MS || 8000);
+
+// Graceful shutdown: stop accepting work, let in-flight requests finish, stop the
+// outbound worker, close every PostgreSQL pool, then exit 0. The timer below is
+// only a backstop; hitting it is logged and exits non-zero.
 function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
   console.log(`[Sentinel] ${signal} received — closing HTTP server`);
-  server.close(() => {
-    process.exitCode = 0;
+  const backstop = setTimeout(() => {
+    console.error(`[Sentinel] shutdown exceeded ${SHUTDOWN_TIMEOUT_MS}ms — forcing exit`);
+    process.exit(1);
+  }, SHUTDOWN_TIMEOUT_MS);
+  backstop.unref();
+  const closeHttp = new Promise(resolve => {
+    server.close(() => resolve());
+    if (typeof server.closeIdleConnections === 'function') server.closeIdleConnections();
   });
-  // If keep-alive connections block close(), force-exit cleanly (0) after a
-  // grace period — a graceful shutdown is not a failure.
-  setTimeout(() => process.exit(0), 10000).unref();
+  (async () => {
+    try { worker.stop(); } catch (err) { console.error('[Sentinel] worker stop failed:', err.message); }
+    await closeHttp;
+    const r = await require('../db').closeAllPools(Math.max(1000, SHUTDOWN_TIMEOUT_MS - 2000));
+    if (r.timedOut) { console.error('[Sentinel] database pool did not drain in time'); process.exit(1); }
+    console.log(`[Sentinel] shutdown complete (database pools closed: ${r.closed})`);
+    process.exit(0);
+  })().catch(err => { console.error('[Sentinel] shutdown error:', err.message); process.exit(1); });
 }
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));

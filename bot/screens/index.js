@@ -9,7 +9,6 @@ const providers = require('./providers');
 const settings = require('./settings');
 const admin = require('./admin');
 const audit = require('./audit');
-const pricing = require('./pricing');
 const intelligence = require('./intelligence');
 const integrations = require('./integrations');
 const ops = require('./ops');
@@ -32,7 +31,6 @@ module.exports = {
   buildPipeline: pipeline.buildPipeline,
   buildDeals: deals.buildDeals,
   buildAudit: audit.buildAudit,
-  buildPricing: pricing.buildPricing,
   buildPlayground: playground.buildPlayground,
   buildAdmin: admin.buildAdmin,
   buildAiGuide: settings.buildAiGuide,

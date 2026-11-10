@@ -51,8 +51,8 @@ function validateUrl(input) {
   let url;
   try {
     url = new URL(input);
-  } catch (_) {
-    throw new Error('Invalid source URL');
+  } catch (err) {
+    throw new Error('Invalid source URL', { cause: err });
   }
 
   if (!['http:', 'https:'].includes(url.protocol)) {

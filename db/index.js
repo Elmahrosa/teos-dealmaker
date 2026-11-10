@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { createPgAdapter, createMemoryAdapter } = require('./adapter');
+const { createPgAdapter, createMemoryAdapter, registerPool, closeAllPools } = require('./adapter');
 const { createRepos, forWorkspace } = require('./repos');
 const { buildPoolConfig } = require('./pool-config');
 const { isProduction } = require('../config/env');
@@ -13,7 +13,7 @@ function getPool() {
       throw new Error('DATABASE_URL environment variable is not set. Cannot connect to PostgreSQL.');
     }
     const { Pool } = require('pg');
-    pool = new Pool(buildPoolConfig());
+    pool = registerPool(new Pool(buildPoolConfig()));
     pool.on('error', (err) => {
       console.error('Unexpected error on idle PostgreSQL client', err);
     });
@@ -21,9 +21,16 @@ function getPool() {
   return pool;
 }
 
+// One shared PostgreSQL adapter (one pool) per process and connection string.
+// Previously every call built a new pool, which leaked connections under any
+// route that resolves the adapter per request.
+let cachedPg = null;
 function getAdapter() {
   if (process.env.DATABASE_URL) {
-    return createPgAdapter();
+    if (!cachedPg || cachedPg.url !== process.env.DATABASE_URL) {
+      cachedPg = { url: process.env.DATABASE_URL, adapter: createPgAdapter() };
+    }
+    return cachedPg.adapter;
   } else {
     throw new Error('DATABASE_URL environment variable is not set. Cannot connect to PostgreSQL.');
   }
@@ -72,6 +79,7 @@ async function createTables() {
 
 module.exports = {
   getPool,
+  closeAllPools,
   getAdapter,
   resolveAdapter,
   getDb,

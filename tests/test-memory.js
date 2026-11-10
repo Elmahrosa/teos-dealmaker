@@ -58,7 +58,14 @@ const memory = require('../services/memory');
   const orchestratorCtx = await memory.getContextFor(adapter, ws.id, 'orchestrator');
   assert.strictEqual(Object.keys(orchestratorCtx).filter(k => k !== 'past_deals').length, Object.keys(memory.MEMORY_DEFAULTS).length, 'orchestrator sees everything');
 
-  await repos.deals.create({ workspace_id: ws.id, company_name: 'Historic Client', stage: 'won', status: 'closed', deal_value: 5000, currency: 'USD', current_agent: 'closing' });
+  {
+    // A won deal can only be produced through the verified closeWon path.
+    const { createTestPaymentVerifier, evidenceFor } = require('./helpers/testPaymentVerifier');
+    const verifier = createTestPaymentVerifier();
+    const wonRepos = require('../db').createRepos(adapter, { paymentVerifier: verifier });
+    const hist = await wonRepos.deals.create({ workspace_id: ws.id, company_name: 'Historic Client', stage: 'closing', status: 'open', deal_value: 5000, currency: 'USD', current_agent: 'closing' });
+    await wonRepos.deals.closeWon(ws.id, hist.id, evidenceFor(verifier, { amount: 5000, tag: 'memory' }));
+  }
   mem = await memory.getMemory(adapter, ws.id);
   assert.strictEqual(mem.past_deals.length, 1, 'past_deals aggregates deals');
   assert.strictEqual(mem.past_deals[0].company, 'Historic Client', 'past deal company');
