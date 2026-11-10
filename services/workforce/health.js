@@ -53,7 +53,7 @@ async function healthCheck(adapter, workspaceId, vaultEntries) {
   return [
     { label: 'AI Providers', ok: configuredProviders.length > 0 || runs.length > 0, detail: configuredProviders.length ? configuredProviders.join(', ') : 'runtime active — no provider keys yet' },
     { label: 'Database', ok: Boolean(process.env.DATABASE_URL), detail: process.env.DATABASE_URL ? 'Postgres connected' : 'in-memory (no DATABASE_URL)' },
-    { label: 'Payments', ok: Boolean(process.env.DODO_API_KEY), detail: process.env.DODO_API_KEY ? 'Dodo connected' : 'dry-run mode' },
+    { label: 'Billing', ok: true, detail: 'Manual Pilot — founder-approved activation; automated checkout disabled' },
     { label: 'Audit', ok: (vaultEntries || 0) > 0, detail: `${vaultEntries || 0} entries` },
     { label: 'Memory', ok: mem.length > 0, detail: `${mem.length} keys` },
     { label: 'Workers', ok: online === agents.length, detail: `${online}/${agents.length} online` }

@@ -1,4 +1,4 @@
-const design = require('../design');
+﻿const design = require('../design');
 const i18n = require('../i18n');
 
 // Stage names for the progress rail. Screen-local display copy. The workforce
@@ -53,19 +53,25 @@ function buildPipelineResult(userId, result) {
   const notes = (result.notes || []).map(n =>
     `${design.code(design.esc(n.agent_name))} ${design.esc(n.note)}`
   );
-  const c = result.treasurer.contract;
+  const c = result.treasurer?.contract || {};
+  const negotiation = result.negotiation;
+  const landingValue = negotiation ? "$" + negotiation.landingPrice : "Pending verified financial inputs";
+  const termsValue = negotiation ? design.esc(negotiation.suggestedTerms || 'Terms unavailable') : 'Negotiation not started: seller target, buyer budget and currency are required.';
+  const contractValue = c.amount != null
+    ? i18n.sprintf(t('pf_contract_line'), design.esc(c.company || ''), c.amount, design.esc(c.currency || ''), c.termMonths || '—')
+    : `Awaiting verified price (${c.status || 'pending'})`;
   const lines = [
     `${design.EMOJI.ai} ${design.b(t('pf_title_run'))}`,
     design.it(t('pf_body_chain')),
     design.divider(),
     design.row(t('pf_row_strategy'), design.esc(result.strategy.style)),
     design.row(t('pf_row_positioning'), design.esc(result.marketing.headline)),
-    design.row(t('pf_row_landing'), `$${result.negotiation.landingPrice}`),
-    design.row(t('pf_row_terms'), design.esc(result.negotiation.suggestedTerms)),
-    design.row(t('pf_row_contract'), i18n.sprintf(t('pf_contract_line'), design.esc(c.company), c.amount, design.esc(c.currency), c.termMonths)),
-    design.row(t('pf_row_checkout'), result.treasurer.checkout ? design.esc(result.treasurer.checkout.url) : t('pf_val_blocked')),
+    design.row(t('pf_row_landing'), landingValue),
+    design.row(t('pf_row_terms'), termsValue),
+    design.row(t('pf_row_contract'), contractValue),
+    design.row(t('pf_row_checkout'), result.treasurer?.checkout ? design.esc(result.treasurer.checkout.url) : t('pf_val_blocked')),
     design.row(t('pf_row_gatekeeper'), design.badge(result.gatekeeper.decision === 'APPROVE' ? 'success' : 'warning')),
-    design.row(t('pf_row_outcome'), design.badge(result.closing.status === 'won' ? 'success' : 'critical')),
+    design.row(t('pf_row_outcome'), design.badge(result.closing.status === 'won' ? 'success' : result.closing.status === 'awaiting_customer' ? 'info' : 'critical')),
     design.row(t('pf_row_deal_saved'), design.badge('success')),
     design.row(t('pf_row_cost'), `$${(result.runs.reduce((acc, r) => acc + r.cost_cents, 0) / 100).toFixed(2)}`),
     design.section(t('pf_sec_notes')),

@@ -12,7 +12,7 @@ const { PRODUCT } = require('../config/product.config');
 const SITE_URL = process.env.SITE_URL || 'https://dealmaker.elmahrosa.org';
 
 // Per-cycle checkout pricing for a tier. The annual row always carries its
-// real Dodo checkout CTA plus the founder-verified savings vs. monthly. Both
+// real billing CTA plus the founder-verified savings vs. monthly. Both
 // rows stay in the DOM so the Monthly|Annual toggle only changes emphasis.
 function renderPlanRows(t) {
   if (t.custom) {

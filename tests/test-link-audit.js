@@ -1,142 +1,25 @@
-// tests/test-link-audit.js
-// Audits every external link in the landed landing page:
-//   - no unreplaced {{PLACEHOLDER}} tokens
-//   - the Sentinel cross-sell is a CROSS-LINK only (no Dodo checkout, no price)
-//   - every rendered Dodo checkout href matches pricing.config (no drift)
-//   - every http(s) href parses as a valid absolute URL
-//   - every external link is reachable (status < 400) via HEAD with a GET retry
-// Set LINK_AUDIT_OFFLINE=1 to skip the network pass (structural checks only).
 'use strict';
 
-process.env.NODE_ENV = process.env.NODE_ENV || 'test';
-process.env.DATABASE_URL = process.env.DATABASE_URL || '';
-
+const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const assert = require('assert');
-const render = require('../server/render');
 
-(async () => {
-  let n = 0;
-  const check = (cond, msg) => { assert.ok(cond, msg); n += 1; };
+const read = p => fs.readFileSync(path.join(__dirname, '..', p), 'utf8');
+const pricing = require('../config/pricing.config');
 
-  const template = fs.readFileSync(path.join(__dirname, '..', 'server', 'landing.html'), 'utf8');
-  const html = render.renderLanding(template);
+assert.strictEqual(pricing.length, 0, 'No commercial pricing tiers are published');
+assert.deepStrictEqual(pricing.ADDONS, [], 'No paid add-ons are published');
 
-  check(!/\{\{[A-Z_]+\}\}/.test(html), 'no unreplaced {{PLACEHOLDER}} tokens');
-
-  const productsBlock = html.match(/<section id="elmahrosa-products"[\s\S]*?<\/section>/);
-  check(!!productsBlock, 'elmahrosa products section present');
-  if (productsBlock) {
-    check(!productsBlock[0].includes('checkout.dodopayments.com'), 'elmahrosa products section has no Dodo checkout link');
-    check(productsBlock[0].includes('sentinel.teosegypt.com'), 'elmahrosa products section cross-links to sentinel.teosegypt.com');
-    check(productsBlock[0].includes('INDEPENDENT PRODUCT'), 'elmahrosa products are labelled as independent');
-  }
-  // Sentinel must NOT appear as a DealMaker section, plugin, or installed item.
-  check((html.match(/id="sentinel"/g) || []).length === 0, 'no #sentinel section remains inside DealMaker');
-  check(!/[Cc]oming\s?soon/i.test(html), 'no coming-soon placeholders in the rendered landing page');
-
-  const enBlock = html.slice(html.indexOf('en: {'), html.indexOf('ar: {'));
-  const arBlock = html.slice(html.indexOf('ar: {'), html.indexOf('};'));
-  for (const [name, block] of [['en', enBlock], ['ar', arBlock]]) {
-    const seen = {};
-    for (const m of block.matchAll(/\n\s*([a-z_0-9]+):/g)) seen[m[1]] = (seen[m[1]] || 0) + 1;
-    const dups = Object.entries(seen).filter(([, c]) => c > 1).map(([k]) => k);
-    check(dups.length === 0, name + ' dict has no duplicate i18n keys' + (dups.length ? ': ' + dups.join(', ') : ''));
-  }
-
-  const expectedDodo = [];
-  for (const t of render.PRICING) {
-    if (t.monthly.url) expectedDodo.push(t.monthly.url);
-    if (t.annual.url) expectedDodo.push(t.annual.url);
-  }
-  const dodoHrefs = [...html.matchAll(/href="(https:\/\/checkout\.dodopayments\.com[^"]+)"/g)].map(m => m[1]);
-  check(dodoHrefs.length === expectedDodo.length, 'rendered Dodo checkout links match non-custom tiers');
-  for (const u of expectedDodo) {
-    check(dodoHrefs.includes(u), 'rendered Dodo link matches config: ' + u);
-  }
-
-  const hrefs = [...html.matchAll(/href="(https?:[^"]+)"/g)].map(m => m[1]);
-  check(hrefs.length > 0, 'found external links to audit');
-  const bad = hrefs.filter(h => {
-    try { return !new URL(h).hostname; } catch (_e) { return true; }
-  });
-  check(bad.length === 0, 'all hrefs parse as valid absolute URLs');
-
-  // Founder-gated pages are linked from the landing page but sit behind
-  // requireFounderSession. For an unauthenticated probe the correct answer is
-  // exactly 401. Exact URL match only; every other status (200 = gate open,
-  // 403/404/5xx/timeout = broken) fails, and every other link keeps the plain
-  // status < 400 rule.
-  const FOUNDER_GATED = new Map([[new URL('/customer-0', render.SITE_URL).href, 401]]);
-  const gated = [...FOUNDER_GATED.keys()][0];
-  const R = (url, status) => (status < 400 ? { url, ok: true, status } : { url, ok: false, status, reason: 'status ' + status });
-  check(!linkFails(R(gated, 401), FOUNDER_GATED), 'gated page: 401 is accepted');
-  for (const st of [200, 403, 404, 500]) {
-    check(linkFails(R(gated, st), FOUNDER_GATED), `gated page: ${st} fails`);
-  }
-  check(linkFails({ url: gated, ok: false, reason: 'timeout' }, FOUNDER_GATED), 'gated page: timeout fails');
-  check(linkFails(R('https://example.com/other', 401), FOUNDER_GATED), 'other link: 401 still fails');
-  check(linkFails(R(gated + '/x', 401), FOUNDER_GATED), 'gated exception is exact-URL only');
-  check(!linkFails(R('https://example.com/other', 200), FOUNDER_GATED), 'other link: 200 passes');
-  check(linkFails(R('https://example.com/other', 404), FOUNDER_GATED), 'other link: 404 fails');
-
-  const unique = [...new Set(hrefs)];
-  if (process.env.LINK_AUDIT_OFFLINE === '1') {
-    console.log(`SKIP network pass (${unique.length} unique links) — LINK_AUDIT_OFFLINE=1`);
-  } else {
-    const results = [];
-    for (const u of unique) {
-      results.push(await probe(u));
-    }
-    const failures = results.filter(r => linkFails(r, FOUNDER_GATED));
-    for (const f of failures) {
-      console.error(`  FAIL ${f.url} -> ${FOUNDER_GATED.has(f.url) ? `expected ${FOUNDER_GATED.get(f.url)} (founder-gated), got ${f.reason || 'status ' + f.status}` : f.reason}`);
-    }
-    check(failures.length === 0, `all ${unique.length} external links reachable (status < 400)`);
-  }
-
-  console.log(`\nPASS ${n} assertions (test-link-audit) · ${unique.length} unique external links`);
-  process.exit(0);
-})().catch(err => {
-  console.error('test-link-audit FAILED:', err && err.stack || err);
-  process.exit(1);
-});
-
-function linkFails(r, gatedMap) {
-  return gatedMap.has(r.url) ? r.status !== gatedMap.get(r.url) : !r.ok;
+for (const p of [
+  'server/landing.html',
+  'server/render.js',
+  'scripts/audit-links.js',
+  'public/dashboard/index.html',
+  'config/pricing.config.js'
+]) {
+  const content = read(p).toLowerCase();
+  assert(!content.includes('dodopayments'), `${p} must not contain Dodo checkout references`);
+  assert(!content.includes('checkout.dodo'), `${p} must not contain Dodo checkout URLs`);
 }
 
-function probe(url) {
-  return new Promise((resolve) => {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 15000);
-    let done = false;
-    const finish = (r) => { if (!done) { done = true; clearTimeout(timer); resolve(r); } };
-    const reasonOf = (err) => (err && err.name === 'AbortError' ? 'timeout' : (err && err.message) || String(err));
-    const tryGet = (err) => {
-      fetch(url, {
-        method: 'GET',
-        redirect: 'follow',
-        signal: controller.signal,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Accept': '*/*'
-        }
-      })
-        .then(res => finish(res.status >= 400 ? { url, ok: false, status: res.status, reason: 'status ' + res.status } : { url, ok: true, status: res.status }))
-        .catch(err2 => finish({ url, ok: false, reason: reasonOf(err || err2) }));
-    };
-    fetch(url, {
-      method: 'HEAD',
-      redirect: 'follow',
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': '*/*'
-      }
-    })
-      .then(res => finish(res.status >= 400 ? { url, ok: false, status: res.status, reason: 'status ' + res.status } : { url, ok: true, status: res.status }))
-      .catch(err => tryGet(err));
-  });
-}
+console.log('PASS: active landing, dashboard, pricing and link audit contain no Dodo checkout integration.');

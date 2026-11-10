@@ -1,7 +1,4 @@
-const audit = require('../../utils/auditLogger');
-const mode = require('../../config/mode');
-const dodoPayments = require('../../utils/dodoPayments');
-const billingConfig = require('../../config/billing');
+﻿const audit = require('../../utils/auditLogger');
 
 function draftContract(deal) {
   audit.writeEntry('TREASURER_AGENT_CONTRACT_DRAFT_STARTED', deal.id, 'in_progress', {
@@ -13,22 +10,26 @@ function draftContract(deal) {
 
   const now = new Date();
   const stamp = now.toISOString().slice(0, 10).replace(/-/g, '');
+  const hasValidAmount = Number.isFinite(Number(deal.amount)) && Number(deal.amount) > 0;
   const contract = {
     contractId: `CONTRACT-${deal.id}-${stamp}`,
     company: deal.company,
     contactName: deal.contactName,
     product: deal.product,
-    amount: deal.amount,
-    currency: deal.currency || 'USD',
-    termMonths: deal.termMonths || 12,
-    paymentMethod: deal.paymentMethod || 'invoice',
+    amount: hasValidAmount ? Number(deal.amount) : null,
+    currency: deal.currency || null,
+    termMonths: deal.termMonths || null,
+    paymentMethod: deal.paymentMethod || null,
     effectiveDate: now.toISOString().slice(0, 10),
-    monthlyPayment: Math.round(((deal.amount || 0) / (deal.termMonths || 12)) * 100) / 100,
+    monthlyPayment: hasValidAmount && deal.termMonths
+      ? Math.round((Number(deal.amount) / Number(deal.termMonths)) * 100) / 100
+      : null,
+    status: hasValidAmount ? 'draft' : 'awaiting_verified_price',
     clauses: [
       'Scope of services as defined in the attached SOW.',
-      'Payment due within 30 days of invoice.',
-      'Either party may terminate with 30 days written notice.',
-      'Governing law: Egypt.'
+      'Payment terms require explicit agreement by both parties.',
+      'Either party may terminate under the mutually agreed written terms.',
+      'Governing law must be confirmed in the final agreement.'
     ]
   };
 
@@ -37,98 +38,46 @@ function draftContract(deal) {
     company: contract.company,
     amount: contract.amount,
     currency: contract.currency,
-    termMonths: contract.termMonths,
-    paymentMethod: contract.paymentMethod
+    status: contract.status
   });
 
   return contract;
 }
 
+// Payment-provider checkout is intentionally disabled until a new provider is approved.
 async function createCheckout(deal, contract) {
-  // In manual_pilot mode, we don't require Dodo credentials for checkout creation
-  // as this is for manual billing validation
-  if (mode.isLIVE() && !process.env.DODO_API_KEY && !billingConfig.isManualPilot()) {
-    audit.writeEntry('TREASURER_AGENT_CHECKOUT_BLOCKED', contract.contractId, 'blocked', {
-      reason: 'LIVE mode requires DODO_API_KEY; none configured (fail-closed)',
-      mode: mode.getMode()
-    });
-    return null;
-  }
-
-  // For manual_pilot mode, create a mock checkout link
-  if (billingConfig.isManualPilot()) {
-    const mockLink = {
-      checkoutId: `manual_pilot_${Date.now()}`,
-      amount: contract.amount,
-      currency: contract.currency,
-      url: `https://manual-pilot.example.com/checkout/${contract.contractId}`,
-      dryRun: true
-    };
-
-    const checkout = {
-      checkoutId: mockLink.checkoutId,
-      amount: mockLink.amount,
-      currency: mockLink.currency,
-      paymentMethod: contract.paymentMethod,
-      url: mockLink.url,
-      dryRun: mockLink.dryRun
-    };
-
-    audit.writeEntry(
-      'TREASURER_AGENT_CHECKOUT_CREATED',
-      mockLink.checkoutId,
-      'manual_pilot',
-      checkout
-    );
-    return checkout;
-  }
-
-  const link = await dodoPayments.createCheckoutLink(contract.contractId, contract.amount, {
-    currency: contract.currency,
-    paymentMethod: contract.paymentMethod
+  audit.writeEntry('TREASURER_AGENT_CHECKOUT_DISABLED', contract.contractId, 'pending', {
+    dealId: deal.id,
+    reason: 'No payment provider is configured or authorized.'
   });
-
-  const checkout = {
-    checkoutId: link.checkoutId,
-    amount: link.amount,
-    currency: link.currency,
-    paymentMethod: contract.paymentMethod,
-    url: link.url,
-    dryRun: link.dryRun
-  };
-
-  audit.writeEntry(
-    'TREASURER_AGENT_CHECKOUT_CREATED',
-    checkout.checkoutId,
-    checkout.dryRun ? 'dry_run' : 'live',
-    checkout
-  );
-  return checkout;
+  return null;
 }
 
-function closeDeal(deal, contract, checkout) {
+function closeDeal(deal, contract) {
   const summary = {
     dealId: deal.id,
     company: deal.company,
     contractId: contract.contractId,
-    checkoutId: checkout ? checkout.checkoutId : null,
+    checkoutId: null,
     amount: contract.amount,
     currency: contract.currency,
-    status: checkout ? 'closed' : 'checkout_failed'
+    status: 'awaiting_customer',
+    won: false,
+    reason: 'Customer acceptance and verified payment evidence are required.'
   };
-  audit.writeEntry(
-    'TREASURER_AGENT_DEAL_CLOSED',
-    deal.id,
-    checkout ? 'success' : 'blocked',
-    summary
-  );
+
+  audit.writeEntry('TREASURER_AGENT_AWAITING_CUSTOMER', deal.id, 'pending', summary);
   return summary;
 }
 
 async function runTreasuryFlow(deal) {
   const contract = draftContract(deal);
   const checkout = await createCheckout(deal, contract);
-  return closeDeal(deal, contract, checkout);
+  return {
+    ...closeDeal(deal, contract, checkout),
+    contract,
+    checkout
+  };
 }
 
 module.exports = { draftContract, createCheckout, closeDeal, runTreasuryFlow };

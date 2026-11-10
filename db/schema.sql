@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     start_date DATE,
     renewal_date DATE,
     refund_eligibility JSONB,
-    provider VARCHAR(50) DEFAULT 'dodo',
+    provider VARCHAR(50) DEFAULT NULL,
     provider_customer_id VARCHAR(120),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -65,14 +65,6 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 CREATE INDEX IF NOT EXISTS idx_subscriptions_workspace ON subscriptions(workspace_id);
 
 ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS missions_used INTEGER DEFAULT 0;
-
-CREATE TABLE IF NOT EXISTS dodo_customers (
-    id SERIAL PRIMARY KEY,
-    workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
-    dodo_customer_id VARCHAR(120) NOT NULL,
-    email VARCHAR(255),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
 
 CREATE TABLE IF NOT EXISTS deals (
     id SERIAL PRIMARY KEY,

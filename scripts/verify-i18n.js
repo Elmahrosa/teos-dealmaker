@@ -60,7 +60,7 @@ const h3 = makeEl('h3'); h3.textContent = '🚀 Solo';
 const tag = makeEl('p', { class: 'tagline' }); tag.textContent = 'For founders and solo teams';
 const ul = makeEl('ul'); const li1 = makeEl('li'); li1.textContent = '1 workspace'; const li2 = makeEl('li'); li2.textContent = 'Core agent capabilities'; ul.children.push(li1, li2);
 const row1 = makeEl('div', { class: 'price-row' }); const c1 = makeEl('span', { class: 'cycle' }); c1.textContent = 'Monthly'; row1.children.push(c1);
-const buy = makeEl('a', { class: 'buy', href: 'https://dodo.pe/teos-dealmaker-solo-monthly-13644952' }); buy.textContent = 'Start 🚀 Solo Monthly';
+const buy = makeEl('a', { class: 'buy', href: '#pricing-unavailable' }); buy.textContent = 'Pricing unavailable';
 priceCard.children.push(h3, tag, ul, row1, buy);
 pricingGrid.children.push(priceCard);
 

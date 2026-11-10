@@ -55,7 +55,7 @@ function createRepos(adapter) {
     },
 
     subscriptions: {
-      create({ workspace_id, plan, status = 'pending', cycle = 'monthly', start_date = null, renewal_date = null, refund_eligibility = null, provider = 'dodo', provider_customer_id = null, missions_used = 0 }) {
+      create({ workspace_id, plan, status = 'pending', cycle = 'monthly', start_date = null, renewal_date = null, refund_eligibility = null, provider = null, provider_customer_id = null, missions_used = 0 }) {
         return adapter.insert('subscriptions', { workspace_id, plan, status, cycle, start_date, renewal_date, refund_eligibility, provider, provider_customer_id, missions_used });
       },
       get(workspace_id) {
@@ -84,14 +84,6 @@ function createRepos(adapter) {
       }
     },
 
-    dodoCustomers: {
-      create({ workspace_id, dodo_customer_id, email = null }) {
-        return adapter.insert('dodo_customers', { workspace_id, dodo_customer_id, email });
-      },
-      getByWorkspace(workspace_id) {
-        return adapter.findOne('dodo_customers', { workspace_id });
-      }
-    },
 
     deals: {
       create({ workspace_id, company_name, stage = 'lead', status = 'open', deal_value = null, currency = 'USD', current_agent = null }) {
@@ -598,7 +590,7 @@ function createRepos(adapter) {
       }
     },
 
-    // Persistence-backed Dodo webhook idempotency (see 016 migration).
+    // Persistence-backed billing webhook idempotency (see 016 migration).
     billingWebhookEvents: {
       add(data) {
         return adapter.insert('billing_webhook_events', data);
@@ -688,10 +680,6 @@ function forWorkspace(adapter, workspaceId) {
       create: data => repos.subscriptions.create({ ...data, workspace_id: workspaceId }),
       get: () => repos.subscriptions.get(workspaceId),
       list: () => repos.subscriptions.list()
-    },
-    dodoCustomers: {
-      create: data => repos.dodoCustomers.create({ ...data, workspace_id: workspaceId }),
-      get: () => repos.dodoCustomers.getByWorkspace(workspaceId)
     },
     deals: {
       create: data => repos.deals.create({ ...data, workspace_id: workspaceId }),

@@ -25,7 +25,7 @@ const PRODUCT = {
   name: 'TEOS DealMaker',
   shortName: 'DealMaker',
   tagline: 'Enterprise AI Revenue Operating System',
-  description: 'Plan, approve, execute, and audit your entire revenue pipeline with a policy-governed 13-agent AI workforce, a Mission Controller, governed email, Dodo checkout, and a 24/7 outbound worker.',
+  description: 'Plan, approve, execute, and audit your entire revenue pipeline with a policy-governed 13-agent AI workforce, a Mission Controller, governed email, founder-approved billing, and a 24/7 outbound worker.',
   siteUrl: env.SITE_URL || 'https://dealmaker.elmahrosa.org',
   telegramBotUrl: env.TELEGRAM_BOT_URL || 'https://t.me/TeosEgypt_bot',
   botHandle: env.BOT_NAME || 'TeosEgypt_bot',
@@ -43,7 +43,7 @@ const PRODUCT = {
     'Deal Simulation',
     'Governed email + 24/7 outbound worker',
     'Mission Reports',
-    'Dodo checkout',
+    'founder-approved billing',
     'Policy governance / audit'
   ],
 
@@ -122,7 +122,7 @@ const PRODUCT = {
   },
 
   // TEOS Sentinel is a SEPARATE product. DealMaker only cross-links to it —
-  // never a Sentinel price, Dodo product, or checkout inside DealMaker.
+  // never a Sentinel price, external payment product, or checkout inside DealMaker.
   sentinel: {
     name: 'TEOS Sentinel',
     url: PRICING.SENTINEL_URL,
@@ -130,7 +130,7 @@ const PRODUCT = {
   },
 
   // Playground / demo behavior. Everything in the demo is SIMULATED: the demo
-  // never sends an external email, never creates a Dodo payment, never
+  // never sends an external email, never creates a external payment, never
   // contacts a prospect, and claims no real customer result.
   demo: {
     label: 'DEMO MODE — SIMULATED DATA',

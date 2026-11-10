@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TEOS DealMaker — Operations Console</title>
-<script>window.__PRICING__ = [{"tier":"🚀 Solo","tagline":"For founders and solo teams","custom":false,"features":["1 workspace","Mission Controller with a 13-agent AI workforce","Core agent capabilities","Community support"],"monthly":{"price":"$99.00","url":"https://dodo.pe/teos-dealmaker-solo-monthly-13644952"},"annual":{"price":"$950.00","url":"https://dodo.pe/teos-dealmaker-solo-annual-13644952"}},{"tier":"⚡ Growth","tagline":"For growing revenue teams","custom":false,"features":["10 seats","Civic Mixer free plugin","Enterprise Knowledge Intelligence","Email support"],"monthly":{"price":"$299.00","url":"https://dodo.pe/teos-dealmaker-growth-monthly-13644952"},"annual":{"price":"$2,990.00","url":"https://dodo.pe/teos-dealmaker-growth-annual-13644952"}},{"tier":"👑 Business","tagline":"For revenue organizations","custom":false,"features":["25 seats","Third-party plugin installs","All platform add-ons","Priority support"],"monthly":{"price":"$999.00","url":"https://dodo.pe/teos-dealmaker-business-monthly-13644952"},"annual":{"price":"$9,990.00","url":"https://dodo.pe/teos-dealmaker-business-annual-13644952"}},{"tier":"🏛️ Enterprise","tagline":"For large and sovereign organizations","custom":true,"features":["Unlimited workspaces","Unlimited missions","Custom deployment options","Policy governance at scale","Direct access to the founding team"],"monthly":{"price":"Custom","url":""},"annual":{"price":"Custom","url":""}}];</script>
 <style>
   :root {
     --bg: #0b0f14;
@@ -98,7 +97,6 @@
       <a href="#" data-view="workspaces" class="nav-link" style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; color: var(--text); text-decoration: none; font-size: 14px;">Workspaces</a>
       <a href="#" data-view="subscriptions" class="nav-link" style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; color: var(--text); text-decoration: none; font-size: 14px;">Subscriptions</a>
       <a href="#" data-view="missions" class="nav-link" style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; color: var(--text); text-decoration: none; font-size: 14px;">Missions</a>
-      <a href="#" data-view="dodo" class="nav-link" style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; color: var(--text); text-decoration: none; font-size: 14px;">Dodo</a>
       <a href="#" data-view="agents" class="nav-link" style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; color: var(--text); text-decoration: none; font-size: 14px;">Agents</a>
       <a href="#" data-view="audit" class="nav-link" style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; color: var(--text); text-decoration: none; font-size: 14px;">Audit</a>
       <a href="#" id="founder-logout" style="background: transparent; border: 1px solid var(--red); border-radius: 4px; padding: 8px 16px; color: var(--red); text-decoration: none; font-size: 14px;">Log out</a>
@@ -337,9 +335,7 @@
       var data = await res.json();
       renderPricing(Array.isArray(data) ? data : (data.tiers || []));
     } catch (_) {
-      var fallback = window.__PRICING__ || [];
-      if (fallback.length) renderPricing(fallback);
-      else renderPricing([]);
+      renderPricing([]);
     }
   }
 
@@ -565,9 +561,6 @@ document.addEventListener('DOMContentLoaded', function() {
       case 'missions':
         endpoint = '/api/admin/command-center/missions';
         break;
-      case 'dodo':
-        endpoint = '/api/admin/command-center/dodo';
-        break;
       case 'agents':
         endpoint = '/api/admin/command-center/agents';
         break;
@@ -620,9 +613,6 @@ document.addEventListener('DOMContentLoaded', function() {
         break;
       case 'missions':
         html += renderMissions(data);
-        break;
-      case 'dodo':
-        html += renderDodo(data);
         break;
       case 'agents':
         html += renderAgents(data);
@@ -811,26 +801,6 @@ document.addEventListener('DOMContentLoaded', function() {
           `).join('')}
         </tbody>
       </table>
-    `;
-  }
-
-  function renderDodo(data) {
-    return `
-      <div style="background: var(--panel); padding: 16px; border-radius: 8px;">
-        <div style="margin-bottom: 12px;"><strong>Dodo API Key:</strong> <span style="color: ${data.dodoApiKey === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.dodoApiKey}</span></div>
-        <div style="margin-bottom: 12px;"><strong>Dodo Webhook Secret:</strong> <span style="color: ${data.dodoWebhookSecret === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.dodoWebhookSecret}</span></div>
-        <div style="margin-bottom: 12px;"><strong>Starter Monthly:</strong> <span style="color: ${data.starterMonthly === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.starterMonthly}</span></div>
-        <div style="margin-bottom: 12px;"><strong>Starter Annual:</strong> <span style="color: ${data.starterAnnual === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.starterAnnual}</span></div>
-        <div style="margin-bottom: 12px;"><strong>Growth Monthly:</strong> <span style="color: ${data.growthMonthly === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.growthMonthly}</span></div>
-        <div style="margin-bottom: 12px;"><strong>Growth Annual:</strong> <span style="color: ${data.growthAnnual === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.growthAnnual}</span></div>
-        <div style="margin-bottom: 12px;"><strong>Business Monthly:</strong> <span style="color: ${data.businessMonthly === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.businessMonthly}</span></div>
-        <div style="margin-bottom: 12px;"><strong>Business Annual:</strong> <span style="color: ${data.businessAnnual === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.businessAnnual}</span></div>
-        <div style="margin-bottom: 12px;"><strong>TEOS Mode:</strong> <span style="color: var(--gold);">${data.teosMode}</span></div>
-        <div style="margin-bottom: 12px;"><strong>Current Mode:</strong> <span style="color: var(--gold);">${data.currentMode}</span></div>
-        <div style="margin-bottom: 12px;"><strong>Product Mapping:</strong> <span style="color: ${data.productMappingComplete === 'COMPLETE' ? 'var(--green)' : 'var(--red)'};">${data.productMappingComplete}</span></div>
-        <div style="margin-bottom: 12px;"><strong>Webhook:</strong> <span style="color: ${data.webhook === 'CONFIGURED' ? 'var(--green)' : 'var(--red)'};">${data.webhook}</span></div>
-        <div style="margin-bottom: 12px;"><strong>Revenue Path:</strong> <span style="color: ${data.revenuePath === 'READY' ? 'var(--green)' : 'var(--red)'};">${data.revenuePath}</span></div>
-      </div>
     `;
   }
 

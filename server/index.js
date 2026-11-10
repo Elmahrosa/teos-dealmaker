@@ -299,8 +299,6 @@ app.get('/api/deploy-verify', requireAuditAuth('ops'), (req, res) => {
       DATABASE_URL: has('DATABASE_URL'),
       AUDIT_API_KEY: has('AUDIT_API_KEY'),
       AUDIT_API_KEYS: has('AUDIT_API_KEYS'),
-      DODO_API_KEY: has('DODO_API_KEY'),
-      DODO_WEBHOOK_SECRET: has('DODO_WEBHOOK_SECRET'),
       RESEND_API_KEY: has('RESEND_API_KEY'),
       EMAIL_FROM: has('EMAIL_FROM'),
       FOUNDER_REPORT_TO: has('FOUNDER_REPORT_TO'),
@@ -309,7 +307,7 @@ app.get('/api/deploy-verify', requireAuditAuth('ops'), (req, res) => {
       SOR_REPORT_INTERVAL_HOURS: has('SOR_REPORT_INTERVAL_HOURS'),
       RESEND_TIMEOUT_MS: has('RESEND_TIMEOUT_MS')
     },
-    revenue_path: has('DODO_API_KEY') && has('DODO_WEBHOOK_SECRET') ? 'CONFIRMED' : 'NOT_CONFIRMED',
+    revenue_path: 'MANUAL_PILOT',
     outbound: has('RESEND_API_KEY') ? 'CONFIGURED' : 'BLOCKED',
     revenue_ops: has('SOR_ENABLED') ? (String(process.env.SOR_ENABLED).toLowerCase() === 'true' ? 'ENABLED' : 'DISABLED') : 'UNSET',
     timestamp: new Date().toISOString()
@@ -358,44 +356,6 @@ app.get('/api/audit', requireAuditAuth('audit'), (req, res) => {
   res.json(entries.reverse());
 });
 
-app.post('/webhook/dodo', express.raw({ type: 'application/json' }), async (req, res) => {
-  const rawBody = req.body.toString('utf8');
-  const signature = req.headers['x-dodo-signature'] || req.headers['x-webhook-signature'] || '';
-
-  const verification = billing.verifySignature(rawBody, signature);
-  if (!verification.ok) {
-    console.warn('[webhook] Dodo signature verification failed');
-    return res.status(401).json({ error: 'invalid_signature' });
-  }
-
-  let event;
-  try {
-    event = JSON.parse(rawBody);
-  } catch (_err) {
-    console.warn('[webhook] malformed JSON body');
-    return res.status(400).json({ error: 'invalid_json' });
-  }
-
-  const eventType = event.event_type || event.type || 'unknown';
-  const data = event.data || event.payload || event;
-  const eventId = String(event.id || event.event_id || (event.data && event.data.id) || '').trim();
-
-  console.log('[webhook] Dodo event:', eventType, eventId ? `(${eventId})` : '');
-
-  let result;
-  try {
-    const { resolveAdapter } = require('../db');
-    const adapter = resolveAdapter();
-    // Idempotency is persistence-backed inside handleEvent (billing_webhook_events):
-    // a replayed event id is acknowledged but never re-applied.
-    result = await billing.handleEvent(adapter, eventType, data, eventId ? { eventId } : undefined);
-  } catch (err) {
-    console.error('[webhook] handler error:', err.message);
-    return res.status(500).json({ error: 'handler_error' });
-  }
-
-  res.json({ ok: true, event: eventType, result });
-});
 
 app.get('/', (req, res) => {
   const template = fs.readFileSync(path.join(__dirname, 'landing.html'), 'utf8');
@@ -1074,25 +1034,6 @@ app.get('/api/admin/command-center/overview', checkFounderSession, async (req, r
       else if (plan === 'solo' || plan === 'growth' || plan === 'corporate') subscriptionStats.paid++;
     }
 
-    // Revenue path status
-    const hasDodoApiKey = process.env.DODO_API_KEY !== undefined && process.env.DODO_API_KEY !== '';
-    const hasDodoWebhookSecret = process.env.DODO_WEBHOOK_SECRET !== undefined && process.env.DODO_WEBHOOK_SECRET !== '';
-    const revenuePath = hasDodoApiKey && hasDodoWebhookSecret ? 'CONFIGURED' : 'NOT_CONFIGURED';
-
-    // Product mapping check
-    const starterMonthlyId = process.env.DODO_STARTER_MONTHLY_PID;
-    const starterAnnualId = process.env.DODO_STARTER_ANNUAL_PID;
-    const growthMonthlyId = process.env.DODO_GROWTH_MONTHLY_PID;
-    const growthAnnualId = process.env.DODO_GROWTH_ANNUAL_PID;
-    const businessMonthlyId = process.env.DODO_BUSINESS_MONTHLY_PID;
-    const businessAnnualId = process.env.DODO_BUSINESS_ANNUAL_PID;
-
-    const productMappingComplete = !!(
-      starterMonthlyId && starterAnnualId &&
-      growthMonthlyId && growthAnnualId &&
-      businessMonthlyId && businessAnnualId
-    );
-
     res.json({
       ok: true,
       system: {
@@ -1115,12 +1056,7 @@ app.get('/api/admin/command-center/overview', checkFounderSession, async (req, r
       },
       missions: missionStats,
       subscriptions: subscriptionStats,
-      revenue: {
-        dodoConfigured: hasDodoApiKey,
-        webhookConfigured: hasDodoWebhookSecret,
-        productMappingComplete: !!productMappingComplete,
-        revenuePath
-      }
+      billing: { mode: require('../config/billing').getMode(), automatedCheckout: false }
     });
   } catch (err) {
     console.error('[Command Center] overview error:', err.message);
@@ -1643,51 +1579,6 @@ app.get('/api/admin/command-center/revenue', checkFounderSession, async (req, re
     });
   } catch (err) {
     console.error('[Command Center] revenue error:', err.message);
-    res.status(500).json({ ok: false, error: 'internal_error' });
-  }
-});
-
-// Dodo endpoint
-app.get('/api/admin/command-center/dodo', checkFounderSession, async (req, res) => {
-  try {
-    const hasDodoApiKey = process.env.DODO_API_KEY !== undefined && process.env.DODO_API_KEY !== '';
-    const hasDodoWebhookSecret = process.env.DODO_WEBHOOK_SECRET !== undefined && process.env.DODO_WEBHOOK_SECRET !== '';
-
-    const starterMonthly = process.env.DODO_STARTER_MONTHLY_PID || null;
-    const starterAnnual = process.env.DODO_STARTER_ANNUAL_PID || null;
-    const growthMonthly = process.env.DODO_GROWTH_MONTHLY_PID || null;
-    const growthAnnual = process.env.DODO_GROWTH_ANNUAL_PID || null;
-    const businessMonthly = process.env.DODO_BUSINESS_MONTHLY_PID || null;
-    const businessAnnual = process.env.DODO_BUSINESS_ANNUAL_PID || null;
-
-    const teosMode = process.env.TEOS_MODE || 'not_set';
-    const mode = require('../config/mode').getMode();
-
-    // Check product mapping completeness
-    const productMappingComplete = !!(
-      starterMonthly && starterAnnual &&
-      growthMonthly && growthAnnual &&
-      businessMonthly && businessAnnual
-    );
-
-    res.json({
-      ok: true,
-      dodoApiKey: hasDodoApiKey ? 'CONFIGURED' : 'MISSING',
-      dodoWebhookSecret: hasDodoWebhookSecret ? 'CONFIGURED' : 'MISSING',
-      starterMonthly: starterMonthly ? 'CONFIGURED' : 'MISSING',
-      starterAnnual: starterAnnual ? 'CONFIGURED' : 'MISSING',
-      growthMonthly: growthMonthly ? 'CONFIGURED' : 'MISSING',
-      growthAnnual: growthAnnual ? 'CONFIGURED' : 'MISSING',
-      businessMonthly: businessMonthly ? 'CONFIGURED' : 'MISSING',
-      businessAnnual: businessAnnual ? 'CONFIGURED' : 'MISSING',
-      teosMode: teosMode,
-      currentMode: mode,
-      productMappingComplete: productMappingComplete ? 'COMPLETE' : 'INCOMPLETE',
-      webhook: hasDodoWebhookSecret ? 'CONFIGURED' : 'MISSING',
-      revenuePath: (hasDodoApiKey && hasDodoWebhookSecret) ? 'READY' : 'BLOCKED'
-    });
-  } catch (err) {
-    console.error('[Command Center] dodo error:', err.message);
     res.status(500).json({ ok: false, error: 'internal_error' });
   }
 });

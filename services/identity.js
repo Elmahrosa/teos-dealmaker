@@ -132,7 +132,7 @@ async function onboardWorkspace(adapter, { ownerUserId, companyName, lang, plan 
     start_date: startDate,
     renewal_date: renewalDate,
     missions_used: 0,
-    provider: 'dodo',
+    provider: null,
     provider_customer_id: null
   });
 

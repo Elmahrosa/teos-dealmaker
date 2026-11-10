@@ -20,7 +20,7 @@ const KNOWN_ROUTES = [
   '/api/health', '/api/pricing', '/api/outreach/status', '/api/reports/latest',
   '/api/outreach/queue', '/api/emails', '/api/audit', '/api/diagnostics',
   '/api/deploy-verify', '/api/intake', '/api/intakes',
-  '/webhook/dodo', '/webhook/resend',
+'/webhook/resend',
   '/robots.txt', '/sitemap.xml', '/favicon.svg', '/og-image.svg', '/og-image.png',
   '/health'
 ];
@@ -29,9 +29,7 @@ const EXTERNAL_OK = [
   'https://t.me/TeosEgypt_bot',
   'https://elmahrosa.org/trust',
   'https://www.credly.com/',
-  'https://checkout.dodopayments.com/',
-  'https://dodo.pe/',
-  'https://sentinel.teosegypt.com',
+'https://sentinel.teosegypt.com',
   'https://dealmaker.elmahrosa.org/',
   'mailto:'
 ];

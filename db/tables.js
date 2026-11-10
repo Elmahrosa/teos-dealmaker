@@ -18,9 +18,6 @@ const TABLES = {
     columns: ['workspace_id', 'plan', 'status', 'cycle', 'start_date', 'renewal_date', 'refund_eligibility', 'provider', 'provider_customer_id', 'missions_used'],
     timestamps: true
   },
-  dodo_customers: {
-    columns: ['workspace_id', 'dodo_customer_id', 'email']
-  },
   deals: {
     columns: ['workspace_id', 'company_name', 'stage', 'status', 'deal_value', 'currency', 'current_agent'],
     timestamps: true
@@ -108,7 +105,7 @@ const TABLES = {
     timestamps: true
   },
 
-  // Dodo webhook idempotency markers: one row per processed event id so a
+  // Billing webhook idempotency markers: one row per processed event id so a
   // replayed (or attacker-resubmitted) signed webhook never re-applies a
   // state change. Mirrors the resend_events idempotency pattern.
   billing_webhook_events: {

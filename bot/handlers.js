@@ -1,4 +1,4 @@
-const { COMMANDS } = require('./commands');
+﻿const { COMMANDS } = require('./commands');
 const onboarding = require('./onboarding');
 const i18n = require('./i18n');
 const identity = require('../services/identity');
@@ -7,6 +7,7 @@ const intelligence = require('../services/intelligence');
 const memoryEdit = require('./memoryEdit');
 const knowledgeState = require('./knowledgeState');
 const missionState = require('./missionState');
+const dealInput = require('./dealInput');
 const botLearning = require('./learning');
 const { getStoreAdapter } = require('./store');
 const { esc } = require('./design');
@@ -116,9 +117,10 @@ function clearPendingInputState(userId) {
   knowledgeState.clear(userId);
   memoryEdit.clear(userId);
   missionState.clear(userId);
+    dealInput.clear(userId);
 }
 
-      return await runSellMission(chatId, userId, sellMatch[2].trim(), Number(sellMatch[1]) || 3);
+async function runSellMission(chatId, userId, goal, durationHours = 3) {
   const adapter = getStoreAdapter();
   const user = await identity.getUserByTelegram(adapter, userId);
   const workspace = user ? await identity.getWorkspaceForUser(adapter, user.id) : null;
@@ -147,17 +149,6 @@ async function handleMessage(msg) {
 
   if (!text) return null;
 
-  // One-line universal sales mission: "Sell [offer]" or "Sell 12h [offer]".
-  const sellMatch = text.match(/^(?:\/sell|sell|بيع)\s+(?:(3|12|24)\s*(?:h|hours?|ساعة|ساعات)\s+)?([\s\S]+)$/i);
-  if (sellMatch) {
-    try {
-      return await runSellMission(chatId, userId, sellMatch[3].trim(), Number(sellMatch[1] || sellMatch[2]) || 3);
-    } catch (err) {
-      audit.writeEntry('BOT_UNIVERSAL_SELL_MISSION', String(userId), 'error', { error: err.message });
-      return { chatId, text: `Sales mission failed: ${esc(err.message)}` };
-    }
-  }
-
   // Founder escape hatch: never trap a new request inside an unfinished form.
   // /cancel clears every conversational input state; /new starts a fresh goal.
   const commandText = text.split(/\s+/)[0].toLowerCase().replace(/@[^@]+$/, '');
@@ -177,6 +168,57 @@ async function handleMessage(msg) {
     return routed || { chatId, text: 'I could not route that request. Try /new with a clearer goal.' };
   }
 
+  if (dealInput.pending(userId) && (!text.startsWith('/') || commandText === '/skip')) {
+    const inputResult = dealInput.handle(userId, text);
+
+    if (!inputResult.done) {
+      return { chatId, text: inputResult.prompt };
+    }
+
+    try {
+      const adapter = getStoreAdapter();
+      const user = await identity.getUserByTelegram(adapter, userId);
+      const workspace = user
+        ? await identity.getWorkspaceForUser(adapter, user.id)
+        : null;
+
+      if (!workspace) {
+        return { chatId, text: 'No workspace found. Please provision a workspace and start again.' };
+      }
+
+      const pipeline = require('../services/workforce/pipeline');
+      const result = await pipeline.runPipeline(adapter, workspace.id, inputResult.data);
+
+      if (!result.ok) {
+        return { chatId, text: `Pipeline not started: ${esc(result.reason || 'unknown reason')}` };
+      }
+
+      const deal = result.deal || {};
+      const lines = [
+        'Asset analysis completed.',
+        `Type: ${esc(inputResult.data.assetType)}`,
+        `Description: ${esc(inputResult.data.description)}`,
+        `Asking price: ${inputResult.data.askingPrice ?? 'Not provided'} ${esc(inputResult.data.currency || '')}`,
+        `Negotiation: ${result.negotiation ? 'Analyzed' : 'Pending verified financial inputs'}`,
+        `Contract: ${esc(result.treasurer?.contract?.status || 'Pending')}`,
+        `Deal status: ${esc(deal.status || 'Awaiting customer')}`,
+        'No deal has been marked as won.'
+      ];
+
+      audit.writeEntry('BOT_ASSET_PIPELINE_COMPLETED', String(userId), 'success', {
+        assetType: inputResult.data.assetType,
+        hasSourceUrl: Boolean(inputResult.data.sourceUrl),
+        dealId: deal.id || null
+      });
+
+      return { chatId, text: lines.join('\n') };
+    } catch (err) {
+      audit.writeEntry('BOT_ASSET_PIPELINE_ERROR', String(userId), 'error', {
+        error: err.message
+      });
+      return { chatId, text: `Pipeline failed: ${esc(err.message)}` };
+    }
+  }
   if (onboarding.isActive(userId) && !text.startsWith('/')) {
     return onboarding.handleText(chatId, userId, text);
   }
@@ -270,6 +312,7 @@ async function handleMessage(msg) {
       }
     }
     missionState.clear(userId);
+    dealInput.clear(userId);
     const adapter = getStoreAdapter();
     try {
       const user = await identity.getUserByTelegram(adapter, userId);
@@ -286,6 +329,17 @@ async function handleMessage(msg) {
     } catch (err) {
       audit.writeEntry('BOT_MISSION_GOAL', String(userId), 'error', { error: err.message });
       return { chatId, text: `Mission failed: ${esc(err.message)}` };
+    }
+  }
+
+  // One-line universal sales mission: "Sell [offer]" or "Sell 12h [offer]".
+  const sellMatch = text.match(/^(?:\/sell|sell|ط¨ظٹط¹)\s+(?:(3|12|24)\s*(?:h|hours?|ط³ط§ط¹ط©|ط³ط§ط¹ط§طھ)\s+)?([\s\S]+)$/i);
+  if (sellMatch) {
+    try {
+      return await runSellMission(chatId, userId, sellMatch[2].trim(), Number(sellMatch[1]) || 3);
+    } catch (err) {
+      audit.writeEntry('BOT_UNIVERSAL_SELL_MISSION', String(userId), 'error', { error: err.message });
+      return { chatId, text: `Sales mission failed: ${esc(err.message)}` };
     }
   }
 

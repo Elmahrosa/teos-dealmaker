@@ -45,7 +45,7 @@ function buildSteps(goal, intent) {
 
   const templates = {
     sell: () => {
-      add('revenue_strategist', 'commercial_brief', `Define the commercial objective, measurable KPIs, operating budget and approval boundaries for selling this product or service: "${goal}". Treat the seller as any independent business; do not assume Elmahrosa products or company context.`);
+      add('revenue_strategist', 'commercial_brief', `Define the commercial objective, measurable KPIs, operating budget and approval boundaries for selling this product or service: "${goal}". Use only the seller identity and business context explicitly provided by the user.`);
       const marketKey = add('market_intelligence', 'market_map', `Identify the strongest buyer segments, geographies, buying triggers and competitor alternatives for the specific product or service in: "${goal}". Separate evidence from assumptions.`, { group: 'parallel' });
       const positioningKey = add('strategist', 'positioning', `Create the ideal customer profile, value proposition and differentiation for the product or service in: "${goal}". Do not invent capabilities, proof or customer results.`, { depends_on: [marketKey] });
       const prospectKey = add('prospecting', 'prospects', `Build a prioritized, evidence-based prospect list for the product or service in: "${goal}". Include source and fit rationale; do not fabricate contacts.`, { depends_on: [positioningKey] });

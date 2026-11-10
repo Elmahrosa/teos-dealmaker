@@ -279,7 +279,7 @@ async function buildFounderOps(userId) {
     design.row(t('fd_telegram'), `${hasBot ? t('fd_connected') : t('fd_not_configured')} · @${design.esc(BOT_CONFIG.botName)}`),
     design.row(t('fd_supabase'), hasDb ? t('fd_connected') : t('fd_not_configured')),
     design.row(t('fd_railway'), liveAllowed ? t('fd_configured') : t('fd_not_configured')),
-    design.row(t('fd_dodo'), process.env.DODO_STARTER_MONTHLY_URL ? t('fd_configured') : t('fd_not_configured')),
+    design.row(t('fd_billing'), 'Manual Pilot — founder approval required'),
     design.divider(),
     design.it(t('fd_security_note'))
   ]);

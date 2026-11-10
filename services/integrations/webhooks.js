@@ -5,7 +5,6 @@ function verify(connectorId, payload, signature) {
   if (!CONNECTORS[connectorId]) return { ok: false, reason: 'unknown_connector' };
   const secret = process.env[`${connectorId.toUpperCase()}_WEBHOOK_SECRET`];
   // Fail closed: an unconfigured webhook cannot authenticate a request. This
-  // mirrors the external /webhook/resend + /webhook/dodo contract (503
   // webhook_not_configured). A missing secret must never validate an unsigned
   // payload even in simulation mode.
   if (!secret) return { ok: false, reason: 'webhook_not_configured' };
@@ -29,7 +28,7 @@ async function ingest(adapter, workspaceId, connectorId, event, payload) {
   ].join('\n');
   const intelligence = require('../intelligence');
   await intelligence.addDocument(adapter, workspaceId, {
-    title: `${c.label} · ${event} · ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`,
+    title: `${c.label} ┬╖ ${event} ┬╖ ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`,
     source_type: 'conversations',
     content: body,
     metadata: { webhook: connectorId, event }

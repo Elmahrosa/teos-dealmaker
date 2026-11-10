@@ -1,4 +1,4 @@
-﻿const design = require('./design');
+const design = require('./design');
 const audit = require('../utils/auditLogger');
 const screens = require('./screens');
 const missionState = require('./missionState');
@@ -251,13 +251,8 @@ async function handleCallback(query, bot) {
         try { await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
         const ctx = await getCtx(userId);
         if (!ctx) return send({ text: design.errorPanel('No workspace', 'Provision a workspace first.').text, keyboard: null });
-        try {
-          const result = await workforce.runPipeline(getStoreAdapter(), ctx.workspace.id);
-          return send(screens.buildPipelineResult(userId, result));
-        } catch (err) {
-          audit.writeEntry('BOT_PIPELINE_ERROR', String(userId), 'error', { error: err.message });
-          return send({ text: design.errorPanel('Pipeline failed', design.esc(String(err.message))).text, keyboard: null });
-        }
+        const prompt = require('./dealInput').begin(userId);
+        return send({ text: prompt, keyboard: null });
       }
       if (action.startsWith('cc_agent:')) {
         const agentType = action.split(':')[1];

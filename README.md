@@ -50,7 +50,6 @@ In other words: the platform is real, the agents are real, the governance is rea
 | **Governed email** | Outreach worker is fail-closed, approval-required, provider-confirmed. Default: paused. You flip it on when ready. |
 | **24/7 outbound worker** | Persistent queue with daily/hourly/per-recipient limits. Nothing ships without founder approval. |
 | **Mission Reports** | Executive report on the web (`/report/:planId`) and Customer #0 reference showcase (`/customer-0`). |
-| **Dodo checkout** | Solo $99 · Growth $299 · Business $999 · Enterprise custom. HMAC-signed webhooks. |
 | **Hash-chained audit vault** | SHA-256 chained. Verifiable. Append-only. Founder has read access via the `/api/audit` endpoint (gated by `AUDIT_API_KEY`). |
 | **Policy engine** | Every capability invocation passes `executeCapability()` — tenant resolution → license/entitlement → plan scope → RBAC → audit. Deny-wins. Fail-closed. |
 | **Multi-tenant by default** | Workspace isolation enforced at the DB layer. SQL column whitelisting. PostgreSQL TLS on. |
@@ -153,8 +152,7 @@ This is the part most AI platforms either skip or hand-wave. We mean it concrete
 - **Emergency Stop.** One toggle, founder-only, halts every agent and pipeline run platform-wide.
 - **Feature Flags.** Founder can disable capability families (Missions, Sales flow, Pipeline run, Intelligence, Integrations) at the executor level.
 - **Prompt-injection treated as data.** Hostile inputs in the simulation layer were tested explicitly (see `tests/promptInjectionTest.js`); the platform treats them as data, never as instructions.
-- **Webhooks are signed and fail-closed.** Dodo HMAC. Resend svix. Unset secret = no requests accepted.
-- **Founder bypass is explicit and auditable.** The founder's `TEOS_FOUNDER_TELEGRAM_ID` skips billing/seat/workspace gates — and every bypass is in the audit log.
+- **Webhooks are signed and fail-closed.** Resend svix. Unset secret = no requests accepted.- **Founder bypass is explicit and auditable.** The founder's `TEOS_FOUNDER_TELEGRAM_ID` skips billing/seat/workspace gates — and every bypass is in the audit log.
 
 ### Honest compliance posture
 
@@ -175,14 +173,10 @@ We're honest about this because procurement teams need to know what's real. See 
 
 | Tier | Monthly | Annual | What you get |
 |---|---|---|---|
-| **Solo** | $99 | $950 (save ~20%) | 1 workspace, Mission Controller, 13-agent workforce, core agent capabilities, community support. |
-| **Growth** | $299 | $2,990 (save ~17%) | 10 seats, Civic Mixer plugin, Enterprise Knowledge Intelligence (RAG), email support. |
-| **Business** | $999 | $9,990 (save ~17%) | 25 seats, third-party plugin installs, all platform add-ons, priority support. |
-| **Enterprise** | Custom | Custom | Unlimited workspaces/missions, custom deployment, policy governance at scale, direct access to the founding team. |
 
-Pricing is **per-seat SaaS** — not outcome-based. We're watching the outcome-pricing trend (HubSpot Breeze, Salesforce Flex Credits) and may add a usage component in v1.3, but the full control plane is a subscription product, not a per-action one. **Source of truth:** [`config/pricing.config.js`](config/pricing.config.js) — single-sourced, no placeholder links.
+Pricing is not published. Commercial terms and activation will be announced after product readiness.
 
-Checkout URLs are wired to Dodo Payments with HMAC webhook verification. **Sentinel** is a separate product (`https://sentinel.teosegypt.com`) and is never sold from this surface.
+Checkout is disabled. Product activation requires founder approval.
 
 ---
 
@@ -229,11 +223,9 @@ npm audit --omit=dev   # 0 vulnerabilities
 | `GET /` | Landing page (EN/AR) |
 | `GET /api/health` | Health check, returns `{"status":"ok",...}` |
 | `GET /health` | Service probe |
-| `GET /api/pricing` | Live pricing tiers with Dodo checkout URLs |
-| `GET /api/reports/latest` | Latest mission report (public) |
+| `GET /api/pricing` | Pricing endpoint; no public tiers or checkout links are published. || `GET /api/reports/latest` | Latest mission report (public) |
 | `GET /api/outreach/status` | Governed outbound worker status (public, sanitized) |
 | `GET /api/audit` | Audit log (gated by `AUDIT_API_KEY` in `X-API-Key`; 503 until configured) |
-| `POST /webhook/dodo` | Dodo payment webhook (HMAC-signed, fail-closed) |
 | `POST /webhook/resend` | Resend delivery webhook (svix-signed, fail-closed) |
 | `GET /dashboard` | Operations console (noindex) |
 | `GET /report/:planId` | Executive mission report |
@@ -259,8 +251,7 @@ Last verification (2026-09-25, release candidate `0c12899` + org-hygiene commit)
 | `GET /` landing | 200 |
 | `GET /customer-0` | 200 |
 | `GET /report/:planId` | 200 |
-| `GET /api/pricing` | 200 with Dodo checkout URLs for Solo/Growth/Business |
-| `GET /api/audit` | 503 (fail-closed until `AUDIT_API_KEY` is configured) |
+| `GET /api/pricing` | Pricing endpoint; no public tiers or checkout links are published. || `GET /api/audit` | 503 (fail-closed until `AUDIT_API_KEY` is configured) |
 | Bot trust/security intents (EN + AR) | PASS — no `/start` fallback |
 | Customer-facing honesty | No "Coming Soon"/"Demo" placeholders, no simulated branding in reports |
 

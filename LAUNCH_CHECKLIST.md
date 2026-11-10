@@ -18,8 +18,7 @@
 | **AR screen coverage at v1.1.0** | **INCOMPLETE — only 5 of 18 bot screens were localized; 248 hardcoded English strings across the other 13** |
 | Mission-as-a-Trial landing flow | PASS |
 | Customer #0 (Elmahrosa International) | PASS |
-| Dodo pricing/billing (Solo $99/$950 · Growth $299/$2,990 · Business $999/$9,990 · Enterprise custom) | UNCHANGED |
-| Sentinel Shield · Policy Engine · Audit Trail | UNCHANGED |
+| Pricing and checkout | DISABLED — no published prices or checkout provider. || Sentinel Shield · Policy Engine · Audit Trail | UNCHANGED |
 | Executive Mission Reports (`/report/:planId`, `/customer-0`) | PASS |
 
 ## Verification Gate (2026-08-08 · figures re-verified 2026-09-26)

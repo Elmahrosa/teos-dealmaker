@@ -24,7 +24,7 @@
 - 46/46 local suites, ESLint clean, syntax gate 234 files, `npm audit --omit=dev` 0 vulnerabilities.
 - Landing HTTP 200, Trust Center link HTTP 200, Credly badge HTTP 200.
 - EN/AR trust intents verified with no `/start` fallback.
-- Pricing, mission flow, Customer #0, Sentinel/Policy/Audit, and Dodo billing unchanged.
+- Pricing and checkout are unpublished and disabled. Mission flow, Customer #0, Sentinel, Policy Engine, and Audit remain separate product capabilities.
 - Production freeze active; proactive Telegram notifications are v1.2.0 scope (preserved on `v1.2.0-notifications`).
 
 ## v1.1.0-rc1 (2026-08-07)

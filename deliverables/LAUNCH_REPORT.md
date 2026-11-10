@@ -60,8 +60,7 @@
 - Mission report outbound section sanitized: `recipient` stripped from `last_sent` (`services/missionReport.js` `sanitizeOutboundActivity()`); counts/timestamps/provider ids retained.
 
 ## DODO
-
-- `GET /api/pricing` verified live — canonical mapping: Solo `$99/$950` · Growth `$299/$2,990` · Business `$999/$9,990` · Enterprise **Custom** (no public checkout), with real Dodo checkout URLs (dodo.pe / checkout.dodopayments.com product links).
+- Historical pricing and checkout details in this launch snapshot are superseded. Current state: pricing unpublished, checkout disabled, and no payment provider configured.
 - Source of truth: `config/pricing.config.js` (also exported `SENTINEL_URL`). `server/render.js` serves it; no duplicated pricing blob in the API path.
 - `DODO_API_KEY`/`DODO_WEBHOOK_SECRET` presence could not be confirmed from here (founder-gated: `GET /api/deploy-verify` requires `AUDIT_API_KEY`). `POST /webhook/dodo` is HMAC fail-closed by design.
 

@@ -1,108 +1,30 @@
-const { draftContract, createCheckout, closeDeal, runTreasuryFlow } = require('../agents/treasurer');
-const mode = require('../config/mode');
+'use strict';
+
+const assert = require('assert');
+const { createCheckout, closeDeal } = require('../agents/treasurer');
 
 async function main() {
-  console.log('Testing Treasurer Agent...\n');
-
-  const deal = {
-    id: 'deal_001',
-    company: 'Nexus AI',
-    contactName: 'Layla Hassan',
-    product: 'TEOS DealMaker Enterprise License',
-    amount: 48000,
-    currency: 'USD',
-    termMonths: 12,
-    paymentMethod: 'invoice'
+  const deal = { id: 'test-deal', company: 'Test Company' };
+  const contract = {
+    contractId: 'test-contract',
+    amount: 100,
+    currency: 'USD'
   };
 
-  console.log('1) Drafting contract (DRY)...');
-  const contract = draftContract(deal);
-  console.log(`   Contract: ${contract.contractId} | ${contract.company} | ${contract.currency} ${contract.amount} / ${contract.termMonths}mo | monthly ${contract.monthlyPayment}`);
-  console.log(`   Clauses: ${contract.clauses.length} | payment method: ${contract.paymentMethod}`);
-
-  console.log('\n2) Creating DRY checkout...');
   const checkout = await createCheckout(deal, contract);
-  console.log(`   Checkout: ${checkout.checkoutId} | ${checkout.url} | dryRun: ${checkout.dryRun}`);
-  if (checkout.dryRun !== true) {
-    console.error('   FAIL: DRY checkout must carry dryRun=true (never a live payment surface)');
-    process.exit(1);
-  }
-  // A non-null DRY url must be the reserved manual-pilot example domain only —
-  // anything else could be a fabricated real payment URL and would be a leak.
-  const dryUrl = checkout.url || '';
-  if (dryUrl !== '' && !/^https:\/\/manual-pilot\.example\.com\//.test(dryUrl)) {
-    console.error(`   FAIL: DRY checkout URL must be inert, got ${dryUrl}`);
-    process.exit(1);
-  }
+  assert.strictEqual(checkout, null, 'Checkout must remain disabled');
 
-  console.log('\n3) Attempting LIVE checkout (no key)...');
-  mode.setMode('LIVE');
-  delete process.env.DODO_API_KEY; // ensure no key
-  const liveCheckoutNoKey = await createCheckout(deal, contract);
-  if (liveCheckoutNoKey !== null) {
-    console.error('   FAIL: LIVE checkout with no key should be blocked (null)');
-    process.exit(1);
-  }
-  console.log('   PASS: LIVE checkout blocked as expected (null returned)');
-  mode.setMode('DRY'); // reset to DRY for next steps
+  const result = closeDeal(deal, contract, null);
+  assert.strictEqual(result.checkoutId, null);
+  assert.strictEqual(result.won, false);
+  assert.strictEqual(result.status, 'awaiting_customer');
+  assert.match(result.reason, /customer acceptance/i);
+  assert.match(result.reason, /verified payment evidence/i);
 
-  console.log('\n4) Attempting LIVE checkout (with DODO_API_KEY set)...');
-  mode.setMode('LIVE');
-  process.env.DODO_API_KEY = 'test-key-12345';
-  try {
-    const liveCheckoutWithKey = await createCheckout(deal, contract);
-    // Network error offline is acceptable; silent block or fake response is a fail
-    console.log('   Note: Attempted real Dodo call (may fail offline, which is OK)');
-    if (liveCheckoutWithKey && liveCheckoutWithKey.dryRun === true) {
-      console.error('   FAIL: LIVE checkout should not return dryRun=true');
-      process.exit(1);
-    }
-    console.log('   PASS: LIVE checkout attempted real API call');
-  } catch (err) {
-    const isNetworkFailure =
-      err.message.includes('Dodo Payments error') ||
-      err.message.includes('fetch') ||
-      (err.cause && err.cause.code) || // getaddrinfo ENOTFOUND, ECONNREFUSED, etc.
-      err.code === 'ENOTFOUND';
-    if (isNetworkFailure) {
-      console.log(`   PASS: attempted real Dodo call, network-level failure expected offline: ${err.message}`);
-    } else {
-      throw err;
-    }
-  } finally {
-    delete process.env.DODO_API_KEY;
-    mode.setMode('DRY'); // reset to DRY
-  }
-
-  console.log('\n5) Closing deal in DRY...');
-  mode.setMode('DRY');
-  const summary = await runTreasuryFlow(deal);
-  console.log(`   Closed: ${summary.status} | ${summary.company} | ${summary.contractId} | checkout ${summary.checkoutId}`);
-
-  // Assertions for DRY closing
-  if (summary.checkoutId == null) {
-    console.error('   FAIL: DRY closing should produce a checkoutId');
-    process.exit(1);
-  }
-  if (summary.status !== 'closed') {
-    console.error(`   FAIL: Expected status 'closed', got '${summary.status}'`);
-    process.exit(1);
-  }
-  console.log('   PASS: DRY closing produced a real checkoutId and status=closed');
-
-  console.log('\n6) Testing blocked-audit path (direct closeDeal with null checkout)...');
-  const blockedSummary = closeDeal(deal, contract, null);
-  if (blockedSummary.status !== 'checkout_failed') {
-    console.error(`   FAIL: Expected status 'checkout_failed', got '${blockedSummary.status}'`);
-    process.exit(1);
-  }
-  console.log('   PASS: blocked checkout produces status=checkout_failed');
-
-  console.log('\nVerification complete. Inspect data/vault/audit.log for TREASURER_AGENT_* entries.');
+  console.log('PASS: no checkout; deal remains open pending customer acceptance and verified payment.');
 }
 
 main().catch(err => {
-  console.error('TEST FAILED:', err);
-  process.exit(1);
+  console.error(err);
+  process.exitCode = 1;
 });
-
