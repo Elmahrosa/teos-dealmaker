@@ -19,25 +19,20 @@ const { assertEnv } = require('../config/env');
 
 assertEnv();
 
-const { spawn, spawnSync } = require('child_process');
+const { spawnSync } = require('child_process');
 const path = require('path');
 const { install: installReliability } = require('../utils/reliability');
 const { getMode } = require('../config/mode');
+const { createSupervisor } = require('../utils/supervisor');
 
 installReliability('prod');
 
 const root = path.join(__dirname, '..');
 
 const SERVICES = [
-  { name: 'web', file: path.join(root, 'server', 'index.js'), restart: 0 },
-  { name: 'bot', file: path.join(root, 'bot', 'index.js'), restart: 0 }
+  { name: 'web', file: path.join(root, 'server', 'index.js') },
+  { name: 'bot', file: path.join(root, 'bot', 'index.js') }
 ];
-
-const MAX_RESTARTS = 10;
-const BACKOFF_MS = 2000;
-
-const children = new Map();
-let shuttingDown = false;
 
 function runMigrations() {
   if (!process.env.DATABASE_URL) {
@@ -57,64 +52,13 @@ function runMigrations() {
   console.log('[prod] DB migrations up to date');
 }
 
-function start(service) {
-  let child;
-  try {
-    child = spawn(process.execPath, [service.file], {
-      cwd: root,
-      env: process.env,
-      stdio: 'inherit'
-    });
-  } catch (err) {
-    console.error(`[prod] failed to spawn ${service.name}:`, err.message);
-    process.exit(1);
-  }
+// Restart policy: 10 consecutive failures end the container with exit 1 (a child
+// counts as healthy again only after 60s of uptime). SIGTERM stops children
+// first and exits only after they are gone.
+const supervisor = createSupervisor({ services: SERVICES, cwd: root, env: process.env });
 
-  child.on('spawn', () => {
-    service.restart = 0;
-    console.log(`[prod] ${service.name} started (pid ${child.pid})`);
-  });
-
-  // A spawn failure (e.g. ENOENT on the target file) emits 'error' — without a
-  // listener the parent would throw and crash. Fail the whole container instead.
-  child.on('error', (err) => {
-    console.error(`[prod] ${service.name} process error:`, err.message);
-    process.exit(1);
-  });
-
-  child.on('exit', (code, signal) => {
-    console.log(`[prod] ${service.name} exited (code=${code} signal=${signal})`);
-    if (shuttingDown) return;
-    if (service.restart >= MAX_RESTARTS) {
-      console.error(`[prod] ${service.name} exceeded ${MAX_RESTARTS} restarts — giving up. Exiting so the orchestrator restarts the container.`);
-      process.exit(1);
-    }
-    service.restart += 1;
-    const delay = Math.min(BACKOFF_MS * Math.pow(2, service.restart - 1), 30000);
-    console.log(`[prod] restarting ${service.name} in ${delay}ms (attempt ${service.restart})`);
-    setTimeout(() => start(service), delay);
-  });
-
-  children.set(service.name, child);
-}
-
-function shutdown() {
-  shuttingDown = true;
-  console.log('[prod] shutting down — sending SIGTERM to children');
-  for (const [name, child] of children.entries()) {
-    try {
-      child.kill('SIGTERM');
-      console.log(`[prod] sent SIGTERM to ${name} (pid ${child.pid})`);
-    } catch (_) { /* ignore */ }
-  }
-  setTimeout(() => {
-    console.log('[prod] force exit after timeout');
-    process.exit(0);
-  }, 5000);
-}
-
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+process.on('SIGTERM', () => supervisor.shutdown(0, 'SIGTERM'));
+process.on('SIGINT', () => supervisor.shutdown(0, 'SIGINT'));
 
 // Mode contract: production supervision should never silently run the bot in
 // DRY mode while an operator believes it is live. Surface the runtime mode
@@ -129,4 +73,4 @@ if (getMode() !== 'LIVE') {
 
 runMigrations();
 
-for (const service of SERVICES) start(service);
+supervisor.start();

@@ -129,6 +129,35 @@ with separate filesystems would keep separate vaults, so run exactly one web
 instance owning the vault file. No verifier exists yet, so closeWon cannot
 succeed in production today.
 
+## Acceptance checklist before any verifier is installed
+A verifier may be approved only if every row below is met. The "Enforced in repo"
+column is what `closeWon` already checks for ANY verifier (db/repos.js,
+agents/closing/index.js). Everything marked "Verifier must" is NOT checked by this
+repository today: a verifier that skips it would still pass `closeWon`.
+
+| Requirement | Enforced in repo | Verifier must |
+|---|---|---|
+| Payment source is one of `provider_webhook`, `bank_statement`, `founder_confirmed_receipt` | yes (source allow-list) | establish the source itself, never copy the caller's `source` field |
+| Payment reference present, recorded by an identity, with a non-future time | yes | resolve the reference to a stored artifact or a provider record |
+| Amount equals `deals.deal_value`; currency equals the deal's | yes (exact amount, case-insensitive currency) | reject partial, over- and under-payment; no rounding or currency conversion |
+| Recipient: funds reached OUR account (merchant account, IBAN or wallet) | no | compare the beneficiary in the provider or bank record with a configured account of the owning workspace; reject a payment to any other payee |
+| Payer: payment came from the accepting customer or an approved payer | no | match payer identity or invoice reference to the deal's customer, or reject and require manual review |
+| Transaction confirmation: settled, not pending, reversed, refunded, disputed or charged back | no | confirm the final settled state at the source at verification time; re-check before closing when the source can reverse (cards, direct debit) |
+| Replay: one payment reference settles one deal only | no | atomically record (source, reference, workspace, deal) as consumed; reject reuse on another deal or workspace; return the same result for a retry on the same deal |
+| Tenant binding: evidence belongs to this workspace and this deal | no | verify the artifact's workspace and deal ids; never accept a reference that exists only globally |
+| Customer acceptance: named accepter, non-future time, proof reference | yes (shape) | resolve the proof to a stored artifact for this workspace and deal (signed contract, e-signature envelope, inbound message) |
+| Acceptance matches what is being paid: same deal, same terms, same amount and currency, and the acceptance came before or with the payment | no | compare the accepted document's terms with the deal; reject a stale or superseded version |
+| No caller-supplied proof: `verified: true`, a bare reference or a receipt file name is never enough | yes (facts come from the verifier's return value) | keep its own ledger or provider lookup |
+| Fail closed: provider timeout or error never means "paid" | yes (`closeWon` throws, deal stays open) | return `{ ok: false, reason }` or throw; no default-to-success path |
+| Verifier installed once at boot by trusted server code, never by a request, bot handler or test helper | yes (slot sealed on first repository use; a test fails if production code installs one) | be reviewed as boot-time code only |
+| Customer #0 and other protected deals cannot be won | yes | not applicable |
+
+Replay protection needs a database constraint (a UNIQUE index on source and
+reference, or an equivalent consumed-reference table written in the same
+transaction as the win). That migration has not been written or reviewed here.
+Until the verifier AND that constraint exist and pass review, closeWon must keep
+failing closed; do not install a verifier to unblock a single deal.
+
 ## Failure and retry
 - Verifier unavailable/timeout: closeWon throws; the deal stays open. Retry is safe.
 - `ok:false`: rejected and audited; retry only with new evidence.

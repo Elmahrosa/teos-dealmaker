@@ -84,12 +84,30 @@ function normalizeRow(row) {
   return out;
 }
 
+// Every pg Pool this process opens is registered so shutdown can close them all.
+const openPools = new Set();
+function registerPool(pool) { openPools.add(pool); return pool; }
+
+// Close every registered pool, waiting for checked-out clients to be released.
+// Bounded: after timeoutMs the result reports timedOut and the caller decides.
+async function closeAllPools(timeoutMs = 5000) {
+  const pools = [...openPools];
+  if (!pools.length) return { closed: 0, timedOut: false };
+  let timer;
+  const deadline = new Promise(res => { timer = setTimeout(() => res('timeout'), timeoutMs); });
+  const ending = Promise.allSettled(pools.map(p => p.end())).then(() => 'done');
+  const r = await Promise.race([ending, deadline]);
+  clearTimeout(timer);
+  if (r === 'done') openPools.clear();
+  return { closed: r === 'done' ? pools.length : 0, timedOut: r === 'timeout' };
+}
+
 function createPgAdapter() {
   if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is not set. Cannot connect to PostgreSQL.');
   }
   const { Pool } = require('pg');
-  const pool = new Pool(buildPoolConfig());
+  const pool = registerPool(new Pool(buildPoolConfig()));
   pool.on('error', (err) => {
     console.error('Unexpected error on idle PostgreSQL client', err);
   });
@@ -346,4 +364,4 @@ function createMemoryAdapter() {
   return guarded;
 }
 
-module.exports = { createPgAdapter, createMemoryAdapter };
+module.exports = { createPgAdapter, createMemoryAdapter, registerPool, closeAllPools };

@@ -1737,14 +1737,33 @@ const server = app.listen(PORT, () => {
   }
 });
 
+let shuttingDown = false;
+const SHUTDOWN_TIMEOUT_MS = Number(process.env.SHUTDOWN_TIMEOUT_MS || 8000);
+
+// Graceful shutdown: stop accepting work, let in-flight requests finish, stop the
+// outbound worker, close every PostgreSQL pool, then exit 0. The timer below is
+// only a backstop; hitting it is logged and exits non-zero.
 function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
   console.log(`[Sentinel] ${signal} received — closing HTTP server`);
-  server.close(() => {
-    process.exitCode = 0;
+  const backstop = setTimeout(() => {
+    console.error(`[Sentinel] shutdown exceeded ${SHUTDOWN_TIMEOUT_MS}ms — forcing exit`);
+    process.exit(1);
+  }, SHUTDOWN_TIMEOUT_MS);
+  backstop.unref();
+  const closeHttp = new Promise(resolve => {
+    server.close(() => resolve());
+    if (typeof server.closeIdleConnections === 'function') server.closeIdleConnections();
   });
-  // If keep-alive connections block close(), force-exit cleanly (0) after a
-  // grace period — a graceful shutdown is not a failure.
-  setTimeout(() => process.exit(0), 10000).unref();
+  (async () => {
+    try { worker.stop(); } catch (err) { console.error('[Sentinel] worker stop failed:', err.message); }
+    await closeHttp;
+    const r = await require('../db').closeAllPools(Math.max(1000, SHUTDOWN_TIMEOUT_MS - 2000));
+    if (r.timedOut) { console.error('[Sentinel] database pool did not drain in time'); process.exit(1); }
+    console.log(`[Sentinel] shutdown complete (database pools closed: ${r.closed})`);
+    process.exit(0);
+  })().catch(err => { console.error('[Sentinel] shutdown error:', err.message); process.exit(1); });
 }
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
