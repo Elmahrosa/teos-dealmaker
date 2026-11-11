@@ -111,7 +111,7 @@ const menu = require('../bot/menu');
   // ---------------------------------------------------------- router universe
   // Every exact callback_data namespace the router dispatches (case labels).
   const EXACT = new Set([
-    'cc_home', 'btn_back', 'cc_dashboard', 'cc_workforce', 'cc_pipeline', 'cc_deals',
+    'cc_home', 'btn_back', 'cc_founder', 'cc_dashboard', 'cc_workforce', 'cc_pipeline', 'cc_deals',
     'cc_pricing', 'cc_playground', 'cc_ai_guide', 'cc_settings', 'cc_learn', 'cc_learn_skip', 'cc_learn_done',
     'cc_learn_more', 'cc_learn_quit', 'cc_missions', 'cc_mission_goal', 'cc_mission1',
     'cc_mission2', 'cc_mission_market', 'cc_approvals', 'cc_memory', 'cc_mem_cancel',
@@ -123,7 +123,9 @@ const menu = require('../bot/menu');
     'cc_mission_form_cancel', 'cc_mission_dashboard', 'cc_fd_mode', 'cc_fd_approval', 'cc_fd_billing',
     'cc_fd_workspaces', 'cc_fd_customers', 'cc_fd_revenue', 'cc_fd_debug', 'cc_fd_ops',
     'cc_fd_sentinel', 'cc_fd_policy', 'cc_fd_analytics', 'cc_fd_flags', 'cc_fd_emergency',
-    'cc_fd_emergency_stop', 'cc_fd_emergency_resume'
+    'cc_fd_emergency_stop', 'cc_fd_emergency_resume',
+    // Setup buttons are dispatched by bot/onboarding.js (via bot/index.js).
+    'cc_onb_quickstart', 'cc_onb_company', 'cc_onb_cancel'
   ]);
   // Every prefix-namespace the router dispatches (startsWith branches).
   const PREFIX = [
@@ -178,13 +180,14 @@ const menu = require('../bot/menu');
 
   // ------------------------------------------------------ 1. dispatch contract
   const contract = [
-    ['cc_home', FOUNDER, 'Control Center'],
-    ['btn_back', FOUNDER, 'Control Center'],
+    ['cc_home', FOUNDER, 'TEOS DEALMAKER'],
+    ['btn_back', FOUNDER, 'TEOS DEALMAKER'],
+    ['cc_founder', FOUNDER, 'Control Center'],
     ['cc_dashboard', FOUNDER, 'Dashboard'],
     ['cc_workforce', FOUNDER, 'My Revenue Team'],
     ['cc_pipeline', FOUNDER, 'Sales Pipeline'],
     ['cc_deals', FOUNDER, 'Deals'],
-    ['cc_pricing', FOUNDER, 'Control Center'],
+    ['cc_pricing', FOUNDER, 'TEOS DEALMAKER'],
     ['cc_ai_guide', FOUNDER, 'AI Guide'],
     ['cc_settings', FOUNDER, 'Settings'],
     ['cc_missions', FOUNDER, 'Mission Center'],
@@ -240,7 +243,7 @@ const menu = require('../bot/menu');
   // ------------------------------------------------------------ 2. learn flow
   await driveAndExpect('cc_learn', FOUNDER, 'Question 1', 'learning interview starts on first question');
   await driveAndExpect('cc_learn_persona:CFO', FOUNDER, 'Question 1', 'persona picker keeps the interview in scope');
-  await driveAndExpect('cc_learn_quit', FOUNDER, 'Control Center', 'quitting learning returns home');
+  await driveAndExpect('cc_learn_quit', FOUNDER, 'TEOS DEALMAKER', 'quitting learning returns home');
 
   // ---------------------------------------------------- 3. live mission flows
   await driveAndExpect('cc_mission1', FOUNDER, 'Mission Launched', 'mission 1 launches a strategy plan');
@@ -372,21 +375,38 @@ const menu = require('../bot/menu');
   // The cc_upload_catalog / cc_launch_campaign "Coming soon" stubs were removed
   // with the legacy dashboard; they now fall through to the unknown-action
   // handler (and are no longer dispatched namespaces).
-  await driveNoEdit('cc_upload_catalog', FOUNDER, 'no longer available');
-  await driveNoEdit('cc_launch_campaign', FOUNDER, 'no longer available');
+  await driveAndExpect('cc_upload_catalog', FOUNDER, 'no longer available', 'stale button cc_upload_catalog is replaced by a notice with a Home button');
+  await driveAndExpect('cc_launch_campaign', FOUNDER, 'no longer available', 'stale button cc_launch_campaign is replaced by a notice with a Home button');
+  // Stale buttons edit their own message (old messages cannot be deleted).
   await driveNoEdit('cc_set_lang:fr', FOUNDER, 'Unknown language');
-  await driveNoEdit('cc_totally_unknown_xyz', FOUNDER, 'no longer available');
+  await driveAndExpect('cc_totally_unknown_xyz', FOUNDER, 'no longer available', 'stale button cc_totally_unknown_xyz is replaced by a notice with a Home button');
 
   // -------------------------------------------- 8. role-aware home keyboards
   const memberHome = await drive('cc_home', MEMBER);
-  const memberEdit = register(memberHome, 'cc_home', 'MISSION CONTROL', 'operator sees mission control');
+  const memberEdit = register(memberHome, 'cc_home', 'TEOS DEALMAKER', 'operator sees the simple home');
   const memberButtons = keyboardButtons(memberEdit, 'cc_home');
   check(!memberButtons.includes('cc_admin'), 'operator home omits cc_admin');
   check(!memberButtons.includes('cc_audit'), 'operator home omits cc_audit');
   check(memberButtons.includes('cc_intelligence'), 'operator home keeps company intelligence');
+  for (const forced of ['cc_missions', 'cc_mission1', 'cc_mission_goal', 'cc_approvals', 'cc_founder']) {
+    check(!memberButtons.includes(forced), `ordinary home does not force ${forced}`);
+  }
+  const founderHomeEdit = register(await drive('cc_home', FOUNDER), 'cc_home', 'TEOS DEALMAKER', 'founder home is the simple home');
+  const founderButtons = keyboardButtons(founderHomeEdit, 'cc_home');
+  check(founderButtons.includes('cc_founder'), 'founder home offers the Founder Console');
+  for (const old of ['cc_missions', 'cc_approvals', 'cc_fd_billing', 'cc_fd_revenue']) {
+    check(!founderButtons.includes(old), `founder home no longer shows ${old} directly`);
+  }
+  await driveAndExpect('cc_founder', MEMBER, 'Access denied', 'ordinary member is denied the Founder Console');
+  for (const direct of ['cc_missions', 'cc_approvals', 'cc_mission1', 'cc_mission2', 'cc_mission_market', 'cc_mission_goal',
+    'cc_mission:1', 'cc_mission_run:1', 'cc_mission_pause:1', 'cc_mission_resume:1', 'cc_mission_report:1', 'cc_mission_kpis:1',
+    'cc_appr:1:approve', 'cc_appr:1:reject', 'cc_mission_form_cancel']) {
+    await driveAndExpect(direct, MEMBER, 'Access denied', `ordinary member sending ${direct} directly is denied`);
+    await driveAndExpect(direct, STRANGER, 'Access denied', `stranger sending ${direct} directly is denied`);
+  }
 
   const strangerHome = await drive('cc_home', STRANGER);
-  register(strangerHome, 'cc_home', 'TEOS DEALMAKER', 'stranger sees onboarding hero');
+  register(strangerHome, 'cc_home', 'Quick Start', 'stranger sees Quick Start');
 
   // Onboarding-stage workspace: buildHome renders the learn launcher whose
   // keyboard carries cc_learn and cc_mission_market (unlocked only when the
@@ -395,11 +415,17 @@ const menu = require('../bot/menu');
   const newbie = await identity.ensureUser(adapter, NEWBIE, { display_name: 'Char Newbie' });
   await identity.onboardWorkspace(adapter, { ownerUserId: newbie.id, companyName: 'Fresh Acme', lang: 'en', plan: 'growth' });
   const newbieHome = await drive('cc_home', NEWBIE);
-  register(newbieHome, 'cc_home', 'Welcome', 'incomplete onboarding renders the learn launcher');
+  const newbieEdit = register(newbieHome, 'cc_home', 'TEOS DEALMAKER', 'incomplete onboarding still gets the simple home');
+  for (const forced of ['cc_mission1', 'cc_mission2', 'cc_mission_market', 'cc_missions']) {
+    check(!keyboardButtons(newbieEdit, 'cc_home').includes(forced), `new workspace home does not force ${forced}`);
+  }
+  // The learn launcher is an explicit choice (/learn), no longer the forced home.
+  const launcher = await menu.buildLearn(NEWBIE, await learning.progress(adapter, (await identity.getWorkspaceForUser(adapter, newbie.id)).id), null);
+  register({ edits: [{ text: launcher.text, opts: { reply_markup: launcher.keyboard } }] }, 'cmd_learn', 'Welcome', '/learn renders the learn launcher');
 
   // ------------------------------------------------------------ 9. coverage
   const RENDERED_REQUIRED_EXACT = [
-    'cc_home', 'cc_dashboard', 'cc_workforce', 'cc_pipeline', 'cc_deals',
+    'cc_home', 'cc_founder', 'cc_dashboard', 'cc_workforce', 'cc_pipeline', 'cc_deals',
     'cc_settings', 'cc_learn', 'cc_learn_quit', 'cc_missions', 'cc_mission_goal',
     'cc_mission_create', 'cc_mission_dashboard', 'cc_mission1', 'cc_mission2', 'cc_mission_market', 'cc_approvals', 'cc_memory',
     'cc_mem_cancel', 'cc_activity', 'cc_timeline', 'cc_costs', 'cc_health', 'cc_providers',

@@ -70,7 +70,8 @@ const menu = require('../bot/menu');
   // An existing founder lands on the home dashboard.
   const home = await handleMessage(msg(FOUNDER, '/start'));
   equal(home.chatId, FOUNDER, 'founder /start is addressed to their chat');
-  check(/CONTROL CENTER/i.test(home.text), 'founder home shows the Control Center hero');
+  check(/TEOS DEALMAKER/i.test(home.text), 'founder home shows the simple home');
+  check(JSON.stringify(home.replyMarkup).includes('cc_founder'), 'founder home offers the Founder Console');
   check(home.replyMarkup && home.replyMarkup.inline_keyboard, 'founder home renders a keyboard');
 
   // Command sweep: every registered command answers with a screen.
@@ -95,8 +96,8 @@ const menu = require('../bot/menu');
   const unknown = await handleMessage(msg(FOUNDER, '/totally_unknown_cmd'));
   check(Boolean(unknown && unknown.text), 'unknown command is answered by the conversation router');
   check(!/Use \/start/i.test(unknown.text), 'unknown command never falls back to "Use /start"');
-  check(/did not get that|run sales|find customers|status|help/i.test(unknown.text),
-    'unknown command reply offers natural-language options');
+  check(/not sure what you mean|DealMaker/i.test(unknown.text) && JSON.stringify(unknown.replyMarkup).includes('cc_pipeline_run'),
+    'unknown command reply explains and offers buttons');
 
   // -------------------------------------------------------- callback chain
   let qid = 0;
@@ -119,7 +120,7 @@ const menu = require('../bot/menu');
     };
   }
   const CALLBACK_MARKERS = [
-    ['cc_home', 'Control Center'],
+    ['cc_home', 'TEOS DEALMAKER'],
     ['cc_workforce', 'Revenue Team'],
     ['cc_pipeline', 'Pipeline'],
     ['cc_deals', 'Deals'],

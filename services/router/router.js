@@ -28,12 +28,21 @@ async function handleText(adapter, userId, rawText) {
   const route = fastpath.classify(detection.intent);
   const ctx = await context.resolve(adapter, userId, session);
   if (!ctx) {
+    // No workspace yet: conversational questions are still answered; anything
+    // else points to Quick Start. Nothing runs without a workspace.
+    const conversational = ['about', 'help', 'greeting'].includes(detection.intent);
+    const text = conversational
+      ? reply.textFor({ action: detection.intent, data: { language, isFounder: false } }, { isFounder: false, language }, session)
+      : (language === 'ar'
+        ? 'أهلاً بك في TEOS DealMaker. يمكنني مساعدتك في المبيعات والعملاء والصفقات، لكني أحتاج أولاً إلى مساحة عمل. اضغط «بدء سريع» أدناه أو أرسل /start.'
+        : 'Welcome to TEOS DealMaker. I can help with sales, customers and deals, but I need a workspace first. Tap Quick Start below (one tap) or send /start.');
     return {
-      text: language === 'ar'
-        ? 'أهلاً بك في TEOS DealMaker. يمكنني مساعدتك في المبيعات والعملاء والصفقات، لكني أحتاج أولاً إلى مساحة عمل. أرسل /start ثم اضغط «بدء سريع».'
-        : 'Welcome to TEOS DealMaker. I can help with sales, customers and deals, but I need a workspace first. Send /start, then tap Quick Start (one tap).',
+      text,
       suggestions: [],
-      session
+      unlinked: true,
+      action: conversational ? detection.intent : 'need_workspace',
+      session,
+      trace: { intent: detection.intent, action: 'need_workspace', path: 'unlinked' }
     };
   }
   memory.update(userId, { workspace: ctx.workspaceId, founderMode: ctx.isFounder });
@@ -79,7 +88,8 @@ async function handleText(adapter, userId, rawText) {
         text: blocked.text,
         suggestions: suggestionsAfterBlock(detection.intent, ctx),
         session,
-        trace: { intent: detection.intent, decision: decision.decision, reason: decision.reason }
+        action: detection.intent === 'pricing' ? 'no_pricing' : 'blocked',
+        trace: { intent: detection.intent, action: detection.intent === 'pricing' ? 'no_pricing' : 'blocked', decision: decision.decision, reason: decision.reason }
       };
     }
   }

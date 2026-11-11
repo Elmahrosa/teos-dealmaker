@@ -75,8 +75,10 @@ async function handleCallback(query, bot) {
       screens.onboarding.quit(userId);
       return send(await screens.buildHome(userId));
     case 'cc_missions':
+      if (!isFounder(userId)) return send(denied('missions'));
       return send(await screens.buildMissions(userId));
     case 'cc_mission_goal':
+      if (!isFounder(userId)) return send(denied('missions'));
       missionState.begin(userId, {});
       return send(await screens.buildMissionGoalPrompt(userId));
     case 'cc_mission_create': {
@@ -85,6 +87,7 @@ async function handleCallback(query, bot) {
       return send(await screens.buildMissionCreatePrompt(userId));
     }
     case 'cc_mission_form_cancel':
+      if (!isFounder(userId)) return send(denied('missions'));
       missionState.clear(userId);
       return send(await screens.buildMissions(userId));
     case 'cc_mission_dashboard': {
@@ -92,6 +95,7 @@ async function handleCallback(query, bot) {
       return send(await screens.buildMissionDashboard(userId));
     }
     case 'cc_mission1': {
+      if (!isFounder(userId)) return send(denied('missions'));
       try { await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
       try {
         return send(await screens.launchMission1(userId));
@@ -101,6 +105,7 @@ async function handleCallback(query, bot) {
       }
     }
     case 'cc_mission2': {
+      if (!isFounder(userId)) return send(denied('missions'));
       try { await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
       try {
         return send(await screens.launchMission2(userId));
@@ -110,6 +115,7 @@ async function handleCallback(query, bot) {
       }
     }
     case 'cc_mission_market': {
+      if (!isFounder(userId)) return send(denied('missions'));
       try { await bot.sendChatAction(query.message.chat.id, 'typing'); } catch (_) { /* ignore */ }
       try {
         return send(await screens.launchMarketMission(userId));
@@ -119,6 +125,7 @@ async function handleCallback(query, bot) {
       }
     }
     case 'cc_approvals':
+      if (!isFounder(userId)) return send(denied('approvals'));
       return send(await screens.buildApprovals(userId));
     case 'cc_memory':
       return send(await screens.buildMemory(userId));
@@ -188,6 +195,9 @@ async function handleCallback(query, bot) {
       if (!isAdmin(userId)) return send(denied('audit feed'));
       return send(screens.buildAudit(0));
     }
+    case 'cc_founder':
+      if (!isFounder(userId)) return send(denied('founder actions'));
+      return send(await require('./screens/founder').buildFounderHome(userId));
     case 'cc_fd_mode':
       if (!isFounder(userId)) return send(denied('founder actions'));
       return send(screens.buildFounderSystemMode(userId));
@@ -413,6 +423,7 @@ async function handleCallback(query, bot) {
         return send(await screens.buildIntegrations(userId));
       }
       if (action.startsWith('cc_mission_run:')) {
+        if (!isFounder(userId)) return send(denied('missions'));
         const ctx = await getCtx(userId);
         if (!ctx) return send(denied('missions'));
         const planId = action.split(':')[1];
@@ -429,18 +440,22 @@ async function handleCallback(query, bot) {
         return send(await screens.onboarding.persona(userId, getStoreAdapter(), lctx.workspace.id, name));
       }
       if (action.startsWith('cc_mission:')) {
+        if (!isFounder(userId)) return send(denied('missions'));
         const planId = action.split(':')[1];
         return send(await screens.buildMissionDetail(userId, planId));
       }
       if (action.startsWith('cc_mission_report:')) {
+        if (!isFounder(userId)) return send(denied('missions'));
         const planId = action.split(':')[1];
         return send(await screens.buildMissionReport(userId, planId));
       }
       if (action.startsWith('cc_mission_kpis:')) {
+        if (!isFounder(userId)) return send(denied('missions'));
         const planId = action.split(':')[1];
         return send(await screens.buildMissionKPIs(userId, planId));
       }
       if (action.startsWith('cc_mission_pause:')) {
+        if (!isFounder(userId)) return send(denied('missions'));
         const ctx = await getCtx(userId);
         if (!ctx) return send(denied('missions'));
         const planId = action.split(':')[1];
@@ -451,6 +466,7 @@ async function handleCallback(query, bot) {
         return send(await screens.buildMissionDetail(userId, planId));
       }
       if (action.startsWith('cc_mission_resume:')) {
+        if (!isFounder(userId)) return send(denied('missions'));
         const ctx = await getCtx(userId);
         if (!ctx) return send(denied('missions'));
         const planId = action.split(':')[1];
@@ -461,6 +477,7 @@ async function handleCallback(query, bot) {
         return send(await screens.buildMissionRunResult(userId, Number(planId), result));
       }
       if (action.startsWith('cc_appr:')) {
+        if (!isFounder(userId)) return send(denied('approvals'));
         const parts = action.split(':');
         const requestId = parts[1];
         const decision = parts[2];
@@ -472,7 +489,12 @@ async function handleCallback(query, bot) {
         audit.writeEntry('BOT_APPROVAL_DECIDE', String(userId), 'success', { requestId, decision });
         return send(await screens.buildApprovals(userId));
       }
-      return bot.answerCallbackQuery(query.id, { text: i18n.t(userId, 'fallback_unknown_action') }).catch(() => {});
+      // Stale button from an older message: say so and offer the current menu.
+      // The old message cannot be deleted, so it is edited in place instead.
+      return send({
+        text: i18n.t(userId, 'fallback_unknown_action'),
+        keyboard: design.keyboard([[design.textButton(i18n.t(userId, 'btn_back_home'), 'cc_home')]])
+      });
     }
   }
 }

@@ -30,6 +30,9 @@ async function dispatch(adapter, step, ctx, session) {
     case 'greeting':
       return { action: 'greeting', data: { language: lang } };
 
+    case 'about':
+      return { action: 'about', data: { language: lang } };
+
     case 'help':
       return { action: 'help', data: { language: lang, isFounder: ctx.isFounder } };
 
