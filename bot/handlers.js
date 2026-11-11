@@ -10,7 +10,8 @@ const missionState = require('./missionState');
 const dealInput = require('./dealInput');
 const botLearning = require('./learning');
 const { getStoreAdapter } = require('./store');
-const { esc } = require('./design');
+const design = require('./design');
+const { esc } = design;
 const { buildHome, buildMemory, buildAskResult, buildMissionRunResult } = require('./menu');
 const audit = require('../utils/auditLogger');
 const { getMode } = require('../config/mode');
@@ -19,6 +20,17 @@ const router = require('../services/router');
 
 function screenResult(chatId, screen) {
   return { chatId, text: screen.text, replyMarkup: screen.keyboard };
+}
+
+// Conversational answers carry one inline row that routes to the right function.
+const GUIDE_ACTIONS = new Set(['greeting', 'help', 'about', 'unknown', 'blocked', 'no_pricing', 'pricing']);
+
+function guideKeyboard(userId) {
+  const tr = key => i18n.t(userId, key);
+  return design.keyboard([
+    [design.textButton(tr('btn_run_pipeline'), 'cc_pipeline_run'), design.textButton(tr('btn_deals'), 'cc_deals')],
+    [design.textButton(tr('btn_back_home'), 'cc_home')]
+  ]);
 }
 
 async function routerResult(chatId, userId, rawText) {
@@ -32,15 +44,21 @@ async function routerResult(chatId, userId, rawText) {
     action: trace.action,
     decision: trace.decision
   });
+  // Inline buttons only. The persistent Reply Keyboard (Run sales / Status /
+  // Help ...) is retired: it forced sales and mission commands on every user.
   let replyMarkup = null;
-  if (reply.suggestions && reply.suggestions.length) {
-    replyMarkup = {
-      keyboard: reply.suggestions.map(s => [{ text: s }]),
-      resize_keyboard: true
-    };
+  let outText = reply.text;
+  const action = reply.action || trace.action;
+  if (reply.unlinked) {
+    // No workspace yet: answer the question, then offer Quick Start.
+    const sc = onboarding.start(userId);
+    outText = `${reply.text}\n\n${sc.text}`;
+    replyMarkup = sc.keyboard;
+  } else if (GUIDE_ACTIONS.has(action)) {
+    replyMarkup = guideKeyboard(userId);
   }
-  const result = { chatId, text: reply.text, replyMarkup };
-  result.__isAI = (reply.action === 'knowledge');
+  const result = { chatId, text: outText, replyMarkup };
+  result.__isAI = (action === 'knowledge');
   return result;
 }
 
@@ -347,6 +365,11 @@ async function handleMessage(msg) {
 
     if (command === '/start' || command === '/setup') {
       return handleStart(chatId, userId, msg.from ? msg.from.first_name : null);
+    }
+
+    if (command === '/help') {
+      const helped = await routerResult(chatId, userId, 'help');
+      if (helped) return helped;
     }
 
     const handler = COMMANDS[command];

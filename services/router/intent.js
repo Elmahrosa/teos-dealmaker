@@ -20,6 +20,18 @@ const PATTERNS = [
     ar: [/^(السلام عليكم|وعليكم السلام|سلام|أهلين|أهلا|مرحبا|صباح الخير|مساء الخير)/]
   },
   {
+    intent: 'about',
+    capability: null,
+    en: [
+      /^(what('| i)?s|what is|what are|who is|tell me about|explain|describe)\s+(the\s+)?(teos\s*)?(deal\s*maker|teos|this(\s+(bot|platform|app|tool|service))?|you)\b/i,
+      /^(who are you|what are you|what do you do|how does (it|this|deal\s*maker) work|how do i (start|begin|use)( this| it)?|about)\b/i
+    ],
+    ar: [
+      /(ما\s*هو|ماهو|ما\s*هي|ايش|إيش|وش|شو)\s*.{0,12}(ديل\s*ميكر|dealmaker|teos|تيوس|هذا البوت)/i,
+      /^(من\s+(أنت|انت)|ما\s+هذا\s+البوت|كيف\s+(يعمل|أبدأ|ابدأ|أستخدم|استخدم))/
+    ]
+  },
+  {
     intent: 'create_mission',
     capability: 'mission.create',
     en: [/^(create|start|new|launch|open)\b.{0,20}\b(mission|plan)\b/i, /^(mission|plan)\b.{0,20}(to\b|for\b)?/i],
@@ -137,7 +149,7 @@ const PATTERNS = [
   {
     intent: 'help',
     capability: 'help.show',
-    en: [/^(help|commands|what can you do|menu|options)\b/i],
+    en: [/^(help|commands|what can you do|menu|options)\b/i, /\b(i\s+need|need|can\s+you|could\s+you|please)\s+(some\s+)?help\b/i, /\bhelp\s+me\b/i],
     ar: [/(مساعدة|الأوامر|ماذا يمكنك أن تفعل|القائمة|خيارات)/, /^مساعدة/]
   }
 ];

@@ -1,6 +1,7 @@
 const { TelegramBot } = require('node-telegram-bot-api');
 const { BOT_CONFIG } = require('./config');
 const { handleMessage } = require('./handlers');
+const { clearLegacyKeyboard } = require('./keyboardCleanup');
 const { handleCallback } = require('./menu');
 const onboarding = require('./onboarding');
 const audit = require('../utils/auditLogger');
@@ -95,6 +96,7 @@ bot.on('message', async (msg) => {
   try {
     const result = await handleMessage(msg);
     if (result && result.chatId && result.text) {
+      await clearLegacyKeyboard(bot, result.chatId);
       await bot.sendChatAction(result.chatId, 'typing').catch(() => {});
       const sendOpts = { parse_mode: 'HTML' };
       if (result.replyMarkup) sendOpts.reply_markup = result.replyMarkup;
@@ -130,6 +132,7 @@ bot.on('message', async (msg) => {
 bot.on('callback_query', async (query) => {
   try {
     const userId = query.from ? query.from.id : null;
+    if (query.message && query.message.chat) await clearLegacyKeyboard(bot, query.message.chat.id);
     // Navigating away from setup (any non-setup button) drops the setup state.
     if (userId && onboarding.isActive(userId) && !String(query.data || '').startsWith('cc_onb_')) onboarding.reset(userId);
     if (userId && onboarding.isActive(userId)) {

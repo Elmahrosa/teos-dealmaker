@@ -16,13 +16,19 @@ function summaryOf(plan, steps) {
   return { status: fmtPlanStatus(plan.status), done, total };
 }
 
+function buildAbout(lang) {
+  return lang === 'ar'
+    ? 'TEOS DealMaker مساعد مبيعات بالذكاء الاصطناعي. تصف له أصلاً تريد بيعه (نطاق، منتج، خدمة)، فيحلل الفرصة ويجهّز العرض ومسودة التفاوض ويحفظ الصفقة في مساحة عملك. لا تُسجَّل أي صفقة كمكسوبة إلا بعد قبول موثّق من العميل ودليل دفع موثّق.\n\nللبدء: اضغط «تشغيل خط البيع» أو اكتب ما تريد بيعه.'
+    : 'TEOS DealMaker is an AI sales assistant. You describe an asset you want to sell (a domain, a product, a service) and it analyses the opportunity, prepares the proposal and negotiation draft, and keeps the deal in your workspace. A deal is never marked won without verified customer acceptance and verified payment evidence.\n\nTo start: tap Run Pipeline, or just describe what you want to sell.';
+}
+
 function buildHelp(lang, isFounder) {
   const base = lang === 'ar'
-    ? 'يمكنني تشغيل المبيعات، البحث عن عملاء، إنشاء مهام، تحديث حالة العملاء، وشرح ما يحدث في حساباتك.'
-    : 'I can run sales, find customers, create missions, onboard new customers, and explain what is happening in your workspace.';
+    ? 'يمكنني مساعدتك في: تشغيل خط البيع لأصل تريد بيعه، عرض صفقاتك، والبحث في معرفة شركتك. اكتب /start لفتح القائمة في أي وقت، أو اسأل «ما هو DealMaker».'
+    : 'I can help you run a sales pipeline for something you want to sell, show your deals, and search your company knowledge. Send /start any time for the menu, or ask "what is DealMaker".';
   const founderOnly = lang === 'ar'
-    ? '\nيمكنني أيضاً إصلاح الأخطاء، وعرض التحليلات الداخلية، وتغيير الإعدادات.'
-    : '\nI can also fix errors, show internal analytics, and change settings.';
+    ? '\nحساب المؤسس: يمكنك أيضاً استخدام «Founder Console» للمهام والموافقات والإعدادات الداخلية.'
+    : '\nFounder account: you can also open the Founder Console for missions, approvals and internal settings.';
   return base + (isFounder ? founderOnly : '');
 }
 
@@ -38,6 +44,9 @@ function textFor(result, ctx, session) {
 
     case 'help':
       return buildHelp(d.language, d.isFounder);
+
+    case 'about':
+      return buildAbout(d.language);
 
     case 'trust': {
       const trustUrl = 'https://elmahrosa.org/trust';
@@ -244,8 +253,8 @@ function textFor(result, ctx, session) {
     case 'unknown':
     default:
       return ar
-        ? 'لم أفهم ذلك بعد. جرّب: «شغّل المبيعات»، «بحث عن عملاء»، «الحالة»، أو «مساعدة».'
-        : 'I did not get that yet. Try: "run sales", "find customers", "status", or "help".';
+        ? 'لست متأكداً مما تقصده بعد. يمكنني شرح DealMaker، أو بدء خط بيع لأصل تريد بيعه، أو عرض صفقاتك. اضغط زراً أدناه أو اسأل «ما هو DealMaker».'
+        : 'I am not sure what you mean yet. I can explain DealMaker, start a sales pipeline for something you want to sell, or show your deals. Tap a button below, or ask "what is DealMaker".';
   }
 }
 
